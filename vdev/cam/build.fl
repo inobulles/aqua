@@ -1,0 +1,26 @@
+# This Source Form is subject to the terms of the AQUA Software License,
+# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+
+import bob
+
+# TODO Put this all in a 'src' directory.
+
+let src = ["main.c", "apple.m"]
+
+let obj = Cc([
+	"-std=c11",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(src)
+
+let vdriver = Linker([
+	"-shared", 
+	# TODO Some way to only do this on macOS in Bob (gonna need if statements in Flamingo and some kind of 'Os' class for this).
+	"-framework", "Foundation",
+	"-framework", "AVFoundation",
+]).link(obj)
+
+install = {
+	vdriver: "share/aqua/vdriver/aquabsd.black.cam.vdriver",
+}
+
+# run = none
