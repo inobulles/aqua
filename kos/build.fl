@@ -1,0 +1,24 @@
+# This Source Form is subject to the terms of the AQUA Software License,
+# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+
+import bob
+
+# TODO Put this all in a 'src' directory.
+
+let src = Fs.list(".").where(|path| path.endswith(".c"))
+
+let obj = Cc([
+	"-std=c11",
+	"-Wall", "-Wextra", "-Werror",
+	"-fPIC",
+]).compile(src)
+
+# TODO 'aqua' command ofc.
+
+let lib = Linker(["-L/usr/local/lib", "-shared", "-lgv"]).link(obj)
+
+install = {
+	lib: "lib/libaqua.so",
+}
+
+run = none
