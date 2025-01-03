@@ -1,0 +1,11 @@
+# This Source Form is subject to the terms of the AQUA Software License,
+# v. 1.0. Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.local("gv"),
+	Dep.local("kos"),
+]
+
+run = none
