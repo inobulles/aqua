@@ -2,6 +2,10 @@
 
 This is the monorepo for all AQUA components.
 
+## Guide du routard
+
+TBD, description of the components held within this repo.
+
 ## Older versions
 
 At some point in the future, I'd also like to clean up all previous versions of AQUA and bring their history into this repo.
