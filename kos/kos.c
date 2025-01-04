@@ -18,8 +18,11 @@
 
 static bool has_init = false;
 static uint64_t local_host_id;
-static kos_vdev_notif_cb_t vdev_notif_cb = NULL;
-static void* vdev_notif_data = NULL;
+static kos_notif_cb_t notif_cb = NULL;
+static void* notif_data = NULL;
+
+static uint64_t conn_count = 0;
+static kos_cookie_t cookies = 0;
 
 void __attribute__((constructor)) kos_init(void) {
 	has_init = true;
@@ -85,8 +88,8 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 
 	// Set other miscellaneous values on VDRIVER.
 
-	vdriver->vdev_notif_cb = vdev_notif_cb;
-	vdriver->vdev_notif_data = vdev_notif_data;
+	vdriver->notif_cb = notif_cb;
+	vdriver->notif_data = notif_data;
 
 	// Finally, call init on the vdriver.
 	// TODO Maybe these should return errors idk.
@@ -96,11 +99,11 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 	return 0;
 }
 
-void kos_sub_to_vdev_notif(kos_vdev_notif_cb_t cb, void* data) {
+void kos_sub_to_notif(kos_notif_cb_t cb, void* data) {
 	assert(has_init);
 
-	vdev_notif_cb = cb;
-	vdev_notif_data = data;
+	notif_cb = cb;
+	notif_data = data;
 }
 
 static void strfree(char** str) {
@@ -173,28 +176,117 @@ void kos_req_vdev(char const* spec) {
 			.attach.vdev = *gv_vdev,
 		};
 
-		vdev_notif_cb(&notif, vdev_notif_data);
+		notif_cb(&notif, notif_data);
 	}
 
 	free(gv_vdevs);
 }
 
-/*
-kos_cookie_t kos_vdev_conn(uint128_t host_id, uint64_t vdev_id, kos_vdev_conn_cb_t cb, void* data) {
-	assert(host_id == local_host_id); // TODO Currently, only local VDEV's are supported.
+// TODO Probably should move this to a separate file.
 
+typedef enum {
+	ACTION_KIND_CONN,
+} action_kind_t;
+
+typedef struct action {
+	action_kind_t kind;
+	kos_cookie_t cookie;
+	void (*cb)(kos_cookie_t cookie, struct action* action);
+
+	union {
+		struct {
+			uint64_t host_id;
+			uint64_t vdev_id;
+		} conn;
+	};
+} action_t;
+
+#define ACTION_QUEUE_SIZE 16
+static action_t action_queue[ACTION_QUEUE_SIZE];
+static size_t action_queue_head = 0;
+static size_t action_queue_tail = 0;
+
+#define QUEUE_INDEX(i) (action_queue[(i) % ACTION_QUEUE_SIZE])
+
+#define PUSH_QUEUE(val)                       \
+	do {                                       \
+		QUEUE_INDEX(action_queue_tail) = (val); \
+		action_queue_tail++;                    \
+	} while (0)
+
+#define POP_QUEUE(res)                        \
+	do {                                       \
+		(res) = QUEUE_INDEX(action_queue_head); \
+		action_queue_head++;                    \
+	} while (0)
+
+static void conn(kos_cookie_t cookie, action_t* action) {
 	// Look for the vdriver this 'vdev_id' is associated with.
 
 	for (size_t i = 0; i < vdriver_count; i++) {
 		kos_vdriver_t* const kos_vdriver = &vdrivers[i];
-
 		vdriver_t* const vdriver = kos_vdriver->vdriver;
 
-		if (vdev_id >= vdriver->vdev_id_lo && vdev_id <= vdriver->vdev_id_hi) {
-			return vdriver->conn(vdev_id, cb, data);
+		if (action->conn.vdev_id >= vdriver->vdev_id_lo && action->conn.vdev_id <= vdriver->vdev_id_hi) {
+			vdriver->conn(action->conn.vdev_id, conn_count++, cookie);
+			return;
 		}
 	}
 
-	return 0;
+	// If we couldn't find anything, emit a connection failure.
+
+	fprintf(stderr, "Could not find a VDRIVER associated with VDEV ID %lu\n", action->conn.vdev_id);
+
+	kos_notif_t notif = {
+		.kind = KOS_NOTIF_CONN_FAIL,
+		.cookie = cookie,
+	};
+
+	notif_cb(&notif, notif_data);
 }
-*/
+
+kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
+	assert(host_id == local_host_id); // TODO Currently, only local VDEV's are supported.
+
+	// Generate cookie and add action to queue.
+
+	kos_cookie_t const cookie = cookies++;
+
+	action_t const action = {
+		.kind = ACTION_KIND_CONN,
+		.cookie = cookie,
+		.cb = conn,
+		.conn = {
+					.host_id = host_id,
+					.vdev_id = vdev_id,
+					},
+	};
+
+	PUSH_QUEUE(action);
+
+	if (action_queue_tail - action_queue_head > ACTION_QUEUE_SIZE) {
+		fprintf(stderr, "Too many actions in the KOS' action queue, dropping the most recent one.\n");
+		action_queue_tail--;
+	}
+
+	return cookie;
+}
+
+void kos_flush(bool sync) {
+	// Clear out the queue.
+
+	while (action_queue_head != action_queue_tail) {
+		action_t action;
+		POP_QUEUE(action);
+		action.cb(action.cookie, &action);
+	}
+
+	// TODO Wait for the operations we started here to finish if sync is set.
+
+	if (sync) {
+	}
+}
+
+void kos_vdev_disconn(uint64_t conn_id) {
+	(void) conn_id; // TODO
+}
