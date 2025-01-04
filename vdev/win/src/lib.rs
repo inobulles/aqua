@@ -138,6 +138,16 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 	);
 }
 
+#[allow(static_mut_refs)]
+unsafe extern "C" fn call(_cookie: u64, _conn_id: u64, fn_id: u64, _args: *const kos_vdev_fn_arg_t) {
+	assert!(VDRIVER.notif_cb.is_some());
+
+	// TODO Check if valid connection ID (isn't this guaranteed? if so assert).
+	// TODO Check if valid function ID (can't this be done for us by the KOS?).
+
+	(FNS[fn_id as usize].cb)();
+}
+
 #[ctor]
 unsafe fn vdriver_init() {
 	// XXX No way to do this at compile time afaict.
@@ -154,6 +164,7 @@ pub static mut VDRIVER: vdriver_t = vdriver_t {
 	probe: Some(probe),
 	init: None,
 	conn: Some(conn),
+	call: Some(call),
 
 	// We have to set these explicitly because.
 	vdev_id_lo: 0,
