@@ -1,0 +1,90 @@
+# Version: 1
+# This tries to follow my .clang-format style as closely as possible, even when some of the objective decisions made for clang-format wind up being irrelevant for rustfmt and mostly being up to personal preference.
+# 'binop_separator' is a good example, where rustfmt will anyway not align the operands with spaces like AlignOperands would in clang-format, so the value we use doesn't really matter.
+# But I'm still using "Back", because, by default, I'm following my .clang-format's style.
+
+binop_separator = "Back"
+
+# You're mad if you don't do these things.
+
+hard_tabs = true
+newline_style = "Unix"
+trailing_comma = "Vertical"
+
+# Line widths.
+
+wrap_comments = false
+format_strings = true
+max_width = 120
+
+# Don't waste vertical space for nothing.
+
+blank_lines_lower_bound = 0
+blank_lines_upper_bound = 1
+combine_control_expr = true
+
+# With where clauses, it's sometimes not as obvious where the function body beings if the brace if its not on its own line.
+
+brace_style = "SameLineWhere"
+
+# I don't personally like '} else {', but go fmt does this and it can't be configured, so I'd rather be consistent with it.
+# Besides, there are some advantages, such as saving vertical space and it doesn't cause problems in diffs as else's are always supposed to be preceded by a closing brace from the previous if.
+
+control_brace_style = "AlwaysSameLine"
+
+# Makes diffs smaller when adding bodies.
+
+empty_item_single_line = false
+fn_single_line = false
+inline_attribute_width = 0
+
+# Don't align these.
+# It's prettier, but it means often when we add/remove a variant/member, the diff will contain all the others.
+
+enum_discrim_align_threshold = 0
+struct_field_align_threshold = 0
+
+# "Compressed" gives us the most unpredictable diffs.
+
+fn_params_layout = "Tall"
+
+# With this set to false, both (_, _) and (..) are allowed.
+# Choose only one.
+
+condense_wildcard_suffixes = true
+
+# I don't see why we wouldn't be explicit about this.
+
+force_explicit_abi = true
+
+# Adds needless clutter.
+
+force_multiline_blocks = false
+
+# For imports, the diff size doesn't really matter cuz there's no logic there.
+
+imports_indent = "Block"
+imports_layout = "Mixed"
+imports_granularity = "Module"
+merge_imports = true
+group_imports = "StdExternalCrate"
+
+# For the most part, this avoids the diff changing for the body when e.g. a variable name is changed in length.
+
+indent_style = "Block"
+
+# What to format vs not.
+
+format_code_in_doc_comments = true
+format_macro_matchers = true
+format_macro_bodies = true
+
+# Misc.
+
+hex_literal_case = "Upper"
+normalize_comments = true
+normalize_doc_attributes = true
+overflow_delimited_expr = true
+reorder_impl_items = true
+reorder_modules = true
+use_try_shorthand = true
