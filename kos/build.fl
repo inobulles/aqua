@@ -19,6 +19,7 @@ let lib = Linker(["-L/usr/local/lib", "-shared", "-lgv"]).link(obj)
 
 install = {
 	lib: "lib/libaqua.so",
+	"kos.h": "include/aqua/kos.h",
 }
 
 run = none
