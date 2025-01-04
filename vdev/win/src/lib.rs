@@ -11,6 +11,7 @@ include!(concat!(env!("OUT_DIR"), "/vdev_bindings.rs"));
 use std::os::raw::c_char;
 
 use ctor::ctor;
+use winit::event_loop::EventLoop;
 
 trait AllowedForStrToSlice: Copy + Default {
 	fn from_u8(x: u8) -> Self;
@@ -78,8 +79,22 @@ unsafe extern "C" fn probe() {
 	);
 }
 
+#[derive(Clone)]
+struct Fn {
+	name: &'static str,
+	cb: fn(),
+}
+
+static FNS: [Fn; 1] = [Fn {
+	name: "create",
+	cb: || {
+		let _event_loop = EventLoop::new();
+		println!("Event loop created: TODO the rest of this");
+	},
+}];
+
 #[allow(static_mut_refs)]
-unsafe extern "C" fn conn(vdev_id: u64, conn_id: u64, cookie: u64) {
+unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 	assert!(VDRIVER.notif_cb.is_some());
 
 	// Since we only support one VDEV, if this is not the ID we gave when probing, we necessarily know something went wrong.
@@ -107,12 +122,15 @@ unsafe extern "C" fn conn(vdev_id: u64, conn_id: u64, cookie: u64) {
 				conn: kos_notif_t__bindgen_ty_1__bindgen_ty_4 {
 					conn_id,
 					fn_count: 1,
-					fns: &kos_vdev_fn_t {
-						name: str_to_slice::<u8, 64>("create"),
-						ret_type: kos_type_t_KOS_TYPE_VOID,
-						arg_count: 0,
-						args: std::ptr::null(),
-					},
+					fns: FNS
+						.clone()
+						.map(|x| kos_vdev_fn_t {
+							name: str_to_slice::<u8, 64>(x.name),
+							ret_type: kos_type_t_KOS_TYPE_VOID,
+							arg_count: 0,
+							args: std::ptr::null(),
+						})
+						.as_ptr(),
 				},
 			},
 		},
