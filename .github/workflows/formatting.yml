@@ -3,7 +3,7 @@ name: Check formatting
 on: [push, workflow_dispatch]
 
 jobs:
-  check_formatting:
+  check_c_formatting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -11,4 +11,11 @@ jobs:
         uses: jidicula/clang-format-action@v4.13.0
         with:
           clang-format-version: 18
-          check-path: .
+  check_rust_formatting:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
+       - uses: actions-rust-lang/rustfmt@v1
+         with:
+           manifest-path: src/rs/Cargo.toml
+           check-path: .
