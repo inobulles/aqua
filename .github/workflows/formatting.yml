@@ -11,6 +11,7 @@ jobs:
         uses: jidicula/clang-format-action@v4.13.0
         with:
           clang-format-version: 18
+          check-path: .
   check_rust_formatting:
      runs-on: ubuntu-latest
      steps:
@@ -18,4 +19,3 @@ jobs:
        - uses: actions-rust-lang/rustfmt@v1
          with:
            manifest-path: src/rs/Cargo.toml
-           check-path: .
