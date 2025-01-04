@@ -15,6 +15,7 @@ typedef struct {
 
 	uint64_t win_conn_cookie;
 	uint64_t win_conn_id;
+	uint64_t win_create;
 } state_t;
 
 static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
@@ -63,6 +64,10 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 			for (size_t i = 0; i < notif->conn.fn_count; i++) {
 				kos_vdev_fn_t const* const fn = &notif->conn.fns[i];
 				printf("Has function %zu:\t%s\n", i, fn->name);
+
+				if (strcmp((char*) fn->name, "create") == 0) {
+					state->win_create = i;
+				}
 
 				for (size_t j = 0; j < fn->arg_count; j++) {
 					kos_vdev_fn_arg_t const* const arg = &fn->args[j];
@@ -122,8 +127,10 @@ int main(void) {
 	}
 
 	// Create the window.
+	// TODO Cookie this and process response.
 
-	// kos_cookie_t const create_cookie = kos_vdev_call(state.win_conn_id, ...);
+	kos_vdev_call(state.win_conn_id, state.win_create, NULL);
+	kos_flush(true);
 
 	// Clean up.
 
