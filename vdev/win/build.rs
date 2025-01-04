@@ -7,14 +7,16 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-	let header = "../../kos/vdev.h";
+	let vdev_header = "../../kos/vdev.h";
+	let kos_header = "../../kos/kos.h";
 
 	// Tell cargo to invalidate the built crate whenever the header changes
 
-	println!("cargo:rerun-if-changed={}", header);
+	println!("cargo:rerun-if-changed={}", vdev_header);
+	println!("cargo:rerun-if-changed={}", kos_header);
 
 	let bindings = bindgen::Builder::default()
-		.header(header)
+		.header(vdev_header)
 		.generate_comments(true)
 		.generate()
 		.expect("Unable to generate bindings");
