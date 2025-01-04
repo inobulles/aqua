@@ -31,6 +31,39 @@ typedef struct {
 
 kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t* descr);
 
+// Types.
+// TODO Better comments.
+
+typedef enum : uint8_t {
+	KOS_TYPE_VOID,
+	KOS_TYPE_BOOL,
+	KOS_TYPE_U8,
+	KOS_TYPE_U16,
+	KOS_TYPE_U32,
+	KOS_TYPE_U64,
+	KOS_TYPE_I8,
+	KOS_TYPE_I16,
+	KOS_TYPE_I32,
+	KOS_TYPE_I64,
+	KOS_TYPE_STR,
+	KOS_TYPE_BUF,
+	KOS_TYPE_OPAQUE_PTR,
+	KOS_TYPE_PTR,
+} kos_type_t;
+
+typedef struct {
+	kos_type_t type;
+	uint8_t name[64];
+} kos_vdev_fn_arg_t;
+
+typedef struct {
+	uint8_t name[64];
+	kos_type_t ret_type;
+
+	uint32_t arg_count;
+	kos_vdev_fn_arg_t const* args;
+} kos_vdev_fn_t;
+
 // Subscribe to notifications about the creation and destruction of VDEVs by registering a callback.
 // Note that `kos_req_vdev` needs to be called after this one for the client to let the KOS know which VDEV specs it requires.
 
@@ -56,10 +89,13 @@ typedef struct __attribute__((packed)) {
 typedef enum {
 	KOS_NOTIF_ATTACH, // TODO Rename to `KOS_NOTIF_ATTACH_VDEV`?
 	KOS_NOTIF_DETACH,
+	KOS_NOTIF_CONN_FAIL,
+	KOS_NOTIF_CONN,
 } kos_notif_kind_t;
 
 typedef struct {
 	kos_notif_kind_t kind;
+	kos_cookie_t cookie;
 
 	union {
 		struct {
@@ -70,12 +106,22 @@ typedef struct {
 			uint64_t host_id;
 			uint64_t vdev_id;
 		} detach;
+
+		struct {
+		} conn_fail;
+
+		struct {
+			uint64_t conn_id;
+			uint32_t fn_count;
+			kos_vdev_fn_t const* fns;
+		} conn;
 	};
 } kos_notif_t;
 
-typedef void (*kos_vdev_notif_cb_t)(kos_notif_t* notif, void* data);
+typedef void (*kos_notif_cb_t)(kos_notif_t const* notif, void* data);
 
-void kos_sub_to_vdev_notif(kos_vdev_notif_cb_t cb, void* data); // TODO Rename to just `kos_sub_to_notif`? Cuz this could really be for anything yeah.
+void kos_sub_to_notif(kos_notif_cb_t cb, void* data);
+void kos_flush(bool sync);
 
 // Request a VDEV's following the given spec to be loaded.
 // This function is guaranteed to immediately call the callback for all `VDEV_KIND_LOCAL` and `VDEV_KIND_UDS` VDEVs, so the client can exit if it doesn't immediately find the VDEV it needs.
@@ -84,11 +130,9 @@ void kos_req_vdev(char const* spec);
 
 // Connect to or disconnect from a VDEV.
 
-typedef void (*kos_vdev_conn_cb_t)(kos_cookie_t cookie, void* data, bool success, uint64_t conn_id);
-
-kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id, kos_vdev_conn_cb_t cb, void* data);
-void kos_vdev_conn_flush(kos_cookie_t cookie);
-
+kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id);
 void kos_vdev_disconn(uint64_t conn_id);
 
-// List VDEV commands.
+// Call a function on a VDEV.
+
+kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args);
