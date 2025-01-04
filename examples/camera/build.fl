@@ -1,0 +1,25 @@
+# This Source Form is subject to the terms of the AQUA Software License,
+# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.local("../.."),
+]
+
+# TODO Put this all in a 'src' directory.
+
+let src = ["client.c"]
+
+let obj = Cc([
+	"-std=c11",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(src)
+
+let cmd = Linker(["-L/usr/local/lib", "-laqua", "-rpath", "/usr/local"]).link(obj)
+
+install = {
+	cmd: "bin/aqua-cam-test",
+}
+
+run = ["aqua-cam-test"]
