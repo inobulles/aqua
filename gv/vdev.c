@@ -37,7 +37,7 @@ static uint64_t cur_vid_slice = 0;
 static size_t vdriver_count = 0;
 static kos_vdriver_t* vdrivers = NULL;
 
-static void vdev_notif_cb(kos_notif_t* notif, void* data) {
+static void notif_cb(kos_notif_t const* notif, void* data) {
 	state_t* const state = data;
 
 	switch (notif->kind) {
@@ -50,6 +50,10 @@ static void vdev_notif_cb(kos_notif_t* notif, void* data) {
 
 		break;
 	case KOS_NOTIF_DETACH:
+		break;
+	case KOS_NOTIF_CONN_FAIL:
+		break;
+	case KOS_NOTIF_CONN:
 		break;
 	}
 }
@@ -87,8 +91,8 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, state_t* state, ch
 
 	// Set other miscellaneous values on VDRIVER.
 
-	vdriver->vdev_notif_cb = vdev_notif_cb;
-	vdriver->vdev_notif_data = state;
+	vdriver->notif_cb = notif_cb;
+	vdriver->notif_data = state;
 
 	// Finally, call init on the vdriver.
 	// TODO Maybe these should return errors idk.
