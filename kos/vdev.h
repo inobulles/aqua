@@ -28,5 +28,6 @@ typedef struct {
 
 	void (*init)(void);
 	void (*probe)(void);
-	void (*conn)(uint64_t vdev_id, uint64_t conn_id, kos_cookie_t cookie);
+	void (*conn)(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id);
+	void (*call)(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_vdev_fn_arg_t const* args);
 } vdriver_t;

@@ -3,6 +3,7 @@
 
 #include "kos.h"
 #include "../gv/gv.h"
+#include "conn.h"
 #include "vdev.h"
 
 #include <assert.h>
@@ -21,7 +22,6 @@ static uint64_t local_host_id;
 static kos_notif_cb_t notif_cb = NULL;
 static void* notif_data = NULL;
 
-static uint64_t conn_count = 0;
 static kos_cookie_t cookies = 0;
 
 void __attribute__((constructor)) kos_init(void) {
@@ -186,12 +186,7 @@ void kos_req_vdev(char const* spec) {
 
 // TODO Probably should move this to a separate file.
 
-typedef enum {
-	ACTION_KIND_CONN,
-} action_kind_t;
-
 typedef struct action {
-	action_kind_t kind;
 	kos_cookie_t cookie;
 	void (*cb)(kos_cookie_t cookie, struct action* action);
 
@@ -200,6 +195,12 @@ typedef struct action {
 			uint64_t host_id;
 			uint64_t vdev_id;
 		} conn;
+
+		struct {
+			uint64_t conn_id;
+			uint32_t fn_id;
+			kos_vdev_fn_arg_t const* args;
+		} call;
 	};
 } action_t;
 
@@ -230,7 +231,7 @@ static void conn(kos_cookie_t cookie, action_t* action) {
 		vdriver_t* const vdriver = kos_vdriver->vdriver;
 
 		if (action->conn.vdev_id >= vdriver->vdev_id_lo && action->conn.vdev_id <= vdriver->vdev_id_hi) {
-			vdriver->conn(action->conn.vdev_id, conn_count++, cookie);
+			vdriver->conn(cookie, action->conn.vdev_id, conn_new(vdriver));
 			return;
 		}
 	}
@@ -255,12 +256,48 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 	kos_cookie_t const cookie = cookies++;
 
 	action_t const action = {
-		.kind = ACTION_KIND_CONN,
 		.cookie = cookie,
 		.cb = conn,
 		.conn = {
 					.host_id = host_id,
 					.vdev_id = vdev_id,
+					},
+	};
+
+	PUSH_QUEUE(action);
+
+	if (action_queue_tail - action_queue_head > ACTION_QUEUE_SIZE) {
+		fprintf(stderr, "Too many actions in the KOS' action queue, dropping the most recent one.\n");
+		action_queue_tail--;
+	}
+
+	return cookie;
+}
+
+static void call(kos_cookie_t cookie, action_t* action) {
+	uint64_t const conn_id = action->call.conn_id;
+
+	// TODO Check that this connection ID is even valid, and do a call failure notif callback if not.
+	// Also, can't these checks just be in kos_vdev_call? Then this function is only responsible for actually doing vdriver->call.
+
+	vdriver_t* const vdriver = conns[conn_id].vdriver;
+	assert(vdriver != NULL);
+
+	vdriver->call(cookie, conn_id, action->call.fn_id, action->call.args);
+}
+
+kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t const* args) {
+	// Generate cookie and add action to queue.
+
+	kos_cookie_t const cookie = cookies++;
+
+	action_t const action = {
+		.cookie = cookie,
+		.cb = call,
+		.call = {
+					.conn_id = conn_id,
+					.fn_id = fn_id,
+					.args = args,
 					},
 	};
 

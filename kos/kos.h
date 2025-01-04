@@ -135,4 +135,4 @@ void kos_vdev_disconn(uint64_t conn_id);
 
 // Call a function on a VDEV.
 
-kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args);
+kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t const* args);
