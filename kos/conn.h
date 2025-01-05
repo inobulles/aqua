@@ -12,7 +12,9 @@
 typedef struct {
 	bool alive;
 	vdriver_t* vdriver;
+
 	size_t fn_count;
+	kos_vdev_fn_t const* fns;
 } conn_t;
 
 static conn_t* conns = NULL;
@@ -24,7 +26,7 @@ static uint64_t conn_new(vdriver_t* vdriver) {
 
 	conn_t* const conn = &conns[conn_count];
 
-	conn->alive = true;
+	conn->alive = false;
 	conn->vdriver = vdriver;
 
 	return conn_count++;

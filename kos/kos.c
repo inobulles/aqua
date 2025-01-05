@@ -20,8 +20,8 @@
 
 static bool has_init = false;
 static uint64_t local_host_id;
-static kos_notif_cb_t notif_cb = NULL;
-static void* notif_data = NULL;
+static kos_notif_cb_t client_notif_cb = NULL;
+static void* client_notif_data = NULL;
 
 static kos_cookie_t cookies = 0;
 
@@ -55,6 +55,28 @@ static uint64_t cur_vid_slice = 0;
 
 static size_t vdriver_count = 0;
 static kos_vdriver_t* vdrivers = NULL;
+
+static void notif_cb(kos_notif_t const* notif, void* data) {
+	switch (notif->kind) {
+	case KOS_NOTIF_ATTACH:
+	case KOS_NOTIF_DETACH:
+	case KOS_NOTIF_CONN_FAIL:
+		break;
+	case KOS_NOTIF_CONN:
+		assert(notif->conn.conn_id < conn_count);
+		conn_t* const conn = &conns[notif->conn.conn_id];
+
+		conn->alive = true;
+		conn->fn_count = notif->conn.fn_count;
+		conn->fns = notif->conn.fns;
+
+		break;
+	}
+
+	// Forward the notification to the client.
+
+	client_notif_cb(notif, data);
+}
 
 static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) {
 	void* const lib = dlopen(path, RTLD_LAZY);
@@ -90,7 +112,7 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 	// Set other miscellaneous values on VDRIVER.
 
 	vdriver->notif_cb = notif_cb;
-	vdriver->notif_data = notif_data;
+	vdriver->notif_data = client_notif_data;
 
 	// Finally, call init on the vdriver.
 	// TODO Maybe these should return errors idk.
@@ -105,8 +127,8 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 void kos_sub_to_notif(kos_notif_cb_t cb, void* data) {
 	assert(has_init);
 
-	notif_cb = cb;
-	notif_data = data;
+	client_notif_cb = cb;
+	client_notif_data = data;
 }
 
 static void strfree(char** str) {
@@ -179,7 +201,7 @@ void kos_req_vdev(char const* spec) {
 			.attach.vdev = *gv_vdev,
 		};
 
-		notif_cb(&notif, notif_data);
+		client_notif_cb(&notif, client_notif_data);
 	}
 
 	free(gv_vdevs);
@@ -207,7 +229,7 @@ static void conn(kos_cookie_t cookie, action_t* action) {
 		.cookie = cookie,
 	};
 
-	notif_cb(&notif, notif_data);
+	client_notif_cb(&notif, client_notif_data);
 }
 
 kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
