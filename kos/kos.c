@@ -348,5 +348,10 @@ void kos_flush(bool sync) {
 }
 
 void kos_vdev_disconn(uint64_t conn_id) {
-	(void) conn_id; // TODO
+	if (conn_id >= conn_count) {
+		fprintf(stderr, "Connection ID %lu invalid.\n", conn_id);
+		return;
+	}
+
+	conns[conn_id].alive = false;
 }
