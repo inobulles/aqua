@@ -14,6 +14,8 @@ uint64_t conn_new(vdriver_t* vdriver) {
 	assert(conns != NULL);
 
 	conn_t* const conn = &conns[conn_count];
+
+	conn->alive = true;
 	conn->vdriver = vdriver;
 
 	return conn_count++;

@@ -197,6 +197,7 @@ typedef struct action {
 		} conn;
 
 		struct {
+			vdriver_t* vdriver;
 			uint64_t conn_id;
 			uint32_t fn_id;
 			kos_vdev_fn_arg_t const* args;
@@ -275,26 +276,46 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 }
 
 static void call(kos_cookie_t cookie, action_t* action) {
-	uint64_t const conn_id = action->call.conn_id;
-
-	// TODO Check that this connection ID is even valid, and do a call failure notif callback if not.
-	// Also, can't these checks just be in kos_vdev_call? Then this function is only responsible for actually doing vdriver->call.
-
-	vdriver_t* const vdriver = conns[conn_id].vdriver;
-	assert(vdriver != NULL);
-
-	vdriver->call(cookie, conn_id, action->call.fn_id, action->call.args);
+	vdriver_t const* const vdriver = action->call.vdriver;
+	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
 }
 
 kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t const* args) {
-	// Generate cookie and add action to queue.
+	// Generate cookie.
 
 	kos_cookie_t const cookie = cookies++;
+
+	// Find connection.
+
+	if (conn_id >= conn_count) {
+		fprintf(stderr, "Connection ID %lu invalid.\n", conn_id);
+		// TODO Error here.
+	}
+
+	conn_t* const conn = &conns[conn_id];
+
+	if (!conn->alive) {
+		fprintf(stderr, "Connection ID %lu is not alive.\n", conn_id);
+		// TODO Error here.
+	}
+
+	// Get VDRIVER and validate function ID.
+
+	vdriver_t* const vdriver = conn->vdriver;
+	assert(vdriver != NULL);
+
+	if (fn_id >= conn->fn_count) {
+		fprintf(stderr, "Function ID %u is invalid.\n", fn_id);
+		// TODO Error here.
+	}
+
+	// Add action to queue.
 
 	action_t const action = {
 		.cookie = cookie,
 		.cb = call,
 		.call = {
+					.vdriver = vdriver,
 					.conn_id = conn_id,
 					.fn_id = fn_id,
 					.args = args,

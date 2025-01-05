@@ -7,7 +7,9 @@
 #include <stdint.h>
 
 typedef struct {
+	bool alive;
 	vdriver_t* vdriver;
+	size_t fn_count;
 } conn_t;
 
 extern conn_t* conns;
