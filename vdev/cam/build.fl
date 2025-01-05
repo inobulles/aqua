@@ -23,4 +23,4 @@ install = {
 	vdriver: "share/aqua/vdriver/aquabsd.black.cam.vdriver",
 }
 
-# run = none
+run = none

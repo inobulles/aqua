@@ -8,7 +8,7 @@
 
 include!(concat!(env!("OUT_DIR"), "/vdev_bindings.rs"));
 
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_void};
 
 use ctor::ctor;
 use winit::event_loop::EventLoop;
@@ -124,11 +124,11 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 					fn_count: 1,
 					fns: FNS
 						.clone()
-						.map(|x| kos_vdev_fn_t {
+						.map(|x| kos_fn_t {
 							name: str_to_slice::<u8, 64>(x.name),
 							ret_type: kos_type_t_KOS_TYPE_VOID,
-							arg_count: 0,
-							args: std::ptr::null(),
+							param_count: 0,
+							params: std::ptr::null(),
 						})
 						.as_ptr(),
 				},
@@ -139,18 +139,15 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn call(_cookie: u64, _conn_id: u64, fn_id: u64, _args: *const kos_vdev_fn_arg_t) {
+unsafe extern "C" fn call(_cookie: u64, _conn_id: u64, fn_id: u64, _args: *const c_void) {
 	assert!(VDRIVER.notif_cb.is_some());
-
-	// TODO Check if valid connection ID (isn't this guaranteed? if so assert).
-	// TODO Check if valid function ID (can't this be done for us by the KOS?).
-
 	(FNS[fn_id as usize].cb)();
 }
 
 #[ctor]
 unsafe fn vdriver_init() {
 	// XXX No way to do this at compile time afaict.
+	// Unfortunately this forces VDRIVER to be mutable.
 
 	VDRIVER.spec = str_to_slice::<c_char, 64>(SPEC);
 	VDRIVER.human = str_to_slice::<c_char, 256>(VDRIVER_HUMAN);
