@@ -71,6 +71,8 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		conn->fns = notif->conn.fns;
 
 		break;
+	case KOS_NOTIF_CALL_FAIL:
+		break;
 	}
 
 	// Forward the notification to the client.
@@ -263,23 +265,39 @@ static void call(kos_cookie_t cookie, action_t* action) {
 	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
 }
 
+static void call_fail(kos_cookie_t cookie, action_t* action) {
+	(void) action;
+
+	kos_notif_t const notif = {
+		.kind = KOS_NOTIF_CALL_FAIL,
+		.cookie = cookie,
+	};
+
+	client_notif_cb(&notif, client_notif_data);
+}
+
 kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t const* args) {
 	// Generate cookie.
 
 	kos_cookie_t const cookie = cookies++;
 
+	action_t action = {
+		.cookie = cookie,
+		.cb = call_fail,
+	};
+
 	// Find connection.
 
 	if (conn_id >= conn_count) {
 		fprintf(stderr, "Connection ID %lu invalid.\n", conn_id);
-		// TODO Error here.
+		goto fail;
 	}
 
 	conn_t* const conn = &conns[conn_id];
 
 	if (!conn->alive) {
 		fprintf(stderr, "Connection ID %lu is not alive.\n", conn_id);
-		// TODO Error here.
+		goto fail;
 	}
 
 	// Get VDRIVER and validate function ID.
@@ -289,21 +307,21 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t c
 
 	if (fn_id >= conn->fn_count) {
 		fprintf(stderr, "Function ID %u is invalid.\n", fn_id);
-		// TODO Error here.
+		goto fail;
 	}
 
-	// Add action to queue.
+	// Success!
 
-	action_t const action = {
-		.cookie = cookie,
-		.cb = call,
-		.call = {
-					.vdriver = vdriver,
-					.conn_id = conn_id,
-					.fn_id = fn_id,
-					.args = args,
-					},
-	};
+	action.cb = call;
+
+	action.call.vdriver = vdriver;
+	action.call.conn_id = conn_id;
+	action.call.fn_id = fn_id;
+	action.call.args = args;
+
+fail:;
+
+	// Add action to queue.
 
 	PUSH_QUEUE(action);
 

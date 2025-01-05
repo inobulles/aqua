@@ -91,6 +91,7 @@ typedef enum {
 	KOS_NOTIF_DETACH,
 	KOS_NOTIF_CONN_FAIL,
 	KOS_NOTIF_CONN,
+	KOS_NOTIF_CALL_FAIL,
 } kos_notif_kind_t;
 
 typedef struct {
@@ -115,6 +116,9 @@ typedef struct {
 			uint32_t fn_count;
 			kos_vdev_fn_t const* fns;
 		} conn;
+
+		struct {
+		} call_fail;
 	};
 } kos_notif_t;
 

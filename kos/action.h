@@ -5,9 +5,13 @@
 
 #include "vdev.h"
 
-typedef struct action {
+typedef struct action action_t;
+
+typedef void (*action_cb_t)(kos_cookie_t cookie, struct action* action);
+
+struct action {
 	kos_cookie_t cookie;
-	void (*cb)(kos_cookie_t cookie, struct action* action);
+	action_cb_t cb;
 
 	union {
 		struct {
@@ -22,7 +26,7 @@ typedef struct action {
 			kos_vdev_fn_arg_t const* args;
 		} call;
 	};
-} action_t;
+};
 
 #define ACTION_QUEUE_SIZE 16
 
