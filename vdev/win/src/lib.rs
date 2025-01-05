@@ -79,19 +79,49 @@ unsafe extern "C" fn probe() {
 	);
 }
 
+struct Win {
+	_event_loop: EventLoop<()>,
+	// window: winit::window::Window,
+}
+
 #[derive(Clone)]
 struct Fn {
 	name: &'static str,
-	cb: fn(),
+	cb: fn(args: *const c_void) -> Option<kos_val_t>,
 }
 
-static FNS: [Fn; 1] = [Fn {
-	name: "create",
-	cb: || {
-		let _event_loop = EventLoop::new();
-		println!("Event loop created: TODO the rest of this");
+static FNS: [Fn; 4] = [
+	Fn {
+		name: "create",
+		cb: |_args| {
+			let win = Box::new(Win {
+				_event_loop: EventLoop::new().expect("failed to create event loop"),
+			});
+
+			Some(kos_val_t {
+				opaque_ptr: Box::into_raw(win) as *mut c_void as u64,
+			})
+		},
 	},
-}];
+	Fn {
+		name: "destroy",
+		cb: |args| {
+			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
+			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+
+			drop(win);
+			None
+		},
+	},
+	Fn {
+		name: "show",
+		cb: |_args| None,
+	},
+	Fn {
+		name: "loop",
+		cb: |_args| None,
+	},
+];
 
 #[allow(static_mut_refs)]
 unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
@@ -121,7 +151,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 				conn: kos_notif_t__bindgen_ty_1__bindgen_ty_4 {
 					conn_id,
-					fn_count: 1,
+					fn_count: FNS.len() as u32,
 					fns: FNS
 						.clone()
 						.map(|x| kos_fn_t {
@@ -139,9 +169,24 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn call(_cookie: u64, _conn_id: u64, fn_id: u64, _args: *const c_void) {
+unsafe extern "C" fn call(cookie: u64, _conn_id: u64, fn_id: u64, args: *const c_void) {
 	assert!(VDRIVER.notif_cb.is_some());
-	(FNS[fn_id as usize].cb)();
+	let ret = (FNS[fn_id as usize].cb)(args);
+
+	VDRIVER.notif_cb.unwrap()(
+		&kos_notif_t {
+			kind: kos_notif_kind_t_KOS_NOTIF_CALL_RET,
+			cookie,
+			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
+				call_ret: kos_notif_t__bindgen_ty_1__bindgen_ty_6 {
+					ret: ret.unwrap_or(kos_val_t {
+						u8_: 0 // Dummy value; this won't be read anyway as if we're returning this, we've already told the client the function returns void.
+					}),
+				},
+			},
+		},
+		VDRIVER.notif_data,
+	);
 }
 
 #[ctor]
