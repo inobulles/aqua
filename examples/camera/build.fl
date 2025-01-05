@@ -12,7 +12,7 @@ deps = [
 let src = ["client.c"]
 
 let obj = Cc([
-	"-std=c11",
+	"-std=c11", "-g",
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 

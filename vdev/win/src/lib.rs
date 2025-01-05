@@ -202,7 +202,7 @@ unsafe extern "C" fn call(cookie: u64, _conn_id: u64, fn_id: u64, args: *const c
 			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 				call_ret: kos_notif_t__bindgen_ty_1__bindgen_ty_6 {
 					ret: ret.unwrap_or(kos_val_t {
-						u8_: 0 // Dummy value; this won't be read anyway as if we're returning this, we've already told the client the function returns void.
+						u8_: 0, // Dummy value; this won't be read anyway as if we're returning this, we've already told the client the function returns void.
 					}),
 				},
 			},
