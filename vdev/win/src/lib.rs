@@ -11,9 +11,11 @@ include!(concat!(env!("OUT_DIR"), "/vdev_bindings.rs"));
 use std::os::raw::{c_char, c_void};
 
 use ctor::ctor;
+use raw_window_handle::{RawDisplayHandle, RawWindowHandle};
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use winit::window::{Window, WindowId};
 
 trait AllowedForStrToSlice: Copy + Default {
@@ -90,8 +92,58 @@ struct App {
 impl ApplicationHandler for App {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
 		let attrs = Window::default_attributes().with_title("Untitled");
-
 		self.window = Some(event_loop.create_window(attrs).unwrap());
+
+		let win_ref = self.window.as_ref().unwrap();
+
+		match win_ref.display_handle().unwrap().as_raw() {
+			RawDisplayHandle::Wayland(display) => {
+				println!("Wayland display: display={:?}", display.display);
+			}
+			RawDisplayHandle::Xcb(display) => {
+				println!(
+					"XCB display: connection={:?} screen={:?}",
+					display.connection, display.screen
+				);
+			}
+			RawDisplayHandle::Xlib(display) => {
+				println!(
+					"Xlib display: display={:?} screen={:?}",
+					display.display, display.screen
+				);
+			}
+			RawDisplayHandle::AppKit(_display) => {
+				// XXX AppKit doesn't have a display.
+				println!("AppKit display");
+			}
+			_ => {
+				// TODO Error message here.
+			}
+		}
+
+		match win_ref.window_handle().unwrap().as_raw() {
+			RawWindowHandle::Wayland(window) => {
+				println!("Wayland window: surface={:?}", window.surface);
+			}
+			RawWindowHandle::Xcb(window) => {
+				println!(
+					"XCB window: window={:?} visual_id={:?}",
+					window.window, window.visual_id
+				);
+			}
+			RawWindowHandle::Xlib(window) => {
+				println!(
+					"Xlib window: window={:?} visual_id={:?}",
+					window.window, window.visual_id
+				);
+			}
+			RawWindowHandle::AppKit(window) => {
+				println!("AppKit window: ns_view={:?}", window.ns_view);
+			}
+			_ => {
+				// TODO Error message here.
+			}
+		}
 	}
 
 	fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
@@ -174,6 +226,26 @@ static FNS: [Fn; 3] = [
 			None
 		},
 	},
+	/*
+	Fn {
+		name: "get_raw_window_handle",
+		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		params: &[Param {
+			name: "win",
+			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		}],
+		cb: |args| {
+			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
+			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+
+			let window = win.event_loop.create_window(Window::default_attributes()).unwrap();
+
+			Some(kos_val_t {
+				opaque_ptr: Box::into_raw(window) as *mut c_void as u64,
+			})
+		},
+	},
+	*/
 ];
 
 #[allow(static_mut_refs)]

@@ -11,4 +11,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 ctor = "0.2.9"
-winit = "0.30.8"
+raw-window-handle = "0.6.2"
+winit = { version = "0.30.8", features = ["rwh_06"] }
