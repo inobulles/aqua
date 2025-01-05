@@ -4,7 +4,10 @@
 #pragma once
 
 #include "vdev.h"
+
+#include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef struct {
 	bool alive;
@@ -12,7 +15,17 @@ typedef struct {
 	size_t fn_count;
 } conn_t;
 
-extern conn_t* conns;
-extern uint64_t conn_count;
+static conn_t* conns = NULL;
+static uint64_t conn_count = 0;
 
-uint64_t conn_new(vdriver_t* vdriver);
+static uint64_t conn_new(vdriver_t* vdriver) {
+	conns = realloc(conns, (conn_count + 1) * sizeof *conns);
+	assert(conns != NULL);
+
+	conn_t* const conn = &conns[conn_count];
+
+	conn->alive = true;
+	conn->vdriver = vdriver;
+
+	return conn_count++;
+}

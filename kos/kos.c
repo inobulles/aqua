@@ -3,6 +3,7 @@
 
 #include "kos.h"
 #include "../gv/gv.h"
+#include "action.h"
 #include "conn.h"
 #include "vdev.h"
 
@@ -183,46 +184,6 @@ void kos_req_vdev(char const* spec) {
 
 	free(gv_vdevs);
 }
-
-// TODO Probably should move this to a separate file.
-
-typedef struct action {
-	kos_cookie_t cookie;
-	void (*cb)(kos_cookie_t cookie, struct action* action);
-
-	union {
-		struct {
-			uint64_t host_id;
-			uint64_t vdev_id;
-		} conn;
-
-		struct {
-			vdriver_t* vdriver;
-			uint64_t conn_id;
-			uint32_t fn_id;
-			kos_vdev_fn_arg_t const* args;
-		} call;
-	};
-} action_t;
-
-#define ACTION_QUEUE_SIZE 16
-static action_t action_queue[ACTION_QUEUE_SIZE];
-static size_t action_queue_head = 0;
-static size_t action_queue_tail = 0;
-
-#define QUEUE_INDEX(i) (action_queue[(i) % ACTION_QUEUE_SIZE])
-
-#define PUSH_QUEUE(val)                       \
-	do {                                       \
-		QUEUE_INDEX(action_queue_tail) = (val); \
-		action_queue_tail++;                    \
-	} while (0)
-
-#define POP_QUEUE(res)                        \
-	do {                                       \
-		(res) = QUEUE_INDEX(action_queue_head); \
-		action_queue_head++;                    \
-	} while (0)
 
 static void conn(kos_cookie_t cookie, action_t* action) {
 	// Look for the vdriver this 'vdev_id' is associated with.
