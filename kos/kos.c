@@ -58,10 +58,6 @@ static kos_vdriver_t* vdrivers = NULL;
 
 static void notif_cb(kos_notif_t const* notif, void* data) {
 	switch (notif->kind) {
-	case KOS_NOTIF_ATTACH:
-	case KOS_NOTIF_DETACH:
-	case KOS_NOTIF_CONN_FAIL:
-		break;
 	case KOS_NOTIF_CONN:
 		assert(notif->conn.conn_id < conn_count);
 		conn_t* const conn = &conns[notif->conn.conn_id];
@@ -71,7 +67,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		conn->fns = notif->conn.fns;
 
 		break;
-	case KOS_NOTIF_CALL_FAIL:
+	default:
 		break;
 	}
 

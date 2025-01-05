@@ -68,6 +68,31 @@ static char const* const kos_type_str[] = {
 	"ptr",
 };
 
+typedef union {
+	bool b;
+	uint8_t u8;
+	uint16_t u16;
+	uint32_t u32;
+	uint64_t u64;
+	int8_t i8;
+	int16_t i16;
+	int32_t i32;
+	int64_t i64;
+
+	struct {
+		uint32_t len;
+		uint8_t const* data;
+	} str;
+
+	struct {
+		uint32_t len;
+		uint8_t const* data;
+	} buf;
+
+	uint64_t opaque_ptr;
+	uint64_t ptr;
+} kos_val_t;
+
 typedef struct {
 	kos_type_t type;
 	uint8_t name[64];
@@ -109,6 +134,7 @@ typedef enum {
 	KOS_NOTIF_CONN_FAIL,
 	KOS_NOTIF_CONN,
 	KOS_NOTIF_CALL_FAIL,
+	KOS_NOTIF_CALL_RET,
 } kos_notif_kind_t;
 
 typedef struct {
@@ -136,6 +162,10 @@ typedef struct {
 
 		struct {
 		} call_fail;
+
+		struct {
+			kos_val_t ret;
+		} call_ret;
 	};
 } kos_notif_t;
 

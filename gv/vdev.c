@@ -49,10 +49,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		printf("Attached VDEV: %s\n", notif->attach.vdev.human);
 
 		break;
-	case KOS_NOTIF_DETACH:
-	case KOS_NOTIF_CONN_FAIL:
-	case KOS_NOTIF_CONN:
-	case KOS_NOTIF_CALL_FAIL:
+	default:
 		break;
 	}
 }

@@ -80,6 +80,11 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 		fprintf(stderr, "Failed to call function on window VDEV\n");
 
 		break;
+	case KOS_NOTIF_CALL_RET:
+		assert(notif->cookie == state->last_cookie);
+		state->win_opaque_ptr = notif->call_ret.ret.opaque_ptr;
+
+		break;
 	}
 }
 
