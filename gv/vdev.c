@@ -50,10 +50,9 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 
 		break;
 	case KOS_NOTIF_DETACH:
-		break;
 	case KOS_NOTIF_CONN_FAIL:
-		break;
 	case KOS_NOTIF_CONN:
+	case KOS_NOTIF_CALL_FAIL:
 		break;
 	}
 }
