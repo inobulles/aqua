@@ -11,7 +11,10 @@ include!(concat!(env!("OUT_DIR"), "/vdev_bindings.rs"));
 use std::os::raw::{c_char, c_void};
 
 use ctor::ctor;
-use winit::event_loop::EventLoop;
+use winit::application::ApplicationHandler;
+use winit::event::WindowEvent;
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::window::{Window, WindowId};
 
 trait AllowedForStrToSlice: Copy + Default {
 	fn from_u8(x: u8) -> Self;
@@ -79,9 +82,34 @@ unsafe extern "C" fn probe() {
 	);
 }
 
+#[derive(Default)]
+struct App {
+	window: Option<Window>,
+}
+
+impl ApplicationHandler for App {
+	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+		let attrs = Window::default_attributes().with_title("Untitled");
+
+		self.window = Some(event_loop.create_window(attrs).unwrap());
+	}
+
+	fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
+		match event {
+			WindowEvent::CloseRequested => {
+				event_loop.exit();
+			}
+			WindowEvent::RedrawRequested => {
+				// TODO Callback to client.
+				self.window.as_ref().unwrap().request_redraw();
+			}
+			_ => (),
+		}
+	}
+}
+
 struct Win {
-	_event_loop: EventLoop<()>,
-	// window: winit::window::Window,
+	event_loop: EventLoop<()>,
 }
 
 struct Param {
@@ -92,18 +120,22 @@ struct Param {
 #[derive(Clone)]
 struct Fn {
 	name: &'static str,
+	ret_type: kos_type_t,
 	params: &'static [Param],
 	cb: fn(args: *const c_void) -> Option<kos_val_t>,
 }
 
-static FNS: [Fn; 4] = [
+static FNS: [Fn; 3] = [
 	Fn {
 		name: "create",
+		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		params: &[],
 		cb: |_args| {
 			let win = Box::new(Win {
-				_event_loop: EventLoop::new().expect("failed to create event loop"),
+				event_loop: EventLoop::new().expect("failed to create event loop"),
 			});
+
+			win.event_loop.set_control_flow(ControlFlow::Poll);
 
 			Some(kos_val_t {
 				opaque_ptr: Box::into_raw(win) as *mut c_void as u64,
@@ -112,6 +144,7 @@ static FNS: [Fn; 4] = [
 	},
 	Fn {
 		name: "destroy",
+		ret_type: kos_type_t_KOS_TYPE_VOID,
 		params: &[Param {
 			name: "win",
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
@@ -125,14 +158,21 @@ static FNS: [Fn; 4] = [
 		},
 	},
 	Fn {
-		name: "show",
-		params: &[],
-		cb: |_args| None,
-	},
-	Fn {
 		name: "loop",
-		params: &[],
-		cb: |_args| None,
+		ret_type: kos_type_t_KOS_TYPE_VOID,
+		params: &[Param {
+			name: "win",
+			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		}],
+		cb: |args| {
+			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
+			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+
+			let mut app = App::default();
+			let _ = win.event_loop.run_app(&mut app);
+
+			None
+		},
 	},
 ];
 
@@ -169,7 +209,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 						.clone()
 						.map(|x| kos_fn_t {
 							name: str_to_slice::<u8, 64>(x.name),
-							ret_type: kos_type_t_KOS_TYPE_VOID,
+							ret_type: x.ret_type,
 							param_count: x.params.len() as u32,
 							params: Box::into_raw(
 								x.params
