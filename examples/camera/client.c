@@ -15,6 +15,8 @@ typedef struct {
 
 	uint64_t win_conn_id;
 	uint64_t win_create;
+	uint64_t win_destroy;
+	uint64_t win_opaque_ptr;
 
 	// Since we're going to be flushing after each operation, we only need one cookie at a time.
 
@@ -66,6 +68,10 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 
 			if (strcmp((char*) fn->name, "create") == 0) {
 				state->win_create = i;
+			}
+
+			else if (strcmp((char*) fn->name, "destroy") == 0) {
+				state->win_destroy = i;
 			}
 
 			for (size_t j = 0; j < fn->param_count; j++) {
@@ -133,6 +139,18 @@ int main(void) {
 	// Create the window.
 
 	state.last_cookie = kos_vdev_call(state.win_conn_id, state.win_create, NULL);
+	kos_flush(true);
+
+	// Destroy the window.
+
+	kos_val_t val = {
+		.opaque_ptr = state.win_opaque_ptr,
+	};
+
+	uint8_t args_buf[sizeof val.opaque_ptr];
+	memcpy(args_buf, &val, sizeof val.opaque_ptr);
+
+	state.last_cookie = kos_vdev_call(state.win_conn_id, state.win_destroy, args_buf);
 	kos_flush(true);
 
 	// Clean up.
