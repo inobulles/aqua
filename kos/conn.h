@@ -14,7 +14,7 @@ typedef struct {
 	vdriver_t* vdriver;
 
 	size_t fn_count;
-	kos_vdev_fn_t const* fns;
+	kos_fn_t const* fns;
 } conn_t;
 
 static conn_t* conns = NULL;

@@ -61,16 +61,16 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 		state->win_conn_id = notif->conn.conn_id;
 
 		for (size_t i = 0; i < notif->conn.fn_count; i++) {
-			kos_vdev_fn_t const* const fn = &notif->conn.fns[i];
+			kos_fn_t const* const fn = &notif->conn.fns[i];
 			printf("Has function %zu:\t%s\n", i, fn->name);
 
 			if (strcmp((char*) fn->name, "create") == 0) {
 				state->win_create = i;
 			}
 
-			for (size_t j = 0; j < fn->arg_count; j++) {
-				kos_vdev_fn_arg_t const* const arg = &fn->args[j];
-				printf("\tArg %zu:\t%d\t%s\n", j, arg->type, arg->name);
+			for (size_t j = 0; j < fn->param_count; j++) {
+				kos_param_t const* const param = &fn->params[j];
+				printf("\tParam %zu:\t%s:\t%s\n", j, param->name, kos_type_str[param->type]);
 			}
 		}
 

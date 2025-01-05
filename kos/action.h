@@ -23,7 +23,7 @@ struct action {
 			vdriver_t* vdriver;
 			uint64_t conn_id;
 			uint32_t fn_id;
-			kos_vdev_fn_arg_t const* args;
+			void const* args;
 		} call;
 	};
 };

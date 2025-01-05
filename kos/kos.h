@@ -51,18 +51,35 @@ typedef enum : uint8_t {
 	KOS_TYPE_PTR,
 } kos_type_t;
 
+static char const* const kos_type_str[] = {
+	"void",
+	"bool",
+	"u8",
+	"u16",
+	"u32",
+	"u64",
+	"i8",
+	"i16",
+	"i32",
+	"i64",
+	"str",
+	"buf",
+	"opaque_ptr",
+	"ptr",
+};
+
 typedef struct {
 	kos_type_t type;
 	uint8_t name[64];
-} kos_vdev_fn_arg_t;
+} kos_param_t;
 
 typedef struct {
 	uint8_t name[64];
 	kos_type_t ret_type;
 
-	uint32_t arg_count;
-	kos_vdev_fn_arg_t const* args;
-} kos_vdev_fn_t;
+	uint32_t param_count;
+	kos_param_t const* params;
+} kos_fn_t;
 
 // Subscribe to notifications about the creation and destruction of VDEVs by registering a callback.
 // Note that `kos_req_vdev` needs to be called after this one for the client to let the KOS know which VDEV specs it requires.
@@ -114,7 +131,7 @@ typedef struct {
 		struct {
 			uint64_t conn_id;
 			uint32_t fn_count;
-			kos_vdev_fn_t const* fns;
+			kos_fn_t const* fns;
 		} conn;
 
 		struct {
@@ -139,4 +156,4 @@ void kos_vdev_disconn(uint64_t conn_id);
 
 // Call a function on a VDEV.
 
-kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t const* args);
+kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args);

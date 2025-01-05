@@ -8,7 +8,7 @@ import bob
 let src = Fs.list(".").where(|path| path.endswith(".c"))
 
 let obj = Cc([
-	"-std=c11",
+	"-std=c11", "-g",
 	"-Wall", "-Wextra", "-Werror",
 	"-fPIC",
 ]).compile(src)

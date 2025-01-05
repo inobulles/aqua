@@ -276,7 +276,7 @@ static void call_fail(kos_cookie_t cookie, action_t* action) {
 	client_notif_cb(&notif, client_notif_data);
 }
 
-kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, kos_vdev_fn_arg_t const* args) {
+kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 	// Generate cookie.
 
 	kos_cookie_t const cookie = cookies++;
