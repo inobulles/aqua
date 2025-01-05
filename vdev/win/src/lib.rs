@@ -84,15 +84,22 @@ struct Win {
 	// window: winit::window::Window,
 }
 
+struct Param {
+	name: &'static str,
+	kind: kos_type_t,
+}
+
 #[derive(Clone)]
 struct Fn {
 	name: &'static str,
+	params: &'static [Param],
 	cb: fn(args: *const c_void) -> Option<kos_val_t>,
 }
 
 static FNS: [Fn; 4] = [
 	Fn {
 		name: "create",
+		params: &[],
 		cb: |_args| {
 			let win = Box::new(Win {
 				_event_loop: EventLoop::new().expect("failed to create event loop"),
@@ -105,6 +112,10 @@ static FNS: [Fn; 4] = [
 	},
 	Fn {
 		name: "destroy",
+		params: &[Param {
+			name: "win",
+			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		}],
 		cb: |args| {
 			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
 			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
@@ -115,10 +126,12 @@ static FNS: [Fn; 4] = [
 	},
 	Fn {
 		name: "show",
+		params: &[],
 		cb: |_args| None,
 	},
 	Fn {
 		name: "loop",
+		params: &[],
 		cb: |_args| None,
 	},
 ];
@@ -157,8 +170,17 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: u64, conn_id: u64) {
 						.map(|x| kos_fn_t {
 							name: str_to_slice::<u8, 64>(x.name),
 							ret_type: kos_type_t_KOS_TYPE_VOID,
-							param_count: 0,
-							params: std::ptr::null(),
+							param_count: x.params.len() as u32,
+							params: Box::into_raw(
+								x.params
+									.iter()
+									.map(|param| kos_param_t {
+										type_: param.kind,
+										name: str_to_slice::<u8, 64>(param.name),
+									})
+									.collect::<Vec<_>>()
+									.into_boxed_slice(),
+							) as *const kos_param_t,
 						})
 						.as_ptr(),
 				},
