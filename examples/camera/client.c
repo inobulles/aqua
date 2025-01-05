@@ -13,9 +13,12 @@ typedef struct {
 	uint64_t win_hid;
 	uint64_t win_vid;
 
-	uint64_t win_conn_cookie;
 	uint64_t win_conn_id;
 	uint64_t win_create;
+
+	// Since we're going to be flushing after each operation, we only need one cookie at a time.
+
+	kos_cookie_t last_cookie;
 } state_t;
 
 static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
@@ -47,38 +50,34 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 		printf("VDEV detached: %lu:%lu\n", notif->detach.host_id, notif->detach.vdev_id);
 		break;
 	case KOS_NOTIF_CONN_FAIL:
-		if (notif->cookie == state->win_conn_cookie) {
-			fprintf(stderr, "Connection to window VDEV failed\n");
-		}
-
-		else {
-			assert(false);
-		}
+		assert(notif->cookie == state->last_cookie);
+		fprintf(stderr, "Connection to window VDEV failed\n");
 
 		break;
 	case KOS_NOTIF_CONN:
-		if (notif->cookie == state->win_conn_cookie) {
-			printf("Connection established with window VDEV: %lu\n", notif->conn.conn_id);
-			state->win_conn_id = notif->conn.conn_id;
+		assert(notif->cookie == state->last_cookie);
 
-			for (size_t i = 0; i < notif->conn.fn_count; i++) {
-				kos_vdev_fn_t const* const fn = &notif->conn.fns[i];
-				printf("Has function %zu:\t%s\n", i, fn->name);
+		printf("Connection established with window VDEV: %lu\n", notif->conn.conn_id);
+		state->win_conn_id = notif->conn.conn_id;
 
-				if (strcmp((char*) fn->name, "create") == 0) {
-					state->win_create = i;
-				}
+		for (size_t i = 0; i < notif->conn.fn_count; i++) {
+			kos_vdev_fn_t const* const fn = &notif->conn.fns[i];
+			printf("Has function %zu:\t%s\n", i, fn->name);
 
-				for (size_t j = 0; j < fn->arg_count; j++) {
-					kos_vdev_fn_arg_t const* const arg = &fn->args[j];
-					printf("\tArg %zu:\t%d\t%s\n", j, arg->type, arg->name);
-				}
+			if (strcmp((char*) fn->name, "create") == 0) {
+				state->win_create = i;
+			}
+
+			for (size_t j = 0; j < fn->arg_count; j++) {
+				kos_vdev_fn_arg_t const* const arg = &fn->args[j];
+				printf("\tArg %zu:\t%d\t%s\n", j, arg->type, arg->name);
 			}
 		}
 
-		else {
-			assert(false);
-		}
+		break;
+	case KOS_NOTIF_CALL_FAIL:
+		assert(notif->cookie == state->last_cookie);
+		fprintf(stderr, "Failed to call function on window VDEV\n");
 
 		break;
 	}
@@ -116,7 +115,7 @@ int main(void) {
 	// Establish a connection with the window VDEV.
 
 	state.win_conn_id = -1u;
-	state.win_conn_cookie = kos_vdev_conn(state.win_hid, state.win_vid);
+	state.last_cookie = kos_vdev_conn(state.win_hid, state.win_vid);
 	kos_flush(true);
 
 	// TODO Somehow wait for connection to be established.
@@ -127,9 +126,8 @@ int main(void) {
 	}
 
 	// Create the window.
-	// TODO Cookie this and process response.
 
-	kos_vdev_call(state.win_conn_id, state.win_create, NULL);
+	state.last_cookie = kos_vdev_call(state.win_conn_id, state.win_create, NULL);
 	kos_flush(true);
 
 	// Clean up.
