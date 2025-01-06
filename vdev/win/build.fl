@@ -2,22 +2,12 @@
 # v. 1.0. Copyright (c) 2024 Aymeric Wibo
 
 import bob
+import bob.cargo
 
-# TODO Put this all in a 'src' directory.
-
-let src = ["main.c"]
-
-let obj = Cc([
-	"-std=c11",
-	"-Wall", "-Wextra", "-Werror",
-]).compile(src)
-
-let vdriver = Linker([
-	"-shared", 
-]).link(obj)
+let target = Cargo.build()
 
 install = {
-	vdriver: "share/aqua/vdriver/aquabsd.black.win.vdriver",
+	target + "libwin.so": "share/aqua/vdriver/aquabsd.black.win.vdriver",
 }
 
 run = none
