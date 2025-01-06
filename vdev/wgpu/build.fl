@@ -4,6 +4,7 @@
 import bob
 
 deps = [
+	# TODO It might be interesting to somehow get the webgpu.h header from here instead of keeping it up to date manually.
 	Dep.git("https://github.com/gfx-rs/wgpu-native", "v22.1.0.5"),
 ]
 
