@@ -4,9 +4,7 @@
 import bob
 
 deps = [
-	Dep.local("gv"),
-	Dep.local("kos"),
-	Dep.local("vdev"),
+	Dep.local("win"),
 ]
 
 run = none
