@@ -20,7 +20,7 @@ let vdriver = Linker([
 ]).link(obj)
 
 install = {
-	vdriver: "share/aqua/vdriver/aquabsd.black.cam.vdriver",
+	vdriver: "lib/vdriver/aquabsd.black.cam.vdriver",
 }
 
 run = none
