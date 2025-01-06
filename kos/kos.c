@@ -16,7 +16,8 @@
 #include <dlfcn.h>
 
 #define VDRIVER_PATH_ENVVAR "VDRIVER_PATH"
-#define DEFAULT_VDRIVER_PATH "/usr/local/share/aqua/vdriver/"
+#define DEFAULT_PREFIX "/usr/local"
+#define DEFAULT_VDRIVER_PATH "lib/vdriver"
 
 static bool has_init = false;
 static uint64_t local_host_id;
@@ -140,10 +141,19 @@ void kos_req_vdev(char const* spec) {
 
 	// Try to find the VDEV locally.
 
+	char* __attribute__((cleanup(strfree))) vdriver_path_tmp = NULL;
 	char* vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
 
 	if (vdriver_path == NULL) {
-		vdriver_path = DEFAULT_VDRIVER_PATH;
+		char* prefix = getenv("PREFIX");
+
+		if (prefix == NULL) {
+			prefix = "/usr/local";
+		}
+
+		asprintf(&vdriver_path_tmp, "%s/%s:%s/%s", prefix, DEFAULT_VDRIVER_PATH, DEFAULT_PREFIX, DEFAULT_VDRIVER_PATH);
+		assert(vdriver_path_tmp != NULL);
+		vdriver_path = vdriver_path_tmp;
 	}
 
 	char* const path_copy_orig = strdup(vdriver_path);
