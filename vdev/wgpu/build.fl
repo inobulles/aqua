@@ -3,16 +3,18 @@
 
 import bob
 
-let src = ["main.c", "apple.m"]
+deps = [
+	Dep.git("https://github.com/gfx-rs/wgpu-native", "v22.1.0.5"),
+]
+
+let src = ["main.c"]
 
 let obj = Cc([
 	"-std=c11",
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
-let vdriver = Linker([
-	"-shared", 
-]).link(obj)
+let vdriver = Linker(["-shared", "-lwgpu_native"]).link(obj)
 
 install = {
 	vdriver: "share/aqua/vdriver/aquabsd.black.wgpu.vdriver",
