@@ -19,6 +19,8 @@ static void unlock(FILE* f) {
 }
 
 ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out) {
+	*vdevs_out = NULL;
+
 	// Make sure gvd is running.
 
 	FILE* const lock_file = fopen(GV_LOCK_PATH, "r");
