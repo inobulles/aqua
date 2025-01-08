@@ -9,4 +9,4 @@ deps = [
 	Dep.local("vdev"),
 ]
 
-run = none
+run = [] # Allow running binaries (e.g. gvd) as such: 'bob run gvd'.
