@@ -8,6 +8,7 @@
 #include "vdev.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -230,7 +231,7 @@ static void conn(kos_cookie_t cookie, action_t* action) {
 
 	// If we couldn't find anything, emit a connection failure.
 
-	fprintf(stderr, "Could not find a VDRIVER associated with VDEV ID %lu\n", action->conn.vdev_id);
+	fprintf(stderr, "Could not find a VDRIVER associated with VDEV ID %" PRIu64 "\n", action->conn.vdev_id);
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CONN_FAIL,
@@ -295,14 +296,14 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 	// Find connection.
 
 	if (conn_id >= conn_count) {
-		fprintf(stderr, "Connection ID %lu invalid.\n", conn_id);
+		fprintf(stderr, "Connection ID %" PRIu64 " invalid.\n", conn_id);
 		goto fail;
 	}
 
 	conn_t* const conn = &conns[conn_id];
 
 	if (!conn->alive) {
-		fprintf(stderr, "Connection ID %lu is not alive.\n", conn_id);
+		fprintf(stderr, "Connection ID %" PRIu64 " is not alive.\n", conn_id);
 		goto fail;
 	}
 
@@ -356,7 +357,7 @@ void kos_flush(bool sync) {
 
 void kos_vdev_disconn(uint64_t conn_id) {
 	if (conn_id >= conn_count) {
-		fprintf(stderr, "Connection ID %lu invalid.\n", conn_id);
+		fprintf(stderr, "Connection ID %" PRIu64 " invalid.\n", conn_id);
 		return;
 	}
 
