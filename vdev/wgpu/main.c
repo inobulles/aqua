@@ -4,6 +4,7 @@
 #include "../../kos/vdev.h"
 
 #include <assert.h>
+#include <stdlib.h>
 
 #define SPEC "aquabsd.black.wgpu"
 #define VERS 0
