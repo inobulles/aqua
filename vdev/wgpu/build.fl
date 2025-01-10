@@ -1,11 +1,11 @@
 # This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+# v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
 import bob
 
 deps = [
-	# TODO It might be interesting to somehow get the webgpu.h header from here instead of keeping it up to date manually.
-	Dep.git("https://github.com/gfx-rs/wgpu-native", "v22.1.0.5"),
+	# TODO Use branch with our extensions here once the Meson situation is sorted out.
+	Dep.git("https://github.com/obiwac/wgpu-native", "meson"),
 ]
 
 let src = ["main.c"]

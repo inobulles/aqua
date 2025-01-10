@@ -21,4 +21,15 @@ This will generate a new `main.c` device source file from the `webgpu.h` header,
 
 ## Extensions
 
-TODO Talk about `WGPUEGLGetProcAddress` and `wgpuInstanceDeviceFromEGL` here.
+To facilitate the use of .wgpu in the .wm VDEV, a couple AQUA-specific unofficial extensions have been added on top of the WebGPU API.
+
+### `wgpuInstanceDeviceFromEGL`
+
+This function allows a device to be created from an instance, forcing the use of the EGL backend.
+This is important as .wm creates the EGL context itself and needs to be able to use the context it created.
+
+### `wgpuDeviceTextureFromRenderbuffer`
+
+This takes in an OpenGL RBO (TODO: should this function be called `wgpuDeviceTextureFromOGLRenderbuffer` instead?) and creates a texture from that that can be used to draw on by the client.
+A WebGPU texture isn't really a texture in the OpenGL sense in that it can either wrap around a native texture or a native renderbuffer.
+In that sense it's more like the equivalent to an FBO.
