@@ -25,10 +25,10 @@ WGPU_BLACKLIST = (
 	"wgpuSurfaceSetLabel",
 )
 
-with open("ffi/webgpu.h") as f:
+with open(".bob/prefix/include/webgpu-headers/webgpu.h") as f:
 	*lines, = map(str.rstrip, f.readlines())
 
-with open("ffi/wgpu.h") as f:
+with open(".bob/prefix/include/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
 
 count = CMD_WGPU_BASE

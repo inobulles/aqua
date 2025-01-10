@@ -5,7 +5,7 @@ This implementation of the `.wgpu` device specifically uses the [`wgpu`](https:/
 
 The C API is defined by the [`webgpu.h`](https://github.com/webgpu-native/webgpu-headers) header (common between [Dawn](https://dawn.googlesource.com/dawn/) and wgpu projects), from which the device is generated.
 Unofficial extensions to this API can be found `wgpu.h`.
-These must be kept up to date in the `ffi` directory.
+This comes with the `wgpu-native` dependency and is installed in the include directory, so there's no need to download it separately.
 
 The C library code for [aqua-c](https://github.com/inobulles/aqua-c) is outputted to `c-lib`.
 
@@ -17,7 +17,7 @@ Run the `gen.py` script:
 python gen.py
 ```
 
-This will generate a new `main.c` device source file from the `webgpu.h` header.
+This will generate a new `main.c` device source file from the `webgpu.h` header, provided it is placed in the default location for the Bob temporary prefix.
 
 ## Extensions
 
