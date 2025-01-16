@@ -146,7 +146,7 @@ struct Fn {
 	cb: fn(args: *const kos_val_t) -> Option<kos_val_t>,
 }
 
-static FNS: [Fn; 3] = [
+static FNS: [Fn; 5] = [
 	Fn {
 		name: "create",
 		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
@@ -185,6 +185,38 @@ static FNS: [Fn; 3] = [
 			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
 
 			drop(win);
+			None
+		},
+	},
+	Fn {
+		name: "register_resume",
+		ret_type: kos_type_t_KOS_TYPE_VOID,
+		params: &[Param {
+			name: "win",
+			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		}], // TODO Also a parameter for the callback itself.
+		cb: |args| {
+			let opaque_ptr = unsafe { (*args).opaque_ptr };
+			let mut _win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+
+			// TODO Register the callback.
+
+			None
+		},
+	},
+	Fn {
+		name: "register_redraw",
+		ret_type: kos_type_t_KOS_TYPE_VOID,
+		params: &[Param {
+			name: "win",
+			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		}], // TODO Also a parameter for the callback itself.
+		cb: |args| {
+			let opaque_ptr = unsafe { (*args).opaque_ptr };
+			let mut _win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+
+			// TODO Register the callback.
+
 			None
 		},
 	},
