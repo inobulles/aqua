@@ -72,23 +72,22 @@ impl ApplicationHandler for App {
 
 		match win_ref.display_handle().unwrap().as_raw() {
 			RawDisplayHandle::Wayland(display) => {
-				println!("Wayland display: display={:?}", display.display);
+				self.win.kind = aqua_win_kind_t_AQUA_WIN_KIND_WAYLAND;
+				self.win.detail.wayland.display = display.display.as_ptr();
 			}
 			RawDisplayHandle::Xcb(display) => {
-				println!(
-					"XCB display: connection={:?} screen={:?}",
-					display.connection, display.screen
-				);
+				self.win.kind = aqua_win_kind_t_AQUA_WIN_KIND_XCB;
+				self.win.detail.xcb.connection = display.connection.unwrap().as_ptr();
+				self.win.detail.xcb.screen = display.screen;
 			}
 			RawDisplayHandle::Xlib(display) => {
-				println!(
-					"Xlib display: display={:?} screen={:?}",
-					display.display, display.screen
-				);
+				self.win.kind = aqua_win_kind_t_AQUA_WIN_KIND_XLIB;
+
+				self.win.detail.xlib.display = display.display.unwrap().as_ptr();
+				self.win.detail.xlib.screen = display.screen;
 			}
 			RawDisplayHandle::AppKit(_display) => {
 				// XXX AppKit doesn't have a display.
-				println!("AppKit display");
 			}
 			_ => {
 				// TODO Error message here.
@@ -97,22 +96,22 @@ impl ApplicationHandler for App {
 
 		match win_ref.window_handle().unwrap().as_raw() {
 			RawWindowHandle::Wayland(window) => {
-				println!("Wayland window: surface={:?}", window.surface);
+				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_WAYLAND);
+				self.win.detail.wayland.surface = window.surface.as_ptr();
 			}
 			RawWindowHandle::Xcb(window) => {
-				println!(
-					"XCB window: window={:?} visual_id={:?}",
-					window.window, window.visual_id
-				);
+				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_XCB);
+				self.win.detail.xcb.window = window.window.into();
+				self.win.detail.xcb.visual_id = window.visual_id.unwrap().into();
 			}
 			RawWindowHandle::Xlib(window) => {
-				println!(
-					"Xlib window: window={:?} visual_id={:?}",
-					window.window, window.visual_id
-				);
+				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_XLIB);
+				self.win.detail.xlib.window = window.window;
+				self.win.detail.xlib.visual_id = window.visual_id;
 			}
 			RawWindowHandle::AppKit(window) => {
-				println!("AppKit window: ns_view={:?}", window.ns_view);
+				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_APPKIT);
+				self.win.detail.appkit.ns_view = window.ns_view.as_ptr();
 			}
 			_ => {
 				// TODO Error message here.
