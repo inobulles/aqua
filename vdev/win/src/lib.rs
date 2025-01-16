@@ -51,9 +51,16 @@ fn str_to_slice<T: AllowedForStrToSlice, const N: usize>(input: &str) -> [T; N] 
 	array_tmp.map(T::from_u8)
 }
 
-#[derive(Default)]
+#[repr(C)]
 struct App {
+	win: aqua_win_t,
 	window: Option<Window>,
+}
+
+#[repr(C)]
+struct Win {
+	app: App,
+	event_loop: EventLoop<()>,
 }
 
 impl ApplicationHandler for App {
@@ -127,10 +134,6 @@ impl ApplicationHandler for App {
 	}
 }
 
-struct Win {
-	event_loop: EventLoop<()>,
-}
-
 struct Param {
 	name: &'static str,
 	kind: kos_type_t,
@@ -151,6 +154,16 @@ static FNS: [Fn; 3] = [
 		params: &[],
 		cb: |_args| {
 			let win = Box::new(Win {
+				app: App {
+					win: aqua_win_t {
+						kind: aqua_win_kind_t_AQUA_WIN_KIND_NONE,
+						detail: aqua_win_t__bindgen_ty_1 {
+							none: aqua_win_t__bindgen_ty_1__bindgen_ty_1 {},
+						},
+						priv_: __IncompleteArrayField::new(),
+					},
+					window: None,
+				},
 				event_loop: EventLoop::new().expect("failed to create event loop"),
 			});
 
@@ -184,35 +197,13 @@ static FNS: [Fn; 3] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
-			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
-
-			let mut app = App::default();
-			let _ = win.event_loop.run_app(&mut app);
+			let opaque_ptr = unsafe { (*args).opaque_ptr };
+			let mut win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let _ = win.event_loop.run_app(&mut win.app);
 
 			None
 		},
 	},
-	/*
-	Fn {
-		name: "get_raw_window_handle",
-		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
-		params: &[Param {
-			name: "win",
-			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
-		}],
-		cb: |args| {
-			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
-			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
-
-			let window = win.event_loop.create_window(Window::default_attributes()).unwrap();
-
-			Some(kos_val_t {
-				opaque_ptr: Box::into_raw(window) as *mut c_void as u64,
-			})
-		},
-	},
-	*/
 ];
 
 #[allow(static_mut_refs)]
