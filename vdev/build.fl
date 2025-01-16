@@ -5,6 +5,7 @@ import bob
 
 deps = [
 	Dep.local("win"),
+	Dep.local("wgpu"),
 ]
 
 run = none
