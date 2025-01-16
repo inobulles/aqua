@@ -6,7 +6,7 @@
 #![allow(non_snake_case)]
 #![allow(improper_ctypes)]
 
-include!(concat!(env!("OUT_DIR"), "/vdev_bindings.rs"));
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 use std::os::raw::{c_char, c_void};
 
