@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 year = datetime.now().year
 
+BASE_FN_ID = 1
+
 PACKED = "__attribute__((packed))"
 
 # WebGPU commands in the spec which aren't yet implemented by wgpu-native.
@@ -57,7 +59,7 @@ def kos_type_to_union(t: str):
 enums = set()
 fns = ""
 call_handlers = ""
-fn_id = 0
+fn_id = BASE_FN_ID
 cmds = "" # REMME
 impls = ""
 
