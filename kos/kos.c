@@ -252,9 +252,9 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 		.cookie = cookie,
 		.cb = conn,
 		.conn = {
-					.host_id = host_id,
-					.vdev_id = vdev_id,
-					},
+			.host_id = host_id,
+			.vdev_id = vdev_id,
+		},
 	};
 
 	PUSH_QUEUE(action);

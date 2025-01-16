@@ -10,6 +10,8 @@
 
 _Static_assert(sizeof(void*) <= sizeof(uint64_t), "pointers on your platform are too big");
 _Static_assert(sizeof(char) == sizeof(uint8_t), "char is not 8 bits");
+_Static_assert(sizeof(float) == 4, "float is not 32 bits");
+_Static_assert(sizeof(double) == 8, "double is not 32 bits");
 
 typedef uint64_t kos_cookie_t;
 
@@ -45,7 +47,8 @@ typedef enum : uint8_t {
 	KOS_TYPE_I16,
 	KOS_TYPE_I32,
 	KOS_TYPE_I64,
-	KOS_TYPE_STR,
+	KOS_TYPE_F32,
+	KOS_TYPE_F64,
 	KOS_TYPE_BUF,
 	KOS_TYPE_OPAQUE_PTR,
 	KOS_TYPE_PTR,
@@ -62,6 +65,8 @@ static char const* const kos_type_str[] = {
 	"i16",
 	"i32",
 	"i64",
+	"f32",
+	"f64",
 	"str",
 	"buf",
 	"opaque_ptr",
@@ -78,19 +83,16 @@ typedef union {
 	int16_t i16;
 	int32_t i32;
 	int64_t i64;
+	float f32;
+	double f64;
+
+	void* opaque_ptr;
+	void* ptr;
 
 	struct {
-		uint32_t len;
-		uint8_t const* data;
-	} str;
-
-	struct {
-		uint32_t len;
-		uint8_t const* data;
+		uint32_t size;
+		void* ptr;
 	} buf;
-
-	uint64_t opaque_ptr;
-	uint64_t ptr;
 } kos_val_t;
 
 typedef struct {
