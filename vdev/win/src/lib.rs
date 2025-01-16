@@ -141,7 +141,7 @@ struct Fn {
 	name: &'static str,
 	ret_type: kos_type_t,
 	params: &'static [Param],
-	cb: fn(args: *const c_void) -> Option<kos_val_t>,
+	cb: fn(args: *const kos_val_t) -> Option<kos_val_t>,
 }
 
 static FNS: [Fn; 3] = [
@@ -157,7 +157,7 @@ static FNS: [Fn; 3] = [
 			win.event_loop.set_control_flow(ControlFlow::Poll);
 
 			Some(kos_val_t {
-				opaque_ptr: Box::into_raw(win) as *mut c_void as u64,
+				opaque_ptr: Box::into_raw(win) as *mut c_void,
 			})
 		},
 	},
@@ -169,7 +169,7 @@ static FNS: [Fn; 3] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let opaque_ptr = unsafe { (*(args as *const kos_val_t)).opaque_ptr };
+			let opaque_ptr = unsafe { (*args).opaque_ptr };
 			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
 
 			drop(win);
@@ -303,7 +303,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn call(cookie: u64, _conn_id: u64, fn_id: u64, args: *const c_void) {
+unsafe extern "C" fn call(cookie: u64, _conn_id: u64, fn_id: u64, args: *const kos_val_t) {
 	assert!(VDRIVER.notif_cb.is_some());
 	let ret = (FNS[fn_id as usize].cb)(args);
 
