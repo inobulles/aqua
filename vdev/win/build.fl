@@ -7,7 +7,8 @@ import bob.cargo
 let target = Cargo.build()
 
 install = {
-	target + "libwin.so": "lib/vdriver/aquabsd.black.win.vdriver",
+	# TODO libwin.so on non-macOS. Or maybe just have a hack in Bob to try to copy .dylib if .so not found?
+	target + "libwin.dylib": "lib/vdriver/aquabsd.black.win.vdriver",
 }
 
 run = none
