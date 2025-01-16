@@ -1,4 +1,4 @@
-# Version: 1
+# Version: 2
 # Minimum clang-format version is 18.
 
 # My personal opinion on what a good-ish style for C is, based on at least some amount of reason (sometimes) ;)
@@ -8,8 +8,9 @@ BasedOnStyle: WebKit
 Language: Cpp # This is also for C.
 
 # Makes numbers look better, especially if there's a unary operand in front.
+# TODO Messes up nested initializers, see next section for more info.
 
-AlignArrayOfStructures: Right
+# AlignArrayOfStructures: Right
 
 # For alignment, there's a bit of a tradeoff between readability and diff size.
 # For all assignments, I think this would be obnoxious, which is why they're disabled.
@@ -126,7 +127,7 @@ AlwaysBreakAfterDefinitionReturnType: None
 IndentWrappedFunctionNames: false
 
 # Usually this is more readable, as this stuff can get very complex.
-# Inline ASM is never very extensively used, so I think the complexity is worth the extra breathing room.
+# Inline ASM is never very extensively used, so I think the complexity warrants the extra breathing room.
 
 BreakBeforeInlineASMColon: Always # clang-format 16
 
