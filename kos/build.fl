@@ -3,6 +3,10 @@
 
 import bob
 
+deps = [
+	Dep.local("../gv"),
+]
+
 # TODO Put this all in a 'src' directory.
 
 let src = Fs.list(".").where(|path| path.endswith(".c"))
