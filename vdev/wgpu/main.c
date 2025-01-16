@@ -2,11 +2,17 @@
 // v. 1.0. Copyright (c) 2025 Aymeric Wibo
 
 #include "../../kos/vdev.h"
+#include "../win/win.h"
 
 #include <assert.h>
 #include <stdlib.h>
 
 #include ".bob/prefix/include/webgpu-headers/webgpu.h"
+
+#if defined(__APPLE__) && defined(__OBJC__)
+# include <Cocoa/Cocoa.h>
+# include <QuartzCore/CAMetalLayer.h>
+#endif
 
 #define SPEC "aquabsd.black.wgpu"
 #define VERS 0
@@ -77,6 +83,84 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	// If you need to update this, read the 'vdev/wgpu/README.md' document.
 
 	switch (fn_id) {
+	case 690: { // TODO Make this into a function.
+		WGPUInstance const inst = args[0].opaque_ptr;
+		aqua_win_t* const win = args[1].opaque_ptr;
+
+		WGPUSurfaceDescriptor descr;
+		WGPUSurface surf = NULL;
+
+		switch (win->kind) {
+		case AQUA_WIN_KIND_WAYLAND:;
+			WGPUSurfaceDescriptorFromWaylandSurface const descr_from_wayland = {
+				.chain = (WGPUChainedStruct const) {
+					.sType = WGPUSType_SurfaceDescriptorFromWaylandSurface,
+				},
+				.display = win->detail.wayland.display,
+				.surface = win->detail.wayland.surface,
+			};
+
+			descr.nextInChain = (void*) &descr_from_wayland;
+			surf = wgpuInstanceCreateSurface(inst, &descr);
+
+			break;
+		case AQUA_WIN_KIND_XCB:;
+			WGPUSurfaceDescriptorFromXcbWindow const descr_from_xcb = {
+				.chain = (WGPUChainedStruct const) {
+					.sType = WGPUSType_SurfaceDescriptorFromXcbWindow,
+				},
+				.connection = win->detail.xcb.connection,
+				.window = win->detail.xcb.window,
+			};
+
+			descr.nextInChain = (void*) &descr_from_xcb;
+			surf = wgpuInstanceCreateSurface(inst, &descr);
+
+			break;
+		case AQUA_WIN_KIND_XLIB:;
+			WGPUSurfaceDescriptorFromXlibWindow const descr_from_xlib = {
+				.chain = (WGPUChainedStruct const) {
+					.sType = WGPUSType_SurfaceDescriptorFromXlibWindow,
+				},
+				.display = win->detail.xlib.display,
+				.window = win->detail.xlib.window,
+			};
+
+			descr.nextInChain = (void*) &descr_from_xlib;
+			surf = wgpuInstanceCreateSurface(inst, &descr);
+
+			break;
+		case AQUA_WIN_KIND_APPKIT:;
+#if defined(__APPLE__) && defined(__OBJC__)
+			NSView* const view = win->detai.appkit.ns_view;
+			[view setWantsLayer:YES];
+			CAMetalLayer* const layer = [CAMetalLayer layer];
+			[view setLayer:layer];
+
+			WGPUSurfaceDescriptorFromMetalLayer const descr_from_metal = {
+				.chain = (WGPUChainedStruct const) {
+					.sType = WGPUSType_SurfaceDescriptorFromMetalLayer,
+				},
+				.layer = layer,
+			};
+
+			descr.nextInChain = (void*) &descr_from_metal;
+			surf = wgpuInstanceCreateSurface(inst, &descr);
+#else
+			assert(false);
+#endif
+
+			break;
+		case AQUA_WIN_KIND_NONE:
+		default:
+			assert(false);
+		}
+
+		assert(surf != NULL);
+		notif.call_ret.ret.opaque_ptr = surf;
+
+		break;
+	}
 	// CALL_HANDLERS:BEGIN
 	case 0: {
 		WGPUInstanceDescriptor const* const descriptor = args[0].buf.ptr;
