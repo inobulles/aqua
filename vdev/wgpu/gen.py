@@ -1,23 +1,13 @@
 # This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-# Copyright (c) 2024 Aymeric Wibo
+# Copyright (c) 2025 Aymeric Wibo
 
 import os
 from datetime import datetime
+year = datetime.now().year
 
-AQUABSD_ALPS_WIN_DEVICE = "aquabsd.alps.win"
-AQUABSD_ALPS_WIN_DEVICE_HEADER_INCLUDE = "aquabsd.alps/win/public.h"
-AQUABSD_BLACK_WIN_DEVICE = "aquabsd.black.win"
-AQUABSD_BLACK_WIN_DEVICE_HEADER_INCLUDE = "aquabsd.black/win/win.h"
-AQUABSD_BLACK_WM_DEVICE = "aquabsd.black.wm"
-AQUABSD_BLACK_WM_DEVICE_HEADER_INCLUDE = "aquabsd.black/wm/wm.h"
-AQUABSD_BLACK_WM_DEVICE_RENDERER_HEADER_INCLUDE = "aquabsd.black/wm/renderer.h"
 PACKED = "__attribute__((packed))"
-CMD_SURFACE_FROM_WIN = "0x0000"
-CMD_DEVICE_FROM_WM = "0x0001"
-CMD_DEVICE_TEXTURE_FROM_WM = "0x0002"
-CMD_WGPU_BASE = 0x1000
 
-# WebGPU commands in the spec which aren't yet implemented by wgpu-native
+# WebGPU commands in the spec which aren't yet implemented by wgpu-native.
 
 WGPU_BLACKLIST = (
 	"wgpuAdapterRequestAdapterInfo",
@@ -31,207 +21,178 @@ with open(".bob/prefix/include/webgpu-headers/webgpu.h") as f:
 with open(".bob/prefix/include/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
 
-count = CMD_WGPU_BASE
+def wgpu_type_to_kos(t: str):
+	KNOWN = {
+		"void": "KOS_TYPE_VOID",
+		"size_t": "KOS_TYPE_U32",
+		"int32_t": "KOS_TYPE_I32",
+		"uint32_t": "KOS_TYPE_U32",
+		"uint64_t": "KOS_TYPE_U64",
+		"float": "KOS_TYPE_F32",
+		"WGPUBool": "KOS_TYPE_BOOL",
+		"char const *": "KOS_TYPE_BUF",
+		"void const *": "KOS_TYPE_OPAQUE_PTR",
+		"void *": "KOS_TYPE_OPAQUE_PTR",
+	}
 
-cmds = ""
+	if t in KNOWN:
+		return KNOWN[t]
+
+	# TODO Since some of these structs can have pointers to other stuff in them and thus can't be serialized/deserialized (which a buf normally has to be), should this not be a ptr instead?
+
+	if t[-1] == "*":
+		return "KOS_TYPE_BUF"
+
+	if t in enums:
+		return "KOS_TYPE_U32"
+
+	return "KOS_TYPE_OPAQUE_PTR"
+
+def kos_type_to_union(t: str):
+	if t == "KOS_TYPE_BOOL":
+		return "b"
+
+	return t.removeprefix("KOS_TYPE_").lower()
+
+enums = set()
+fns = "static kos_fn_t const FNS[] = {\n"
+call_handlers = ""
+fn_id = 0
+cmds = "" # REMME
 impls = ""
 
 c_types = ""
 c_wrappers = ""
 
 for line in lines:
+	# Parse function declaration.
+
 	if line.startswith("#include \""):
+		continue
+
+	if line.endswith(" WGPU_ENUM_ATTRIBUTE;"):
+		enums.add(line.split()[-2])
 		continue
 
 	if not line.startswith("WGPU_EXPORT "):
 		c_types += line + "\n"
 		continue
 
-	type_and_name, args = line.split('(')
-	_, *return_type, name = type_and_name.split()
-	return_type = ' '.join(return_type)
+	type_and_name, params = line.split('(')
+	_, *ret_type, name = type_and_name.split()
+	ret_type = ' '.join(ret_type)
 
 	if name in WGPU_BLACKLIST:
 		continue
 
-	raw_args = args.split(')')[0]
-	args = raw_args.split(", ")
-	arg_names = []
+	raw_params = params.split(')')[0]
+	params = raw_params.split(", ")
+	param_types = []
+	param_names = []
 
-	for arg in args:
-		*type_, arg_name = arg.split()
-		arg_names.append(arg_name)
+	for arg in params:
+		*t, arg_name = arg.split()
+		param_types.append(' '.join(t).removeprefix("WGPU_NULLABLE "))
+		param_names.append(arg_name)
 
-	cmd_id = f"0x{count:04x}"
+	# Generate function struct.
 
-	# device source
+	fns += f"""\t{{
+		.name = "{name}",
+		.ret_type = {wgpu_type_to_kos(ret_type)},
+		.param_count = {len(param_names)},
+		.params = (kos_param_t[]) {{\n"""
 
-	cmds += f"\tCMD_{name} = {cmd_id},\n"
+	for t, n in zip(param_types, param_names):
+		fns += f"""\t\t\t{{
+				.type = {wgpu_type_to_kos(t)},
+				.name = "{n}",
+			}},\n"""
 
-	args_struct = ";\n\t\t\t".join(args)
-	args_call = ", ".join(map(lambda name: f"args->{name}", arg_names))
-	ret = "" if return_type == "void" else f"return (uint64_t) "
+	fns += "\t\t},\n\t},\n"
 
-	impls += f"""
-	else if (cmd == CMD_{name}) {{
-		struct {{
-			{args_struct};
-		}} {PACKED}* const args = data;
+	# Generate args parser for call handler.
 
-		{ret}{name}({args_call});
+	parser = ""
+
+	for i, p in enumerate(param_names):
+		t = param_types[i]
+		kos_t = wgpu_type_to_kos(t)
+
+		if t in ("WGPUSurfaceCapabilities", "WGPUAdapterInfo"):
+			parser += f"\t\t{t} const {p} = *({t}*) args[{i}].opaque_ptr;\n"
+
+		elif kos_t == "KOS_TYPE_BUF":
+			parser += f"\t\t{t} const {p} = args[{i}].buf.ptr;\n"
+			parser += f"\t\tassert(args[{i}].buf.size == sizeof *{p});\n"
+
+		elif kos_t == "KOS_TYPE_OPAQUE_PTR":
+			parser += f"\t\t{t} const {p} = args[{i}].opaque_ptr;\n"
+
+		else:
+			union = kos_type_to_union(kos_t)
+			parser += f"\t\t{t} const {p} = args[{i}].{union};\n"
+
+	# Generate return code.
+
+	kos_ret_type = wgpu_type_to_kos(ret_type)
+
+	if kos_ret_type == "KOS_TYPE_VOID":
+		ret = ""
+
+	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
+		ret = f"notif.call_ret.ret.opaque_ptr = (void*) "
+
+	else:
+		union = kos_type_to_union(kos_ret_type)
+		ret = f"notif.call_ret.ret.{union} = "
+
+	# Generate actual call handler.
+
+	call_handlers += f"""\tcase {fn_id}: {{
+{parser}\t\t{ret}{name}({", ".join(param_names)});
+		break;
 	}}
 """
 
-	# C library source
+	fn_id += 1
 
-	args_struct = ";\n\t\t".join(args)
-	args_assign = ",\n\t\t".join(map(lambda name: f".{name} = {name}", arg_names))
-	ret = "" if return_type == "void" else f"return ({return_type}) "
+fns += "};\n"
 
-	c_wrappers += f"""
-AQUA_C_FN {return_type} {name}({raw_args}) {{
-	struct {{
-		{args_struct};
-	}} {PACKED} const args = {{
-		{args_assign},
-	}};
+# Write out functions.
 
-	{ret}send_device(wgpu_device, {cmd_id}, (void*) &args);
-}}
-"""
-
-	count += 1
-
-# device source
-
-year = datetime.now().year
-
-dev_out = f"""// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+with open("fns.h", "w") as f:
+	f.write(f"""// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) {year} Aymeric Wibo
 
-// this file is automatically generated by 'aqua-devices/aquabsd.black/wgpu/gen.py'
-// if you need to update this, read the 'aqua-devices/aquabsd.black/wgpu/README.md' document
+// This file is automatically generated by 'vdev/wgpu/gen.py'.
+// If you need to update this, read the 'vdev/wgpu/README.md' document.
 
-#include <stdint.h>
-#include <string.h>
+#include "../../kos/vdev.h"
 
-#include "ffi/wgpu.h"
+{fns}""")
 
-#include <{AQUABSD_ALPS_WIN_DEVICE_HEADER_INCLUDE}>
-#include <{AQUABSD_BLACK_WIN_DEVICE_HEADER_INCLUDE}>
-#include <{AQUABSD_BLACK_WM_DEVICE_HEADER_INCLUDE}>
-#include <{AQUABSD_BLACK_WM_DEVICE_RENDERER_HEADER_INCLUDE}>
+# Inject generated call handlers into device source.
 
-typedef enum {{
-	CMD_SURFACE_FROM_WIN = {CMD_SURFACE_FROM_WIN},
-	CMD_DEVICE_FROM_WM = {CMD_DEVICE_FROM_WM},
-	CMD_DEVICE_TEXTURE_FROM_WM = {CMD_DEVICE_TEXTURE_FROM_WM},
+with open("main.c") as f:
+	src = f.read().split("\n")
 
-	// WebGPU commands
+begin = src.index("\t// CALL_HANDLERS:BEGIN")
+end = src.index("\t// CALL_HANDLERS:END")
 
-{cmds}}} cmd_t;
+assert begin != -1 and end != -1
+assert begin < end
 
-uint64_t (*kos_query_device) (uint64_t, uint64_t name);
-void* (*kos_load_device_function) (uint64_t device, const char* name);
-uint64_t (*kos_callback) (uint64_t callback, int argument_count, ...);
-
-static uint64_t aquabsd_alps_win_device = -1;
-
-int load(void) {{
-	aquabsd_alps_win_device = kos_query_device(0, (uint64_t) "{AQUABSD_ALPS_WIN_DEVICE}");
-
-	if (aquabsd_alps_win_device != (uint64_t) -1) {{
-		aquabsd_alps_win_get_draw_win = kos_load_device_function(aquabsd_alps_win_device, "get_draw_win");
-	}}
-
-	return 0;
-}}
-
-uint64_t send(uint16_t _cmd, void* data) {{
-	cmd_t const cmd = _cmd;
-
-	if (cmd == CMD_SURFACE_FROM_WIN) {{
-		struct {{
-			WGPUInstance instance;
-			win_t* win;
-		}} {PACKED}* const aquabsd_black_win_args = data;
-
-		if (strcmp(aquabsd_black_win_args->win->aquabsd_black_win_signature, AQUABSD_BLACK_WIN_SIGNATURE) == 0) {{
-			struct {{
-				WGPUInstance instance;
-				win_t* win;
-			}} {PACKED}* const aquabsd_black_win_args = data;
-
-			WGPUSurfaceDescriptorFromWaylandSurface const descr_from_wayland = {{
-				.chain = (WGPUChainedStruct const) {{
-					.sType = WGPUSType_SurfaceDescriptorFromWaylandSurface,
-				}},
-				.display = aquabsd_black_win_args->win->display,
-				.surface = aquabsd_black_win_args->win->surface,
-			}};
-
-			WGPUSurfaceDescriptor const descr = {{
-				.nextInChain = (WGPUChainedStruct const*) &descr_from_wayland,
-			}};
-
-			WGPUSurface const surface = wgpuInstanceCreateSurface(aquabsd_black_win_args->instance, &descr);
-			return (uint64_t) surface;
-		}}
-
-		struct {{
-			WGPUInstance instance;
-			aquabsd_alps_win_t* win;
-		}} {PACKED}* const aquabsd_alps_win_args = data;
-
-		WGPUSurfaceDescriptorFromXcbWindow const descr_from_xcb = {{
-			.chain = (WGPUChainedStruct const) {{
-				.sType = WGPUSType_SurfaceDescriptorFromXcbWindow,
-			}},
-			.connection = aquabsd_alps_win_args->win->connection,
-			.window = aquabsd_alps_win_args->win->win,
-		}};
-
-		WGPUSurfaceDescriptor const descr = {{
-			.nextInChain = (WGPUChainedStruct const*) &descr_from_xcb,
-		}};
-
-		WGPUSurface const surface = wgpuInstanceCreateSurface(aquabsd_alps_win_args->instance, &descr);
-		return (uint64_t) surface;
-	}}
-
-	else if (cmd == CMD_DEVICE_FROM_WM) {{
-		struct {{
-			WGPUInstance instance;
-			wm_t* wm;
-		}} {PACKED}* const args = data;
-
-		renderer_t* const renderer = wm_renderer_container(args->wm->wlr_renderer);
-		WGPUDevice const device = wgpuInstanceDeviceFromEGL(args->instance, NULL, renderer->egl_get_proc_addr);
-
-		return (uint64_t) device;
-	}}
-
-	else if (cmd == CMD_DEVICE_TEXTURE_FROM_WM) {{
-		struct {{
-			WGPUDevice device;
-			wm_t* wm;
-		}} {PACKED}* const args = data;
-
-		renderer_t* const renderer = wm_renderer_container(args->wm->wlr_renderer);
-		WGPUTexture const texture = wgpuDeviceTextureFromRenderbuffer(args->device, renderer->rbo);
-		return (uint64_t) texture;
-	}}
-	{impls}
-	return -1;
-}}
-"""
+src = "\n".join(src[:begin + 1] + call_handlers.strip("\n").split("\n") + src[end:])
 
 with open("main.c", "w") as f:
-	f.write(dev_out)
+	f.write(src)
 
 # Compile device as a sanity check.
 
-os.system("DEVSET_INC_PATH=../.. bob build")
+os.system("bob build")
+
+exit()
 
 # C library source
 

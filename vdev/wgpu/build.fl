@@ -15,10 +15,17 @@ let obj = Cc([
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
-let vdriver = Linker(["-shared", "-lwgpu_native"]).link(obj)
+let vdriver = Linker([
+	"-shared", "-lwgpu_native",
+	# TODO Don't do this on Linux or FreeBSD.
+	"-framework", "AppKit",
+	"-framework", "CoreFoundation",
+	"-framework", "Metal",
+	"-framework", "QuartzCore",
+]).link(obj)
 
 install = {
-	vdriver: "share/aqua/vdriver/aquabsd.black.wgpu.vdriver",
+	vdriver: "lib/vdriver/aquabsd.black.wgpu.vdriver",
 }
 
 run = none
