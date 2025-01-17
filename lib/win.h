@@ -108,3 +108,13 @@ void win_destroy(win_t win);
  * @param win The window to start and enter the event loop of.
  */
 void win_loop(win_t win);
+
+/**
+ * Notify of a window event interrupt.
+ *
+ * This function should be called by the client when it receives a window event interrupt notification from the KOS (`KOS_NOTIF_INTERRUPT`).
+ *
+ * @param win The window to handle the interrupt for.
+ * @param notif The interrupt notification.
+ */
+void win_interrupt(win_t win, kos_notif_t const* notif);

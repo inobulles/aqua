@@ -218,3 +218,17 @@ void win_loop(win_t win) {
 	kos_vdev_call(sc->conn_id, sc->fns.loop, args);
 	kos_flush(true);
 }
+
+void win_interrupt(win_t win, kos_notif_t const* notif) {
+	if (win->ino != notif->interrupt.ino) {
+		return;
+	}
+
+	win_softc_t const sc = win->sc;
+
+	if (!sc->is_conn) {
+		return;
+	}
+
+	// TODO Parse interrupt itself.
+}
