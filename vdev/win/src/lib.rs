@@ -56,7 +56,7 @@ fn str_to_slice<T: AllowedForStrToSlice, const N: usize>(input: &str) -> [T; N] 
 
 #[derive(Clone, Copy)]
 enum Intr {
-	REDRRAW,
+	REDRAW,
 	RESIZE,
 }
 
@@ -67,13 +67,23 @@ struct Win {
 	window: Option<Window>,
 }
 
-impl Win {
-	fn interrupt(&self, intr: Intr, args: Vec<kos_val_t>) {
-		if let Some(ino) = self.ino {
-			let mut args = args;
-			args.insert(0, kos_val_t { u8_: intr as u8 });
-			let args = Box::into_raw(args.into_boxed_slice());
+#[repr(packed)]
+#[allow(dead_code)]
+struct RedrawIntr {
+	intr: u8,
+}
 
+#[repr(packed)]
+#[allow(dead_code)]
+struct ResizeIntr {
+	intr: u8,
+	x_res: u32,
+	y_res: u32,
+}
+
+impl Win {
+	fn interrupt<T>(&self, data: T) {
+		if let Some(ino) = self.ino {
 			unsafe {
 				VDRIVER.notif_cb.unwrap()(
 					&kos_notif_t {
@@ -82,14 +92,13 @@ impl Win {
 						__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 							interrupt: kos_notif_t__bindgen_ty_1__bindgen_ty_7 {
 								ino,
-								args: args as *const kos_val_t,
+								data_size: std::mem::size_of::<T>() as u32,
+								data: &data as *const T as *const c_void,
 							},
 						},
 					},
 					VDRIVER.notif_data,
 				);
-
-				let _ = Box::from_raw(args); // Drop the box.
 			}
 		}
 	}
@@ -159,12 +168,17 @@ impl ApplicationHandler for Win {
 				event_loop.exit();
 			}
 			WindowEvent::Resized(size) => {
-				self.interrupt(Intr::RESIZE, vec![kos_val_t { u32_: size.width }, kos_val_t {
-					u32_: size.height,
-				}]);
+				self.interrupt(ResizeIntr {
+					intr: Intr::RESIZE as u8,
+					x_res: size.width,
+					y_res: size.height,
+				});
 			}
 			WindowEvent::RedrawRequested => {
-				self.interrupt(Intr::REDRRAW, vec![]);
+				self.interrupt(RedrawIntr {
+					intr: Intr::REDRAW as u8,
+				});
+
 				self.window.as_ref().unwrap().request_redraw();
 			}
 			_ => (),
@@ -330,7 +344,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 			name: "INTR_REDRAW",
 			kind: kos_type_t_KOS_TYPE_U8,
 			val: kos_val_t {
-				u8_: Intr::REDRRAW as u8,
+				u8_: Intr::REDRAW as u8,
 			},
 		},
 		Const {
