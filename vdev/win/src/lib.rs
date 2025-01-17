@@ -56,13 +56,15 @@ fn str_to_slice<T: AllowedForStrToSlice, const N: usize>(input: &str) -> [T; N] 
 
 #[repr(C)]
 struct Win {
-	win: aqua_win_t,
+	win: aqua_win_t, // This must be at the beginning of the struct.
+	ino: Option<u32>,
 	window: Option<Window>,
 }
 
 impl ApplicationHandler for Win {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-		let attrs = Window::default_attributes().with_title("Untitled");
+		let attrs = Window::default_attributes().with_title(format!("Untitled ({VDEV_HUMAN})"));
+
 		self.window = Some(event_loop.create_window(attrs).unwrap());
 
 		let win_ref = self.window.as_ref().unwrap();
