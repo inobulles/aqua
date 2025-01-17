@@ -54,6 +54,8 @@ fn str_to_slice<T: AllowedForStrToSlice, const N: usize>(input: &str) -> [T; N] 
 	array_tmp.map(T::from_u8)
 }
 
+const INTR_REDRAW: u8 = 0;
+
 #[repr(C)]
 struct Win {
 	win: aqua_win_t, // This must be at the beginning of the struct.
@@ -134,7 +136,7 @@ impl ApplicationHandler for Win {
 								__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 									interrupt: kos_notif_t__bindgen_ty_1__bindgen_ty_7 {
 										ino,
-										args: &[kos_val_t { u8_: 0 }] as *const kos_val_t,
+										args: &[kos_val_t { u8_: INTR_REDRAW }] as *const kos_val_t,
 									},
 								},
 							},
@@ -148,6 +150,12 @@ impl ApplicationHandler for Win {
 			_ => (),
 		}
 	}
+}
+
+struct Const {
+	name: &'static str,
+	kind: kos_type_t,
+	val: kos_val_t,
 }
 
 struct Param {
@@ -297,6 +305,12 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 		return;
 	}
 
+	let CONSTS = [Const {
+		name: "INTR_REDRAW",
+		kind: kos_type_t_KOS_TYPE_U8,
+		val: kos_val_t { u8_: INTR_REDRAW },
+	}];
+
 	VDRIVER.notif_cb.unwrap()(
 		&kos_notif_t {
 			kind: kos_notif_kind_t_KOS_NOTIF_CONN,
@@ -304,6 +318,16 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 				conn: kos_notif_t__bindgen_ty_1__bindgen_ty_4 {
 					conn_id,
+					const_count: CONSTS.len() as u32,
+					consts: CONSTS
+						.iter()
+						.map(|x| kos_const_t {
+							name: str_to_slice::<u8, 64>(x.name),
+							type_: x.kind,
+							val: x.val,
+						})
+						.collect::<Vec<_>>()
+						.as_ptr(),
 					fn_count: FNS.len() as u32,
 					fns: FNS
 						.clone()
@@ -312,6 +336,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 							ret_type: x.ret_type,
 							param_count: x.params.len() as u32,
 							params: Box::into_raw(
+								// TODO Should we ever bother to free this?
 								x.params
 									.iter()
 									.map(|param| kos_param_t {
