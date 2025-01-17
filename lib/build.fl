@@ -1,0 +1,21 @@
+# This Source Form is subject to the terms of the AQUA Software License,
+# v. 1.0. Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.local("../kos"),
+]
+
+let win = Cc([
+	"-std=c11", "-g",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(["win.c"])
+
+install = {
+	"win.h": "include/aqua/win.h",
+	Linker([]).archive(win): "lib/libaqua_win.a",
+	Linker(["-laqua", "-shared"]).link(win): "lib/libaqua_win.so",
+}
+
+run = none
