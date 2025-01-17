@@ -248,6 +248,16 @@ void win_loop(win_t win) {
 	kos_flush(true);
 }
 
+typedef struct __attribute__((packed)) {
+	uint8_t type;
+} intr_generic_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint32_t x_res;
+	uint32_t y_res;
+} intr_resize_t;
+
 void win_interrupt(win_t win, kos_notif_t const* notif) {
 	if (win->ino != notif->interrupt.ino) {
 		return;
@@ -259,13 +269,23 @@ void win_interrupt(win_t win, kos_notif_t const* notif) {
 		return;
 	}
 
-	uint8_t const intr_type = notif->interrupt.args[0].u8;
+	intr_generic_t const* const intr = notif->interrupt.data;
 
-	if (intr_type == sc->consts.INTR_REDRAW) {
+	if (notif->interrupt.data_size < sizeof *intr) {
+		return;
+	}
+
+	if (intr->type == sc->consts.INTR_REDRAW) {
 		// TODO Redraw.
 	}
 
-	if (intr_type == sc->consts.INTR_RESIZE) {
-		// TODO Resize.
+	if (intr->type == sc->consts.INTR_RESIZE) {
+		intr_resize_t const* const resize = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *resize) {
+			return;
+		}
+
+		(void) resize; // TODO Resize.
 	}
 }
