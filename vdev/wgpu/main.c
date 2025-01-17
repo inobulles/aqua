@@ -80,7 +80,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	};
 
 	switch (fn_id) {
-	case 0: { // TODO Make this into a function.
+	case 0: {
 		WGPUInstance const inst = args[0].opaque_ptr;
 		aqua_win_t* const win = args[1].opaque_ptr;
 
