@@ -5,9 +5,9 @@
 #include <aqua/win.h>
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 
 typedef struct {
 	bool has_win;
@@ -25,8 +25,8 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 			// Connect to the first window VDEV we find.
 
 			printf("Found window VDEV: %s\n", vdev->human);
-			state->has_win = true;
-			win_conn(&state->win_sc, vdev);
+			state->win_sc = win_conn(vdev);
+			kos_flush(true);
 		}
 
 		break;
@@ -37,13 +37,13 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 		fprintf(stderr, "Connection to VDEV failed\n");
 		break;
 	case KOS_NOTIF_CONN:
-		win_notif_conn(&state->win_sc, notif);
+		win_notif_conn(state->win_sc, notif);
 		break;
 	case KOS_NOTIF_CALL_FAIL:
 		fprintf(stderr, "Failed to call function on window VDEV\n");
 		break;
 	case KOS_NOTIF_CALL_RET:
-		win_notif_call_ret(&state->win_sc, notif);
+		win_notif_call_ret(state->win_sc, notif);
 		break;
 	}
 }
@@ -60,7 +60,7 @@ int main(void) {
 	printf("Loaded KOS v4: %s\n", descr.name);
 
 	state_t state = {
-		.has_win = false,
+		.win_sc = NULL,
 	};
 
 	kos_sub_to_notif(vdev_notif_cb, &state);
@@ -69,9 +69,9 @@ int main(void) {
 
 	win_init();
 
-	win_t const win = win_create(&state.win_sc);
-	win_loop(&state.win_sc, win);
-	win_destroy(&state.win_sc, win);
+	win_t const win = win_create(state.win_sc);
+	win_loop(win);
+	win_destroy(win);
 
 	return EXIT_SUCCESS;
 }
