@@ -87,6 +87,7 @@ impl ApplicationHandler for App {
 				self.win.detail.xlib.screen = display.screen;
 			}
 			RawDisplayHandle::AppKit(_display) => {
+				self.win.kind = aqua_win_kind_t_AQUA_WIN_KIND_APPKIT;
 				// XXX AppKit doesn't have a display.
 			}
 			_ => {
