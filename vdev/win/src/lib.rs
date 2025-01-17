@@ -1,6 +1,9 @@
 // This Source Form is subject to the terms of the AQUA Software License,
 // v. 1.0. Copyright (c) 2025 Aymeric Wibo
 
+// TODO In fine, we should support everything shown off in the winit example:
+// https://github.com/rust-windowing/winit/blob/master/examples/window.rs
+
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -52,18 +55,12 @@ fn str_to_slice<T: AllowedForStrToSlice, const N: usize>(input: &str) -> [T; N] 
 }
 
 #[repr(C)]
-struct App {
+struct Win {
 	win: aqua_win_t,
 	window: Option<Window>,
 }
 
-#[repr(C)]
-struct Win {
-	app: App,
-	event_loop: EventLoop<()>,
-}
-
-impl ApplicationHandler for App {
+impl ApplicationHandler for Win {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
 		let attrs = Window::default_attributes().with_title("Untitled");
 		self.window = Some(event_loop.create_window(attrs).unwrap());
@@ -154,20 +151,15 @@ static FNS: [Fn; 5] = [
 		params: &[],
 		cb: |_args| {
 			let win = Box::new(Win {
-				app: App {
-					win: aqua_win_t {
-						kind: aqua_win_kind_t_AQUA_WIN_KIND_NONE,
-						detail: aqua_win_t__bindgen_ty_1 {
-							none: aqua_win_t__bindgen_ty_1__bindgen_ty_1 {},
-						},
-						priv_: __IncompleteArrayField::new(),
+				win: aqua_win_t {
+					kind: aqua_win_kind_t_AQUA_WIN_KIND_NONE,
+					detail: aqua_win_t__bindgen_ty_1 {
+						none: aqua_win_t__bindgen_ty_1__bindgen_ty_1 {},
 					},
-					window: None,
+					priv_: __IncompleteArrayField::new(),
 				},
-				event_loop: EventLoop::new().expect("failed to create event loop"),
+				window: None,
 			});
-
-			win.event_loop.set_control_flow(ControlFlow::Poll);
 
 			Some(kos_val_t {
 				opaque_ptr: Box::into_raw(win) as *mut c_void,
@@ -183,9 +175,9 @@ static FNS: [Fn; 5] = [
 		}],
 		cb: |args| {
 			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let _ = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
 
-			drop(win);
+			// We don't need to explicitly drop the box; from_raw automatically reclaims ownership and its Drop implementation will be called as we go out of scope.
 			None
 		},
 	},
@@ -198,10 +190,11 @@ static FNS: [Fn; 5] = [
 		}], // TODO Also a parameter for the callback itself.
 		cb: |args| {
 			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let mut _win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
 
 			// TODO Register the callback.
 
+			let _ = Box::into_raw(win);
 			None
 		},
 	},
@@ -214,10 +207,11 @@ static FNS: [Fn; 5] = [
 		}], // TODO Also a parameter for the callback itself.
 		cb: |args| {
 			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let mut _win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
 
 			// TODO Register the callback.
 
+			let _ = Box::into_raw(win);
 			None
 		},
 	},
@@ -231,8 +225,12 @@ static FNS: [Fn; 5] = [
 		cb: |args| {
 			let opaque_ptr = unsafe { (*args).opaque_ptr };
 			let mut win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
-			let _ = win.event_loop.run_app(&mut win.app);
 
+			let event_loop = EventLoop::new().expect("failed to create event loop");
+			event_loop.set_control_flow(ControlFlow::Poll);
+			let _ = event_loop.run_app(&mut win);
+
+			let _ = Box::into_raw(win); // Don't drop memory.
 			None
 		},
 	},

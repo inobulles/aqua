@@ -71,7 +71,7 @@ int main(void) {
 
 	win_t const win = win_create(&state.win_sc);
 	win_loop(&state.win_sc, win);
-	// win_destroy(&state.win_sc, win);
+	win_destroy(&state.win_sc, win);
 
 	return EXIT_SUCCESS;
 }
