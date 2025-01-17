@@ -125,7 +125,10 @@ impl ApplicationHandler for Win {
 				event_loop.exit();
 			}
 			WindowEvent::RedrawRequested => {
-				// TODO Callback to client.
+				if let Some(ino) = self.ino {
+					println!("TODO Interrupt ino: {}", ino);
+				}
+
 				self.window.as_ref().unwrap().request_redraw();
 			}
 			_ => (),
@@ -146,7 +149,7 @@ struct Fn {
 	cb: fn(args: *const kos_val_t) -> Option<kos_val_t>,
 }
 
-static FNS: [Fn; 5] = [
+static FNS: [Fn; 4] = [
 	Fn {
 		name: "create",
 		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
@@ -160,6 +163,7 @@ static FNS: [Fn; 5] = [
 					},
 					priv_: __IncompleteArrayField::new(),
 				},
+				ino: None,
 				window: None,
 			});
 
@@ -176,44 +180,32 @@ static FNS: [Fn; 5] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let _ = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let _ = unsafe { Box::from_raw((*args).opaque_ptr as *mut Win) };
 
 			// We don't need to explicitly drop the box; from_raw automatically reclaims ownership and its Drop implementation will be called as we go out of scope.
 			None
 		},
 	},
 	Fn {
-		name: "register_resume",
+		name: "register_interrupt",
 		ret_type: kos_type_t_KOS_TYPE_VOID,
-		params: &[Param {
-			name: "win",
-			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
-		}], // TODO Also a parameter for the callback itself.
+		params: &[
+			Param {
+				name: "win",
+				kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+			},
+			Param {
+				name: "ino",
+				kind: kos_type_t_KOS_TYPE_U32,
+			},
+		],
 		cb: |args| {
-			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let mut win = unsafe { Box::from_raw((*args).opaque_ptr as *mut Win) };
+			let ino = unsafe { (*args.add(1)).u32_ };
 
-			// TODO Register the callback.
+			win.ino = Some(ino);
 
-			let _ = Box::into_raw(win);
-			None
-		},
-	},
-	Fn {
-		name: "register_redraw",
-		ret_type: kos_type_t_KOS_TYPE_VOID,
-		params: &[Param {
-			name: "win",
-			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
-		}], // TODO Also a parameter for the callback itself.
-		cb: |args| {
-			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
-
-			// TODO Register the callback.
-
-			let _ = Box::into_raw(win);
+			let _ = Box::into_raw(win); // Don't drop memory.
 			None
 		},
 	},
@@ -225,8 +217,7 @@ static FNS: [Fn; 5] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let opaque_ptr = unsafe { (*args).opaque_ptr };
-			let mut win = unsafe { Box::from_raw(opaque_ptr as *mut Win) };
+			let mut win = unsafe { Box::from_raw((*args).opaque_ptr as *mut Win) };
 
 			let event_loop = EventLoop::new().expect("failed to create event loop");
 			event_loop.set_control_flow(ControlFlow::Poll);
