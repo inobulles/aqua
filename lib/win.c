@@ -20,6 +20,10 @@ struct win_softc_t {
 	uint64_t conn_id;
 
 	struct {
+		uint32_t INTR_REDRAW;
+	} consts;
+
+	struct {
 		uint32_t create;
 		uint32_t destroy;
 		uint32_t register_interrupt;
@@ -81,6 +85,26 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 
 	sc->conn_id = notif->conn.conn_id;
 	sc->is_conn = true;
+
+	// Read constants.
+
+	memset(&sc->consts, 0xFF, sizeof sc->consts);
+
+	for (size_t i = 0; i < notif->conn.const_count; i++) {
+		kos_const_t const* const c = &notif->conn.consts[i];
+		char const* const name = (void*) c->name;
+
+		if (strcmp(name, "INTR_REDRAW") == 0) {
+			sc->consts.INTR_REDRAW = c->val.u8;
+		}
+	}
+
+	for (size_t i = 0; i < sizeof sc->consts / sizeof(uint32_t); i++) {
+		if (((uint32_t*) &sc->consts)[i] == -1u) {
+			sc->is_conn = false;
+			break;
+		}
+	}
 
 	// Read functions.
 
@@ -230,5 +254,9 @@ void win_interrupt(win_t win, kos_notif_t const* notif) {
 		return;
 	}
 
-	// TODO Parse interrupt itself.
+	uint8_t const intr_type = notif->interrupt.args[0].u8;
+
+	if (intr_type == sc->consts.INTR_REDRAW) {
+		// TODO Redraw.
+	}
 }
