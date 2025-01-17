@@ -54,13 +54,45 @@ fn str_to_slice<T: AllowedForStrToSlice, const N: usize>(input: &str) -> [T; N] 
 	array_tmp.map(T::from_u8)
 }
 
-const INTR_REDRAW: u8 = 0;
+#[derive(Clone, Copy)]
+enum Intr {
+	REDRRAW,
+	RESIZE,
+}
 
 #[repr(C)]
 struct Win {
 	win: aqua_win_t, // This must be at the beginning of the struct.
 	ino: Option<u32>,
 	window: Option<Window>,
+}
+
+impl Win {
+	fn interrupt(&self, intr: Intr, args: Vec<kos_val_t>) {
+		if let Some(ino) = self.ino {
+			let mut args = args;
+			args.insert(0, kos_val_t { u8_: intr as u8 });
+			let args = Box::into_raw(args.into_boxed_slice());
+
+			unsafe {
+				VDRIVER.notif_cb.unwrap()(
+					&kos_notif_t {
+						kind: kos_notif_kind_t_KOS_NOTIF_INTERRUPT,
+						cookie: 0,
+						__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
+							interrupt: kos_notif_t__bindgen_ty_1__bindgen_ty_7 {
+								ino,
+								args: args as *const kos_val_t,
+							},
+						},
+					},
+					VDRIVER.notif_data,
+				);
+
+				let _ = Box::from_raw(args); // Drop the box.
+			}
+		}
+	}
 }
 
 impl ApplicationHandler for Win {
@@ -126,25 +158,13 @@ impl ApplicationHandler for Win {
 			WindowEvent::CloseRequested => {
 				event_loop.exit();
 			}
+			WindowEvent::Resized(size) => {
+				self.interrupt(Intr::RESIZE, vec![kos_val_t { u32_: size.width }, kos_val_t {
+					u32_: size.height,
+				}]);
+			}
 			WindowEvent::RedrawRequested => {
-				if let Some(ino) = self.ino {
-					unsafe {
-						VDRIVER.notif_cb.unwrap()(
-							&kos_notif_t {
-								kind: kos_notif_kind_t_KOS_NOTIF_INTERRUPT,
-								cookie: 0,
-								__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
-									interrupt: kos_notif_t__bindgen_ty_1__bindgen_ty_7 {
-										ino,
-										args: &[kos_val_t { u8_: INTR_REDRAW }] as *const kos_val_t,
-									},
-								},
-							},
-							VDRIVER.notif_data,
-						);
-					}
-				}
-
+				self.interrupt(Intr::REDRRAW, vec![]);
 				self.window.as_ref().unwrap().request_redraw();
 			}
 			_ => (),
@@ -305,11 +325,22 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 		return;
 	}
 
-	let CONSTS = [Const {
-		name: "INTR_REDRAW",
-		kind: kos_type_t_KOS_TYPE_U8,
-		val: kos_val_t { u8_: INTR_REDRAW },
-	}];
+	let CONSTS = [
+		Const {
+			name: "INTR_REDRAW",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: Intr::REDRRAW as u8,
+			},
+		},
+		Const {
+			name: "INTR_RESIZE",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: Intr::RESIZE as u8,
+			},
+		},
+	];
 
 	VDRIVER.notif_cb.unwrap()(
 		&kos_notif_t {
