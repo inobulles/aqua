@@ -21,6 +21,7 @@ struct win_softc_t {
 
 	struct {
 		uint32_t INTR_REDRAW;
+		uint32_t INTR_RESIZE;
 	} consts;
 
 	struct {
@@ -96,6 +97,10 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 
 		if (strcmp(name, "INTR_REDRAW") == 0) {
 			sc->consts.INTR_REDRAW = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_RESIZE") == 0) {
+			sc->consts.INTR_RESIZE = c->val.u8;
 		}
 	}
 
@@ -258,5 +263,9 @@ void win_interrupt(win_t win, kos_notif_t const* notif) {
 
 	if (intr_type == sc->consts.INTR_REDRAW) {
 		// TODO Redraw.
+	}
+
+	if (intr_type == sc->consts.INTR_RESIZE) {
+		// TODO Resize.
 	}
 }
