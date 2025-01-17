@@ -102,6 +102,12 @@ typedef struct {
 } kos_param_t;
 
 typedef struct {
+	kos_type_t type;
+	uint8_t name[64];
+	kos_val_t val;
+} kos_const_t;
+
+typedef struct {
 	uint8_t name[64];
 	kos_type_t ret_type;
 
@@ -160,6 +166,10 @@ typedef struct {
 
 		struct {
 			uint64_t conn_id;
+
+			uint32_t const_count;
+			kos_const_t const* consts;
+
 			uint32_t fn_count;
 			kos_fn_t const* fns;
 		} conn;
