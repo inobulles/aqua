@@ -109,6 +109,18 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 		}
 
 		if (
+			strcmp(name, "register_interrupt") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "ino") == 0
+		) {
+			sc->fns.register_interrupt = i;
+		}
+
+		if (
 			strcmp(name, "loop") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
@@ -153,6 +165,19 @@ win_t win_create(win_softc_t sc) {
 
 	win->sc = sc;
 	win->opaque_ptr = sc->last_ret.opaque_ptr;
+	win->ino = kos_gen_ino();
+
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = win->opaque_ptr,
+		},
+		{
+			.u32 = 0,
+		},
+	};
+
+	sc->last_cookie = kos_vdev_call(sc->conn_id, sc->fns.register_interrupt, args);
+	kos_flush(true);
 
 	return win;
 }

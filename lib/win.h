@@ -86,6 +86,8 @@ void win_notif_call_ret(win_softc_t sc, kos_notif_t const* notif);
 /**
  * Create a window.
  *
+ * Create a window object. This also registers an interrupt for window events. The caller must call `win_interrupt` on each `KOS_NOTIF_INTERRUPT` notification it receives for these window event interrupts to be processed.
+ *
  * @param sc The window driver context.
  * @return A window object.
  */
