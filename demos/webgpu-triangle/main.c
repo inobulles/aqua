@@ -45,6 +45,9 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 	case KOS_NOTIF_CALL_RET:
 		win_notif_call_ret(state->win_sc, notif);
 		break;
+	case KOS_NOTIF_INTERRUPT:
+		win_interrupt(state->win, notif);
+		break;
 	}
 }
 
