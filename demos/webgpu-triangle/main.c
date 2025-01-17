@@ -10,8 +10,8 @@
 #include <stdlib.h>
 
 typedef struct {
-	bool has_win;
 	win_softc_t win_sc;
+	win_t win;
 } state_t;
 
 static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
@@ -21,7 +21,7 @@ static void vdev_notif_cb(kos_notif_t const* notif, void* data) {
 	case KOS_NOTIF_ATTACH:;
 		kos_vdev_descr_t const* const vdev = &notif->attach.vdev;
 
-		if (win_probe(vdev) && !state->has_win) {
+		if (win_probe(vdev) && state->win_sc == NULL) {
 			// Connect to the first window VDEV we find.
 
 			printf("Found window VDEV: %s\n", vdev->human);
@@ -69,9 +69,9 @@ int main(void) {
 
 	win_init();
 
-	win_t const win = win_create(state.win_sc);
-	win_loop(win);
-	win_destroy(win);
+	state.win = win_create(state.win_sc);
+	win_loop(state.win);
+	win_destroy(state.win);
 
 	return EXIT_SUCCESS;
 }
