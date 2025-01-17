@@ -26,6 +26,7 @@ static kos_notif_cb_t client_notif_cb = NULL;
 static void* client_notif_data = NULL;
 
 static kos_cookie_t cookies = 0;
+static kos_ino_t inos = 0;
 
 void __attribute__((constructor)) kos_init(void) {
 	has_init = true;
@@ -362,4 +363,8 @@ void kos_vdev_disconn(uint64_t conn_id) {
 	}
 
 	conns[conn_id].alive = false;
+}
+
+kos_ino_t kos_gen_ino(void) {
+	return inos++;
 }

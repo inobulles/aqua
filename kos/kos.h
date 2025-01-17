@@ -189,3 +189,9 @@ void kos_vdev_disconn(uint64_t conn_id);
 // Call a function on a VDEV.
 
 kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args);
+
+// Get a new interrupt number.
+
+typedef uint32_t kos_ino_t;
+
+kos_ino_t kos_gen_ino(void);
