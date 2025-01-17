@@ -14,6 +14,7 @@ _Static_assert(sizeof(float) == 4, "float is not 32 bits");
 _Static_assert(sizeof(double) == 8, "double is not 32 bits");
 
 typedef uint64_t kos_cookie_t;
+typedef uint32_t kos_ino_t;
 
 // Tell the KOS what range of versions of the API we, the client, support.
 // The KOS will respond with the best version it supports that is within the range we specify, and if there is one, will fill in the 'descr' struct.
@@ -137,6 +138,7 @@ typedef enum {
 	KOS_NOTIF_CONN,
 	KOS_NOTIF_CALL_FAIL,
 	KOS_NOTIF_CALL_RET,
+	KOS_NOTIF_INTERRUPT,
 } kos_notif_kind_t;
 
 typedef struct {
@@ -170,7 +172,8 @@ typedef struct {
 		} call_ret;
 
 		struct {
-			// TODO
+			kos_ino_t ino;
+			kos_val_t const* args;
 		} interrupt;
 	};
 } kos_notif_t;
@@ -195,7 +198,5 @@ void kos_vdev_disconn(uint64_t conn_id);
 kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args);
 
 // Get a new interrupt number.
-
-typedef uint32_t kos_ino_t;
 
 kos_ino_t kos_gen_ino(void);
