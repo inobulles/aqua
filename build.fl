@@ -5,6 +5,7 @@ import bob
 
 deps = [
 	Dep.local("gv"),
+	Dep.local("lib"),
 	Dep.local("kos"),
 	Dep.local("vdev"),
 ]
