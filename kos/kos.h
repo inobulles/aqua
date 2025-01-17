@@ -183,7 +183,8 @@ typedef struct {
 
 		struct {
 			kos_ino_t ino;
-			kos_val_t const* args;
+			uint32_t data_size;
+			void const* data;
 		} interrupt;
 	};
 } kos_notif_t;
