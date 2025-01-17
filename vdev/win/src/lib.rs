@@ -126,7 +126,21 @@ impl ApplicationHandler for Win {
 			}
 			WindowEvent::RedrawRequested => {
 				if let Some(ino) = self.ino {
-					println!("TODO Interrupt ino: {}", ino);
+					unsafe {
+						VDRIVER.notif_cb.unwrap()(
+							&kos_notif_t {
+								kind: kos_notif_kind_t_KOS_NOTIF_INTERRUPT,
+								cookie: 0,
+								__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
+									interrupt: kos_notif_t__bindgen_ty_1__bindgen_ty_7 {
+										ino,
+										args: &[kos_val_t { u8_: 0 }] as *const kos_val_t,
+									},
+								},
+							},
+							VDRIVER.notif_data,
+						);
+					}
 				}
 
 				self.window.as_ref().unwrap().request_redraw();
