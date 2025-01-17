@@ -84,7 +84,7 @@ void win_notif_conn(win_softc_t* sc, kos_notif_t const* notif);
  * @param sc The window driver context.
  * @param notif The call return notification.
  */
-void win_call_ret(win_softc_t* sc, kos_notif_t const* notif);
+void win_notif_call_ret(win_softc_t* sc, kos_notif_t const* notif);
 
 /**
  * Create a window.

@@ -23,6 +23,7 @@ void win_conn(win_softc_t* sc, kos_vdev_descr_t const* vdev) {
 
 	sc->is_conn = false;
 	sc->last_cookie = kos_vdev_conn(sc->hid, sc->vid);
+	kos_flush(true);
 }
 
 void win_notif_conn(win_softc_t* sc, kos_notif_t const* notif) {
@@ -78,7 +79,7 @@ void win_notif_conn(win_softc_t* sc, kos_notif_t const* notif) {
 	}
 }
 
-void win_call_ret(win_softc_t* sc, kos_notif_t const* notif) {
+void win_notif_call_ret(win_softc_t* sc, kos_notif_t const* notif) {
 	if (!sc->is_conn || notif->cookie != sc->last_cookie) {
 		return;
 	}
@@ -104,7 +105,10 @@ void win_destroy(win_softc_t* sc, win_t win) {
 		return;
 	}
 
-	kos_vdev_call(sc->conn_id, sc->fns.destroy, win);
+	kos_vdev_call(sc->conn_id, sc->fns.destroy, (kos_val_t[]) {
+		{ .opaque_ptr = win, },
+	});
+
 	kos_flush(true);
 }
 
@@ -113,6 +117,9 @@ void win_loop(win_softc_t* sc, win_t win) {
 		return;
 	}
 
-	kos_vdev_call(sc->conn_id, sc->fns.loop, win);
+	kos_vdev_call(sc->conn_id, sc->fns.loop, (kos_val_t[]) {
+		{ .opaque_ptr = win, },
+	});
+
 	kos_flush(true);
 }
