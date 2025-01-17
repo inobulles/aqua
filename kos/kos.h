@@ -168,6 +168,10 @@ typedef struct {
 		struct {
 			kos_val_t ret;
 		} call_ret;
+
+		struct {
+			// TODO
+		} interrupt;
 	};
 } kos_notif_t;
 
