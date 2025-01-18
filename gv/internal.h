@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2024 Aymeric Wibo
+// v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
 #pragma once
 
@@ -115,7 +115,5 @@ typedef struct __attribute__((packed)) {
 } packet_t;
 
 static inline void free_packet(packet_t** packet) {
-	if (*packet != NULL) {
-		free(*packet);
-	}
+	free(*packet);
 }

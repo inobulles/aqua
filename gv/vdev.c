@@ -93,7 +93,9 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, state_t* state, ch
 	// Finally, call init on the vdriver.
 	// TODO Maybe these should return errors idk.
 
-	vdriver->init();
+	if (vdriver->init != NULL) {
+		vdriver->init();
+	}
 
 	return 0;
 }

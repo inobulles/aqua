@@ -22,6 +22,8 @@
 #include <sys/file.h>
 #include <sys/socket.h>
 
+// TODO Spawn new processes out of each connection instead of just threads.
+
 int main(int argc, char* argv[]) {
 	int rv = EXIT_FAILURE;
 	state_t state;
