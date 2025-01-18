@@ -7,41 +7,50 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <sys/file.h>
 
+static size_t node_count = 0;
+static node_ent_t nodes[256];
+
 static void unlock(FILE* f) {
 	flock(fileno(f), LOCK_UN);
 	fclose(f);
 }
 
-ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out) {
-	*vdevs_out = NULL;
-
-	// Make sure gvd is running.
-
+static bool is_gvd_running(void) {
 	FILE* const lock_file = fopen(GV_LOCK_PATH, "r");
 
 	if (lock_file == NULL) {
-		return 0;
+		return false;
 	}
 
 	int const rv = flock(fileno(lock_file), LOCK_EX | LOCK_NB);
 
 	if (rv == 0) { // If we got the lock, gvd is not running.
 		unlock(lock_file);
-		return 0;
+		return false;
 	}
 
 	if (rv < 0 && errno != EWOULDBLOCK) { // Some other issue occurred.
 		unlock(lock_file);
-		return 0;
+		return false;
 	}
 
 	unlock(lock_file);
+	return true;
+}
+
+ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out) {
+	*vdevs_out = NULL;
+
+	if (!is_gvd_running()) {
+		return 0;
+	}
 
 	// Actually read.
 
@@ -54,10 +63,19 @@ ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out) {
 	ssize_t vdev_count = 0;
 	kos_vdev_descr_t* vdevs = NULL;
 
+	node_count = 0;
+
 	while (!feof(f)) {
 		node_ent_t header;
 
 		if (fread(&header, 1, sizeof header, f) != sizeof header) {
+			goto done;
+		}
+
+		nodes[node_count++] = header;
+
+		if (node_count >= sizeof nodes / sizeof *nodes) {
+			fprintf(stderr, "Too many nodes in GrapeVine nodes file.\n");
 			goto done;
 		}
 
@@ -95,4 +113,72 @@ done:
 	*vdevs_out = vdevs;
 
 	return vdev_count;
+}
+
+int gv_conn(uint64_t host_id, uint64_t vdev_id) {
+	// First, find the node with the host ID.
+
+	if (!is_gvd_running()) {
+		return 0;
+	}
+
+	node_ent_t* found = NULL;
+
+	for (size_t i = 0; i < node_count; i++) {
+		if (nodes[i].host == host_id) {
+			if (found != NULL) {
+				fprintf(stderr, "Found multiple nodes with host ID %" PRIx64 "\n", host_id);
+				return -1;
+			}
+
+			found = &nodes[i];
+		}
+	}
+
+	if (found == NULL) {
+		fprintf(stderr, "Could not find a node with host ID %" PRIx64 "\n", host_id);
+		return -1;
+	}
+
+	// Now, establish a TCP connection to that node.
+
+	int const sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	if (sock < 0) {
+		fprintf(stderr, "socket: %s\n", strerror(errno));
+		return -1;
+	}
+
+	// Connect to the node.
+
+	struct sockaddr_in addr = {
+		.sin_family = AF_INET,
+		.sin_port = htons(GV_PORT),
+		.sin_addr.s_addr = found->ipv4,
+	};
+
+	if (connect(sock, (struct sockaddr*) &addr, sizeof addr) < 0) {
+		fprintf(stderr, "connect: %s\n", strerror(errno));
+		return -1;
+	}
+
+	// Send CONN_VDEV packet.
+
+	packet_t const packet = {
+		.header.type = CONN_VDEV,
+		.conn_vdev = {
+			.vdev_id = vdev_id,
+		},
+	};
+
+	size_t const size = sizeof packet.header + sizeof packet.conn_vdev;
+
+	if (sendto(sock, &packet, size, 0, (struct sockaddr*) &addr, sizeof addr) != size) {
+		fprintf(stderr, "sendto: %s\n", strerror(errno));
+		return -1;
+	}
+
+	// TODO How do we handle the response? Who do we pass the socket on to? Probably don't wanna close this.
+
+	return 0;
 }

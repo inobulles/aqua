@@ -110,7 +110,7 @@ typedef struct __attribute__((packed)) {
 	union {
 		elp_t elp;
 		query_res_t query_res;
-		conn_vdev_t conn;
+		conn_vdev_t conn_vdev;
 	}; // Payload.
 } packet_t;
 

@@ -26,7 +26,7 @@ int query(in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_t** vdevs_re
 		return -1;
 	}
 
-	// Create a connection to the node.
+	// Connect to the node.
 
 	struct sockaddr_in addr = {
 		.sin_family = AF_INET,
@@ -39,7 +39,7 @@ int query(in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_t** vdevs_re
 		return -1;
 	}
 
-	// Create QUERY packet.
+	// Send QUERY packet.
 
 	packet_t packet = {
 		.header.type = QUERY,

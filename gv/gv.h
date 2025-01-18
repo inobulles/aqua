@@ -20,3 +20,16 @@
  * @return The number of VDEVs found, 0 if the daemon is not running, and -1 if some unexpected error occurred.
  */
 ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out);
+
+/**
+ * Request a connection to a VDEV.
+ *
+ * This function will first attempt to find a node with the given host ID. If one is found, it will send a VDEV connection request to that node for the given VDEV ID.
+ *
+ * TODO Define what happens next.
+ *
+ * @param host_id The host ID of the node to connect to.
+ * @param vdev_id The VDEV ID to connect to.
+ * @return 0 on success, -1 if something went wrong.
+ */
+int gv_conn(uint64_t host_id, uint64_t vdev_id);

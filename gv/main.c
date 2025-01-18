@@ -22,7 +22,7 @@
 #include <sys/file.h>
 #include <sys/socket.h>
 
-// TODO Spawn new processes out of each connection instead of just threads.
+// TODO Spawn new processes out of each connection instead of just threads?
 
 int main(int argc, char* argv[]) {
 	int rv = EXIT_FAILURE;
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
 
 	// Start listening for connections.
 
-	if (listen(state.sock, 5) < 0) { // TODO What's the significance of 5 here? What's a sane default? Should this be configurable.
+	if (listen(state.sock, 5) < 0) { // What's a sane default for the backlog number? Should this be configurable?
 		fprintf(stderr, "listen: %s\n", strerror(errno));
 		goto err_listen;
 	}
