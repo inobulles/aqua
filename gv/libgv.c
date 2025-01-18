@@ -78,8 +78,14 @@ ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out) {
 		vdevs = realloc(vdevs, (vdev_count + header.vdev_count) * sizeof *vdevs);
 		assert(vdevs != NULL);
 		memcpy(vdevs + vdev_count, ent + sizeof header, vdevs_bytes);
-		vdev_count += header.vdev_count;
 
+		// Set the host ID of each reported VDEV to the host ID of the node.
+
+		for (size_t i = 0; i < header.vdev_count; i++) {
+			vdevs[vdev_count + i].host_id = header.host;
+		}
+
+		vdev_count += header.vdev_count;
 		free(ent);
 	}
 
