@@ -217,7 +217,9 @@ void kos_req_vdev(char const* spec) {
 	free(gv_vdevs);
 }
 
-static void conn_local(kos_cookie_t cookie, action_t* action) {
+static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
+	(void) sync; // This is always done synchronously.
+
 	// Look for the vdriver this 'vdev_id' is associated with.
 
 	for (size_t i = 0; i < vdriver_count; i++) {
@@ -242,12 +244,22 @@ static void conn_local(kos_cookie_t cookie, action_t* action) {
 	client_notif_cb(&notif, client_notif_data);
 }
 
-static void conn_gv(kos_cookie_t cookie, action_t* action) {
-	// TODO First, figure out which node we must connect to from the host ID.
-	// Then, we gotta attempt to establish a TCP connection to that node.
-	// The question is, do we push all VDEVs for a host through the same connection, or do we establish a new connection for each VDEV? -> the second option is the most natural one.
+static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
+	gv_vdev_conn_t conn;
+
+	if (gv_vdev_conn(&conn, action->conn.host_id, action->conn.vdev_id) < 0) {
+		goto fail;
+	}
+
+	// TODO Here we're going to wanna wait for the connection response if sync.
+	// If not, we should return straight away but I do need a way to tell libgv to call the callback when the connection is established (or when it receives other events for a VDEV).
+	// Since this is done in a VDEV connection thread, we're going to need some mutex for the callback, which can probably be created here in the KOS and passe on to libgv for each VDEV connection we make.
 
 	fprintf(stderr, "Connecting to GrapeVine VDEVs is not yet implemented.\n");
+
+	return;
+
+fail:;
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CONN_FAIL,
@@ -281,12 +293,15 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 	return cookie;
 }
 
-static void call(kos_cookie_t cookie, action_t* action) {
+static void call(kos_cookie_t cookie, action_t* action, bool sync) {
+	(void) sync; // This is always done synchronously.
+
 	vdriver_t const* const vdriver = action->call.vdriver;
 	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
 }
 
-static void call_fail(kos_cookie_t cookie, action_t* action) {
+static void call_fail(kos_cookie_t cookie, action_t* action, bool sync) {
+	(void) sync; // This is always done synchronously.
 	(void) action;
 
 	kos_notif_t const notif = {
@@ -360,12 +375,7 @@ void kos_flush(bool sync) {
 	while (action_queue_head != action_queue_tail) {
 		action_t action;
 		POP_QUEUE(action);
-		action.cb(action.cookie, &action);
-	}
-
-	// TODO Wait for the operations we started here to finish if sync is set.
-
-	if (sync) {
+		action.cb(action.cookie, &action, sync);
 	}
 }
 

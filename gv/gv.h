@@ -12,6 +12,14 @@
 #define GV_LOCK_PATH "/tmp/gv.lock"
 
 /**
+ * A VDEV connection object.
+ */
+typedef struct {
+	int sock;
+	pthread_t thread;
+} gv_vdev_conn_t;
+
+/**
  * Get all the VDEVs found by the GrapeVine daemon.
  *
  * This function reads the GrapeVine nodes file which should've been populated by the daemon for node entries and their reported VDEVs.
@@ -24,12 +32,13 @@ ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out);
 /**
  * Request a connection to a VDEV.
  *
- * This function will first attempt to find a node with the given host ID. If one is found, it will send a VDEV connection request to that node for the given VDEV ID.
+ * This function will first attempt to find a node with the given host ID. If one is found, it will send a VDEV connection request to that node for the given VDEV ID and initialize a new connection object.
  *
  * TODO Define what happens next.
  *
+ * @param conn The connection object to initialize.
  * @param host_id The host ID of the node to connect to.
  * @param vdev_id The VDEV ID to connect to.
  * @return 0 on success, -1 if something went wrong.
  */
-int gv_conn(uint64_t host_id, uint64_t vdev_id);
+int gv_vdev_conn(gv_vdev_conn_t* conn, uint64_t host_id, uint64_t vdev_id);

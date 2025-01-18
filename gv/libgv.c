@@ -115,11 +115,18 @@ done:
 	return vdev_count;
 }
 
-int gv_conn(uint64_t host_id, uint64_t vdev_id) {
+static void* vdev_conn_thread(void* arg) {
+	for (;;) {
+	}
+
+	return NULL;
+}
+
+int gv_conn(gv_vdev_conn_t* conn, uint64_t host_id, uint64_t vdev_id) {
 	// First, find the node with the host ID.
 
 	if (!is_gvd_running()) {
-		return 0;
+		return -1;
 	}
 
 	node_ent_t* found = NULL;
@@ -178,7 +185,8 @@ int gv_conn(uint64_t host_id, uint64_t vdev_id) {
 		return -1;
 	}
 
-	// TODO How do we handle the response? Who do we pass the socket on to? Probably don't wanna close this.
+	conn->sock = sock;
+	pthread_create(&conn->thread, NULL, vdev_conn_thread, conn);
 
 	return 0;
 }
