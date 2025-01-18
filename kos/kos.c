@@ -217,7 +217,7 @@ void kos_req_vdev(char const* spec) {
 	free(gv_vdevs);
 }
 
-static void conn(kos_cookie_t cookie, action_t* action) {
+static void conn_local(kos_cookie_t cookie, action_t* action) {
 	// Look for the vdriver this 'vdev_id' is associated with.
 
 	for (size_t i = 0; i < vdriver_count; i++) {
@@ -242,16 +242,29 @@ static void conn(kos_cookie_t cookie, action_t* action) {
 	client_notif_cb(&notif, client_notif_data);
 }
 
-kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
-	assert(host_id == local_host_id); // TODO Currently, only local VDEV's are supported.
+static void conn_gv(kos_cookie_t cookie, action_t* action) {
+	// TODO First, figure out which node we must connect to from the host ID.
+	// Then, we gotta attempt to establish a TCP connection to that node.
+	// The question is, do we push all VDEVs for a host through the same connection, or do we establish a new connection for each VDEV? -> the second option is the most natural one.
 
+	fprintf(stderr, "Connecting to GrapeVine VDEVs is not yet implemented.\n");
+
+	kos_notif_t notif = {
+		.kind = KOS_NOTIF_CONN_FAIL,
+		.cookie = cookie,
+	};
+
+	client_notif_cb(&notif, client_notif_data);
+}
+
+kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 	// Generate cookie and add action to queue.
 
 	kos_cookie_t const cookie = cookies++;
 
 	action_t const action = {
 		.cookie = cookie,
-		.cb = conn,
+		.cb = host_id == local_host_id ? conn_local : conn_gv,
 		.conn = {
 			.host_id = host_id,
 			.vdev_id = vdev_id,
