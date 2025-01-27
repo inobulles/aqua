@@ -5,10 +5,14 @@ import bob
 import bob.cargo
 
 let target = Cargo.build()
+let lib_path = target + "libwin.so"
+
+if Platform.os() == "Darwin" {
+	lib_path = target + "libwin.dylib"
+}
 
 install = {
-	# TODO libwin.so on non-macOS. Or maybe just have a hack in Bob to try to copy .dylib if .so not found?
-	target + "libwin.dylib": "lib/vdriver/aquabsd.black.win.vdriver",
+	lib_path: "lib/vdriver/aquabsd.black.win.vdriver",
 }
 
 run = none
