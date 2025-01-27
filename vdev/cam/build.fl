@@ -1,5 +1,5 @@
 # This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+# v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
 import bob
 
@@ -12,12 +12,16 @@ let obj = Cc([
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
-let vdriver = Linker([
-	"-shared", 
-	# TODO Some way to only do this on macOS in Bob (gonna need if statements in Flamingo and some kind of 'Os' class for this).
-	"-framework", "Foundation",
-	"-framework", "AVFoundation",
-]).link(obj)
+let linker_flags = ["-shared"]
+
+if Platform.os() == "Darwin" {
+	linker_flags = linker_flags + [
+		"-framework", "Foundation",
+		"-framework", "AVFoundation",
+	]
+}
+
+let vdriver = Linker(linker_flags).link(obj)
 
 install = {
 	vdriver: "lib/vdriver/aquabsd.black.cam.vdriver",
