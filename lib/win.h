@@ -20,9 +20,7 @@ typedef struct win_ctx_t* win_ctx_t;
 typedef struct win_t* win_t;
 
 /**
- * Initialize the window driver.
- *
- * This requests the window VDEV from the KOS. It should be called once at the beginning of the program to signal to the KOS that we want to request and receive attach notifications from window VDEVs.
+ * Initialize the window library component.
  *
  * @param ctx The AQUA library context.
  * @return The window library component handle.
@@ -32,11 +30,7 @@ aqua_component_t win_init(aqua_ctx_t ctx);
 /**
  * Connect to a window VDEV.
  *
- * Once we've chosen the attached window VDEV we'd like to connect to and we've called `win_probe` on it to ensure it is supported, this function may be called to create a library component context and connect to it.
- *
- * Since the caller probably wants to store the context before it gets a connection notification, this function doesn't flush the KOS. Instead, the caller must do this through `kos_flush(true)` after calling this function.
- *
- * `win_disconn` must be called to disconnect from the VDEV and to free the context.
+ * {@link win_disconn} must be called to disconnect from the VDEV and to free the context.
  *
  * @param vdev The descriptor of the window VDEV to connect to.
  * @return The window library component context or `NULL` if allocation failed.
