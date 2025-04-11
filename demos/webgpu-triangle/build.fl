@@ -16,7 +16,7 @@ let obj = Cc([
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
-let cmd = Linker(["-L/usr/local/lib", "-laqua", "-laqua_aqua", "-laqua_win"]).link(obj)
+let cmd = Linker(["-L/usr/local/lib", "-laqua", "-laqua_aqua", "-laqua_win", "-laqua_wgpu"]).link(obj)
 
 install = {
 	cmd: "bin/aqua-webgpu-triangle",

@@ -5,6 +5,7 @@
 // #include <aqua/win.h>
 
 #include "../../lib/aqua.h"
+#include "../../lib/wgpu.h"
 #include "../../lib/win.h"
 
 #include <assert.h>
@@ -44,6 +45,28 @@ int main(void) {
 	printf("Using window VDEV %s\n", (char*) vdev->human);
 	win_ctx_t const win_ctx = win_conn(vdev);
 
+	// Setup WebGPU library component.
+
+	aqua_component_t const wgpu_comp = wgpu_init(ctx);
+
+	// Get the first WebGPU VDEV and create library component context from that.
+	// TODO Maybe I should have a simple function to do this for me automatically? I.e. init + find best VDEV + connection. Maybe even roll in aqua_init somehow.
+
+	vdev = NULL;
+
+	for (aqua_vdev_it_t it = aqua_vdev_it(wgpu_comp); it.vdev != NULL; aqua_vdev_it_next(&it)) {
+		vdev = it.vdev;
+		break;
+	}
+
+	if (vdev == NULL) {
+		fprintf(stderr, "No WebGPU VDEV found\n");
+		return EXIT_FAILURE;
+	}
+
+	printf("Using WebGPU VDEV %s\n", (char*) vdev->human);
+	wgpu_ctx_t const wgpu_ctx = wgpu_conn(vdev);
+
 	// Create window and loop it.
 
 	win_t const win = win_create(win_ctx);
@@ -55,6 +78,11 @@ int main(void) {
 
 	win_loop(win);
 	win_destroy(win);
+
+	// Disconnect from VDEVs.
+
+	win_disconn(win_ctx);
+	wgpu_disconn(wgpu_ctx);
 
 	return EXIT_SUCCESS;
 }
