@@ -36,6 +36,10 @@ static void probe(void) {
 			.vers = VERS,
 			.human = "WebGPU GPU", // TODO Should we get the actual GPU's name here?
 			.vdriver_human = VDRIVER_HUMAN,
+
+			.pref = 0,
+			.host_id = 0,
+			.vdev_id = only_vid,
 		},
 	};
 
