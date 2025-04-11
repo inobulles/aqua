@@ -88,6 +88,7 @@ impl Win {
 				VDRIVER.notif_cb.unwrap()(
 					&kos_notif_t {
 						kind: kos_notif_kind_t_KOS_NOTIF_INTERRUPT,
+						conn_id: 0,
 						cookie: 0,
 						__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 							interrupt: kos_notif_t__bindgen_ty_1__bindgen_ty_7 {
@@ -297,6 +298,7 @@ unsafe extern "C" fn probe() {
 	VDRIVER.notif_cb.unwrap()(
 		&kos_notif_t {
 			kind: kos_notif_kind_t_KOS_NOTIF_ATTACH,
+			conn_id: 0,
 			cookie: 0,
 			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 				attach: kos_notif_t__bindgen_ty_1__bindgen_ty_1 {
@@ -328,6 +330,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 		VDRIVER.notif_cb.unwrap()(
 			&kos_notif_t {
 				kind: kos_notif_kind_t_KOS_NOTIF_CONN_FAIL,
+				conn_id: 0,
 				cookie,
 				__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 					conn_fail: kos_notif_t__bindgen_ty_1__bindgen_ty_3 {},
@@ -359,10 +362,10 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 	VDRIVER.notif_cb.unwrap()(
 		&kos_notif_t {
 			kind: kos_notif_kind_t_KOS_NOTIF_CONN,
+			conn_id,
 			cookie,
 			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 				conn: kos_notif_t__bindgen_ty_1__bindgen_ty_4 {
-					conn_id,
 					const_count: CONSTS.len() as u32,
 					consts: CONSTS
 						.iter()
@@ -401,13 +404,14 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn call(cookie: u64, _conn_id: u64, fn_id: u64, args: *const kos_val_t) {
+unsafe extern "C" fn call(cookie: u64, conn_id: u64, fn_id: u64, args: *const kos_val_t) {
 	assert!(VDRIVER.notif_cb.is_some());
 	let ret = (FNS[fn_id as usize].cb)(args);
 
 	VDRIVER.notif_cb.unwrap()(
 		&kos_notif_t {
 			kind: kos_notif_kind_t_KOS_NOTIF_CALL_RET,
+			conn_id,
 			cookie,
 			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
 				call_ret: kos_notif_t__bindgen_ty_1__bindgen_ty_6 {

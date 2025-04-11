@@ -58,9 +58,9 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 
 	kos_notif_t const notif = {
 		.kind = KOS_NOTIF_CONN,
+		.conn_id = conn_id,
 		.cookie = cookie,
 		.conn = {
-			.conn_id = conn_id,
 			.fn_count = sizeof(FNS) / sizeof(*FNS),
 			.fns = FNS,
 		},
@@ -76,6 +76,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CALL_RET,
+		.conn_id = conn_id,
 		.cookie = cookie,
 	};
 
