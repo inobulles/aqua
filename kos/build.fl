@@ -3,12 +3,6 @@
 
 import bob
 
-deps = [
-	Dep.local("../gv"),
-]
-
-# TODO Put this all in a 'src' directory.
-
 let src = Fs.list(".").where(|path| path.endswith(".c"))
 
 let obj = Cc([
@@ -19,7 +13,7 @@ let obj = Cc([
 
 # TODO 'aqua' command ofc.
 
-let lib = Linker(["-L/usr/local/lib", "-shared", "-lgv"]).link(obj)
+let lib = Linker(["-L/usr/local/lib", "-shared"]).link(obj)
 
 install = {
 	lib: "lib/libaqua.so",

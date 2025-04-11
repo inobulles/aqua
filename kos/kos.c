@@ -2,10 +2,11 @@
 // v. 1.0. Copyright (c) 2024 Aymeric Wibo
 
 #include "kos.h"
-#include "../gv/gv.h"
 #include "action.h"
 #include "conn.h"
 #include "vdev.h"
+
+#include "../gv/gv.h" // TODO NO!
 
 #include <assert.h>
 #include <inttypes.h>
@@ -44,7 +45,7 @@ kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t*
 	descr->best_api_vers = KOS_API_V4;
 	strcpy((char*) descr->name, "Generic Unix-like system's KOS");
 
-	local_host_id = KOS_LOCAL_HOST_ID;
+	local_host_id = 0; // TODO This should be the actual ID that we're gonna advertise on the GV.
 
 	return descr->api_vers;
 }
@@ -62,8 +63,8 @@ static kos_vdriver_t* vdrivers = NULL;
 static void notif_cb(kos_notif_t const* notif, void* data) {
 	switch (notif->kind) {
 	case KOS_NOTIF_CONN:
-		assert(notif->conn.conn_id < conn_count);
-		conn_t* const conn = &conns[notif->conn.conn_id];
+		assert(notif->conn_id < conn_count);
+		conn_t* const conn = &conns[notif->conn_id];
 
 		conn->alive = true;
 		conn->fn_count = notif->conn.fn_count;
@@ -245,11 +246,14 @@ static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
 }
 
 static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
-	gv_vdev_conn_t conn;
+	(void) action; // TODO
+	(void) sync;   // TODO
 
-	if (gv_vdev_conn(&conn, action->conn.host_id, action->conn.vdev_id) < 0) {
-		goto fail;
-	}
+	// gv_vdev_conn_t conn;
+
+	// if (gv_vdev_conn(&conn, action->conn.host_id, action->conn.vdev_id) < 0) {
+	// 	goto fail;
+	// }
 
 	// TODO Here we're going to wanna wait for the connection response if sync.
 	// If not, we should return straight away but I do need a way to tell libgv to call the callback when the connection is established (or when it receives other events for a VDEV).
@@ -259,7 +263,7 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	return;
 
-fail:;
+	// fail:;
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CONN_FAIL,
