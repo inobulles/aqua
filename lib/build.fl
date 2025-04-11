@@ -12,10 +12,13 @@ let flags = [
 	"-Wall", "-Wextra", "-Werror",
 ]
 
-let libs = ["win"]
+let libs = ["aqua", "win"]
 
 # TODO I would like to be able to Fs.list() to get all the libraries here, and individually link them and add their headers/so/archives to the install map.
 # This requires for loops in Flamingo though.
+
+# TODO Should I even build the archives? If I kept everything always shared, then I could use ctors/dtors for the root part.
+# TODO Also, should find a better name so we don't have -laqua and -laqua_aqua (-laqua_root?).
 
 let i = 0
 install = {}
@@ -26,5 +29,13 @@ let obj = Cc(flags).compile([name + ".c"])
 install[name + ".h"] = "include/aqua/" + name + ".h"
 install[Linker([]).archive(obj)] = "lib/libaqua_" + name + ".a"
 install[Linker(["-laqua", "-shared"]).link(obj)] = "lib/libaqua_" + name + ".so"
+
+i = 1
+name = libs[i]
+obj = Cc(flags).compile([name + ".c"])
+
+install[name + ".h"] = "include/aqua/" + name + ".h"
+install[Linker([]).archive(obj)] = "lib/libaqua_" + name + ".a"
+install[Linker(["-laqua", "-laqua_aqua", "-shared"]).link(obj)] = "lib/libaqua_" + name + ".so"
 
 run = none
