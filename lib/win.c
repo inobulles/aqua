@@ -6,6 +6,7 @@
 
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"
+#include "win_internal.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -38,12 +39,6 @@ struct win_ctx_t {
 
 	bool last_success;
 	kos_val_t last_ret;
-	kos_ino_t ino;
-};
-
-struct win_t {
-	win_ctx_t ctx;
-	void* opaque_ptr;
 	kos_ino_t ino;
 };
 
