@@ -13,6 +13,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct {
+	wgpu_ctx_t wgpu_ctx;
+	WGPUInstance instance;
+	WGPUSurface surface;
+} state_t;
+
+static void redraw(win_t win, void* data) {
+	state_t* const state = data;
+
+	if (state->surface == NULL) {
+		state->surface = wgpu_surface_from_win(state->wgpu_ctx, state->instance, win);
+		printf("WebGPU surface created: %p\n", state->surface);
+	}
+}
+
 int main(void) {
 	aqua_ctx_t const ctx = aqua_init();
 
@@ -67,7 +82,7 @@ int main(void) {
 	printf("Using WebGPU VDEV %s\n", (char*) vdev->human);
 	wgpu_ctx_t const wgpu_ctx = wgpu_conn(vdev);
 
-	// Create window and loop it.
+	// Create window.
 
 	win_t const win = win_create(win_ctx);
 
@@ -76,6 +91,20 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+	// Set up WebGPU stuff.
+
+	state_t state = {
+		.wgpu_ctx = wgpu_ctx,
+	};
+
+	WGPUInstanceDescriptor const create_instance_descr = {};
+	state.instance = aqua_wgpuCreateInstance(wgpu_ctx, &create_instance_descr);
+
+	printf("WebGPU instance created: %p\n", state.instance);
+
+	// Loop the window.
+
+	win_register_redraw_cb(win, redraw, &state);
 	win_loop(win);
 	win_destroy(win);
 
