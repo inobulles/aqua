@@ -8,16 +8,12 @@ deps = [
 	Dep.git("https://github.com/obiwac/wgpu-native", "meson"),
 ]
 
-let src = ["main.c", "apple.m"]
-
-let obj = Cc([
-	"-std=c11",
-	"-Wall", "-Wextra", "-Werror",
-]).compile(src)
-
+let src = ["main.c"]
 let linker_flags = ["-shared", "-lwgpu_native"]
 
 if Platform.os() == "Darwin" {
+	src = src + ["apple.m"]
+
 	linker_flags = linker_flags + [
 		"-framework", "AppKit",
 		"-framework", "CoreFoundation",
@@ -25,6 +21,11 @@ if Platform.os() == "Darwin" {
 		"-framework", "QuartzCore",
 	]
 }
+
+let obj = Cc([
+	"-std=c11",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(src)
 
 let vdriver = Linker(linker_flags).link(obj)
 
