@@ -20,6 +20,14 @@ typedef struct win_ctx_t* win_ctx_t;
 typedef struct win_t* win_t;
 
 /**
+ * Window redraw event callback.
+ *
+ * @param win The window object.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link win_register_redraw_cb}.
+ */
+typedef void (*win_redraw_cb_t)(win_t win, void* data);
+
+/**
  * Initialize the window library component.
  *
  * @param ctx The AQUA library context.
@@ -62,6 +70,16 @@ win_t win_create(win_ctx_t ctx);
  * @param win The window to destroy.
  */
 void win_destroy(win_t win);
+
+/**
+ * Register a redraw callback.
+ *
+ * These will be called when the window needs to be redrawn, only once the window's loop has been entered (see {@link win_loop}).
+ *
+ * @param win The window to register the callback for.
+ * @param cb The callback to register.
+ */
+void win_register_redraw_cb(win_t win, win_redraw_cb_t cb, void* data);
 
 /**
  * Enter the window event loop.

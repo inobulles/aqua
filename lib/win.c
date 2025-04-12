@@ -213,6 +213,15 @@ static void notif_call_ret(kos_notif_t const* notif, void* data) {
 	ctx->last_ret = notif->call_ret.ret;
 }
 
+static void notif_call_fail(kos_notif_t const* notif, void* data) {
+	win_ctx_t const ctx = data;
+	ctx->last_success = false;
+
+	(void) notif;
+
+	fprintf(stderr, "TODO Call failed, but how do we handle this?\n");
+}
+
 // Actual function implementations.
 
 win_t win_create(win_ctx_t ctx) {
@@ -277,13 +286,9 @@ void win_destroy(win_t win) {
 	free(win);
 }
 
-static void notif_call_fail(kos_notif_t const* notif, void* data) {
-	win_ctx_t const ctx = data;
-	ctx->last_success = false;
-
-	(void) notif;
-
-	fprintf(stderr, "TODO Call failed, but how do we handle this?\n");
+void win_register_redraw_cb(win_t win, win_redraw_cb_t cb, void* data) {
+	win->redraw = cb;
+	win->redraw_data = data;
 }
 
 void win_loop(win_t win) {
@@ -334,7 +339,9 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 	}
 
 	if (intr->type == ctx->consts.INTR_REDRAW) {
-		// TODO Redraw.
+		if (win->redraw != NULL) {
+			win->redraw(win, win->redraw_data);
+		}
 	}
 
 	if (intr->type == ctx->consts.INTR_RESIZE) {
