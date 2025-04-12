@@ -4,6 +4,7 @@
 #pragma once
 
 #include "aqua.h"
+#include "win.h"
 
 #include <aqua/kos.h>
 
@@ -38,3 +39,7 @@ wgpu_ctx_t wgpu_conn(kos_vdev_descr_t const* vdev);
  * @param ctx The WebGPU library component context.
  */
 void wgpu_disconn(wgpu_ctx_t ctx);
+
+#include "../vdev/wgpu/.bob/prefix/include/webgpu-headers/webgpu.h" // TODO
+WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t win);
+WGPUInstance aqua_wgpuCreateInstance(wgpu_ctx_t ctx, WGPUInstanceDescriptor const* descriptor);
