@@ -7,8 +7,12 @@ static kos_fn_t const FNS[] = {
 	{
 		.name = "surface_from_win",
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
-		.param_count = 1,
+		.param_count = 2,
 		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "instance",
+			},
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "win",

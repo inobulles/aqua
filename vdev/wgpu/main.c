@@ -1,18 +1,15 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 #include "../../kos/vdev.h"
 #include "../win/win.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include ".bob/prefix/include/webgpu-headers/webgpu.h"
-
-#if defined(__APPLE__) && defined(__OBJC__)
-# include <Cocoa/Cocoa.h>
-# include <QuartzCore/CAMetalLayer.h>
-#endif
+#include "apple.h"
 
 #define SPEC "aquabsd.black.wgpu"
 #define VERS 0
@@ -133,18 +130,8 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 			break;
 		case AQUA_WIN_KIND_APPKIT:;
-#if defined(__APPLE__) && defined(__OBJC__)
-			NSView* const view = win->detai.appkit.ns_view;
-			[view setWantsLayer:YES];
-			CAMetalLayer* const layer = [CAMetalLayer layer];
-			[view setLayer:layer];
-
-			WGPUSurfaceDescriptorFromMetalLayer const descr_from_metal = {
-				.chain = (WGPUChainedStruct const) {
-					.sType = WGPUSType_SurfaceDescriptorFromMetalLayer,
-				},
-				.layer = layer,
-			};
+#if defined(__APPLE__)
+			WGPUSurfaceDescriptorFromMetalLayer const descr_from_metal = wgpu_get_surface_descriptor_from_metal_layer(win);
 
 			descr.nextInChain = (void*) &descr_from_metal;
 			surf = wgpuInstanceCreateSurface(inst, &descr);
@@ -155,7 +142,8 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 			break;
 		case AQUA_WIN_KIND_NONE:
 		default:
-			assert(false);
+			fprintf(stderr, "Unsupported window kind: %d. This can happen if you are trying to create a surface from a window whose main loop has not yet started.\n", win->kind);
+			return;
 		}
 
 		assert(surf != NULL);
