@@ -28,6 +28,16 @@ typedef struct win_t* win_t;
 typedef void (*win_redraw_cb_t)(win_t win, void* data);
 
 /**
+ * Window resize event callback.
+ *
+ * @param win The window object.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link win_register_resize_cb}.
+ * @param x_res The new X resolution of the window (aka width).
+ * @param y_res The new Y resolution of the window (aka height).
+ */
+typedef void (*win_resize_cb_t)(win_t win, void* data, uint32_t res_x, uint32_t res_y);
+
+/**
  * Initialize the window library component.
  *
  * @param ctx The AQUA library context.
@@ -78,8 +88,20 @@ void win_destroy(win_t win);
  *
  * @param win The window to register the callback for.
  * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
  */
 void win_register_redraw_cb(win_t win, win_redraw_cb_t cb, void* data);
+
+/**
+ * Register a resize callback.
+ *
+ * These will be called when the window needs to be resized, only once the window's loop has been entered (see {@link win_loop}).
+ *
+ * @param win The window to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void win_register_resize_cb(win_t win, win_resize_cb_t cb, void* data);
 
 /**
  * Enter the window event loop.

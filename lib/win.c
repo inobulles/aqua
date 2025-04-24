@@ -286,6 +286,11 @@ void win_register_redraw_cb(win_t win, win_redraw_cb_t cb, void* data) {
 	win->redraw_data = data;
 }
 
+void win_register_resize_cb(win_t win, win_resize_cb_t cb, void* data) {
+	win->resize = cb;
+	win->resize_data = data;
+}
+
 void win_loop(win_t win) {
 	win_ctx_t const ctx = win->ctx;
 
@@ -346,7 +351,9 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 			return;
 		}
 
-		printf("TODO Resize: %u x %u\n", resize->x_res, resize->y_res);
+		if (win->resize != NULL) {
+			win->resize(win, win->resize_data, resize->x_res, resize->y_res);
+		}
 	}
 }
 

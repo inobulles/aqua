@@ -16,4 +16,7 @@ struct win_t {
 
 	void* redraw_data;
 	win_redraw_cb_t redraw;
+
+	void* resize_data;
+	win_resize_cb_t resize;
 };
