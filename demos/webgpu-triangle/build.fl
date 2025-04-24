@@ -1,13 +1,11 @@
-# This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
 
 import bob
 
 deps = [
 	Dep.local("../.."),
 ]
-
-# TODO Put this all in a 'src' directory.
 
 let src = ["main.c"]
 
@@ -16,7 +14,9 @@ let obj = Cc([
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
-let cmd = Linker(["-L/usr/local/lib", "-laqua", "-laqua_aqua", "-laqua_win", "-laqua_wgpu"]).link(obj)
+let cmd = Linker([
+	"-L/usr/local/lib", "-laqua", "-laqua_aqua", "-laqua_win", "-laqua_wgpu"
+]).link(obj)
 
 install = {
 	cmd: "bin/aqua-webgpu-triangle",

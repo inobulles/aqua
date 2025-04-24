@@ -67,8 +67,11 @@ typedef struct {
 	WGPUDevice device;
 	WGPUShaderModule shader;
 	WGPUQueue queue;
+	WGPUSurfaceCapabilities caps;
+	WGPUCompositeAlphaMode alpha_mode;
 	WGPURenderPipeline render_pipeline;
 	WGPUSurfaceConfiguration config;
+	bool configured;
 } state_t;
 
 static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* msg, void* data) {
@@ -169,24 +172,23 @@ static int setup_surface(state_t* state, win_t win) {
 
 	// Get surface capabilities.
 
-	WGPUSurfaceCapabilities caps = {};
-	aqua_wgpuSurfaceGetCapabilities(state->wgpu_ctx, state->surface, state->adapter, &caps);
+	aqua_wgpuSurfaceGetCapabilities(state->wgpu_ctx, state->surface, state->adapter, &state->caps);
 
 	printf("Surface formats:");
 
-	for (size_t i = 0; i < caps.formatCount; ++i) {
-		printf(" %u", caps.formats[i]);
+	for (size_t i = 0; i < state->caps.formatCount; ++i) {
+		printf(" %u", state->caps.formats[i]);
 	}
 
 	printf("\n");
 
-	WGPUCompositeAlphaMode alpha_mode = caps.alphaModes[0];
+	state->alpha_mode = state->caps.alphaModes[0];
 
 	bool has_unpremulitplied = false;
 	bool has_premultiplied = false;
 
-	for (size_t i = 0; i < caps.alphaModeCount; ++i) {
-		switch (caps.alphaModes[i]) {
+	for (size_t i = 0; i < state->caps.alphaModeCount; ++i) {
+		switch (state->caps.alphaModes[i]) {
 		case WGPUCompositeAlphaMode_Unpremultiplied:
 			has_unpremulitplied = true;
 			break;
@@ -199,12 +201,14 @@ static int setup_surface(state_t* state, win_t win) {
 	}
 
 	if (has_premultiplied) {
-		alpha_mode = WGPUCompositeAlphaMode_Premultiplied;
+		state->alpha_mode = WGPUCompositeAlphaMode_Premultiplied;
 	}
 
 	else if (has_unpremulitplied) {
-		alpha_mode = WGPUCompositeAlphaMode_Unpremultiplied;
+		state->alpha_mode = WGPUCompositeAlphaMode_Unpremultiplied;
 	}
+
+	printf("Chose alpha mode %u\n", state->alpha_mode);
 
 	// Create pipeline layout.
 
@@ -228,7 +232,7 @@ static int setup_surface(state_t* state, win_t win) {
 
 	WGPUColorTargetState const target_states[] = {
 		{
-			.format = caps.formats[0],
+			.format = state->caps.formats[0],
 			.writeMask = WGPUColorWriteMask_All,
 		}
 	};
@@ -264,19 +268,6 @@ static int setup_surface(state_t* state, win_t win) {
 		fprintf(stderr, "Failed to create render pipeline\n");
 		goto err_render_pipeline;
 	}
-
-	// Configure surface.
-	// TODO Reconfigure on resize.
-
-	state->config.device = state->device;
-	state->config.usage = WGPUTextureUsage_RenderAttachment;
-	state->config.format = caps.formats[0];
-	state->config.presentMode = WGPUPresentMode_Fifo;
-	state->config.alphaMode = alpha_mode;
-	state->config.width = 1600; // TODO
-	state->config.height = 1200;
-
-	aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
 
 	return 0;
 
@@ -318,6 +309,10 @@ static void redraw(win_t win, void* data) {
 	}
 
 	// Actually render.
+
+	if (!state->configured) {
+		return;
+	}
 
 	WGPUSurfaceTexture surface_texture;
 	aqua_wgpuSurfaceGetCurrentTexture(state->wgpu_ctx, state->surface, &surface_texture);
@@ -406,6 +401,26 @@ static void redraw(win_t win, void* data) {
 	aqua_wgpuTextureRelease(state->wgpu_ctx, surface_texture.texture);
 }
 
+static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
+	state_t* const state = data;
+	(void) win;
+
+	printf("Resizing to %ux%u\n", x_res, y_res);
+
+	// Reconfigure surface.
+
+	state->config.device = state->device;
+	state->config.usage = WGPUTextureUsage_RenderAttachment;
+	state->config.format = state->caps.formats[0];
+	state->config.presentMode = WGPUPresentMode_Fifo;
+	state->config.alphaMode = state->alpha_mode;
+	state->config.width = x_res;
+	state->config.height = y_res;
+
+	aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
+	state->configured = true;
+}
+
 int main(void) {
 	int rv = EXIT_FAILURE;
 	aqua_ctx_t const ctx = aqua_init();
@@ -487,6 +502,8 @@ int main(void) {
 	// Loop the window.
 
 	win_register_redraw_cb(win, redraw, &state);
+	win_register_resize_cb(win, resize, &state);
+
 	win_loop(win);
 
 	// Success!
