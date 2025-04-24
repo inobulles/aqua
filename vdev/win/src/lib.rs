@@ -107,7 +107,10 @@ impl Win {
 
 impl ApplicationHandler for Win {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-		let attrs = Window::default_attributes().with_title(format!("Untitled ({VDEV_HUMAN})"));
+		let attrs = Window::default_attributes()
+			.with_blur(true)
+			.with_transparent(true)
+			.with_title(format!("Untitled ({VDEV_HUMAN})"));
 
 		self.window = Some(event_loop.create_window(attrs).unwrap());
 
