@@ -26,6 +26,7 @@ struct wgpu_ctx_t {
 
 	struct {
 		uint32_t surface_from_win;
+		// clang-format off
 // FN_IDS:BEGIN
 		uint32_t wgpuCreateInstance;
 		uint32_t wgpuGetProcAddress;
@@ -209,6 +210,7 @@ struct wgpu_ctx_t {
 		uint32_t wgpuTextureViewReference;
 		uint32_t wgpuTextureViewRelease;
 // FN_IDS:END
+		// clang-format on
 	} fns;
 
 	bool last_success;
@@ -336,6 +338,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			ctx->fns.surface_from_win = i;
 		}
 
+		// clang-format off
 // FN_VALIDATORS:BEGIN
 		if (
 			strcmp(name, "wgpuCreateInstance") == 0 &&
@@ -2545,6 +2548,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			ctx->fns.wgpuTextureViewRelease = i;
 		}
 // FN_VALIDATORS:END
+		// clang-format on
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -2592,6 +2596,7 @@ static component_t comp = {
 	.vdevs = NULL,
 };
 
+// clang-format off
 // FNS:BEGIN
 WGPUInstance aqua_wgpuCreateInstance(wgpu_ctx_t ctx, WGPU_NULLABLE WGPUInstanceDescriptor const * descriptor) {
 	kos_val_t const args[] = {
@@ -5485,3 +5490,4 @@ void aqua_wgpuTextureViewRelease(wgpu_ctx_t ctx, WGPUTextureView textureView) {
 	
 }
 // FNS:END
+// clang-format on

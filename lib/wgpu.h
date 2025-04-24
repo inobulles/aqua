@@ -44,6 +44,7 @@ void wgpu_disconn(wgpu_ctx_t ctx);
 
 WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t win);
 
+// clang-format off
 // PROTOS:BEGIN
 WGPUInstance aqua_wgpuCreateInstance(wgpu_ctx_t ctx, WGPU_NULLABLE WGPUInstanceDescriptor const * descriptor);
 WGPUProc aqua_wgpuGetProcAddress(wgpu_ctx_t ctx, WGPUDevice device, char const * procName);
@@ -227,3 +228,4 @@ void aqua_wgpuTextureViewSetLabel(wgpu_ctx_t ctx, WGPUTextureView textureView, c
 void aqua_wgpuTextureViewReference(wgpu_ctx_t ctx, WGPUTextureView textureView);
 void aqua_wgpuTextureViewRelease(wgpu_ctx_t ctx, WGPUTextureView textureView);
 // PROTOS:END
+// clang-format on
