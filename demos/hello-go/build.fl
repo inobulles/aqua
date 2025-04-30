@@ -1,0 +1,17 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+import bob.go
+
+deps = [
+	Dep.local("../../lib/bindings/go"),
+]
+
+let bin = Go.build()
+
+install = {
+	bin: "bin/hello-go",
+}
+
+run = ["hello-go"]
