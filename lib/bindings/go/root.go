@@ -23,6 +23,12 @@ type VdevIter struct {
 	it C.aqua_vdev_it_t
 }
 
+type KosDescr struct {
+	Api_vers      uint64
+	Best_api_vers uint64
+	Name          string
+}
+
 func Init() *Context {
 	ctx := C.aqua_init()
 
@@ -33,8 +39,14 @@ func Init() *Context {
 	return &Context{ctx: ctx}
 }
 
-func (c *Context) GetKosDescr() unsafe.Pointer {
-	return unsafe.Pointer(C.aqua_get_kos_descr(c.ctx))
+func (c *Context) GetKosDescr() KosDescr {
+	descr := C.aqua_get_kos_descr(c.ctx)
+
+	return KosDescr{
+		Api_vers:      uint64(descr.api_vers),
+		Best_api_vers: uint64(descr.best_api_vers),
+		Name:          C.GoString((*C.char)(unsafe.Pointer(&descr.name[0]))),
+	}
 }
 
 func (c *Component) NewVdevIter() *VdevIter {
