@@ -16,5 +16,5 @@ func main() {
 
 	descr := ctx.GetKosDescr()
 
-	fmt.Printf("AQUA context initialized successfully: KOS v%d, %s\n", descr.Api_vers, descr.Name)
+	fmt.Printf("AQUA context initialized successfully: KOS v%d, %s\n", descr.ApiVers, descr.Name)
 }
