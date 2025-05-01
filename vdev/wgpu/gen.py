@@ -28,6 +28,18 @@ with open(".bob/prefix/include/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
 
 
+def is_buf_struct(t):
+	if t.endswith("CallbackInfo"):
+		return True
+
+	return t in (
+		"WGPUAdapterInfo",
+		"WGPUSupportedFeatures",
+		"WGPUSupportedWGSLLanguageFeatures",
+		"WGPUSurfaceCapabilities",
+	)
+
+
 def wgpu_type_to_kos(t: str):
 	KNOWN = {
 		"void": "KOS_TYPE_VOID",
@@ -38,6 +50,8 @@ def wgpu_type_to_kos(t: str):
 		"float": "KOS_TYPE_F32",
 		"WGPUBool": "KOS_TYPE_BOOL",
 		"WGPUMapMode": "KOS_TYPE_U64",
+		"WGPUBufferUsage": "KOS_TYPE_U64",
+		"WGPUTextureUsage": "KOS_TYPE_U64",
 		"void const *": "KOS_TYPE_OPAQUE_PTR",
 		"void *": "KOS_TYPE_OPAQUE_PTR",
 	}
@@ -47,11 +61,7 @@ def wgpu_type_to_kos(t: str):
 
 	# TODO Since some of these structs can have pointers to other stuff in them and thus can't be serialized/deserialized (which a buf normally has to be), should this not be a ptr instead?
 
-	if (
-		t[-1] == "*"
-		or t.endswith("CallbackInfo")
-		or t in ("WGPUAdapaterInfo", "WGPUSupportedFeatures", "WGPUSupportedWGSLLanguageFeatures")
-	):
+	if t[-1] == "*" or is_buf_struct(t):
 		return "KOS_TYPE_BUF"
 
 	if t in enums:
@@ -232,8 +242,11 @@ for line in lines:
 		t = param_types[i]
 		kos_t = wgpu_type_to_kos(t)
 
-		if t in ("WGPUSurfaceCapabilities", "WGPUAdapterInfo"):
+		if is_buf_struct(t):
 			args.append(f".buf.size = sizeof {p},\n\t\t\t.buf.ptr = &{p},")
+
+		elif t == "WGPUStringView":
+			args.append(f".buf.size = {p}.length,\n\t\t\t.buf.ptr = (void*) {p}.data,")
 
 		elif kos_t == "KOS_TYPE_BUF":
 			args.append(f".buf.size = sizeof *{p},\n\t\t\t.buf.ptr = (void*) {p},")
@@ -249,6 +262,12 @@ for line in lines:
 
 	if kos_ret_type == "KOS_TYPE_VOID":
 		ret = ""
+
+	elif ret_type == "WGPUFuture":
+		ret = f"\n\treturn (WGPUFuture) {{ .id = ctx->last_ret.u64 }};"
+
+	elif ret_type == "WGPUAdapterInfo":
+		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;"
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
 		ret = f"\n\treturn ctx->last_ret.opaque_ptr;"

@@ -298,7 +298,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 23: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
-		notif.call_ret.ret.opaque_ptr = (void*) wgpuBufferGetUsage(buffer);
+		notif.call_ret.ret.u64 = wgpuBufferGetUsage(buffer);
 		break;
 	}
 	case 24: {
@@ -1396,7 +1396,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 181: {
 		WGPUTexture const texture = args[0].opaque_ptr;
-		notif.call_ret.ret.opaque_ptr = (void*) wgpuTextureGetUsage(texture);
+		notif.call_ret.ret.u64 = wgpuTextureGetUsage(texture);
 		break;
 	}
 	case 182: {

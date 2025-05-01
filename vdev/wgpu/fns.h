@@ -165,7 +165,7 @@ static kos_fn_t const FNS[] = {
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
+				.type = KOS_TYPE_BUF,
 				.name = "adapterInfo",
 			},
 		},
@@ -317,7 +317,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuBufferGetUsage",
-		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
@@ -1190,7 +1190,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuDeviceGetAdapterInfo",
-		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.ret_type = KOS_TYPE_BUF,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
@@ -2676,7 +2676,7 @@ static kos_fn_t const FNS[] = {
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
+				.type = KOS_TYPE_BUF,
 				.name = "surfaceCapabilities",
 			},
 		},
@@ -2775,7 +2775,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuTextureGetUsage",
-		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
