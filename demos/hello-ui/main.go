@@ -10,23 +10,48 @@ func main() {
 	ctx := aqua.Init()
 
 	if ctx == nil {
-		fmt.Println("Failed to initialize AQUA context")
-		return
+		panic("Failed to initialize AQUA context.")
 	}
 
 	descr := ctx.GetKosDescr()
-	fmt.Printf("AQUA context initialized successfully: KOS v%d, %s\n", descr.ApiVers, descr.Name)
+	fmt.Printf("AQUA context initialized successfully: KOS v%d, %s.\n", descr.ApiVers, descr.Name)
 
-	comp := ctx.UiInit()
-	iter := comp.NewVdevIter()
+	// Get window VDEV.
 
-	for {
-		vdev := iter.Next()
+	win_comp := ctx.WinInit()
+	iter := win_comp.NewVdevIter()
 
-		if vdev == nil {
-			break
-		}
+	var found *aqua.VdevDescr
 
-		fmt.Printf("Found vdev: %s (\"%s\", from \"%s\")\n", vdev.Spec, vdev.Human, vdev.VdriverHuman)
+	for vdev := iter.Next(); vdev != nil; vdev = iter.Next() {
+		fmt.Printf("Found window VDEV: %s (\"%s\", from \"%s\").\n", vdev.Spec, vdev.Human, vdev.VdriverHuman)
+		found = vdev
 	}
+
+	if found == nil {
+		panic("No window VDEV found.")
+	}
+
+	win_ctx := win_comp.Conn(found)
+
+	// Get UI VDEV.
+
+	ui_comp := ctx.UiInit()
+	iter = ui_comp.NewVdevIter()
+
+	found = nil
+
+	for vdev := iter.Next(); vdev != nil; vdev = iter.Next() {
+		fmt.Printf("Found UI VDEV: %s (\"%s\", from \"%s\").\n", vdev.Spec, vdev.Human, vdev.VdriverHuman)
+		found = vdev
+	}
+
+	if found == nil {
+		panic("No UI VDEV found.")
+	}
+
+	// Create window.
+
+	win := win_ctx.Create()
+	win.Loop()
 }
