@@ -30,6 +30,8 @@ type KosDescr struct {
 }
 
 type VdevDescr struct {
+	internal C.kos_vdev_descr_t
+
 	Spec         string
 	Vers         uint32
 	Human        string
@@ -70,6 +72,7 @@ func (it *VdevIter) Next() *VdevDescr {
 	C.aqua_vdev_it_next(&it.it)
 
 	return &VdevDescr{
+		internal:     *vdev,
 		Spec:         C.GoString((*C.char)(unsafe.Pointer(&vdev.spec[0]))),
 		Vers:         uint32(vdev.vers),
 		Human:        C.GoString((*C.char)(unsafe.Pointer(&vdev.human[0]))),
