@@ -5,8 +5,7 @@ import bob
 
 deps = [
 	Dep.local("../kos"),
-	# TODO How do we wanna do this?
-	# Dep.git("https://github.com/wgpu-native/webgpu-headers", "TODO"),
+	Dep.local("../external/webgpu-headers"),
 ]
 
 let flags = [

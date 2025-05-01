@@ -29,20 +29,21 @@ struct wgpu_ctx_t {
 		// clang-format off
 // FN_IDS:BEGIN
 		uint32_t wgpuCreateInstance;
+		uint32_t wgpuGetInstanceCapabilities;
 		uint32_t wgpuGetProcAddress;
-		uint32_t wgpuAdapterEnumerateFeatures;
+		uint32_t wgpuAdapterGetFeatures;
 		uint32_t wgpuAdapterGetInfo;
 		uint32_t wgpuAdapterGetLimits;
 		uint32_t wgpuAdapterHasFeature;
 		uint32_t wgpuAdapterRequestDevice;
-		uint32_t wgpuAdapterReference;
+		uint32_t wgpuAdapterAddRef;
 		uint32_t wgpuAdapterRelease;
 		uint32_t wgpuAdapterInfoFreeMembers;
 		uint32_t wgpuBindGroupSetLabel;
-		uint32_t wgpuBindGroupReference;
+		uint32_t wgpuBindGroupAddRef;
 		uint32_t wgpuBindGroupRelease;
 		uint32_t wgpuBindGroupLayoutSetLabel;
-		uint32_t wgpuBindGroupLayoutReference;
+		uint32_t wgpuBindGroupLayoutAddRef;
 		uint32_t wgpuBindGroupLayoutRelease;
 		uint32_t wgpuBufferDestroy;
 		uint32_t wgpuBufferGetConstMappedRange;
@@ -53,10 +54,10 @@ struct wgpu_ctx_t {
 		uint32_t wgpuBufferMapAsync;
 		uint32_t wgpuBufferSetLabel;
 		uint32_t wgpuBufferUnmap;
-		uint32_t wgpuBufferReference;
+		uint32_t wgpuBufferAddRef;
 		uint32_t wgpuBufferRelease;
 		uint32_t wgpuCommandBufferSetLabel;
-		uint32_t wgpuCommandBufferReference;
+		uint32_t wgpuCommandBufferAddRef;
 		uint32_t wgpuCommandBufferRelease;
 		uint32_t wgpuCommandEncoderBeginComputePass;
 		uint32_t wgpuCommandEncoderBeginRenderPass;
@@ -72,7 +73,7 @@ struct wgpu_ctx_t {
 		uint32_t wgpuCommandEncoderResolveQuerySet;
 		uint32_t wgpuCommandEncoderSetLabel;
 		uint32_t wgpuCommandEncoderWriteTimestamp;
-		uint32_t wgpuCommandEncoderReference;
+		uint32_t wgpuCommandEncoderAddRef;
 		uint32_t wgpuCommandEncoderRelease;
 		uint32_t wgpuComputePassEncoderDispatchWorkgroups;
 		uint32_t wgpuComputePassEncoderDispatchWorkgroupsIndirect;
@@ -83,11 +84,11 @@ struct wgpu_ctx_t {
 		uint32_t wgpuComputePassEncoderSetBindGroup;
 		uint32_t wgpuComputePassEncoderSetLabel;
 		uint32_t wgpuComputePassEncoderSetPipeline;
-		uint32_t wgpuComputePassEncoderReference;
+		uint32_t wgpuComputePassEncoderAddRef;
 		uint32_t wgpuComputePassEncoderRelease;
 		uint32_t wgpuComputePipelineGetBindGroupLayout;
 		uint32_t wgpuComputePipelineSetLabel;
-		uint32_t wgpuComputePipelineReference;
+		uint32_t wgpuComputePipelineAddRef;
 		uint32_t wgpuComputePipelineRelease;
 		uint32_t wgpuDeviceCreateBindGroup;
 		uint32_t wgpuDeviceCreateBindGroupLayout;
@@ -104,38 +105,42 @@ struct wgpu_ctx_t {
 		uint32_t wgpuDeviceCreateShaderModule;
 		uint32_t wgpuDeviceCreateTexture;
 		uint32_t wgpuDeviceDestroy;
-		uint32_t wgpuDeviceEnumerateFeatures;
+		uint32_t wgpuDeviceGetAdapterInfo;
+		uint32_t wgpuDeviceGetFeatures;
 		uint32_t wgpuDeviceGetLimits;
+		uint32_t wgpuDeviceGetLostFuture;
 		uint32_t wgpuDeviceGetQueue;
 		uint32_t wgpuDeviceHasFeature;
 		uint32_t wgpuDevicePopErrorScope;
 		uint32_t wgpuDevicePushErrorScope;
 		uint32_t wgpuDeviceSetLabel;
-		uint32_t wgpuDeviceReference;
+		uint32_t wgpuDeviceAddRef;
 		uint32_t wgpuDeviceRelease;
 		uint32_t wgpuInstanceCreateSurface;
+		uint32_t wgpuInstanceGetWGSLLanguageFeatures;
 		uint32_t wgpuInstanceProcessEvents;
 		uint32_t wgpuInstanceRequestAdapter;
-		uint32_t wgpuInstanceReference;
+		uint32_t wgpuInstanceWaitAny;
+		uint32_t wgpuInstanceAddRef;
 		uint32_t wgpuInstanceRelease;
 		uint32_t wgpuPipelineLayoutSetLabel;
-		uint32_t wgpuPipelineLayoutReference;
+		uint32_t wgpuPipelineLayoutAddRef;
 		uint32_t wgpuPipelineLayoutRelease;
 		uint32_t wgpuQuerySetDestroy;
 		uint32_t wgpuQuerySetGetCount;
 		uint32_t wgpuQuerySetGetType;
 		uint32_t wgpuQuerySetSetLabel;
-		uint32_t wgpuQuerySetReference;
+		uint32_t wgpuQuerySetAddRef;
 		uint32_t wgpuQuerySetRelease;
 		uint32_t wgpuQueueOnSubmittedWorkDone;
 		uint32_t wgpuQueueSetLabel;
 		uint32_t wgpuQueueSubmit;
 		uint32_t wgpuQueueWriteBuffer;
 		uint32_t wgpuQueueWriteTexture;
-		uint32_t wgpuQueueReference;
+		uint32_t wgpuQueueAddRef;
 		uint32_t wgpuQueueRelease;
 		uint32_t wgpuRenderBundleSetLabel;
-		uint32_t wgpuRenderBundleReference;
+		uint32_t wgpuRenderBundleAddRef;
 		uint32_t wgpuRenderBundleRelease;
 		uint32_t wgpuRenderBundleEncoderDraw;
 		uint32_t wgpuRenderBundleEncoderDrawIndexed;
@@ -150,7 +155,7 @@ struct wgpu_ctx_t {
 		uint32_t wgpuRenderBundleEncoderSetLabel;
 		uint32_t wgpuRenderBundleEncoderSetPipeline;
 		uint32_t wgpuRenderBundleEncoderSetVertexBuffer;
-		uint32_t wgpuRenderBundleEncoderReference;
+		uint32_t wgpuRenderBundleEncoderAddRef;
 		uint32_t wgpuRenderBundleEncoderRelease;
 		uint32_t wgpuRenderPassEncoderBeginOcclusionQuery;
 		uint32_t wgpuRenderPassEncoderDraw;
@@ -172,25 +177,27 @@ struct wgpu_ctx_t {
 		uint32_t wgpuRenderPassEncoderSetStencilReference;
 		uint32_t wgpuRenderPassEncoderSetVertexBuffer;
 		uint32_t wgpuRenderPassEncoderSetViewport;
-		uint32_t wgpuRenderPassEncoderReference;
+		uint32_t wgpuRenderPassEncoderAddRef;
 		uint32_t wgpuRenderPassEncoderRelease;
 		uint32_t wgpuRenderPipelineGetBindGroupLayout;
 		uint32_t wgpuRenderPipelineSetLabel;
-		uint32_t wgpuRenderPipelineReference;
+		uint32_t wgpuRenderPipelineAddRef;
 		uint32_t wgpuRenderPipelineRelease;
 		uint32_t wgpuSamplerSetLabel;
-		uint32_t wgpuSamplerReference;
+		uint32_t wgpuSamplerAddRef;
 		uint32_t wgpuSamplerRelease;
 		uint32_t wgpuShaderModuleGetCompilationInfo;
 		uint32_t wgpuShaderModuleSetLabel;
-		uint32_t wgpuShaderModuleReference;
+		uint32_t wgpuShaderModuleAddRef;
 		uint32_t wgpuShaderModuleRelease;
+		uint32_t wgpuSupportedFeaturesFreeMembers;
+		uint32_t wgpuSupportedWGSLLanguageFeaturesFreeMembers;
 		uint32_t wgpuSurfaceConfigure;
 		uint32_t wgpuSurfaceGetCapabilities;
 		uint32_t wgpuSurfaceGetCurrentTexture;
 		uint32_t wgpuSurfacePresent;
 		uint32_t wgpuSurfaceUnconfigure;
-		uint32_t wgpuSurfaceReference;
+		uint32_t wgpuSurfaceAddRef;
 		uint32_t wgpuSurfaceRelease;
 		uint32_t wgpuSurfaceCapabilitiesFreeMembers;
 		uint32_t wgpuTextureCreateView;
@@ -204,10 +211,10 @@ struct wgpu_ctx_t {
 		uint32_t wgpuTextureGetUsage;
 		uint32_t wgpuTextureGetWidth;
 		uint32_t wgpuTextureSetLabel;
-		uint32_t wgpuTextureReference;
+		uint32_t wgpuTextureAddRef;
 		uint32_t wgpuTextureRelease;
 		uint32_t wgpuTextureViewSetLabel;
-		uint32_t wgpuTextureViewReference;
+		uint32_t wgpuTextureViewAddRef;
 		uint32_t wgpuTextureViewRelease;
 // FN_IDS:END
 		// clang-format on
@@ -351,32 +358,40 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
+			strcmp(name, "wgpuGetInstanceCapabilities") == 0 &&
+			fn->ret_type == KOS_TYPE_U32 &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[0].name, "capabilities") == 0
+		) {
+			ctx->fns.wgpuGetInstanceCapabilities = i;
+		}
+
+		if (
 			strcmp(name, "wgpuGetProcAddress") == 0 &&
 			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
-			fn->param_count == 2 &&
+			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[0].name, "device") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
-			strcmp((char*) fn->params[1].name, "procName") == 0
+			strcmp((char*) fn->params[0].name, "procName") == 0
 		) {
 			ctx->fns.wgpuGetProcAddress = i;
 		}
 
 		if (
-			strcmp(name, "wgpuAdapterEnumerateFeatures") == 0 &&
-			fn->ret_type == KOS_TYPE_U32 &&
+			strcmp(name, "wgpuAdapterGetFeatures") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "adapter") == 0 &&
 			fn->params[1].type == KOS_TYPE_BUF &&
 			strcmp((char*) fn->params[1].name, "features") == 0
 		) {
-			ctx->fns.wgpuAdapterEnumerateFeatures = i;
+			ctx->fns.wgpuAdapterGetFeatures = i;
 		}
 
 		if (
 			strcmp(name, "wgpuAdapterGetInfo") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
+			fn->ret_type == KOS_TYPE_U32 &&
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "adapter") == 0 &&
@@ -388,7 +403,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuAdapterGetLimits") == 0 &&
-			fn->ret_type == KOS_TYPE_BOOL &&
+			fn->ret_type == KOS_TYPE_U32 &&
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "adapter") == 0 &&
@@ -412,28 +427,26 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuAdapterRequestDevice") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 4 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 3 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "adapter") == 0 &&
 			fn->params[1].type == KOS_TYPE_BUF &&
 			strcmp((char*) fn->params[1].name, "descriptor") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "callback") == 0 &&
-			fn->params[3].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[3].name, "userdata") == 0
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuAdapterRequestDevice = i;
 		}
 
 		if (
-			strcmp(name, "wgpuAdapterReference") == 0 &&
+			strcmp(name, "wgpuAdapterAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "adapter") == 0
 		) {
-			ctx->fns.wgpuAdapterReference = i;
+			ctx->fns.wgpuAdapterAddRef = i;
 		}
 
 		if (
@@ -462,20 +475,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "bindGroup") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuBindGroupSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuBindGroupReference") == 0 &&
+			strcmp(name, "wgpuBindGroupAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "bindGroup") == 0
 		) {
-			ctx->fns.wgpuBindGroupReference = i;
+			ctx->fns.wgpuBindGroupAddRef = i;
 		}
 
 		if (
@@ -494,20 +507,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "bindGroupLayout") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuBindGroupLayoutSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuBindGroupLayoutReference") == 0 &&
+			strcmp(name, "wgpuBindGroupLayoutAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "bindGroupLayout") == 0
 		) {
-			ctx->fns.wgpuBindGroupLayoutReference = i;
+			ctx->fns.wgpuBindGroupLayoutAddRef = i;
 		}
 
 		if (
@@ -580,7 +593,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuBufferGetUsage") == 0 &&
-			fn->ret_type == KOS_TYPE_U32 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "buffer") == 0
@@ -590,20 +603,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuBufferMapAsync") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 6 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 5 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "buffer") == 0 &&
-			fn->params[1].type == KOS_TYPE_U32 &&
+			fn->params[1].type == KOS_TYPE_U64 &&
 			strcmp((char*) fn->params[1].name, "mode") == 0 &&
 			fn->params[2].type == KOS_TYPE_U32 &&
 			strcmp((char*) fn->params[2].name, "offset") == 0 &&
 			fn->params[3].type == KOS_TYPE_U32 &&
 			strcmp((char*) fn->params[3].name, "size") == 0 &&
-			fn->params[4].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[4].name, "callback") == 0 &&
-			fn->params[5].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[5].name, "userdata") == 0
+			fn->params[4].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[4].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuBufferMapAsync = i;
 		}
@@ -614,7 +625,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "buffer") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuBufferSetLabel = i;
@@ -631,13 +642,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuBufferReference") == 0 &&
+			strcmp(name, "wgpuBufferAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "buffer") == 0
 		) {
-			ctx->fns.wgpuBufferReference = i;
+			ctx->fns.wgpuBufferAddRef = i;
 		}
 
 		if (
@@ -656,20 +667,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "commandBuffer") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuCommandBufferSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuCommandBufferReference") == 0 &&
+			strcmp(name, "wgpuCommandBufferAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "commandBuffer") == 0
 		) {
-			ctx->fns.wgpuCommandBufferReference = i;
+			ctx->fns.wgpuCommandBufferAddRef = i;
 		}
 
 		if (
@@ -808,7 +819,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "commandEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "markerLabel") == 0
 		) {
 			ctx->fns.wgpuCommandEncoderInsertDebugMarker = i;
@@ -830,7 +841,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "commandEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "groupLabel") == 0
 		) {
 			ctx->fns.wgpuCommandEncoderPushDebugGroup = i;
@@ -862,7 +873,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "commandEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuCommandEncoderSetLabel = i;
@@ -883,13 +894,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuCommandEncoderReference") == 0 &&
+			strcmp(name, "wgpuCommandEncoderAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "commandEncoder") == 0
 		) {
-			ctx->fns.wgpuCommandEncoderReference = i;
+			ctx->fns.wgpuCommandEncoderAddRef = i;
 		}
 
 		if (
@@ -948,7 +959,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "computePassEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "markerLabel") == 0
 		) {
 			ctx->fns.wgpuComputePassEncoderInsertDebugMarker = i;
@@ -970,7 +981,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "computePassEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "groupLabel") == 0
 		) {
 			ctx->fns.wgpuComputePassEncoderPushDebugGroup = i;
@@ -1000,7 +1011,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "computePassEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuComputePassEncoderSetLabel = i;
@@ -1019,13 +1030,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuComputePassEncoderReference") == 0 &&
+			strcmp(name, "wgpuComputePassEncoderAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "computePassEncoder") == 0
 		) {
-			ctx->fns.wgpuComputePassEncoderReference = i;
+			ctx->fns.wgpuComputePassEncoderAddRef = i;
 		}
 
 		if (
@@ -1056,20 +1067,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "computePipeline") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuComputePipelineSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuComputePipelineReference") == 0 &&
+			strcmp(name, "wgpuComputePipelineAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "computePipeline") == 0
 		) {
-			ctx->fns.wgpuComputePipelineReference = i;
+			ctx->fns.wgpuComputePipelineAddRef = i;
 		}
 
 		if (
@@ -1144,16 +1155,14 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuDeviceCreateComputePipelineAsync") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 4 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 3 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0 &&
 			fn->params[1].type == KOS_TYPE_BUF &&
 			strcmp((char*) fn->params[1].name, "descriptor") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "callback") == 0 &&
-			fn->params[3].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[3].name, "userdata") == 0
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuDeviceCreateComputePipelineAsync = i;
 		}
@@ -1208,16 +1217,14 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuDeviceCreateRenderPipelineAsync") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 4 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 3 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0 &&
 			fn->params[1].type == KOS_TYPE_BUF &&
 			strcmp((char*) fn->params[1].name, "descriptor") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "callback") == 0 &&
-			fn->params[3].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[3].name, "userdata") == 0
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuDeviceCreateRenderPipelineAsync = i;
 		}
@@ -1269,20 +1276,30 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuDeviceEnumerateFeatures") == 0 &&
-			fn->ret_type == KOS_TYPE_U32 &&
+			strcmp(name, "wgpuDeviceGetAdapterInfo") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "device") == 0
+		) {
+			ctx->fns.wgpuDeviceGetAdapterInfo = i;
+		}
+
+		if (
+			strcmp(name, "wgpuDeviceGetFeatures") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0 &&
 			fn->params[1].type == KOS_TYPE_BUF &&
 			strcmp((char*) fn->params[1].name, "features") == 0
 		) {
-			ctx->fns.wgpuDeviceEnumerateFeatures = i;
+			ctx->fns.wgpuDeviceGetFeatures = i;
 		}
 
 		if (
 			strcmp(name, "wgpuDeviceGetLimits") == 0 &&
-			fn->ret_type == KOS_TYPE_BOOL &&
+			fn->ret_type == KOS_TYPE_U32 &&
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0 &&
@@ -1290,6 +1307,16 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[1].name, "limits") == 0
 		) {
 			ctx->fns.wgpuDeviceGetLimits = i;
+		}
+
+		if (
+			strcmp(name, "wgpuDeviceGetLostFuture") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "device") == 0
+		) {
+			ctx->fns.wgpuDeviceGetLostFuture = i;
 		}
 
 		if (
@@ -1316,14 +1343,12 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuDevicePopErrorScope") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 3 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0 &&
-			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[1].name, "callback") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "userdata") == 0
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuDevicePopErrorScope = i;
 		}
@@ -1346,20 +1371,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuDeviceSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuDeviceReference") == 0 &&
+			strcmp(name, "wgpuDeviceAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "device") == 0
 		) {
-			ctx->fns.wgpuDeviceReference = i;
+			ctx->fns.wgpuDeviceAddRef = i;
 		}
 
 		if (
@@ -1385,6 +1410,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
+			strcmp(name, "wgpuInstanceGetWGSLLanguageFeatures") == 0 &&
+			fn->ret_type == KOS_TYPE_U32 &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "instance") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "features") == 0
+		) {
+			ctx->fns.wgpuInstanceGetWGSLLanguageFeatures = i;
+		}
+
+		if (
 			strcmp(name, "wgpuInstanceProcessEvents") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
@@ -1396,28 +1433,42 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuInstanceRequestAdapter") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 4 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 3 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "instance") == 0 &&
 			fn->params[1].type == KOS_TYPE_BUF &&
 			strcmp((char*) fn->params[1].name, "options") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "callback") == 0 &&
-			fn->params[3].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[3].name, "userdata") == 0
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuInstanceRequestAdapter = i;
 		}
 
 		if (
-			strcmp(name, "wgpuInstanceReference") == 0 &&
+			strcmp(name, "wgpuInstanceWaitAny") == 0 &&
+			fn->ret_type == KOS_TYPE_U32 &&
+			fn->param_count == 4 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "instance") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "futureCount") == 0 &&
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "futures") == 0 &&
+			fn->params[3].type == KOS_TYPE_U64 &&
+			strcmp((char*) fn->params[3].name, "timeoutNS") == 0
+		) {
+			ctx->fns.wgpuInstanceWaitAny = i;
+		}
+
+		if (
+			strcmp(name, "wgpuInstanceAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "instance") == 0
 		) {
-			ctx->fns.wgpuInstanceReference = i;
+			ctx->fns.wgpuInstanceAddRef = i;
 		}
 
 		if (
@@ -1436,20 +1487,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "pipelineLayout") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuPipelineLayoutSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuPipelineLayoutReference") == 0 &&
+			strcmp(name, "wgpuPipelineLayoutAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "pipelineLayout") == 0
 		) {
-			ctx->fns.wgpuPipelineLayoutReference = i;
+			ctx->fns.wgpuPipelineLayoutAddRef = i;
 		}
 
 		if (
@@ -1498,20 +1549,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "querySet") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuQuerySetSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuQuerySetReference") == 0 &&
+			strcmp(name, "wgpuQuerySetAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "querySet") == 0
 		) {
-			ctx->fns.wgpuQuerySetReference = i;
+			ctx->fns.wgpuQuerySetAddRef = i;
 		}
 
 		if (
@@ -1526,14 +1577,12 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuQueueOnSubmittedWorkDone") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 3 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "queue") == 0 &&
-			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[1].name, "callback") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "userdata") == 0
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuQueueOnSubmittedWorkDone = i;
 		}
@@ -1544,7 +1593,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "queue") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuQueueSetLabel = i;
@@ -1603,13 +1652,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuQueueReference") == 0 &&
+			strcmp(name, "wgpuQueueAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "queue") == 0
 		) {
-			ctx->fns.wgpuQueueReference = i;
+			ctx->fns.wgpuQueueAddRef = i;
 		}
 
 		if (
@@ -1628,20 +1677,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderBundle") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuRenderBundleSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuRenderBundleReference") == 0 &&
+			strcmp(name, "wgpuRenderBundleAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderBundle") == 0
 		) {
-			ctx->fns.wgpuRenderBundleReference = i;
+			ctx->fns.wgpuRenderBundleAddRef = i;
 		}
 
 		if (
@@ -1738,7 +1787,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderBundleEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "markerLabel") == 0
 		) {
 			ctx->fns.wgpuRenderBundleEncoderInsertDebugMarker = i;
@@ -1760,7 +1809,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderBundleEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "groupLabel") == 0
 		) {
 			ctx->fns.wgpuRenderBundleEncoderPushDebugGroup = i;
@@ -1808,7 +1857,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderBundleEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuRenderBundleEncoderSetLabel = i;
@@ -1845,13 +1894,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuRenderBundleEncoderReference") == 0 &&
+			strcmp(name, "wgpuRenderBundleEncoderAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderBundleEncoder") == 0
 		) {
-			ctx->fns.wgpuRenderBundleEncoderReference = i;
+			ctx->fns.wgpuRenderBundleEncoderAddRef = i;
 		}
 
 		if (
@@ -1982,7 +2031,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderPassEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "markerLabel") == 0
 		) {
 			ctx->fns.wgpuRenderPassEncoderInsertDebugMarker = i;
@@ -2004,7 +2053,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderPassEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "groupLabel") == 0
 		) {
 			ctx->fns.wgpuRenderPassEncoderPushDebugGroup = i;
@@ -2064,7 +2113,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderPassEncoder") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuRenderPassEncoderSetLabel = i;
@@ -2153,13 +2202,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuRenderPassEncoderReference") == 0 &&
+			strcmp(name, "wgpuRenderPassEncoderAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderPassEncoder") == 0
 		) {
-			ctx->fns.wgpuRenderPassEncoderReference = i;
+			ctx->fns.wgpuRenderPassEncoderAddRef = i;
 		}
 
 		if (
@@ -2190,20 +2239,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderPipeline") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuRenderPipelineSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuRenderPipelineReference") == 0 &&
+			strcmp(name, "wgpuRenderPipelineAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "renderPipeline") == 0
 		) {
-			ctx->fns.wgpuRenderPipelineReference = i;
+			ctx->fns.wgpuRenderPipelineAddRef = i;
 		}
 
 		if (
@@ -2222,20 +2271,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "sampler") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuSamplerSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuSamplerReference") == 0 &&
+			strcmp(name, "wgpuSamplerAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "sampler") == 0
 		) {
-			ctx->fns.wgpuSamplerReference = i;
+			ctx->fns.wgpuSamplerAddRef = i;
 		}
 
 		if (
@@ -2250,14 +2299,12 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuShaderModuleGetCompilationInfo") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 3 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "shaderModule") == 0 &&
-			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[1].name, "callback") == 0 &&
-			fn->params[2].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[2].name, "userdata") == 0
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "callbackInfo") == 0
 		) {
 			ctx->fns.wgpuShaderModuleGetCompilationInfo = i;
 		}
@@ -2268,20 +2315,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "shaderModule") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuShaderModuleSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuShaderModuleReference") == 0 &&
+			strcmp(name, "wgpuShaderModuleAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "shaderModule") == 0
 		) {
-			ctx->fns.wgpuShaderModuleReference = i;
+			ctx->fns.wgpuShaderModuleAddRef = i;
 		}
 
 		if (
@@ -2292,6 +2339,26 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[0].name, "shaderModule") == 0
 		) {
 			ctx->fns.wgpuShaderModuleRelease = i;
+		}
+
+		if (
+			strcmp(name, "wgpuSupportedFeaturesFreeMembers") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[0].name, "supportedFeatures") == 0
+		) {
+			ctx->fns.wgpuSupportedFeaturesFreeMembers = i;
+		}
+
+		if (
+			strcmp(name, "wgpuSupportedWGSLLanguageFeaturesFreeMembers") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[0].name, "supportedWGSLLanguageFeatures") == 0
+		) {
+			ctx->fns.wgpuSupportedWGSLLanguageFeaturesFreeMembers = i;
 		}
 
 		if (
@@ -2308,7 +2375,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuSurfaceGetCapabilities") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
+			fn->ret_type == KOS_TYPE_U32 &&
 			fn->param_count == 3 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "surface") == 0 &&
@@ -2334,7 +2401,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuSurfacePresent") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
+			fn->ret_type == KOS_TYPE_U32 &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "surface") == 0
@@ -2353,13 +2420,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "wgpuSurfaceReference") == 0 &&
+			strcmp(name, "wgpuSurfaceAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "surface") == 0
 		) {
-			ctx->fns.wgpuSurfaceReference = i;
+			ctx->fns.wgpuSurfaceAddRef = i;
 		}
 
 		if (
@@ -2466,7 +2533,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "wgpuTextureGetUsage") == 0 &&
-			fn->ret_type == KOS_TYPE_U32 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "texture") == 0
@@ -2490,20 +2557,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "texture") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuTextureSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuTextureReference") == 0 &&
+			strcmp(name, "wgpuTextureAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "texture") == 0
 		) {
-			ctx->fns.wgpuTextureReference = i;
+			ctx->fns.wgpuTextureAddRef = i;
 		}
 
 		if (
@@ -2522,20 +2589,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "textureView") == 0 &&
-			fn->params[1].type == KOS_TYPE_BUF &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[1].name, "label") == 0
 		) {
 			ctx->fns.wgpuTextureViewSetLabel = i;
 		}
 
 		if (
-			strcmp(name, "wgpuTextureViewReference") == 0 &&
+			strcmp(name, "wgpuTextureViewAddRef") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 1 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "textureView") == 0
 		) {
-			ctx->fns.wgpuTextureViewReference = i;
+			ctx->fns.wgpuTextureViewAddRef = i;
 		}
 
 		if (
@@ -2612,14 +2679,24 @@ WGPUInstance aqua_wgpuCreateInstance(wgpu_ctx_t ctx, WGPU_NULLABLE WGPUInstanceD
 	return ctx->last_ret.opaque_ptr;
 }
 
-WGPUProc aqua_wgpuGetProcAddress(wgpu_ctx_t ctx, WGPUDevice device, char const * procName) {
+WGPUStatus aqua_wgpuGetInstanceCapabilities(wgpu_ctx_t ctx, WGPUInstanceCapabilities * capabilities) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (void*) device,
+			.buf.size = sizeof *capabilities,
+			.buf.ptr = (void*) capabilities,
 		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuGetInstanceCapabilities, args);
+	kos_flush(true);
+	
+	return ctx->last_ret.u32;
+}
+
+WGPUProc aqua_wgpuGetProcAddress(wgpu_ctx_t ctx, WGPUStringView procName) {
+	kos_val_t const args[] = {
 		{
-			.buf.size = sizeof *procName,
-			.buf.ptr = (void*) procName,
+			.opaque_ptr = (void*) procName,
 		},
 	};
 
@@ -2629,7 +2706,7 @@ WGPUProc aqua_wgpuGetProcAddress(wgpu_ctx_t ctx, WGPUDevice device, char const *
 	return ctx->last_ret.opaque_ptr;
 }
 
-size_t aqua_wgpuAdapterEnumerateFeatures(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUFeatureName * features) {
+void aqua_wgpuAdapterGetFeatures(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUSupportedFeatures * features) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) adapter,
@@ -2640,13 +2717,12 @@ size_t aqua_wgpuAdapterEnumerateFeatures(wgpu_ctx_t ctx, WGPUAdapter adapter, WG
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterEnumerateFeatures, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterGetFeatures, args);
 	kos_flush(true);
 	
-	return ctx->last_ret.u32;
 }
 
-void aqua_wgpuAdapterGetInfo(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUAdapterInfo * info) {
+WGPUStatus aqua_wgpuAdapterGetInfo(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUAdapterInfo * info) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) adapter,
@@ -2660,9 +2736,10 @@ void aqua_wgpuAdapterGetInfo(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUAdapterInf
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterGetInfo, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.u32;
 }
 
-WGPUBool aqua_wgpuAdapterGetLimits(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUSupportedLimits * limits) {
+WGPUStatus aqua_wgpuAdapterGetLimits(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPULimits * limits) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) adapter,
@@ -2676,7 +2753,7 @@ WGPUBool aqua_wgpuAdapterGetLimits(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUSupp
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterGetLimits, args);
 	kos_flush(true);
 	
-	return ctx->last_ret.b;
+	return ctx->last_ret.u32;
 }
 
 WGPUBool aqua_wgpuAdapterHasFeature(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUFeatureName feature) {
@@ -2695,7 +2772,7 @@ WGPUBool aqua_wgpuAdapterHasFeature(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUFea
 	return ctx->last_ret.b;
 }
 
-void aqua_wgpuAdapterRequestDevice(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPU_NULLABLE WGPUDeviceDescriptor const * descriptor, WGPUAdapterRequestDeviceCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuAdapterRequestDevice(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPU_NULLABLE WGPUDeviceDescriptor const * descriptor, WGPURequestDeviceCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) adapter,
@@ -2705,26 +2782,25 @@ void aqua_wgpuAdapterRequestDevice(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPU_NUL
 			.buf.ptr = (void*) descriptor,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterRequestDevice, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuAdapterReference(wgpu_ctx_t ctx, WGPUAdapter adapter) {
+void aqua_wgpuAdapterAddRef(wgpu_ctx_t ctx, WGPUAdapter adapter) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) adapter,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuAdapterAddRef, args);
 	kos_flush(true);
 	
 }
@@ -2754,14 +2830,13 @@ void aqua_wgpuAdapterInfoFreeMembers(wgpu_ctx_t ctx, WGPUAdapterInfo adapterInfo
 	
 }
 
-void aqua_wgpuBindGroupSetLabel(wgpu_ctx_t ctx, WGPUBindGroup bindGroup, char const * label) {
+void aqua_wgpuBindGroupSetLabel(wgpu_ctx_t ctx, WGPUBindGroup bindGroup, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) bindGroup,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -2770,14 +2845,14 @@ void aqua_wgpuBindGroupSetLabel(wgpu_ctx_t ctx, WGPUBindGroup bindGroup, char co
 	
 }
 
-void aqua_wgpuBindGroupReference(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
+void aqua_wgpuBindGroupAddRef(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) bindGroup,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBindGroupReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBindGroupAddRef, args);
 	kos_flush(true);
 	
 }
@@ -2794,14 +2869,13 @@ void aqua_wgpuBindGroupRelease(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
 	
 }
 
-void aqua_wgpuBindGroupLayoutSetLabel(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout, char const * label) {
+void aqua_wgpuBindGroupLayoutSetLabel(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) bindGroupLayout,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -2810,14 +2884,14 @@ void aqua_wgpuBindGroupLayoutSetLabel(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGr
 	
 }
 
-void aqua_wgpuBindGroupLayoutReference(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout) {
+void aqua_wgpuBindGroupLayoutAddRef(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) bindGroupLayout,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBindGroupLayoutReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBindGroupLayoutAddRef, args);
 	kos_flush(true);
 	
 }
@@ -2910,7 +2984,7 @@ uint64_t aqua_wgpuBufferGetSize(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	return ctx->last_ret.u64;
 }
 
-WGPUBufferUsageFlags aqua_wgpuBufferGetUsage(wgpu_ctx_t ctx, WGPUBuffer buffer) {
+WGPUBufferUsage aqua_wgpuBufferGetUsage(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) buffer,
@@ -2920,16 +2994,16 @@ WGPUBufferUsageFlags aqua_wgpuBufferGetUsage(wgpu_ctx_t ctx, WGPUBuffer buffer) 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBufferGetUsage, args);
 	kos_flush(true);
 	
-	return ctx->last_ret.u32;
+	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuBufferMapAsync(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUMapModeFlags mode, size_t offset, size_t size, WGPUBufferMapAsyncCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuBufferMapAsync(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUMapMode mode, size_t offset, size_t size, WGPUBufferMapCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) buffer,
 		},
 		{
-			.u32 = mode,
+			.u64 = mode,
 		},
 		{
 			.u32 = offset,
@@ -2938,26 +3012,24 @@ void aqua_wgpuBufferMapAsync(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUMapModeFlags
 			.u32 = size,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBufferMapAsync, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuBufferSetLabel(wgpu_ctx_t ctx, WGPUBuffer buffer, char const * label) {
+void aqua_wgpuBufferSetLabel(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) buffer,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -2978,14 +3050,14 @@ void aqua_wgpuBufferUnmap(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	
 }
 
-void aqua_wgpuBufferReference(wgpu_ctx_t ctx, WGPUBuffer buffer) {
+void aqua_wgpuBufferAddRef(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) buffer,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBufferReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBufferAddRef, args);
 	kos_flush(true);
 	
 }
@@ -3002,14 +3074,13 @@ void aqua_wgpuBufferRelease(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	
 }
 
-void aqua_wgpuCommandBufferSetLabel(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer, char const * label) {
+void aqua_wgpuCommandBufferSetLabel(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandBuffer,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -3018,14 +3089,14 @@ void aqua_wgpuCommandBufferSetLabel(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuf
 	
 }
 
-void aqua_wgpuCommandBufferReference(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer) {
+void aqua_wgpuCommandBufferAddRef(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandBuffer,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandBufferReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandBufferAddRef, args);
 	kos_flush(true);
 	
 }
@@ -3124,7 +3195,7 @@ void aqua_wgpuCommandEncoderCopyBufferToBuffer(wgpu_ctx_t ctx, WGPUCommandEncode
 	
 }
 
-void aqua_wgpuCommandEncoderCopyBufferToTexture(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUImageCopyBuffer const * source, WGPUImageCopyTexture const * destination, WGPUExtent3D const * copySize) {
+void aqua_wgpuCommandEncoderCopyBufferToTexture(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUTexelCopyBufferInfo const * source, WGPUTexelCopyTextureInfo const * destination, WGPUExtent3D const * copySize) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
@@ -3148,7 +3219,7 @@ void aqua_wgpuCommandEncoderCopyBufferToTexture(wgpu_ctx_t ctx, WGPUCommandEncod
 	
 }
 
-void aqua_wgpuCommandEncoderCopyTextureToBuffer(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUImageCopyTexture const * source, WGPUImageCopyBuffer const * destination, WGPUExtent3D const * copySize) {
+void aqua_wgpuCommandEncoderCopyTextureToBuffer(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUTexelCopyTextureInfo const * source, WGPUTexelCopyBufferInfo const * destination, WGPUExtent3D const * copySize) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
@@ -3172,7 +3243,7 @@ void aqua_wgpuCommandEncoderCopyTextureToBuffer(wgpu_ctx_t ctx, WGPUCommandEncod
 	
 }
 
-void aqua_wgpuCommandEncoderCopyTextureToTexture(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUImageCopyTexture const * source, WGPUImageCopyTexture const * destination, WGPUExtent3D const * copySize) {
+void aqua_wgpuCommandEncoderCopyTextureToTexture(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUTexelCopyTextureInfo const * source, WGPUTexelCopyTextureInfo const * destination, WGPUExtent3D const * copySize) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
@@ -3213,14 +3284,13 @@ WGPUCommandBuffer aqua_wgpuCommandEncoderFinish(wgpu_ctx_t ctx, WGPUCommandEncod
 	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuCommandEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, char const * markerLabel) {
+void aqua_wgpuCommandEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
 		},
 		{
-			.buf.size = sizeof *markerLabel,
-			.buf.ptr = (void*) markerLabel,
+			.opaque_ptr = (void*) markerLabel,
 		},
 	};
 
@@ -3241,14 +3311,13 @@ void aqua_wgpuCommandEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder com
 	
 }
 
-void aqua_wgpuCommandEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, char const * groupLabel) {
+void aqua_wgpuCommandEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
 		},
 		{
-			.buf.size = sizeof *groupLabel,
-			.buf.ptr = (void*) groupLabel,
+			.opaque_ptr = (void*) groupLabel,
 		},
 	};
 
@@ -3284,14 +3353,13 @@ void aqua_wgpuCommandEncoderResolveQuerySet(wgpu_ctx_t ctx, WGPUCommandEncoder c
 	
 }
 
-void aqua_wgpuCommandEncoderSetLabel(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, char const * label) {
+void aqua_wgpuCommandEncoderSetLabel(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -3318,14 +3386,14 @@ void aqua_wgpuCommandEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPUCommandEncoder co
 	
 }
 
-void aqua_wgpuCommandEncoderReference(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder) {
+void aqua_wgpuCommandEncoderAddRef(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) commandEncoder,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandEncoderReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandEncoderAddRef, args);
 	kos_flush(true);
 	
 }
@@ -3393,14 +3461,13 @@ void aqua_wgpuComputePassEncoderEnd(wgpu_ctx_t ctx, WGPUComputePassEncoder compu
 	
 }
 
-void aqua_wgpuComputePassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, char const * markerLabel) {
+void aqua_wgpuComputePassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) computePassEncoder,
 		},
 		{
-			.buf.size = sizeof *markerLabel,
-			.buf.ptr = (void*) markerLabel,
+			.opaque_ptr = (void*) markerLabel,
 		},
 	};
 
@@ -3421,14 +3488,13 @@ void aqua_wgpuComputePassEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEnc
 	
 }
 
-void aqua_wgpuComputePassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, char const * groupLabel) {
+void aqua_wgpuComputePassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) computePassEncoder,
 		},
 		{
-			.buf.size = sizeof *groupLabel,
-			.buf.ptr = (void*) groupLabel,
+			.opaque_ptr = (void*) groupLabel,
 		},
 	};
 
@@ -3462,14 +3528,13 @@ void aqua_wgpuComputePassEncoderSetBindGroup(wgpu_ctx_t ctx, WGPUComputePassEnco
 	
 }
 
-void aqua_wgpuComputePassEncoderSetLabel(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, char const * label) {
+void aqua_wgpuComputePassEncoderSetLabel(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) computePassEncoder,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -3493,14 +3558,14 @@ void aqua_wgpuComputePassEncoderSetPipeline(wgpu_ctx_t ctx, WGPUComputePassEncod
 	
 }
 
-void aqua_wgpuComputePassEncoderReference(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
+void aqua_wgpuComputePassEncoderAddRef(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) computePassEncoder,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuComputePassEncoderReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuComputePassEncoderAddRef, args);
 	kos_flush(true);
 	
 }
@@ -3533,14 +3598,13 @@ WGPUBindGroupLayout aqua_wgpuComputePipelineGetBindGroupLayout(wgpu_ctx_t ctx, W
 	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuComputePipelineSetLabel(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline, char const * label) {
+void aqua_wgpuComputePipelineSetLabel(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) computePipeline,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -3549,14 +3613,14 @@ void aqua_wgpuComputePipelineSetLabel(wgpu_ctx_t ctx, WGPUComputePipeline comput
 	
 }
 
-void aqua_wgpuComputePipelineReference(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline) {
+void aqua_wgpuComputePipelineAddRef(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) computePipeline,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuComputePipelineReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuComputePipelineAddRef, args);
 	kos_flush(true);
 	
 }
@@ -3658,7 +3722,7 @@ WGPUComputePipeline aqua_wgpuDeviceCreateComputePipeline(wgpu_ctx_t ctx, WGPUDev
 	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuDeviceCreateComputePipelineAsync(wgpu_ctx_t ctx, WGPUDevice device, WGPUComputePipelineDescriptor const * descriptor, WGPUDeviceCreateComputePipelineAsyncCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuDeviceCreateComputePipelineAsync(wgpu_ctx_t ctx, WGPUDevice device, WGPUComputePipelineDescriptor const * descriptor, WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
@@ -3668,16 +3732,15 @@ void aqua_wgpuDeviceCreateComputePipelineAsync(wgpu_ctx_t ctx, WGPUDevice device
 			.buf.ptr = (void*) descriptor,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateComputePipelineAsync, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
 WGPUPipelineLayout aqua_wgpuDeviceCreatePipelineLayout(wgpu_ctx_t ctx, WGPUDevice device, WGPUPipelineLayoutDescriptor const * descriptor) {
@@ -3748,7 +3811,7 @@ WGPURenderPipeline aqua_wgpuDeviceCreateRenderPipeline(wgpu_ctx_t ctx, WGPUDevic
 	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuDeviceCreateRenderPipelineAsync(wgpu_ctx_t ctx, WGPUDevice device, WGPURenderPipelineDescriptor const * descriptor, WGPUDeviceCreateRenderPipelineAsyncCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuDeviceCreateRenderPipelineAsync(wgpu_ctx_t ctx, WGPUDevice device, WGPURenderPipelineDescriptor const * descriptor, WGPUCreateRenderPipelineAsyncCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
@@ -3758,16 +3821,15 @@ void aqua_wgpuDeviceCreateRenderPipelineAsync(wgpu_ctx_t ctx, WGPUDevice device,
 			.buf.ptr = (void*) descriptor,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateRenderPipelineAsync, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
 WGPUSampler aqua_wgpuDeviceCreateSampler(wgpu_ctx_t ctx, WGPUDevice device, WGPU_NULLABLE WGPUSamplerDescriptor const * descriptor) {
@@ -3833,7 +3895,20 @@ void aqua_wgpuDeviceDestroy(wgpu_ctx_t ctx, WGPUDevice device) {
 	
 }
 
-size_t aqua_wgpuDeviceEnumerateFeatures(wgpu_ctx_t ctx, WGPUDevice device, WGPUFeatureName * features) {
+WGPUAdapterInfo aqua_wgpuDeviceGetAdapterInfo(wgpu_ctx_t ctx, WGPUDevice device) {
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = (void*) device,
+		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceGetAdapterInfo, args);
+	kos_flush(true);
+	
+	return ctx->last_ret.opaque_ptr;
+}
+
+void aqua_wgpuDeviceGetFeatures(wgpu_ctx_t ctx, WGPUDevice device, WGPUSupportedFeatures * features) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
@@ -3844,13 +3919,12 @@ size_t aqua_wgpuDeviceEnumerateFeatures(wgpu_ctx_t ctx, WGPUDevice device, WGPUF
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceEnumerateFeatures, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceGetFeatures, args);
 	kos_flush(true);
 	
-	return ctx->last_ret.u32;
 }
 
-WGPUBool aqua_wgpuDeviceGetLimits(wgpu_ctx_t ctx, WGPUDevice device, WGPUSupportedLimits * limits) {
+WGPUStatus aqua_wgpuDeviceGetLimits(wgpu_ctx_t ctx, WGPUDevice device, WGPULimits * limits) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
@@ -3864,7 +3938,20 @@ WGPUBool aqua_wgpuDeviceGetLimits(wgpu_ctx_t ctx, WGPUDevice device, WGPUSupport
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceGetLimits, args);
 	kos_flush(true);
 	
-	return ctx->last_ret.b;
+	return ctx->last_ret.u32;
+}
+
+WGPUFuture aqua_wgpuDeviceGetLostFuture(wgpu_ctx_t ctx, WGPUDevice device) {
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = (void*) device,
+		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceGetLostFuture, args);
+	kos_flush(true);
+	
+	return ctx->last_ret.opaque_ptr;
 }
 
 WGPUQueue aqua_wgpuDeviceGetQueue(wgpu_ctx_t ctx, WGPUDevice device) {
@@ -3896,22 +3983,21 @@ WGPUBool aqua_wgpuDeviceHasFeature(wgpu_ctx_t ctx, WGPUDevice device, WGPUFeatur
 	return ctx->last_ret.b;
 }
 
-void aqua_wgpuDevicePopErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUErrorCallback callback, void * userdata) {
+WGPUFuture aqua_wgpuDevicePopErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUPopErrorScopeCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDevicePopErrorScope, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
 void aqua_wgpuDevicePushErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUErrorFilter filter) {
@@ -3929,14 +4015,13 @@ void aqua_wgpuDevicePushErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUErrorF
 	
 }
 
-void aqua_wgpuDeviceSetLabel(wgpu_ctx_t ctx, WGPUDevice device, char const * label) {
+void aqua_wgpuDeviceSetLabel(wgpu_ctx_t ctx, WGPUDevice device, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -3945,14 +4030,14 @@ void aqua_wgpuDeviceSetLabel(wgpu_ctx_t ctx, WGPUDevice device, char const * lab
 	
 }
 
-void aqua_wgpuDeviceReference(wgpu_ctx_t ctx, WGPUDevice device) {
+void aqua_wgpuDeviceAddRef(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) device,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceAddRef, args);
 	kos_flush(true);
 	
 }
@@ -3986,6 +4071,23 @@ WGPUSurface aqua_wgpuInstanceCreateSurface(wgpu_ctx_t ctx, WGPUInstance instance
 	return ctx->last_ret.opaque_ptr;
 }
 
+WGPUStatus aqua_wgpuInstanceGetWGSLLanguageFeatures(wgpu_ctx_t ctx, WGPUInstance instance, WGPUSupportedWGSLLanguageFeatures * features) {
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = (void*) instance,
+		},
+		{
+			.buf.size = sizeof *features,
+			.buf.ptr = (void*) features,
+		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuInstanceGetWGSLLanguageFeatures, args);
+	kos_flush(true);
+	
+	return ctx->last_ret.u32;
+}
+
 void aqua_wgpuInstanceProcessEvents(wgpu_ctx_t ctx, WGPUInstance instance) {
 	kos_val_t const args[] = {
 		{
@@ -3998,7 +4100,7 @@ void aqua_wgpuInstanceProcessEvents(wgpu_ctx_t ctx, WGPUInstance instance) {
 	
 }
 
-void aqua_wgpuInstanceRequestAdapter(wgpu_ctx_t ctx, WGPUInstance instance, WGPU_NULLABLE WGPURequestAdapterOptions const * options, WGPUInstanceRequestAdapterCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuInstanceRequestAdapter(wgpu_ctx_t ctx, WGPUInstance instance, WGPU_NULLABLE WGPURequestAdapterOptions const * options, WGPURequestAdapterCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) instance,
@@ -4008,26 +4110,48 @@ void aqua_wgpuInstanceRequestAdapter(wgpu_ctx_t ctx, WGPUInstance instance, WGPU
 			.buf.ptr = (void*) options,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuInstanceRequestAdapter, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuInstanceReference(wgpu_ctx_t ctx, WGPUInstance instance) {
+WGPUWaitStatus aqua_wgpuInstanceWaitAny(wgpu_ctx_t ctx, WGPUInstance instance, size_t futureCount, WGPU_NULLABLE WGPUFutureWaitInfo * futures, uint64_t timeoutNS) {
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = (void*) instance,
+		},
+		{
+			.u32 = futureCount,
+		},
+		{
+			.buf.size = sizeof *futures,
+			.buf.ptr = (void*) futures,
+		},
+		{
+			.u64 = timeoutNS,
+		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuInstanceWaitAny, args);
+	kos_flush(true);
+	
+	return ctx->last_ret.u32;
+}
+
+void aqua_wgpuInstanceAddRef(wgpu_ctx_t ctx, WGPUInstance instance) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) instance,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuInstanceReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuInstanceAddRef, args);
 	kos_flush(true);
 	
 }
@@ -4044,14 +4168,13 @@ void aqua_wgpuInstanceRelease(wgpu_ctx_t ctx, WGPUInstance instance) {
 	
 }
 
-void aqua_wgpuPipelineLayoutSetLabel(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout, char const * label) {
+void aqua_wgpuPipelineLayoutSetLabel(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) pipelineLayout,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -4060,14 +4183,14 @@ void aqua_wgpuPipelineLayoutSetLabel(wgpu_ctx_t ctx, WGPUPipelineLayout pipeline
 	
 }
 
-void aqua_wgpuPipelineLayoutReference(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout) {
+void aqua_wgpuPipelineLayoutAddRef(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) pipelineLayout,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuPipelineLayoutReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuPipelineLayoutAddRef, args);
 	kos_flush(true);
 	
 }
@@ -4122,14 +4245,13 @@ WGPUQueryType aqua_wgpuQuerySetGetType(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	return ctx->last_ret.u32;
 }
 
-void aqua_wgpuQuerySetSetLabel(wgpu_ctx_t ctx, WGPUQuerySet querySet, char const * label) {
+void aqua_wgpuQuerySetSetLabel(wgpu_ctx_t ctx, WGPUQuerySet querySet, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) querySet,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -4138,14 +4260,14 @@ void aqua_wgpuQuerySetSetLabel(wgpu_ctx_t ctx, WGPUQuerySet querySet, char const
 	
 }
 
-void aqua_wgpuQuerySetReference(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
+void aqua_wgpuQuerySetAddRef(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) querySet,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuQuerySetReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuQuerySetAddRef, args);
 	kos_flush(true);
 	
 }
@@ -4162,32 +4284,30 @@ void aqua_wgpuQuerySetRelease(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	
 }
 
-void aqua_wgpuQueueOnSubmittedWorkDone(wgpu_ctx_t ctx, WGPUQueue queue, WGPUQueueOnSubmittedWorkDoneCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuQueueOnSubmittedWorkDone(wgpu_ctx_t ctx, WGPUQueue queue, WGPUQueueWorkDoneCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) queue,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuQueueOnSubmittedWorkDone, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuQueueSetLabel(wgpu_ctx_t ctx, WGPUQueue queue, char const * label) {
+void aqua_wgpuQueueSetLabel(wgpu_ctx_t ctx, WGPUQueue queue, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) queue,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -4239,7 +4359,7 @@ void aqua_wgpuQueueWriteBuffer(wgpu_ctx_t ctx, WGPUQueue queue, WGPUBuffer buffe
 	
 }
 
-void aqua_wgpuQueueWriteTexture(wgpu_ctx_t ctx, WGPUQueue queue, WGPUImageCopyTexture const * destination, void const * data, size_t dataSize, WGPUTextureDataLayout const * dataLayout, WGPUExtent3D const * writeSize) {
+void aqua_wgpuQueueWriteTexture(wgpu_ctx_t ctx, WGPUQueue queue, WGPUTexelCopyTextureInfo const * destination, void const * data, size_t dataSize, WGPUTexelCopyBufferLayout const * dataLayout, WGPUExtent3D const * writeSize) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) queue,
@@ -4269,14 +4389,14 @@ void aqua_wgpuQueueWriteTexture(wgpu_ctx_t ctx, WGPUQueue queue, WGPUImageCopyTe
 	
 }
 
-void aqua_wgpuQueueReference(wgpu_ctx_t ctx, WGPUQueue queue) {
+void aqua_wgpuQueueAddRef(wgpu_ctx_t ctx, WGPUQueue queue) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) queue,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuQueueReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuQueueAddRef, args);
 	kos_flush(true);
 	
 }
@@ -4293,14 +4413,13 @@ void aqua_wgpuQueueRelease(wgpu_ctx_t ctx, WGPUQueue queue) {
 	
 }
 
-void aqua_wgpuRenderBundleSetLabel(wgpu_ctx_t ctx, WGPURenderBundle renderBundle, char const * label) {
+void aqua_wgpuRenderBundleSetLabel(wgpu_ctx_t ctx, WGPURenderBundle renderBundle, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderBundle,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -4309,14 +4428,14 @@ void aqua_wgpuRenderBundleSetLabel(wgpu_ctx_t ctx, WGPURenderBundle renderBundle
 	
 }
 
-void aqua_wgpuRenderBundleReference(wgpu_ctx_t ctx, WGPURenderBundle renderBundle) {
+void aqua_wgpuRenderBundleAddRef(wgpu_ctx_t ctx, WGPURenderBundle renderBundle) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderBundle,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderBundleReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderBundleAddRef, args);
 	kos_flush(true);
 	
 }
@@ -4437,14 +4556,13 @@ WGPURenderBundle aqua_wgpuRenderBundleEncoderFinish(wgpu_ctx_t ctx, WGPURenderBu
 	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuRenderBundleEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, char const * markerLabel) {
+void aqua_wgpuRenderBundleEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderBundleEncoder,
 		},
 		{
-			.buf.size = sizeof *markerLabel,
-			.buf.ptr = (void*) markerLabel,
+			.opaque_ptr = (void*) markerLabel,
 		},
 	};
 
@@ -4465,14 +4583,13 @@ void aqua_wgpuRenderBundleEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPURenderBundleE
 	
 }
 
-void aqua_wgpuRenderBundleEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, char const * groupLabel) {
+void aqua_wgpuRenderBundleEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderBundleEncoder,
 		},
 		{
-			.buf.size = sizeof *groupLabel,
-			.buf.ptr = (void*) groupLabel,
+			.opaque_ptr = (void*) groupLabel,
 		},
 	};
 
@@ -4530,14 +4647,13 @@ void aqua_wgpuRenderBundleEncoderSetIndexBuffer(wgpu_ctx_t ctx, WGPURenderBundle
 	
 }
 
-void aqua_wgpuRenderBundleEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, char const * label) {
+void aqua_wgpuRenderBundleEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderBundleEncoder,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -4585,14 +4701,14 @@ void aqua_wgpuRenderBundleEncoderSetVertexBuffer(wgpu_ctx_t ctx, WGPURenderBundl
 	
 }
 
-void aqua_wgpuRenderBundleEncoderReference(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder) {
+void aqua_wgpuRenderBundleEncoderAddRef(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderBundleEncoder,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderBundleEncoderReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderBundleEncoderAddRef, args);
 	kos_flush(true);
 	
 }
@@ -4754,14 +4870,13 @@ void aqua_wgpuRenderPassEncoderExecuteBundles(wgpu_ctx_t ctx, WGPURenderPassEnco
 	
 }
 
-void aqua_wgpuRenderPassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, char const * markerLabel) {
+void aqua_wgpuRenderPassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderPassEncoder,
 		},
 		{
-			.buf.size = sizeof *markerLabel,
-			.buf.ptr = (void*) markerLabel,
+			.opaque_ptr = (void*) markerLabel,
 		},
 	};
 
@@ -4782,14 +4897,13 @@ void aqua_wgpuRenderPassEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEncod
 	
 }
 
-void aqua_wgpuRenderPassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, char const * groupLabel) {
+void aqua_wgpuRenderPassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderPassEncoder,
 		},
 		{
-			.buf.size = sizeof *groupLabel,
-			.buf.ptr = (void*) groupLabel,
+			.opaque_ptr = (void*) groupLabel,
 		},
 	};
 
@@ -4863,14 +4977,13 @@ void aqua_wgpuRenderPassEncoderSetIndexBuffer(wgpu_ctx_t ctx, WGPURenderPassEnco
 	
 }
 
-void aqua_wgpuRenderPassEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, char const * label) {
+void aqua_wgpuRenderPassEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderPassEncoder,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -4987,14 +5100,14 @@ void aqua_wgpuRenderPassEncoderSetViewport(wgpu_ctx_t ctx, WGPURenderPassEncoder
 	
 }
 
-void aqua_wgpuRenderPassEncoderReference(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
+void aqua_wgpuRenderPassEncoderAddRef(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderPassEncoder,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderPassEncoderReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderPassEncoderAddRef, args);
 	kos_flush(true);
 	
 }
@@ -5027,14 +5140,13 @@ WGPUBindGroupLayout aqua_wgpuRenderPipelineGetBindGroupLayout(wgpu_ctx_t ctx, WG
 	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuRenderPipelineSetLabel(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline, char const * label) {
+void aqua_wgpuRenderPipelineSetLabel(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderPipeline,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -5043,14 +5155,14 @@ void aqua_wgpuRenderPipelineSetLabel(wgpu_ctx_t ctx, WGPURenderPipeline renderPi
 	
 }
 
-void aqua_wgpuRenderPipelineReference(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline) {
+void aqua_wgpuRenderPipelineAddRef(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) renderPipeline,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderPipelineReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderPipelineAddRef, args);
 	kos_flush(true);
 	
 }
@@ -5067,14 +5179,13 @@ void aqua_wgpuRenderPipelineRelease(wgpu_ctx_t ctx, WGPURenderPipeline renderPip
 	
 }
 
-void aqua_wgpuSamplerSetLabel(wgpu_ctx_t ctx, WGPUSampler sampler, char const * label) {
+void aqua_wgpuSamplerSetLabel(wgpu_ctx_t ctx, WGPUSampler sampler, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) sampler,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -5083,14 +5194,14 @@ void aqua_wgpuSamplerSetLabel(wgpu_ctx_t ctx, WGPUSampler sampler, char const * 
 	
 }
 
-void aqua_wgpuSamplerReference(wgpu_ctx_t ctx, WGPUSampler sampler) {
+void aqua_wgpuSamplerAddRef(wgpu_ctx_t ctx, WGPUSampler sampler) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) sampler,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSamplerReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSamplerAddRef, args);
 	kos_flush(true);
 	
 }
@@ -5107,32 +5218,30 @@ void aqua_wgpuSamplerRelease(wgpu_ctx_t ctx, WGPUSampler sampler) {
 	
 }
 
-void aqua_wgpuShaderModuleGetCompilationInfo(wgpu_ctx_t ctx, WGPUShaderModule shaderModule, WGPUShaderModuleGetCompilationInfoCallback callback, WGPU_NULLABLE void * userdata) {
+WGPUFuture aqua_wgpuShaderModuleGetCompilationInfo(wgpu_ctx_t ctx, WGPUShaderModule shaderModule, WGPUCompilationInfoCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) shaderModule,
 		},
 		{
-			.opaque_ptr = (void*) callback,
-		},
-		{
-			.opaque_ptr = (void*) userdata,
+			.buf.size = sizeof *callbackInfo,
+			.buf.ptr = (void*) callbackInfo,
 		},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuShaderModuleGetCompilationInfo, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.opaque_ptr;
 }
 
-void aqua_wgpuShaderModuleSetLabel(wgpu_ctx_t ctx, WGPUShaderModule shaderModule, char const * label) {
+void aqua_wgpuShaderModuleSetLabel(wgpu_ctx_t ctx, WGPUShaderModule shaderModule, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) shaderModule,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -5141,14 +5250,14 @@ void aqua_wgpuShaderModuleSetLabel(wgpu_ctx_t ctx, WGPUShaderModule shaderModule
 	
 }
 
-void aqua_wgpuShaderModuleReference(wgpu_ctx_t ctx, WGPUShaderModule shaderModule) {
+void aqua_wgpuShaderModuleAddRef(wgpu_ctx_t ctx, WGPUShaderModule shaderModule) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) shaderModule,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuShaderModuleReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuShaderModuleAddRef, args);
 	kos_flush(true);
 	
 }
@@ -5161,6 +5270,32 @@ void aqua_wgpuShaderModuleRelease(wgpu_ctx_t ctx, WGPUShaderModule shaderModule)
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuShaderModuleRelease, args);
+	kos_flush(true);
+	
+}
+
+void aqua_wgpuSupportedFeaturesFreeMembers(wgpu_ctx_t ctx, WGPUSupportedFeatures supportedFeatures) {
+	kos_val_t const args[] = {
+		{
+			.buf.size = sizeof *supportedFeatures,
+			.buf.ptr = (void*) supportedFeatures,
+		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSupportedFeaturesFreeMembers, args);
+	kos_flush(true);
+	
+}
+
+void aqua_wgpuSupportedWGSLLanguageFeaturesFreeMembers(wgpu_ctx_t ctx, WGPUSupportedWGSLLanguageFeatures supportedWGSLLanguageFeatures) {
+	kos_val_t const args[] = {
+		{
+			.buf.size = sizeof *supportedWGSLLanguageFeatures,
+			.buf.ptr = (void*) supportedWGSLLanguageFeatures,
+		},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSupportedWGSLLanguageFeaturesFreeMembers, args);
 	kos_flush(true);
 	
 }
@@ -5181,7 +5316,7 @@ void aqua_wgpuSurfaceConfigure(wgpu_ctx_t ctx, WGPUSurface surface, WGPUSurfaceC
 	
 }
 
-void aqua_wgpuSurfaceGetCapabilities(wgpu_ctx_t ctx, WGPUSurface surface, WGPUAdapter adapter, WGPUSurfaceCapabilities * capabilities) {
+WGPUStatus aqua_wgpuSurfaceGetCapabilities(wgpu_ctx_t ctx, WGPUSurface surface, WGPUAdapter adapter, WGPUSurfaceCapabilities * capabilities) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) surface,
@@ -5198,6 +5333,7 @@ void aqua_wgpuSurfaceGetCapabilities(wgpu_ctx_t ctx, WGPUSurface surface, WGPUAd
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSurfaceGetCapabilities, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.u32;
 }
 
 void aqua_wgpuSurfaceGetCurrentTexture(wgpu_ctx_t ctx, WGPUSurface surface, WGPUSurfaceTexture * surfaceTexture) {
@@ -5216,7 +5352,7 @@ void aqua_wgpuSurfaceGetCurrentTexture(wgpu_ctx_t ctx, WGPUSurface surface, WGPU
 	
 }
 
-void aqua_wgpuSurfacePresent(wgpu_ctx_t ctx, WGPUSurface surface) {
+WGPUStatus aqua_wgpuSurfacePresent(wgpu_ctx_t ctx, WGPUSurface surface) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) surface,
@@ -5226,6 +5362,7 @@ void aqua_wgpuSurfacePresent(wgpu_ctx_t ctx, WGPUSurface surface) {
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSurfacePresent, args);
 	kos_flush(true);
 	
+	return ctx->last_ret.u32;
 }
 
 void aqua_wgpuSurfaceUnconfigure(wgpu_ctx_t ctx, WGPUSurface surface) {
@@ -5240,14 +5377,14 @@ void aqua_wgpuSurfaceUnconfigure(wgpu_ctx_t ctx, WGPUSurface surface) {
 	
 }
 
-void aqua_wgpuSurfaceReference(wgpu_ctx_t ctx, WGPUSurface surface) {
+void aqua_wgpuSurfaceAddRef(wgpu_ctx_t ctx, WGPUSurface surface) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) surface,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSurfaceReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuSurfaceAddRef, args);
 	kos_flush(true);
 	
 }
@@ -5384,7 +5521,7 @@ uint32_t aqua_wgpuTextureGetSampleCount(wgpu_ctx_t ctx, WGPUTexture texture) {
 	return ctx->last_ret.u32;
 }
 
-WGPUTextureUsageFlags aqua_wgpuTextureGetUsage(wgpu_ctx_t ctx, WGPUTexture texture) {
+WGPUTextureUsage aqua_wgpuTextureGetUsage(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) texture,
@@ -5394,7 +5531,7 @@ WGPUTextureUsageFlags aqua_wgpuTextureGetUsage(wgpu_ctx_t ctx, WGPUTexture textu
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureGetUsage, args);
 	kos_flush(true);
 	
-	return ctx->last_ret.u32;
+	return ctx->last_ret.opaque_ptr;
 }
 
 uint32_t aqua_wgpuTextureGetWidth(wgpu_ctx_t ctx, WGPUTexture texture) {
@@ -5410,14 +5547,13 @@ uint32_t aqua_wgpuTextureGetWidth(wgpu_ctx_t ctx, WGPUTexture texture) {
 	return ctx->last_ret.u32;
 }
 
-void aqua_wgpuTextureSetLabel(wgpu_ctx_t ctx, WGPUTexture texture, char const * label) {
+void aqua_wgpuTextureSetLabel(wgpu_ctx_t ctx, WGPUTexture texture, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) texture,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -5426,14 +5562,14 @@ void aqua_wgpuTextureSetLabel(wgpu_ctx_t ctx, WGPUTexture texture, char const * 
 	
 }
 
-void aqua_wgpuTextureReference(wgpu_ctx_t ctx, WGPUTexture texture) {
+void aqua_wgpuTextureAddRef(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) texture,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureAddRef, args);
 	kos_flush(true);
 	
 }
@@ -5450,14 +5586,13 @@ void aqua_wgpuTextureRelease(wgpu_ctx_t ctx, WGPUTexture texture) {
 	
 }
 
-void aqua_wgpuTextureViewSetLabel(wgpu_ctx_t ctx, WGPUTextureView textureView, char const * label) {
+void aqua_wgpuTextureViewSetLabel(wgpu_ctx_t ctx, WGPUTextureView textureView, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) textureView,
 		},
 		{
-			.buf.size = sizeof *label,
-			.buf.ptr = (void*) label,
+			.opaque_ptr = (void*) label,
 		},
 	};
 
@@ -5466,14 +5601,14 @@ void aqua_wgpuTextureViewSetLabel(wgpu_ctx_t ctx, WGPUTextureView textureView, c
 	
 }
 
-void aqua_wgpuTextureViewReference(wgpu_ctx_t ctx, WGPUTextureView textureView) {
+void aqua_wgpuTextureViewAddRef(wgpu_ctx_t ctx, WGPUTextureView textureView) {
 	kos_val_t const args[] = {
 		{
 			.opaque_ptr = (void*) textureView,
 		},
 	};
 
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureViewReference, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureViewAddRef, args);
 	kos_flush(true);
 	
 }
