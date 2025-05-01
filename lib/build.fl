@@ -14,10 +14,11 @@ let flags = [
 ]
 
 # TODO Should I even build the archives? If I kept everything always shared, then I could use ctors/dtors for the root part.
+# TODO We could parallelize this if we ran all the CC steps at once.
 
 install = {}
 
-for lib in ["root", "win", "wgpu"] {
+for lib in ["root", "win", "wgpu", "ui"] {
 	let linker_args = ["-laqua", "-shared"]
 
 	if lib != "root" {
