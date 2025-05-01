@@ -24,9 +24,16 @@ type VdevIter struct {
 }
 
 type KosDescr struct {
-	Api_vers      uint64
-	Best_api_vers uint64
-	Name          string
+	ApiVers     uint64
+	BestApiVers uint64
+	Name        string
+}
+
+type VdevDescr struct {
+	Spec         string
+	Vers         uint32
+	Human        string
+	VdriverHuman string
 }
 
 func Init() *Context {
@@ -43,9 +50,9 @@ func (c *Context) GetKosDescr() KosDescr {
 	descr := C.aqua_get_kos_descr(c.ctx)
 
 	return KosDescr{
-		Api_vers:      uint64(descr.api_vers),
-		Best_api_vers: uint64(descr.best_api_vers),
-		Name:          C.GoString((*C.char)(unsafe.Pointer(&descr.name[0]))),
+		ApiVers:     uint64(descr.api_vers),
+		BestApiVers: uint64(descr.best_api_vers),
+		Name:        C.GoString((*C.char)(unsafe.Pointer(&descr.name[0]))),
 	}
 }
 
@@ -54,13 +61,18 @@ func (c *Component) NewVdevIter() *VdevIter {
 	return &VdevIter{it: it}
 }
 
-func (it *VdevIter) Next() unsafe.Pointer {
+func (it *VdevIter) Next() *VdevDescr {
 	if it.it.vdev == nil {
 		return nil
 	}
 
-	vdev := unsafe.Pointer(it.it.vdev)
+	vdev := (*C.kos_vdev_descr_t)(unsafe.Pointer(it.it.vdev))
 	C.aqua_vdev_it_next(&it.it)
 
-	return vdev
+	return &VdevDescr{
+		Spec:         C.GoString((*C.char)(unsafe.Pointer(&vdev.spec[0]))),
+		Vers:         uint32(vdev.vers),
+		Human:        C.GoString((*C.char)(unsafe.Pointer(&vdev.human[0]))),
+		VdriverHuman: C.GoString((*C.char)(unsafe.Pointer(&vdev.vdriver_human[0]))),
+	}
 }
