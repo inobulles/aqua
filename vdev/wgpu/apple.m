@@ -11,15 +11,15 @@
 # include <Cocoa/Cocoa.h>
 # include <QuartzCore/CAMetalLayer.h>
 
-WGPUSurfaceDescriptorFromMetalLayer wgpu_get_surface_descriptor_from_metal_layer(aqua_win_t* win) {
+WGPUSurfaceSourceMetalLayer wgpu_get_metal_layer_surface_source(aqua_win_t* win) {
 	NSView* const view = win->detail.appkit.ns_view;
 	[view setWantsLayer:YES];
 	CAMetalLayer* const layer = [CAMetalLayer layer];
 	[view setLayer:layer];
 
-	WGPUSurfaceDescriptorFromMetalLayer const descr_from_metal = {
+	WGPUSurfaceSourceMetalLayer  const descr_from_metal = {
 		.chain = (WGPUChainedStruct const) {
-			.sType = WGPUSType_SurfaceDescriptorFromMetalLayer,
+			.sType = WGPUSType_SurfaceSourceMetalLayer,
 		},
 		.layer = layer,
 	};

@@ -3,7 +3,7 @@
 
 #if defined(__APPLE__)
 # include "../win/win.h"
-# include ".bob/prefix/include/webgpu-headers/webgpu.h"
+# include <webgpu/webgpu.h>
 
-WGPUSurfaceDescriptorFromMetalLayer wgpu_get_surface_descriptor_from_metal_layer(aqua_win_t* win);
+WGPUSurfaceSourceMetalLayer wgpu_get_metal_layer_surface_source(aqua_win_t* win);
 #endif

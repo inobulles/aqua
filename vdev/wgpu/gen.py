@@ -10,15 +10,18 @@ BASE_FN_ID = 1
 
 PACKED = "__attribute__((packed))"
 
+# We must first attempt to build once first to ensure dependencies are downloaded.
+
+os.system("bob build")
+
 # WebGPU commands in the spec which aren't yet implemented by wgpu-native.
 
 WGPU_BLACKLIST = (
-	"wgpuAdapterRequestAdapterInfo",
 	"wgpuInstanceHasWGSLLanguageFeature",
 	"wgpuSurfaceSetLabel",
 )
 
-with open(".bob/prefix/include/webgpu-headers/webgpu.h") as f:
+with open(".bob/prefix/include/webgpu/webgpu.h") as f:
 	(*lines,) = map(str.rstrip, f.readlines())
 
 with open(".bob/prefix/include/wgpu.h") as f:
@@ -34,7 +37,7 @@ def wgpu_type_to_kos(t: str):
 		"uint64_t": "KOS_TYPE_U64",
 		"float": "KOS_TYPE_F32",
 		"WGPUBool": "KOS_TYPE_BOOL",
-		"char const *": "KOS_TYPE_BUF",
+		"WGPUMapMode": "KOS_TYPE_U64",
 		"void const *": "KOS_TYPE_OPAQUE_PTR",
 		"void *": "KOS_TYPE_OPAQUE_PTR",
 	}
@@ -44,7 +47,11 @@ def wgpu_type_to_kos(t: str):
 
 	# TODO Since some of these structs can have pointers to other stuff in them and thus can't be serialized/deserialized (which a buf normally has to be), should this not be a ptr instead?
 
-	if t[-1] == "*":
+	if (
+		t[-1] == "*"
+		or t.endswith("CallbackInfo")
+		or t in ("WGPUAdapaterInfo", "WGPUSupportedFeatures", "WGPUSupportedWGSLLanguageFeatures")
+	):
 		return "KOS_TYPE_BUF"
 
 	if t in enums:
@@ -132,7 +139,20 @@ for line in lines:
 		if t in ("WGPUSurfaceCapabilities", "WGPUAdapterInfo"):
 			parser += f"\t\t{t} const {p} = *({t}*) args[{i}].opaque_ptr;\n"
 
-		elif kos_t == "KOS_TYPE_BUF":
+		elif t == "WGPUStringView":
+			parser += f"\t\t{t} const {p} = {{\n"
+			parser += f"\t\t\t.data = args[{i}].buf.ptr,\n"
+			parser += f"\t\t\t.length = args[{i}].buf.size,\n"
+			parser += f"\t\t}};\n"
+
+		elif t == "WGPUFuture":
+			parser += f"\t\t{t} const {p} = {{ .id = args[{i}].u64 }};\n"
+
+		elif kos_t == "KOS_TYPE_BUF" and t[-1] != "*":
+			parser += f"\t\t{t} const {p} = *({t}*) args[{i}].buf.ptr;\n"
+			parser += f"\t\tassert(args[{i}].buf.size == sizeof {p});\n"
+
+		elif kos_t == "KOS_TYPE_BUF" and t[-1] == "*":
 			parser += f"\t\t{t} const {p} = args[{i}].buf.ptr;\n"
 			parser += f"\t\tassert(args[{i}].buf.size == sizeof *{p});\n"
 
@@ -145,22 +165,34 @@ for line in lines:
 
 	# Generate return code.
 
+	call = f"{name}({", ".join(param_names)})"
+
 	kos_ret_type = wgpu_type_to_kos(ret_type)
 
-	if kos_ret_type == "KOS_TYPE_VOID":
-		ret = ""
+	if ret_type == "WGPUFuture":
+		ret = f"notif.call_ret.ret.u64 = {call}.id"
+
+	elif ret_type == "WGPUAdapterInfo":
+		ret = f"""{ret_type}* const ptr = malloc(sizeof({ret_type}));
+		assert(ptr != NULL);
+		notif.call_ret.ret.buf.ptr = (void*) ptr;
+		notif.call_ret.ret.buf.size = sizeof({ret_type});
+		*ptr = {call};"""
+
+	elif kos_ret_type == "KOS_TYPE_VOID":
+		ret = call
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
-		ret = f"notif.call_ret.ret.opaque_ptr = (void*) "
+		ret = f"notif.call_ret.ret.opaque_ptr = (void*) {call}"
 
 	else:
 		union = kos_type_to_union(kos_ret_type)
-		ret = f"notif.call_ret.ret.{union} = "
+		ret = f"notif.call_ret.ret.{union} = {call}"
 
 	# Generate actual call handler.
 
 	call_handlers += f"""\tcase {fn_id}: {{
-{parser}\t\t{ret}{name}({", ".join(param_names)});
+{parser}\t\t{ret};
 		break;
 	}}
 """
