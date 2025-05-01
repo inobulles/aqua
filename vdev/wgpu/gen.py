@@ -175,7 +175,7 @@ for line in lines:
 
 	# Generate return code.
 
-	call = f"{name}({", ".join(param_names)})"
+	call = f"{name}({', '.join(param_names)})"
 
 	kos_ret_type = wgpu_type_to_kos(ret_type)
 
