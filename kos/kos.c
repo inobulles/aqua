@@ -186,6 +186,11 @@ void kos_req_vdev(char const* spec) {
 
 		// Probe for VDEVs on that driver.
 
+		if (vdriver.vdriver->probe == NULL) {
+			fprintf(stderr, "VDEV driver '%s' doesn't implement a probe function.\n", spec);
+			continue;
+		}
+
 		vdriver.vdriver->probe();
 	}
 
