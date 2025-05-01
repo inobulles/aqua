@@ -71,27 +71,29 @@ typedef struct {
 	bool configured;
 } state_t;
 
-static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* msg, void* data) {
+static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView msg, void* data, void* data2) {
 	state_t* const state = data;
+	(void) data2;
 
 	if (status == WGPURequestAdapterStatus_Success) {
 		state->adapter = adapter;
 	}
 
 	else {
-		fprintf(stderr, "%s: status = %#.8x, message = \"%s\"\n", __func__, status, msg);
+		fprintf(stderr, "%s: status = %#.8x, message = \"%.*s\"\n", __func__, status, (int) msg.length, msg.data);
 	}
 }
 
-static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, char const* msg, void* data) {
+static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView msg, void* data, void* data2) {
 	state_t* const state = data;
+	(void) data2;
 
 	if (status == WGPURequestDeviceStatus_Success) {
 		state->device = device;
 	}
 
 	else {
-		fprintf(stderr, "%s: status = %#.8x, message = \"%s\"\n", __func__, status, msg);
+		fprintf(stderr, "%s: status = %#.8x, message = \"%.*s\"\n", __func__, status, (int) msg.length, msg.data);
 	}
 }
 
@@ -116,7 +118,12 @@ static int setup_surface(state_t* state, win_t win) {
 		.backendType = WGPUBackendType_Undefined, // Will use anything.
 	};
 
-	aqua_wgpuInstanceRequestAdapter(state->wgpu_ctx, state->instance, &request_adapter_options, request_adapter_cb, state);
+	WGPURequestAdapterCallbackInfo const request_adapter_cb_info = {
+		.callback = request_adapter_cb,
+		.userdata1 = state,
+	};
+
+	aqua_wgpuInstanceRequestAdapter(state->wgpu_ctx, state->instance, &request_adapter_options, request_adapter_cb_info);
 
 	if (state->adapter == NULL) {
 		fprintf(stderr, "Failed to get WebGPU adapter\n");
@@ -126,11 +133,16 @@ static int setup_surface(state_t* state, win_t win) {
 	WGPUAdapterInfo info;
 	aqua_wgpuAdapterGetInfo(state->wgpu_ctx, state->adapter, &info);
 
-	printf("Got adapter: %s %s %s (%s)\n", info.vendor, info.architecture, info.device, info.description);
+	printf("Got adapter: %.*s %.*s %.*s (%.*s)\n", (int) info.vendor.length, info.vendor.data, (int) info.architecture.length, info.architecture.data, (int) info.device.length, info.device.data, (int) info.description.length, info.description.data);
 
 	// Get device.
 
-	aqua_wgpuAdapterRequestDevice(state->wgpu_ctx, state->adapter, NULL, request_device_cb, state);
+	WGPURequestDeviceCallbackInfo const request_device_cb_info = {
+		.callback = request_device_cb,
+		.userdata1 = state,
+	};
+
+	aqua_wgpuAdapterRequestDevice(state->wgpu_ctx, state->adapter, NULL, request_device_cb_info);
 
 	if (state->device == NULL) {
 		fprintf(stderr, "Failed to get WebGPU device\n");
@@ -139,15 +151,20 @@ static int setup_surface(state_t* state, win_t win) {
 
 	// Create shader module.
 
-	WGPUShaderModuleWGSLDescriptor const wgsl_descr = {
+	WGPUShaderSourceWGSL const wgsl_source = {
 		.chain = {
-			.sType = WGPUSType_ShaderModuleWGSLDescriptor,
+			.sType = WGPUSType_ShaderSourceWGSL,
 		},
-		.code = SHADER_SRC,
+		.code = {SHADER_SRC, WGPU_STRLEN},
+	};
+
+	WGPUShaderModuleDescriptor const wgsl_descr = {
+		.label = {"shader", WGPU_STRLEN},
+		.nextInChain = (WGPUChainedStruct*) &wgsl_source,
 	};
 
 	WGPUShaderModuleDescriptor const shader_module_descr = {
-		.label = "shader_module",
+		.label = {"shader_module", WGPU_STRLEN},
 		.nextInChain = (WGPUChainedStruct*) &wgsl_descr,
 	};
 
@@ -210,7 +227,7 @@ static int setup_surface(state_t* state, win_t win) {
 	// Create pipeline layout.
 
 	WGPUPipelineLayoutDescriptor const pipeline_layout_descr = {
-		.label = "pipeline_layout"
+		.label = {"pipeline_layout", WGPU_STRLEN},
 	};
 
 	WGPUPipelineLayout const pipeline_layout = aqua_wgpuDeviceCreatePipelineLayout(state->wgpu_ctx, state->device, &pipeline_layout_descr);
@@ -224,7 +241,7 @@ static int setup_surface(state_t* state, win_t win) {
 
 	WGPUVertexState const vert_state = {
 		.module = state->shader,
-		.entryPoint = "vert_main",
+		.entryPoint = {"vert_main", WGPU_STRLEN},
 	};
 
 	WGPUColorTargetState const target_states[] = {
@@ -236,7 +253,7 @@ static int setup_surface(state_t* state, win_t win) {
 
 	WGPUFragmentState const frag_state = {
 		.module = state->shader,
-		.entryPoint = "frag_main",
+		.entryPoint = {"frag_main", WGPU_STRLEN},
 		.targetCount = sizeof target_states / sizeof *target_states,
 		.targets = target_states,
 	};
@@ -251,7 +268,7 @@ static int setup_surface(state_t* state, win_t win) {
 	};
 
 	WGPURenderPipelineDescriptor const render_pipeline_descr = {
-		.label = "render_pipeline",
+		.label = {"render_pipeline", WGPU_STRLEN},
 		.layout = pipeline_layout,
 		.vertex = vert_state,
 		.fragment = &frag_state,
@@ -315,8 +332,10 @@ static void redraw(win_t win, void* data) {
 	aqua_wgpuSurfaceGetCurrentTexture(state->wgpu_ctx, state->surface, &surface_texture);
 
 	switch (surface_texture.status) {
-	case WGPUSurfaceGetCurrentTextureStatus_Success:
+	case WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal:
+	case WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal:
 		break;
+	case WGPUSurfaceGetCurrentTextureStatus_Error:
 	case WGPUSurfaceGetCurrentTextureStatus_Timeout:
 	case WGPUSurfaceGetCurrentTextureStatus_Outdated:
 	case WGPUSurfaceGetCurrentTextureStatus_Lost:
@@ -348,7 +367,7 @@ static void redraw(win_t win, void* data) {
 	WGPUTextureView const frame = aqua_wgpuTextureCreateView(state->wgpu_ctx, surface_texture.texture, NULL);
 	assert(frame != NULL);
 
-	WGPUCommandEncoderDescriptor const encoder_descr = {.label = "command_encoder"};
+	WGPUCommandEncoderDescriptor const encoder_descr = {.label = {"command_encoder", WGPU_STRLEN}};
 	WGPUCommandEncoder const encoder = aqua_wgpuDeviceCreateCommandEncoder(state->wgpu_ctx, state->device, &encoder_descr);
 	assert(encoder != NULL);
 
@@ -367,7 +386,7 @@ static void redraw(win_t win, void* data) {
 	};
 
 	WGPURenderPassDescriptor const render_pass_descr = {
-		.label = "render_pass_encoder",
+		.label = {"render_pass_encoder", WGPU_STRLEN},
 		.colorAttachmentCount = sizeof colour_attachments / sizeof *colour_attachments,
 		.colorAttachments = colour_attachments,
 	};
@@ -383,7 +402,7 @@ static void redraw(win_t win, void* data) {
 
 	// Create final command buffer.
 
-	WGPUCommandBufferDescriptor const command_buffer_descr = {.label = "command_buffer"};
+	WGPUCommandBufferDescriptor const command_buffer_descr = {.label = {"command_buffer", WGPU_STRLEN}};
 	WGPUCommandBuffer const command_buffer = aqua_wgpuCommandEncoderFinish(state->wgpu_ctx, encoder, &command_buffer_descr);
 
 	// Submit command buffer to queue.

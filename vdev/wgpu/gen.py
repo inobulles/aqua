@@ -264,7 +264,7 @@ for line in lines:
 		ret = ""
 
 	elif ret_type == "WGPUFuture":
-		ret = f"\n\treturn (WGPUFuture) {{ .id = ctx->last_ret.u64 }};"
+		ret = f"\n\treturn (WGPUFuture) {{.id = ctx->last_ret.u64}};"
 
 	elif ret_type == "WGPUAdapterInfo":
 		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;"
