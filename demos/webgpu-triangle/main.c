@@ -1,12 +1,9 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2025 Aymeric Wibo
 
-// #include <aqua/aqua.h>
-// #include <aqua/win.h>
-
-#include "../../lib/aqua.h"
-#include "../../lib/wgpu.h"
-#include "../../lib/win.h"
+#include <aqua/root.h>
+#include <aqua/wgpu.h>
+#include <aqua/win.h>
 
 #include <assert.h>
 #include <inttypes.h>
