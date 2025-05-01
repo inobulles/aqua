@@ -1,0 +1,13 @@
+# Usually, you'd want to include this in your pyproject.toml file instead of having it in a separate ruff.toml file.
+
+# For Python, since formatting is already standardized by PEP-8, it's probably best not to stray off the beaten path.
+# However, while I don't feel strongly about most of PEP-8, spaces over tabs is an absolute no-go.
+# Popular formatters such as Black will not compromise on this for in my opinion all the wrong reasons: https://github.com/psf/black/issues/47
+# Luckily, Ruff stays quite opinionated and true to PEP-8, while also letting you choose to use tabs.
+# And on top of this, it's significantly faster than Black.
+
+line-length = 120
+
+[format]
+indent-style = "tab"
+line-ending = "lf"
