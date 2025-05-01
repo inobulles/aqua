@@ -15,15 +15,14 @@ let flags = [
 ]
 
 # TODO Should I even build the archives? If I kept everything always shared, then I could use ctors/dtors for the root part.
-# TODO Also, should find a better name so we don't have -laqua and -laqua_aqua (-laqua_root?).
 
 install = {}
 
-for lib in ["aqua", "win", "wgpu"] {
+for lib in ["root", "win", "wgpu"] {
 	let linker_args = ["-laqua", "-shared"]
 
-	if lib != "aqua" {
-		linker_args = linker_args + ["-laqua_aqua"]
+	if lib != "root" {
+		linker_args = linker_args + ["-laqua_root"]
 	}
 
 	let obj = Cc(flags).compile([lib + ".c"])

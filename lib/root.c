@@ -1,7 +1,7 @@
 // This Source Form is subject to the terms of the AQUA Software License,
 // v. 1.0. Copyright (c) 2025 Aymeric Wibo
 
-#include "aqua.h"
+#include "root.h"
 
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"

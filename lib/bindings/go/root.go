@@ -4,9 +4,9 @@
 package aqua
 
 /*
-#cgo LDFLAGS: -laqua_aqua
+#cgo LDFLAGS: -laqua_root
 
-#include <aqua/aqua.h>
+#include <aqua/root.h>
 */
 import "C"
 import "unsafe"

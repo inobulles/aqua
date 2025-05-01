@@ -7,7 +7,7 @@
 
 // TODO This should probably be renamed "internal.h or something like that.
 
-#include "aqua.h"
+#include "root.h"
 
 #include <aqua/kos.h>
 
