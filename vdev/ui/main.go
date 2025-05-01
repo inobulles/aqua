@@ -42,7 +42,7 @@ func GoProbe() {
 	}
 
 	// XXX Go doesn't support unions, and vdev happens to be the first field in .attach, so this happens to be fine.
-	vdev := (*C.kos_vdev_descr_t) (unsafe.Pointer(&notif.anon0[0]))
+	vdev := (*C.kos_vdev_descr_t)(unsafe.Pointer(&notif.anon0[0]))
 
 	vdev.kind = C.KOS_VDEV_KIND_LOCAL
 	vdev.vers = VERS
