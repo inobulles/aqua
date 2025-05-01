@@ -11,7 +11,7 @@ This does mean I need to first write a Go library.
 ## Semantics
 
 Previously, the UI VDEV provided quite a few different element types for different semantic elements (e.g. paragraph, title, subtitle, log, etc, which are all just text elements behind the scenes).
-I think a much more elegant and scalable solution is for there to be only a few super generic elements (e.g. div, title, text, image, text input) and then to be able to add a semantic tag to them (e.g. button, link, title, subtitle, etc).
+I think a much more elegant and scalable solution is for there to be only a few super generic elements (e.g. div, title, text, text input) and then to be able to add a semantic tag to them (e.g. button, link, title, subtitle, etc).
 With this semantic tag, the device can then decide which styles it wants to apply to the element, depending on what platform its running on e.g.
 
 TODO Should buttons be semantics or elements? Because we could want to be able to set an icon on a button.
