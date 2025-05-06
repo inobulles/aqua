@@ -3,25 +3,42 @@
 
 import os
 from datetime import datetime
+
 year = datetime.now().year
 
 BASE_FN_ID = 1
 
 PACKED = "__attribute__((packed))"
 
+# We must first attempt to build once first to ensure dependencies are downloaded.
+
+os.system("bob build")
+
 # WebGPU commands in the spec which aren't yet implemented by wgpu-native.
 
 WGPU_BLACKLIST = (
-	"wgpuAdapterRequestAdapterInfo",
 	"wgpuInstanceHasWGSLLanguageFeature",
 	"wgpuSurfaceSetLabel",
 )
 
-with open(".bob/prefix/include/webgpu-headers/webgpu.h") as f:
-	*lines, = map(str.rstrip, f.readlines())
+with open(".bob/prefix/include/webgpu/webgpu.h") as f:
+	(*lines,) = map(str.rstrip, f.readlines())
 
-with open(".bob/prefix/include/wgpu.h") as f:
+with open(".bob/prefix/include/webgpu/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
+
+
+def is_buf_struct(t):
+	if t.endswith("CallbackInfo"):
+		return True
+
+	return t in (
+		"WGPUAdapterInfo",
+		"WGPUSupportedFeatures",
+		"WGPUSupportedWGSLLanguageFeatures",
+		"WGPUSurfaceCapabilities",
+	)
+
 
 def wgpu_type_to_kos(t: str):
 	KNOWN = {
@@ -32,7 +49,12 @@ def wgpu_type_to_kos(t: str):
 		"uint64_t": "KOS_TYPE_U64",
 		"float": "KOS_TYPE_F32",
 		"WGPUBool": "KOS_TYPE_BOOL",
-		"char const *": "KOS_TYPE_BUF",
+		# TODO Just make some list of flag types.
+		"WGPUMapMode": "KOS_TYPE_U64",
+		"WGPUBufferUsage": "KOS_TYPE_U64",
+		"WGPUTextureUsage": "KOS_TYPE_U64",
+		"WGPUShaderStage": "KOS_TYPE_U64",
+		"WGPUSubmissionIndex": "KOS_TYPE_U64",
 		"void const *": "KOS_TYPE_OPAQUE_PTR",
 		"void *": "KOS_TYPE_OPAQUE_PTR",
 	}
@@ -42,7 +64,7 @@ def wgpu_type_to_kos(t: str):
 
 	# TODO Since some of these structs can have pointers to other stuff in them and thus can't be serialized/deserialized (which a buf normally has to be), should this not be a ptr instead?
 
-	if t[-1] == "*":
+	if t[-1] == "*" or is_buf_struct(t):
 		return "KOS_TYPE_BUF"
 
 	if t in enums:
@@ -50,17 +72,23 @@ def wgpu_type_to_kos(t: str):
 
 	return "KOS_TYPE_OPAQUE_PTR"
 
+
 def kos_type_to_union(t: str):
 	if t == "KOS_TYPE_BOOL":
 		return "b"
 
 	return t.removeprefix("KOS_TYPE_").lower()
 
+
 enums = set()
 fns = ""
 call_handlers = ""
+lib_protos = ""
+lib_fn_ids = ""
+lib_fn_validators = ""
+lib_impls = ""
 fn_id = BASE_FN_ID
-cmds = "" # REMME
+cmds = ""  # REMME
 impls = ""
 
 c_types = ""
@@ -69,7 +97,7 @@ c_wrappers = ""
 for line in lines:
 	# Parse function declaration.
 
-	if line.startswith("#include \""):
+	if line.startswith('#include "'):
 		continue
 
 	if line.endswith(" WGPU_ENUM_ATTRIBUTE;"):
@@ -80,22 +108,25 @@ for line in lines:
 		c_types += line + "\n"
 		continue
 
-	type_and_name, params = line.split('(')
+	type_and_name, raw_params = line.split("(")
 	_, *ret_type, name = type_and_name.split()
-	ret_type = ' '.join(ret_type)
+	ret_type = " ".join(ret_type)
 
 	if name in WGPU_BLACKLIST:
 		continue
 
-	raw_params = params.split(')')[0]
-	params = raw_params.split(", ")
+	raw_params = raw_params.split(")")[0]
+	params = []
 	param_types = []
 	param_names = []
 
-	for arg in params:
-		*t, arg_name = arg.split()
-		param_types.append(' '.join(t).removeprefix("WGPU_NULLABLE "))
-		param_names.append(arg_name)
+	if raw_params != "void":
+		params = raw_params.split(", ")
+
+		for arg in params:
+			*t, arg_name = arg.split()
+			param_types.append(" ".join(t).removeprefix("WGPU_NULLABLE "))
+			param_names.append(arg_name)
 
 	# Generate function struct.
 
@@ -124,7 +155,20 @@ for line in lines:
 		if t in ("WGPUSurfaceCapabilities", "WGPUAdapterInfo"):
 			parser += f"\t\t{t} const {p} = *({t}*) args[{i}].opaque_ptr;\n"
 
-		elif kos_t == "KOS_TYPE_BUF":
+		elif t == "WGPUStringView":
+			parser += f"\t\t{t} const {p} = {{\n"
+			parser += f"\t\t\t.data = args[{i}].buf.ptr,\n"
+			parser += f"\t\t\t.length = args[{i}].buf.size,\n"
+			parser += f"\t\t}};\n"
+
+		elif t == "WGPUFuture":
+			parser += f"\t\t{t} const {p} = {{ .id = args[{i}].u64 }};\n"
+
+		elif kos_t == "KOS_TYPE_BUF" and t[-1] != "*":
+			parser += f"\t\t{t} const {p} = *({t}*) args[{i}].buf.ptr;\n"
+			parser += f"\t\tassert(args[{i}].buf.size == sizeof {p});\n"
+
+		elif kos_t == "KOS_TYPE_BUF" and t[-1] == "*":
 			parser += f"\t\t{t} const {p} = args[{i}].buf.ptr;\n"
 			parser += f"\t\tassert(args[{i}].buf.size == sizeof *{p});\n"
 
@@ -137,138 +181,153 @@ for line in lines:
 
 	# Generate return code.
 
+	call = f"{name}({', '.join(param_names)})"
+
 	kos_ret_type = wgpu_type_to_kos(ret_type)
 
-	if kos_ret_type == "KOS_TYPE_VOID":
-		ret = ""
+	if ret_type == "WGPUFuture":
+		ret = f"notif.call_ret.ret.u64 = {call}.id"
+
+	elif ret_type == "WGPUAdapterInfo":
+		ret = f"""{ret_type}* const ptr = malloc(sizeof({ret_type}));
+		assert(ptr != NULL);
+		notif.call_ret.ret.buf.ptr = (void*) ptr;
+		notif.call_ret.ret.buf.size = sizeof({ret_type});
+		*ptr = {call};"""
+
+	elif kos_ret_type == "KOS_TYPE_VOID":
+		ret = call
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
-		ret = f"notif.call_ret.ret.opaque_ptr = (void*) "
+		ret = f"notif.call_ret.ret.opaque_ptr = (void*) {call}"
 
 	else:
 		union = kos_type_to_union(kos_ret_type)
-		ret = f"notif.call_ret.ret.{union} = "
+		ret = f"notif.call_ret.ret.{union} = {call}"
 
 	# Generate actual call handler.
 
 	call_handlers += f"""\tcase {fn_id}: {{
-{parser}\t\t{ret}{name}({", ".join(param_names)});
+{parser}\t\t{ret};
 		break;
 	}}
 """
 
+	# Generate library prototype and function IDs.
+
+	lib_fn_sig = f"{ret_type} aqua_{name}({','.join(['wgpu_ctx_t ctx'] + params)})"
+	lib_protos += f"{lib_fn_sig};\n"
+	lib_fn_ids += f"\t\tuint32_t {name};\n"
+
+	# Generate function validator.
+
+	param_validators = ""
+
+	for i, p in enumerate(param_names):
+		t = param_types[i]
+		kos_t = wgpu_type_to_kos(t)
+
+		param_validators += f""" &&
+			fn->params[{i}].type == {kos_t} &&
+			strcmp((char*) fn->params[{i}].name, "{p}") == 0"""
+
+	lib_fn_validators += f"""
+		if (
+			strcmp(name, "{name}") == 0 &&
+			fn->ret_type == {kos_ret_type} &&
+			fn->param_count == {len(param_names)}{param_validators}
+		) {{
+			ctx->fns.{name} = i;
+		}}
+"""
+
+	# Generate args generator for library implementation.
+
+	args = []
+
+	for i, p in enumerate(param_names):
+		t = param_types[i]
+		kos_t = wgpu_type_to_kos(t)
+
+		if is_buf_struct(t):
+			args.append(f".buf.size = sizeof {p},\n\t\t\t.buf.ptr = &{p},")
+
+		elif t == "WGPUStringView":
+			args.append(f".buf.size = {p}.length,\n\t\t\t.buf.ptr = (void*) {p}.data,")
+
+		elif kos_t == "KOS_TYPE_BUF":
+			args.append(f".buf.size = sizeof *{p},\n\t\t\t.buf.ptr = (void*) {p},")
+
+		elif kos_t == "KOS_TYPE_OPAQUE_PTR":
+			args.append(f".opaque_ptr = (void*) {p},")
+
+		else:
+			union = kos_type_to_union(kos_t)
+			args.append(f".{union} = {p},")
+
+	args = ",\n\t\t".join(map(lambda arg: f"{{\n\t\t\t{arg}\n\t\t}}", args))
+
+	if kos_ret_type == "KOS_TYPE_VOID":
+		ret = ""
+
+	elif ret_type == "WGPUFuture":
+		ret = f"\n\treturn (WGPUFuture) {{.id = ctx->last_ret.u64}};"
+
+	elif ret_type == "WGPUAdapterInfo":
+		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;"
+
+	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
+		ret = f"\n\treturn ctx->last_ret.opaque_ptr;"
+
+	else:
+		union = kos_type_to_union(kos_ret_type)
+		ret = f"\n\treturn ctx->last_ret.{union};"
+
+	lib_impls += f"""{lib_fn_sig} {{
+	kos_val_t const args[] = {{
+		{args}
+	}};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.{name}, args);
+	kos_flush(true);
+	{ret}
+}}
+
+"""
+
+	# Done! Move to next function ID.
+
 	fn_id += 1
 
-# Inject generated functions into device source.
 
-with open("fns.h") as f:
-	src = f.read().split("\n")
+def inject_src(path: str, tag: str, payload: str):
+	with open(path) as f:
+		src = f.read().split("\n")
 
-begin = src.index("// FNS:BEGIN")
-end = src.index("// FNS:END")
+	begin = src.index(f"// {tag}:BEGIN")
+	end = src.index(f"// {tag}:END")
 
-assert begin != -1 and end != -1
-assert begin < end
+	assert begin != -1 and end != -1
+	assert begin < end
 
-src = "\n".join(src[:begin + 1] + fns.strip("\n").split("\n") + src[end:])
+	src = "\n".join(src[: begin + 1] + payload.strip("\n").split("\n") + src[end:])
 
-with open("fns.h", "w") as f:
-	f.write(src)
+	with open(path, "w") as f:
+		f.write(src)
 
-# Inject generated call handlers into device source.
 
-with open("main.c") as f:
-	src = f.read().split("\n")
+# Generate sources for device & library.
 
-begin = src.index("// CALL_HANDLERS:BEGIN")
-end = src.index("// CALL_HANDLERS:END")
-
-assert begin != -1 and end != -1
-assert begin < end
-
-src = "\n".join(src[:begin + 1] + call_handlers.strip("\n").split("\n") + src[end:])
-
-with open("main.c", "w") as f:
-	f.write(src)
+inject_src("fns.h", "FNS", fns)
+inject_src("main.c", "CALL_HANDLERS", call_handlers)
 
 # Compile device as a sanity check.
 
 os.system("bob build")
 
-exit()
+# Inject function prototypes into library source.
 
-# C library source
-
-lib_out = f"""// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) {year} Aymeric Wibo
-
-// this file is automatically generated by 'aqua-devices/aquabsd.black/wgpu/gen.py'
-// if you need to update this, read the 'aqua-devices/aquabsd.black/wgpu/README.md' document
-
-#pragma once
-
-#include <root.h>
-
-#include "wgpu_types.h"
-
-static device_t wgpu_device = NO_DEVICE;
-
-AQUA_C_FN int wgpu_init(void) {{
-	wgpu_device = query_device("aquabsd.black.wgpu");
-
-	if (wgpu_device == NO_DEVICE) {{
-		return ERR_NO_DEVICE;
-	}}
-
-	return SUCCESS;
-}}
-
-#if defined(AQUABSD_ALPS_WIN) || defined(AQUABSD_BLACK_WIN)
-AQUA_C_FN WGPUSurface wgpu_surface_from_win(WGPUInstance instance, win_t* win) {{
-	struct {{
-		WGPUInstance instance;
-		void* win;
-	}} {PACKED} const args = {{
-		.instance = instance,
-		.win = (void*) win->internal_win,
-	}};
-
-	return (WGPUSurface) send_device(wgpu_device, {CMD_SURFACE_FROM_WIN}, (void*) &args);
-}}
-#endif
-
-#if defined(AQUABSD_BLACK_WM)
-AQUA_C_FN WGPUDevice wgpu_device_from_wm(WGPUInstance instance, wm_t* wm) {{
-	struct {{
-		WGPUInstance instance;
-		void* wm;
-	}} {PACKED} const args = {{
-		.instance = instance,
-		.wm = (void*) wm->internal_wm,
-	}};
-
-	return (WGPUDevice) send_device(wgpu_device, {CMD_DEVICE_FROM_WM}, (void*) &args);
-}}
-
-AQUA_C_FN WGPUTexture wgpu_device_texture_from_wm(WGPUDevice device, wm_t* wm) {{
-	struct {{
-		WGPUDevice device;
-		void* wm;
-	}} {PACKED} const args = {{
-		.device = device,
-		.wm = (void*) wm->internal_wm,
-	}};
-
-	return (WGPUTexture) send_device(wgpu_device, {CMD_DEVICE_TEXTURE_FROM_WM}, (void*) &args);
-}}
-#endif
-{c_wrappers}"""
-
-if not os.path.exists("c-lib"):
-	os.mkdir("c-lib")
-
-with open("c-lib/wgpu.h", "w") as f:
-	f.write(lib_out)
-
-with open("c-lib/wgpu_types.h", "w") as f:
-	f.write(c_types)
+inject_src("../../lib/wgpu.h", "PROTOS", lib_protos)
+inject_src("../../lib/wgpu.c", "FN_IDS", lib_fn_ids)
+inject_src("../../lib/wgpu.c", "FN_VALIDATORS", lib_fn_validators)
+inject_src("../../lib/wgpu.c", "FNS", lib_impls[:-1])

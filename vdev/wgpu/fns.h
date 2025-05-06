@@ -7,8 +7,12 @@ static kos_fn_t const FNS[] = {
 	{
 		.name = "surface_from_win",
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
-		.param_count = 1,
+		.param_count = 2,
 		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "instance",
+			},
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "win",
@@ -33,23 +37,30 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
+		.name = "wgpuGetInstanceCapabilities",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "capabilities",
+			},
+		},
+	},
+	{
 		.name = "wgpuGetProcAddress",
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
-		.param_count = 2,
+		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
 				.name = "procName",
 			},
 		},
 	},
 	{
-		.name = "wgpuAdapterEnumerateFeatures",
-		.ret_type = KOS_TYPE_U32,
+		.name = "wgpuAdapterGetFeatures",
+		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
@@ -64,7 +75,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuAdapterGetInfo",
-		.ret_type = KOS_TYPE_VOID,
+		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
@@ -79,7 +90,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuAdapterGetLimits",
-		.ret_type = KOS_TYPE_BOOL,
+		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
@@ -109,8 +120,8 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuAdapterRequestDevice",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 3,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
@@ -121,17 +132,13 @@ static kos_fn_t const FNS[] = {
 				.name = "descriptor",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
 	{
-		.name = "wgpuAdapterReference",
+		.name = "wgpuAdapterAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -158,7 +165,7 @@ static kos_fn_t const FNS[] = {
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
+				.type = KOS_TYPE_BUF,
 				.name = "adapterInfo",
 			},
 		},
@@ -173,13 +180,13 @@ static kos_fn_t const FNS[] = {
 				.name = "bindGroup",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuBindGroupReference",
+		.name = "wgpuBindGroupAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -210,13 +217,13 @@ static kos_fn_t const FNS[] = {
 				.name = "bindGroupLayout",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuBindGroupLayoutReference",
+		.name = "wgpuBindGroupLayoutAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -310,7 +317,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuBufferGetUsage",
-		.ret_type = KOS_TYPE_U32,
+		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
@@ -321,15 +328,15 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuBufferMapAsync",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 6,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 5,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "buffer",
 			},
 			{
-				.type = KOS_TYPE_U32,
+				.type = KOS_TYPE_U64,
 				.name = "mode",
 			},
 			{
@@ -341,12 +348,8 @@ static kos_fn_t const FNS[] = {
 				.name = "size",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
@@ -360,7 +363,7 @@ static kos_fn_t const FNS[] = {
 				.name = "buffer",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
@@ -377,7 +380,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuBufferReference",
+		.name = "wgpuBufferAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -408,13 +411,13 @@ static kos_fn_t const FNS[] = {
 				.name = "commandBuffer",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuCommandBufferReference",
+		.name = "wgpuCommandBufferAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -613,7 +616,7 @@ static kos_fn_t const FNS[] = {
 				.name = "commandEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "markerLabel",
 			},
 		},
@@ -639,7 +642,7 @@ static kos_fn_t const FNS[] = {
 				.name = "commandEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "groupLabel",
 			},
 		},
@@ -685,7 +688,7 @@ static kos_fn_t const FNS[] = {
 				.name = "commandEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
@@ -710,7 +713,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuCommandEncoderReference",
+		.name = "wgpuCommandEncoderAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -794,7 +797,7 @@ static kos_fn_t const FNS[] = {
 				.name = "computePassEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "markerLabel",
 			},
 		},
@@ -820,7 +823,7 @@ static kos_fn_t const FNS[] = {
 				.name = "computePassEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "groupLabel",
 			},
 		},
@@ -862,7 +865,7 @@ static kos_fn_t const FNS[] = {
 				.name = "computePassEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
@@ -883,7 +886,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuComputePassEncoderReference",
+		.name = "wgpuComputePassEncoderAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -929,13 +932,13 @@ static kos_fn_t const FNS[] = {
 				.name = "computePipeline",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuComputePipelineReference",
+		.name = "wgpuComputePipelineAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1033,8 +1036,8 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuDeviceCreateComputePipelineAsync",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 3,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
@@ -1045,12 +1048,8 @@ static kos_fn_t const FNS[] = {
 				.name = "descriptor",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
@@ -1116,8 +1115,8 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuDeviceCreateRenderPipelineAsync",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 3,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
@@ -1128,12 +1127,8 @@ static kos_fn_t const FNS[] = {
 				.name = "descriptor",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
@@ -1194,8 +1189,19 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuDeviceEnumerateFeatures",
-		.ret_type = KOS_TYPE_U32,
+		.name = "wgpuDeviceGetAdapterInfo",
+		.ret_type = KOS_TYPE_BUF,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "device",
+			},
+		},
+	},
+	{
+		.name = "wgpuDeviceGetFeatures",
+		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
@@ -1210,7 +1216,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuDeviceGetLimits",
-		.ret_type = KOS_TYPE_BOOL,
+		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
@@ -1220,6 +1226,17 @@ static kos_fn_t const FNS[] = {
 			{
 				.type = KOS_TYPE_BUF,
 				.name = "limits",
+			},
+		},
+	},
+	{
+		.name = "wgpuDeviceGetLostFuture",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "device",
 			},
 		},
 	},
@@ -1251,20 +1268,16 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuDevicePopErrorScope",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 3,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "device",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
@@ -1293,13 +1306,13 @@ static kos_fn_t const FNS[] = {
 				.name = "device",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuDeviceReference",
+		.name = "wgpuDeviceAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1336,6 +1349,21 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
+		.name = "wgpuInstanceGetWGSLLanguageFeatures",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "instance",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "features",
+			},
+		},
+	},
+	{
 		.name = "wgpuInstanceProcessEvents",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
@@ -1348,8 +1376,8 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuInstanceRequestAdapter",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 3,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
@@ -1360,17 +1388,36 @@ static kos_fn_t const FNS[] = {
 				.name = "options",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
 	{
-		.name = "wgpuInstanceReference",
+		.name = "wgpuInstanceWaitAny",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "instance",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "futureCount",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "futures",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "timeoutNS",
+			},
+		},
+	},
+	{
+		.name = "wgpuInstanceAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1401,13 +1448,13 @@ static kos_fn_t const FNS[] = {
 				.name = "pipelineLayout",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuPipelineLayoutReference",
+		.name = "wgpuPipelineLayoutAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1471,13 +1518,13 @@ static kos_fn_t const FNS[] = {
 				.name = "querySet",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuQuerySetReference",
+		.name = "wgpuQuerySetAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1500,20 +1547,16 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuQueueOnSubmittedWorkDone",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 3,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "queue",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
@@ -1527,7 +1570,7 @@ static kos_fn_t const FNS[] = {
 				.name = "queue",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
@@ -1610,7 +1653,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuQueueReference",
+		.name = "wgpuQueueAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1641,13 +1684,13 @@ static kos_fn_t const FNS[] = {
 				.name = "renderBundle",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuRenderBundleReference",
+		.name = "wgpuRenderBundleAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -1789,7 +1832,7 @@ static kos_fn_t const FNS[] = {
 				.name = "renderBundleEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "markerLabel",
 			},
 		},
@@ -1815,7 +1858,7 @@ static kos_fn_t const FNS[] = {
 				.name = "renderBundleEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "groupLabel",
 			},
 		},
@@ -1884,7 +1927,7 @@ static kos_fn_t const FNS[] = {
 				.name = "renderBundleEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
@@ -1932,7 +1975,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuRenderBundleEncoderReference",
+		.name = "wgpuRenderBundleEncoderAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2115,7 +2158,7 @@ static kos_fn_t const FNS[] = {
 				.name = "renderPassEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "markerLabel",
 			},
 		},
@@ -2141,7 +2184,7 @@ static kos_fn_t const FNS[] = {
 				.name = "renderPassEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "groupLabel",
 			},
 		},
@@ -2225,7 +2268,7 @@ static kos_fn_t const FNS[] = {
 				.name = "renderPassEncoder",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
@@ -2350,7 +2393,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuRenderPassEncoderReference",
+		.name = "wgpuRenderPassEncoderAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2396,13 +2439,13 @@ static kos_fn_t const FNS[] = {
 				.name = "renderPipeline",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuRenderPipelineReference",
+		.name = "wgpuRenderPipelineAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2433,13 +2476,13 @@ static kos_fn_t const FNS[] = {
 				.name = "sampler",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuSamplerReference",
+		.name = "wgpuSamplerAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2462,20 +2505,16 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuShaderModuleGetCompilationInfo",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 3,
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "shaderModule",
 			},
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
+				.type = KOS_TYPE_BUF,
+				.name = "callbackInfo",
 			},
 		},
 	},
@@ -2489,13 +2528,13 @@ static kos_fn_t const FNS[] = {
 				.name = "shaderModule",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuShaderModuleReference",
+		.name = "wgpuShaderModuleAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2517,6 +2556,28 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
+		.name = "wgpuSupportedFeaturesFreeMembers",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "supportedFeatures",
+			},
+		},
+	},
+	{
+		.name = "wgpuSupportedWGSLLanguageFeaturesFreeMembers",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "supportedWGSLLanguageFeatures",
+			},
+		},
+	},
+	{
 		.name = "wgpuSurfaceConfigure",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
@@ -2533,7 +2594,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuSurfaceGetCapabilities",
-		.ret_type = KOS_TYPE_VOID,
+		.ret_type = KOS_TYPE_U32,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
 			{
@@ -2567,7 +2628,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuSurfacePresent",
-		.ret_type = KOS_TYPE_VOID,
+		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
@@ -2588,7 +2649,7 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuSurfaceReference",
+		.name = "wgpuSurfaceAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2615,7 +2676,7 @@ static kos_fn_t const FNS[] = {
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
-				.type = KOS_TYPE_OPAQUE_PTR,
+				.type = KOS_TYPE_BUF,
 				.name = "surfaceCapabilities",
 			},
 		},
@@ -2714,7 +2775,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "wgpuTextureGetUsage",
-		.ret_type = KOS_TYPE_U32,
+		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
@@ -2744,13 +2805,13 @@ static kos_fn_t const FNS[] = {
 				.name = "texture",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuTextureReference",
+		.name = "wgpuTextureAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2781,13 +2842,13 @@ static kos_fn_t const FNS[] = {
 				.name = "textureView",
 			},
 			{
-				.type = KOS_TYPE_BUF,
+				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "label",
 			},
 		},
 	},
 	{
-		.name = "wgpuTextureViewReference",
+		.name = "wgpuTextureViewAddRef",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -2805,6 +2866,409 @@ static kos_fn_t const FNS[] = {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
 				.name = "textureView",
+			},
+		},
+	},
+	{
+		.name = "wgpuGenerateReport",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "instance",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "report",
+			},
+		},
+	},
+	{
+		.name = "wgpuInstanceEnumerateAdapters",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "instance",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "options",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "adapters",
+			},
+		},
+	},
+	{
+		.name = "wgpuQueueSubmitForIndex",
+		.ret_type = KOS_TYPE_U64,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "queue",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "commandCount",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "commands",
+			},
+		},
+	},
+	{
+		.name = "wgpuDevicePoll",
+		.ret_type = KOS_TYPE_BOOL,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "device",
+			},
+			{
+				.type = KOS_TYPE_BOOL,
+				.name = "wait",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "submissionIndex",
+			},
+		},
+	},
+	{
+		.name = "wgpuDeviceCreateShaderModuleSpirV",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "device",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "descriptor",
+			},
+		},
+	},
+	{
+		.name = "wgpuSetLogCallback",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "callback",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "userdata",
+			},
+		},
+	},
+	{
+		.name = "wgpuSetLogLevel",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_U32,
+				.name = "level",
+			},
+		},
+	},
+	{
+		.name = "wgpuGetVersion",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 0,
+		.params = (kos_param_t[]) {
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderSetPushConstants",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 5,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "stages",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "sizeBytes",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "data",
+			},
+		},
+	},
+	{
+		.name = "wgpuComputePassEncoderSetPushConstants",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "sizeBytes",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "data",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderBundleEncoderSetPushConstants",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 5,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "stages",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "sizeBytes",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "data",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderMultiDrawIndirect",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "buffer",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "count",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderMultiDrawIndexedIndirect",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "buffer",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "count",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderMultiDrawIndirectCount",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 6,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "buffer",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "count_buffer",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "count_buffer_offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "max_count",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderMultiDrawIndexedIndirectCount",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 6,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "encoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "buffer",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "offset",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "count_buffer",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "count_buffer_offset",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "max_count",
+			},
+		},
+	},
+	{
+		.name = "wgpuComputePassEncoderBeginPipelineStatisticsQuery",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "computePassEncoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "querySet",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "queryIndex",
+			},
+		},
+	},
+	{
+		.name = "wgpuComputePassEncoderEndPipelineStatisticsQuery",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "computePassEncoder",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderBeginPipelineStatisticsQuery",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "renderPassEncoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "querySet",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "queryIndex",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderEndPipelineStatisticsQuery",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "renderPassEncoder",
+			},
+		},
+	},
+	{
+		.name = "wgpuComputePassEncoderWriteTimestamp",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "computePassEncoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "querySet",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "queryIndex",
+			},
+		},
+	},
+	{
+		.name = "wgpuRenderPassEncoderWriteTimestamp",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "renderPassEncoder",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "querySet",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "queryIndex",
 			},
 		},
 	},

@@ -5,6 +5,8 @@
 
 #include "vdev.h"
 
+#include <stdlib.h>
+
 typedef struct action action_t;
 
 typedef void (*action_cb_t)(kos_cookie_t cookie, struct action* action, bool sync);

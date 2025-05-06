@@ -1,9 +1,9 @@
 // This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2024 Aymeric Wibo
+// v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
+#include "../gv/gv.h"       // TODO Where to put this?
+#include "../gv/internal.h" // TODO Where to put this?
 #include "../kos/kos.h"
-#include "gv.h"
-#include "internal.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <sys/file.h>
 
@@ -116,9 +117,33 @@ done:
 }
 
 static void* vdev_conn_thread(void* arg) {
-	for (;;) {
+	gv_vdev_conn_t* const conn = arg;
+
+	packet_t buf;
+	int len;
+
+	while ((len = recv(conn->sock, &buf, sizeof buf, 0)) > 0) {
+		switch (buf.header.type) {
+		case ELP:
+			fprintf(stderr, "Received ELP from host %" PRIx64 " on TCP. This should not happen!\n", buf.elp.host);
+			break;
+		case QUERY:
+			fprintf(stderr, "Received QUERY on VDEV connection. This should not happen!\n");
+			break;
+		case QUERY_RES:
+			fprintf(stderr, "Received QUERY_RES on VDEV connection. This should not happen!\n");
+			break;
+		case CONN_VDEV:
+			fprintf(stderr, "Received CONN_VDEV on VDEV connection. This should not happen!\n");
+			break;
+		case CONN_VDEV_RES:
+			// TODO Here we're going to need to call back to the KOS.
+			printf("TODO CONN_VDEV_RES\n");
+			break;
+		}
 	}
 
+	close(conn->sock);
 	return NULL;
 }
 

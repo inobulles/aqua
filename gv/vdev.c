@@ -62,7 +62,7 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, state_t* state, ch
 		return -1;
 	}
 
-	// Load the VDEV symbol itself.
+	// Load the VDRIVER symbol itself.
 
 	dlerror(); // Clear last error message.
 	vdriver_t* const vdriver = dlsym(lib, "VDRIVER");

@@ -5,7 +5,6 @@
 
 #include "../kos/kos.h"
 #include "conn.h"
-#include "gv.h"
 
 #include <pthread.h>
 #include <stdbool.h>
@@ -19,6 +18,9 @@
 #define ELP_PORT GV_PORT
 #define ELP_DELAY 1 // In seconds.
 #define NODE_TTL 5  // In seconds.
+
+#define GV_NODES_PATH "/tmp/gv.nodes"
+#define GV_LOCK_PATH "/tmp/gv.lock"
 
 _Static_assert(sizeof(in_addr_t) == sizeof(uint32_t), "in_addr_t is not 32 bits long.");
 
@@ -79,6 +81,7 @@ typedef enum : uint8_t {
 	QUERY = 1,
 	QUERY_RES = 2,
 	CONN_VDEV = 3,
+	CONN_VDEV_RES = 4,
 } packet_type_t;
 
 #define ELP_VERS 0

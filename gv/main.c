@@ -3,7 +3,6 @@
 
 #include "conn.h"
 #include "elp.h"
-#include "gv.h"
 #include "internal.h"
 #include "vdev.h"
 

@@ -1,0 +1,10 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+# Go doesn't need the library to be built in any way, so all this file is doing is depending on the C library we're providing bindings for.
+
+deps = [
+	Dep.local("../.."),
+]

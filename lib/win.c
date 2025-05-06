@@ -4,13 +4,19 @@
 #include "win.h"
 #include <aqua/kos.h>
 
+#define __AQUA_LIB_COMPONENT__
+#include "component.h"
+#include "win_internal.h"
+
+#include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define SPEC "aquabsd.black.win"
 
-struct win_softc_t {
+struct win_ctx_t {
 	uint64_t hid;
 	uint64_t vid;
 
@@ -31,89 +37,105 @@ struct win_softc_t {
 		uint32_t loop;
 	} fns;
 
+	bool last_success;
 	kos_val_t last_ret;
 	kos_ino_t ino;
 };
 
-struct win_t {
-	win_softc_t sc;
-	void* opaque_ptr;
-	kos_ino_t ino;
-};
+static component_t comp;
 
-void win_init(void) {
+aqua_component_t win_init(aqua_ctx_t ctx) {
+	aqua_register_component(ctx, &comp);
 	kos_req_vdev("aquabsd.black.win");
+
+	return &comp;
 }
 
-bool win_probe(kos_vdev_descr_t const* vdev) {
+static bool probe(kos_vdev_descr_t const* vdev) {
 	return strcmp((char*) vdev->spec, SPEC) == 0;
 }
 
-win_softc_t win_conn(kos_vdev_descr_t const* vdev) {
-	win_softc_t const sc = calloc(1, sizeof *sc);
+win_ctx_t win_conn(kos_vdev_descr_t const* vdev) {
+	win_ctx_t const ctx = calloc(1, sizeof *ctx);
 
-	if (sc == NULL) {
+	if (ctx == NULL) {
 		return NULL;
 	}
 
-	sc->hid = vdev->host_id;
-	sc->vid = vdev->vdev_id;
+	ctx->hid = vdev->host_id;
+	ctx->vid = vdev->vdev_id;
 
-	sc->is_conn = false;
-	sc->last_cookie = kos_vdev_conn(sc->hid, sc->vid);
+	ctx->is_conn = false;
+	ctx->last_cookie = kos_vdev_conn(ctx->hid, ctx->vid);
 
-	return sc;
+	// Add pending connection.
+
+	cookie_notif_conn_tuple_t tuple = {
+		.cookie = ctx->last_cookie,
+		.comp = &comp,
+		.data = ctx,
+	};
+
+	aqua_add_pending_conn(comp.ctx, &tuple);
+
+	// Finally, flush.
+
+	kos_flush(true);
+
+	return ctx;
 }
 
-void win_disconn(win_softc_t sc) {
-	if (sc == NULL) {
+void win_disconn(win_ctx_t ctx) {
+	if (ctx == NULL) {
 		return;
 	}
 
-	if (!sc->is_conn) {
-		free(sc);
+	if (!ctx->is_conn) {
+		free(ctx);
 		return;
 	}
 
-	kos_vdev_disconn(sc->conn_id);
-	free(sc);
+	kos_vdev_disconn(ctx->conn_id);
+	free(ctx);
 }
 
-void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
-	if (sc == NULL || notif->cookie != sc->last_cookie) {
+static void notif_conn(kos_notif_t const* notif, void* data) {
+	win_ctx_t const ctx = data;
+
+	if (ctx == NULL || notif->cookie != ctx->last_cookie) {
 		return;
 	}
 
-	sc->conn_id = notif->conn.conn_id;
-	sc->is_conn = true;
+	ctx->conn_id = notif->conn_id;
+	ctx->is_conn = true;
 
 	// Read constants.
 
-	memset(&sc->consts, 0xFF, sizeof sc->consts);
+	memset(&ctx->consts, 0xFF, sizeof ctx->consts);
 
 	for (size_t i = 0; i < notif->conn.const_count; i++) {
 		kos_const_t const* const c = &notif->conn.consts[i];
 		char const* const name = (void*) c->name;
 
 		if (strcmp(name, "INTR_REDRAW") == 0) {
-			sc->consts.INTR_REDRAW = c->val.u8;
+			ctx->consts.INTR_REDRAW = c->val.u8;
 		}
 
 		if (strcmp(name, "INTR_RESIZE") == 0) {
-			sc->consts.INTR_RESIZE = c->val.u8;
+			ctx->consts.INTR_RESIZE = c->val.u8;
 		}
 	}
 
-	for (size_t i = 0; i < sizeof sc->consts / sizeof(uint32_t); i++) {
-		if (((uint32_t*) &sc->consts)[i] == -1u) {
-			sc->is_conn = false;
+	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
+		if (((uint32_t*) &ctx->consts)[i] == -1u) {
+			ctx->is_conn = false;
 			break;
 		}
 	}
 
 	// Read functions.
 
-	memset(&sc->fns, 0xFF, sizeof sc->fns);
+	memset(&ctx->fns, 0xFF, sizeof ctx->fns);
 
 	for (size_t i = 0; i < notif->conn.fn_count; i++) {
 		kos_fn_t const* const fn = &notif->conn.fns[i];
@@ -124,7 +146,7 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
 			fn->param_count == 0
 		) {
-			sc->fns.create = i;
+			ctx->fns.create = i;
 		}
 
 		if (
@@ -134,7 +156,7 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "win") == 0
 		) {
-			sc->fns.destroy = i;
+			ctx->fns.destroy = i;
 		}
 
 		if (
@@ -146,7 +168,7 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 			fn->params[1].type == KOS_TYPE_U32 &&
 			strcmp((char*) fn->params[1].name, "ino") == 0
 		) {
-			sc->fns.register_interrupt = i;
+			ctx->fns.register_interrupt = i;
 		}
 
 		if (
@@ -156,30 +178,49 @@ void win_notif_conn(win_softc_t sc, kos_notif_t const* notif) {
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "win") == 0
 		) {
-			sc->fns.loop = i;
+			ctx->fns.loop = i;
 		}
 	}
 
-	for (size_t i = 0; i < sizeof sc->fns / sizeof(uint32_t); i++) {
-		if (((uint32_t*) &sc->fns)[i] == -1u) {
-			sc->is_conn = false;
+	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
+		if (((uint32_t*) &ctx->fns)[i] == -1u) {
+			ctx->is_conn = false;
 			break;
 		}
 	}
 }
 
-void win_notif_call_ret(win_softc_t sc, kos_notif_t const* notif) {
-	if (sc == NULL || !sc->is_conn || notif->cookie != sc->last_cookie) {
+static void notif_conn_fail(kos_notif_t const* notif, void* data) {
+	(void) notif;
+	(void) data;
+
+	fprintf(stderr, "TODO Connection failed, but how do we handle this?\n");
+}
+
+static void notif_call_ret(kos_notif_t const* notif, void* data) {
+	win_ctx_t const ctx = data;
+
+	if (ctx == NULL || !ctx->is_conn || notif->cookie != ctx->last_cookie) {
 		return;
 	}
 
-	sc->last_ret = notif->call_ret.ret;
+	ctx->last_success = true;
+	ctx->last_ret = notif->call_ret.ret;
+}
+
+static void notif_call_fail(kos_notif_t const* notif, void* data) {
+	win_ctx_t const ctx = data;
+	ctx->last_success = false;
+
+	(void) notif;
+
+	fprintf(stderr, "TODO Call failed, but how do we handle this?\n");
 }
 
 // Actual function implementations.
 
-win_t win_create(win_softc_t sc) {
-	if (sc == NULL || !sc->is_conn) {
+win_t win_create(win_ctx_t ctx) {
+	if (ctx == NULL || !ctx->is_conn) {
 		return NULL;
 	}
 
@@ -189,11 +230,11 @@ win_t win_create(win_softc_t sc) {
 		return NULL;
 	}
 
-	sc->last_cookie = kos_vdev_call(sc->conn_id, sc->fns.create, NULL);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.create, NULL);
 	kos_flush(true);
 
-	win->sc = sc;
-	win->opaque_ptr = sc->last_ret.opaque_ptr;
+	win->ctx = ctx;
+	win->opaque_ptr = ctx->last_ret.opaque_ptr;
 	win->ino = kos_gen_ino();
 
 	kos_val_t const args[] = {
@@ -205,16 +246,25 @@ win_t win_create(win_softc_t sc) {
 		},
 	};
 
-	sc->last_cookie = kos_vdev_call(sc->conn_id, sc->fns.register_interrupt, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.register_interrupt, args);
+	ctx->last_success = false;
 	kos_flush(true);
+
+	// If the interrupt registration was successful, add it to our interrupt vector.
+
+	if (!ctx->last_success) {
+		return win;
+	}
+
+	aqua_add_interrupt(comp.ctx, win->ino, &comp, win);
 
 	return win;
 }
 
 void win_destroy(win_t win) {
-	win_softc_t const sc = win->sc;
+	win_ctx_t const ctx = win->ctx;
 
-	if (!sc->is_conn) {
+	if (!ctx->is_conn) {
 		free(win);
 		return;
 	}
@@ -225,16 +275,26 @@ void win_destroy(win_t win) {
 		},
 	};
 
-	kos_vdev_call(sc->conn_id, sc->fns.destroy, args);
+	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
 	kos_flush(true);
 
 	free(win);
 }
 
-void win_loop(win_t win) {
-	win_softc_t const sc = win->sc;
+void win_register_redraw_cb(win_t win, win_redraw_cb_t cb, void* data) {
+	win->redraw = cb;
+	win->redraw_data = data;
+}
 
-	if (!sc->is_conn) {
+void win_register_resize_cb(win_t win, win_resize_cb_t cb, void* data) {
+	win->resize = cb;
+	win->resize_data = data;
+}
+
+void win_loop(win_t win) {
+	win_ctx_t const ctx = win->ctx;
+
+	if (!ctx->is_conn) {
 		return;
 	}
 
@@ -244,7 +304,7 @@ void win_loop(win_t win) {
 		},
 	};
 
-	kos_vdev_call(sc->conn_id, sc->fns.loop, args);
+	kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
 	kos_flush(true);
 }
 
@@ -258,14 +318,17 @@ typedef struct __attribute__((packed)) {
 	uint32_t y_res;
 } intr_resize_t;
 
-void win_interrupt(win_t win, kos_notif_t const* notif) {
+static void interrupt(kos_notif_t const* notif, void* data) {
+	assert(notif->kind == KOS_NOTIF_INTERRUPT);
+
+	win_t const win = data;
+	win_ctx_t const ctx = win->ctx;
+
 	if (win->ino != notif->interrupt.ino) {
 		return;
 	}
 
-	win_softc_t const sc = win->sc;
-
-	if (!sc->is_conn) {
+	if (!ctx->is_conn) {
 		return;
 	}
 
@@ -275,17 +338,32 @@ void win_interrupt(win_t win, kos_notif_t const* notif) {
 		return;
 	}
 
-	if (intr->type == sc->consts.INTR_REDRAW) {
-		// TODO Redraw.
+	if (intr->type == ctx->consts.INTR_REDRAW) {
+		if (win->redraw != NULL) {
+			win->redraw(win, win->redraw_data);
+		}
 	}
 
-	if (intr->type == sc->consts.INTR_RESIZE) {
+	if (intr->type == ctx->consts.INTR_RESIZE) {
 		intr_resize_t const* const resize = notif->interrupt.data;
 
 		if (notif->interrupt.data_size < sizeof *resize) {
 			return;
 		}
 
-		(void) resize; // TODO Resize.
+		if (win->resize != NULL) {
+			win->resize(win, win->resize_data, resize->x_res, resize->y_res);
+		}
 	}
 }
+
+static component_t comp = {
+	.probe = probe,
+	.notif_conn = notif_conn,
+	.notif_conn_fail = notif_conn_fail,
+	.notif_call_ret = notif_call_ret,
+	.notif_call_fail = notif_call_fail,
+	.interrupt = interrupt,
+	.vdev_count = 0,
+	.vdevs = NULL,
+};

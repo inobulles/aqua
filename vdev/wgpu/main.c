@@ -1,18 +1,17 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 #include "../../kos/vdev.h"
 #include "../win/win.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-#include ".bob/prefix/include/webgpu-headers/webgpu.h"
+#include <webgpu/webgpu.h>
+#include <webgpu/wgpu.h>
 
-#if defined(__APPLE__) && defined(__OBJC__)
-# include <Cocoa/Cocoa.h>
-# include <QuartzCore/CAMetalLayer.h>
-#endif
+#include "apple.h"
 
 #define SPEC "aquabsd.black.wgpu"
 #define VERS 0
@@ -36,6 +35,10 @@ static void probe(void) {
 			.vers = VERS,
 			.human = "WebGPU GPU", // TODO Should we get the actual GPU's name here?
 			.vdriver_human = VDRIVER_HUMAN,
+
+			.pref = 0,
+			.host_id = 0,
+			.vdev_id = only_vid,
 		},
 	};
 
@@ -58,9 +61,9 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 
 	kos_notif_t const notif = {
 		.kind = KOS_NOTIF_CONN,
+		.conn_id = conn_id,
 		.cookie = cookie,
 		.conn = {
-			.conn_id = conn_id,
 			.fn_count = sizeof(FNS) / sizeof(*FNS),
 			.fns = FNS,
 		},
@@ -76,6 +79,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CALL_RET,
+		.conn_id = conn_id,
 		.cookie = cookie,
 	};
 
@@ -89,9 +93,9 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 		switch (win->kind) {
 		case AQUA_WIN_KIND_WAYLAND:;
-			WGPUSurfaceDescriptorFromWaylandSurface const descr_from_wayland = {
+			WGPUSurfaceSourceWaylandSurface const descr_from_wayland = {
 				.chain = (WGPUChainedStruct const) {
-					.sType = WGPUSType_SurfaceDescriptorFromWaylandSurface,
+					.sType = WGPUSType_SurfaceSourceWaylandSurface,
 				},
 				.display = win->detail.wayland.display,
 				.surface = win->detail.wayland.surface,
@@ -102,9 +106,9 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 			break;
 		case AQUA_WIN_KIND_XCB:;
-			WGPUSurfaceDescriptorFromXcbWindow const descr_from_xcb = {
+			WGPUSurfaceSourceXCBWindow const descr_from_xcb = {
 				.chain = (WGPUChainedStruct const) {
-					.sType = WGPUSType_SurfaceDescriptorFromXcbWindow,
+					.sType = WGPUSType_SurfaceSourceXCBWindow,
 				},
 				.connection = win->detail.xcb.connection,
 				.window = win->detail.xcb.window,
@@ -115,9 +119,9 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 			break;
 		case AQUA_WIN_KIND_XLIB:;
-			WGPUSurfaceDescriptorFromXlibWindow const descr_from_xlib = {
+			WGPUSurfaceSourceXlibWindow const descr_from_xlib = {
 				.chain = (WGPUChainedStruct const) {
-					.sType = WGPUSType_SurfaceDescriptorFromXlibWindow,
+					.sType = WGPUSType_SurfaceSourceXlibWindow,
 				},
 				.display = win->detail.xlib.display,
 				.window = win->detail.xlib.window,
@@ -128,18 +132,8 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 			break;
 		case AQUA_WIN_KIND_APPKIT:;
-#if defined(__APPLE__) && defined(__OBJC__)
-			NSView* const view = win->detai.appkit.ns_view;
-			[view setWantsLayer:YES];
-			CAMetalLayer* const layer = [CAMetalLayer layer];
-			[view setLayer:layer];
-
-			WGPUSurfaceDescriptorFromMetalLayer const descr_from_metal = {
-				.chain = (WGPUChainedStruct const) {
-					.sType = WGPUSType_SurfaceDescriptorFromMetalLayer,
-				},
-				.layer = layer,
-			};
+#if defined(__APPLE__)
+			WGPUSurfaceSourceMetalLayer const descr_from_metal = wgpu_get_metal_layer_surface_source(win);
 
 			descr.nextInChain = (void*) &descr_from_metal;
 			surf = wgpuInstanceCreateSurface(inst, &descr);
@@ -150,7 +144,8 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 			break;
 		case AQUA_WIN_KIND_NONE:
 		default:
-			assert(false);
+			fprintf(stderr, "Unsupported window kind: %d. This can happen if you are trying to create a surface from a window whose main loop has not yet started.\n", win->kind);
+			return;
 		}
 
 		assert(surf != NULL);
@@ -171,195 +166,210 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		break;
 	}
 	case 2: {
-		WGPUDevice const device = args[0].opaque_ptr;
-		char const * const procName = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *procName);
-		notif.call_ret.ret.opaque_ptr = (void*) wgpuGetProcAddress(device, procName);
+		WGPUInstanceCapabilities * const capabilities = args[0].buf.ptr;
+		assert(args[0].buf.size == sizeof *capabilities);
+		notif.call_ret.ret.u32 = wgpuGetInstanceCapabilities(capabilities);
 		break;
 	}
 	case 3: {
-		WGPUAdapter const adapter = args[0].opaque_ptr;
-		WGPUFeatureName * const features = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *features);
-		notif.call_ret.ret.u32 = wgpuAdapterEnumerateFeatures(adapter, features);
+		WGPUStringView const procName = {
+			.data = args[0].buf.ptr,
+			.length = args[0].buf.size,
+		};
+		notif.call_ret.ret.opaque_ptr = (void*) wgpuGetProcAddress(procName);
 		break;
 	}
 	case 4: {
 		WGPUAdapter const adapter = args[0].opaque_ptr;
-		WGPUAdapterInfo * const info = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *info);
-		wgpuAdapterGetInfo(adapter, info);
+		WGPUSupportedFeatures * const features = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *features);
+		wgpuAdapterGetFeatures(adapter, features);
 		break;
 	}
 	case 5: {
 		WGPUAdapter const adapter = args[0].opaque_ptr;
-		WGPUSupportedLimits * const limits = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *limits);
-		notif.call_ret.ret.b = wgpuAdapterGetLimits(adapter, limits);
+		WGPUAdapterInfo * const info = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *info);
+		notif.call_ret.ret.u32 = wgpuAdapterGetInfo(adapter, info);
 		break;
 	}
 	case 6: {
+		WGPUAdapter const adapter = args[0].opaque_ptr;
+		WGPULimits * const limits = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *limits);
+		notif.call_ret.ret.u32 = wgpuAdapterGetLimits(adapter, limits);
+		break;
+	}
+	case 7: {
 		WGPUAdapter const adapter = args[0].opaque_ptr;
 		WGPUFeatureName const feature = args[1].u32;
 		notif.call_ret.ret.b = wgpuAdapterHasFeature(adapter, feature);
 		break;
 	}
-	case 7: {
+	case 8: {
 		WGPUAdapter const adapter = args[0].opaque_ptr;
 		WGPUDeviceDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
-		WGPUAdapterRequestDeviceCallback const callback = args[2].opaque_ptr;
-		void * const userdata = args[3].opaque_ptr;
-		wgpuAdapterRequestDevice(adapter, descriptor, callback, userdata);
-		break;
-	}
-	case 8: {
-		WGPUAdapter const adapter = args[0].opaque_ptr;
-		wgpuAdapterReference(adapter);
+		WGPURequestDeviceCallbackInfo const callbackInfo = *(WGPURequestDeviceCallbackInfo*) args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuAdapterRequestDevice(adapter, descriptor, callbackInfo).id;
 		break;
 	}
 	case 9: {
 		WGPUAdapter const adapter = args[0].opaque_ptr;
-		wgpuAdapterRelease(adapter);
+		wgpuAdapterAddRef(adapter);
 		break;
 	}
 	case 10: {
+		WGPUAdapter const adapter = args[0].opaque_ptr;
+		wgpuAdapterRelease(adapter);
+		break;
+	}
+	case 11: {
 		WGPUAdapterInfo const adapterInfo = *(WGPUAdapterInfo*) args[0].opaque_ptr;
 		wgpuAdapterInfoFreeMembers(adapterInfo);
 		break;
 	}
-	case 11: {
-		WGPUBindGroup const bindGroup = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
-		wgpuBindGroupSetLabel(bindGroup, label);
-		break;
-	}
 	case 12: {
 		WGPUBindGroup const bindGroup = args[0].opaque_ptr;
-		wgpuBindGroupReference(bindGroup);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuBindGroupSetLabel(bindGroup, label);
 		break;
 	}
 	case 13: {
 		WGPUBindGroup const bindGroup = args[0].opaque_ptr;
-		wgpuBindGroupRelease(bindGroup);
+		wgpuBindGroupAddRef(bindGroup);
 		break;
 	}
 	case 14: {
-		WGPUBindGroupLayout const bindGroupLayout = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
-		wgpuBindGroupLayoutSetLabel(bindGroupLayout, label);
+		WGPUBindGroup const bindGroup = args[0].opaque_ptr;
+		wgpuBindGroupRelease(bindGroup);
 		break;
 	}
 	case 15: {
 		WGPUBindGroupLayout const bindGroupLayout = args[0].opaque_ptr;
-		wgpuBindGroupLayoutReference(bindGroupLayout);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuBindGroupLayoutSetLabel(bindGroupLayout, label);
 		break;
 	}
 	case 16: {
 		WGPUBindGroupLayout const bindGroupLayout = args[0].opaque_ptr;
-		wgpuBindGroupLayoutRelease(bindGroupLayout);
+		wgpuBindGroupLayoutAddRef(bindGroupLayout);
 		break;
 	}
 	case 17: {
+		WGPUBindGroupLayout const bindGroupLayout = args[0].opaque_ptr;
+		wgpuBindGroupLayoutRelease(bindGroupLayout);
+		break;
+	}
+	case 18: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
 		wgpuBufferDestroy(buffer);
 		break;
 	}
-	case 18: {
+	case 19: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
 		size_t const offset = args[1].u32;
 		size_t const size = args[2].u32;
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuBufferGetConstMappedRange(buffer, offset, size);
 		break;
 	}
-	case 19: {
+	case 20: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuBufferGetMapState(buffer);
 		break;
 	}
-	case 20: {
+	case 21: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
 		size_t const offset = args[1].u32;
 		size_t const size = args[2].u32;
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuBufferGetMappedRange(buffer, offset, size);
 		break;
 	}
-	case 21: {
+	case 22: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
 		notif.call_ret.ret.u64 = wgpuBufferGetSize(buffer);
 		break;
 	}
-	case 22: {
-		WGPUBuffer const buffer = args[0].opaque_ptr;
-		notif.call_ret.ret.u32 = wgpuBufferGetUsage(buffer);
-		break;
-	}
 	case 23: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
-		WGPUMapModeFlags const mode = args[1].u32;
-		size_t const offset = args[2].u32;
-		size_t const size = args[3].u32;
-		WGPUBufferMapAsyncCallback const callback = args[4].opaque_ptr;
-		void * const userdata = args[5].opaque_ptr;
-		wgpuBufferMapAsync(buffer, mode, offset, size, callback, userdata);
+		notif.call_ret.ret.u64 = wgpuBufferGetUsage(buffer);
 		break;
 	}
 	case 24: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
-		wgpuBufferSetLabel(buffer, label);
+		WGPUMapMode const mode = args[1].u64;
+		size_t const offset = args[2].u32;
+		size_t const size = args[3].u32;
+		WGPUBufferMapCallbackInfo const callbackInfo = *(WGPUBufferMapCallbackInfo*) args[4].buf.ptr;
+		assert(args[4].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuBufferMapAsync(buffer, mode, offset, size, callbackInfo).id;
 		break;
 	}
 	case 25: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
-		wgpuBufferUnmap(buffer);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuBufferSetLabel(buffer, label);
 		break;
 	}
 	case 26: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
-		wgpuBufferReference(buffer);
+		wgpuBufferUnmap(buffer);
 		break;
 	}
 	case 27: {
 		WGPUBuffer const buffer = args[0].opaque_ptr;
-		wgpuBufferRelease(buffer);
+		wgpuBufferAddRef(buffer);
 		break;
 	}
 	case 28: {
-		WGPUCommandBuffer const commandBuffer = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
-		wgpuCommandBufferSetLabel(commandBuffer, label);
+		WGPUBuffer const buffer = args[0].opaque_ptr;
+		wgpuBufferRelease(buffer);
 		break;
 	}
 	case 29: {
 		WGPUCommandBuffer const commandBuffer = args[0].opaque_ptr;
-		wgpuCommandBufferReference(commandBuffer);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuCommandBufferSetLabel(commandBuffer, label);
 		break;
 	}
 	case 30: {
 		WGPUCommandBuffer const commandBuffer = args[0].opaque_ptr;
-		wgpuCommandBufferRelease(commandBuffer);
+		wgpuCommandBufferAddRef(commandBuffer);
 		break;
 	}
 	case 31: {
+		WGPUCommandBuffer const commandBuffer = args[0].opaque_ptr;
+		wgpuCommandBufferRelease(commandBuffer);
+		break;
+	}
+	case 32: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPUComputePassDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuCommandEncoderBeginComputePass(commandEncoder, descriptor);
 		break;
 	}
-	case 32: {
+	case 33: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPURenderPassDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuCommandEncoderBeginRenderPass(commandEncoder, descriptor);
 		break;
 	}
-	case 33: {
+	case 34: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPUBuffer const buffer = args[1].opaque_ptr;
 		uint64_t const offset = args[2].u64;
@@ -367,7 +377,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuCommandEncoderClearBuffer(commandEncoder, buffer, offset, size);
 		break;
 	}
-	case 34: {
+	case 35: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPUBuffer const source = args[1].opaque_ptr;
 		uint64_t const sourceOffset = args[2].u64;
@@ -377,66 +387,70 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuCommandEncoderCopyBufferToBuffer(commandEncoder, source, sourceOffset, destination, destinationOffset, size);
 		break;
 	}
-	case 35: {
+	case 36: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		WGPUImageCopyBuffer const * const source = args[1].buf.ptr;
+		WGPUTexelCopyBufferInfo const * const source = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *source);
-		WGPUImageCopyTexture const * const destination = args[2].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const destination = args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *destination);
 		WGPUExtent3D const * const copySize = args[3].buf.ptr;
 		assert(args[3].buf.size == sizeof *copySize);
 		wgpuCommandEncoderCopyBufferToTexture(commandEncoder, source, destination, copySize);
 		break;
 	}
-	case 36: {
+	case 37: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		WGPUImageCopyTexture const * const source = args[1].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const source = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *source);
-		WGPUImageCopyBuffer const * const destination = args[2].buf.ptr;
+		WGPUTexelCopyBufferInfo const * const destination = args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *destination);
 		WGPUExtent3D const * const copySize = args[3].buf.ptr;
 		assert(args[3].buf.size == sizeof *copySize);
 		wgpuCommandEncoderCopyTextureToBuffer(commandEncoder, source, destination, copySize);
 		break;
 	}
-	case 37: {
+	case 38: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		WGPUImageCopyTexture const * const source = args[1].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const source = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *source);
-		WGPUImageCopyTexture const * const destination = args[2].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const destination = args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *destination);
 		WGPUExtent3D const * const copySize = args[3].buf.ptr;
 		assert(args[3].buf.size == sizeof *copySize);
 		wgpuCommandEncoderCopyTextureToTexture(commandEncoder, source, destination, copySize);
 		break;
 	}
-	case 38: {
+	case 39: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPUCommandBufferDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuCommandEncoderFinish(commandEncoder, descriptor);
 		break;
 	}
-	case 39: {
-		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		char const * const markerLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *markerLabel);
-		wgpuCommandEncoderInsertDebugMarker(commandEncoder, markerLabel);
-		break;
-	}
 	case 40: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		wgpuCommandEncoderPopDebugGroup(commandEncoder);
+		WGPUStringView const markerLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuCommandEncoderInsertDebugMarker(commandEncoder, markerLabel);
 		break;
 	}
 	case 41: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		char const * const groupLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *groupLabel);
-		wgpuCommandEncoderPushDebugGroup(commandEncoder, groupLabel);
+		wgpuCommandEncoderPopDebugGroup(commandEncoder);
 		break;
 	}
 	case 42: {
+		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
+		WGPUStringView const groupLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuCommandEncoderPushDebugGroup(commandEncoder, groupLabel);
+		break;
+	}
+	case 43: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPUQuerySet const querySet = args[1].opaque_ptr;
 		uint32_t const firstQuery = args[2].u32;
@@ -446,31 +460,33 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuCommandEncoderResolveQuerySet(commandEncoder, querySet, firstQuery, queryCount, destination, destinationOffset);
 		break;
 	}
-	case 43: {
+	case 44: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuCommandEncoderSetLabel(commandEncoder, label);
 		break;
 	}
-	case 44: {
+	case 45: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		WGPUQuerySet const querySet = args[1].opaque_ptr;
 		uint32_t const queryIndex = args[2].u32;
 		wgpuCommandEncoderWriteTimestamp(commandEncoder, querySet, queryIndex);
 		break;
 	}
-	case 45: {
+	case 46: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
-		wgpuCommandEncoderReference(commandEncoder);
+		wgpuCommandEncoderAddRef(commandEncoder);
 		break;
 	}
-	case 46: {
+	case 47: {
 		WGPUCommandEncoder const commandEncoder = args[0].opaque_ptr;
 		wgpuCommandEncoderRelease(commandEncoder);
 		break;
 	}
-	case 47: {
+	case 48: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
 		uint32_t const workgroupCountX = args[1].u32;
 		uint32_t const workgroupCountY = args[2].u32;
@@ -478,38 +494,42 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, workgroupCountX, workgroupCountY, workgroupCountZ);
 		break;
 	}
-	case 48: {
+	case 49: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
 		WGPUBuffer const indirectBuffer = args[1].opaque_ptr;
 		uint64_t const indirectOffset = args[2].u64;
 		wgpuComputePassEncoderDispatchWorkgroupsIndirect(computePassEncoder, indirectBuffer, indirectOffset);
 		break;
 	}
-	case 49: {
+	case 50: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
 		wgpuComputePassEncoderEnd(computePassEncoder);
 		break;
 	}
-	case 50: {
-		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
-		char const * const markerLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *markerLabel);
-		wgpuComputePassEncoderInsertDebugMarker(computePassEncoder, markerLabel);
-		break;
-	}
 	case 51: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
-		wgpuComputePassEncoderPopDebugGroup(computePassEncoder);
+		WGPUStringView const markerLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuComputePassEncoderInsertDebugMarker(computePassEncoder, markerLabel);
 		break;
 	}
 	case 52: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
-		char const * const groupLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *groupLabel);
-		wgpuComputePassEncoderPushDebugGroup(computePassEncoder, groupLabel);
+		wgpuComputePassEncoderPopDebugGroup(computePassEncoder);
 		break;
 	}
 	case 53: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		WGPUStringView const groupLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuComputePassEncoderPushDebugGroup(computePassEncoder, groupLabel);
+		break;
+	}
+	case 54: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
 		uint32_t const groupIndex = args[1].u32;
 		WGPUBindGroup const group = args[2].opaque_ptr;
@@ -519,309 +539,351 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuComputePassEncoderSetBindGroup(computePassEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
 		break;
 	}
-	case 54: {
+	case 55: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuComputePassEncoderSetLabel(computePassEncoder, label);
 		break;
 	}
-	case 55: {
+	case 56: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
 		WGPUComputePipeline const pipeline = args[1].opaque_ptr;
 		wgpuComputePassEncoderSetPipeline(computePassEncoder, pipeline);
 		break;
 	}
-	case 56: {
+	case 57: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
-		wgpuComputePassEncoderReference(computePassEncoder);
+		wgpuComputePassEncoderAddRef(computePassEncoder);
 		break;
 	}
-	case 57: {
+	case 58: {
 		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
 		wgpuComputePassEncoderRelease(computePassEncoder);
 		break;
 	}
-	case 58: {
+	case 59: {
 		WGPUComputePipeline const computePipeline = args[0].opaque_ptr;
 		uint32_t const groupIndex = args[1].u32;
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuComputePipelineGetBindGroupLayout(computePipeline, groupIndex);
 		break;
 	}
-	case 59: {
-		WGPUComputePipeline const computePipeline = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
-		wgpuComputePipelineSetLabel(computePipeline, label);
-		break;
-	}
 	case 60: {
 		WGPUComputePipeline const computePipeline = args[0].opaque_ptr;
-		wgpuComputePipelineReference(computePipeline);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
+		wgpuComputePipelineSetLabel(computePipeline, label);
 		break;
 	}
 	case 61: {
 		WGPUComputePipeline const computePipeline = args[0].opaque_ptr;
-		wgpuComputePipelineRelease(computePipeline);
+		wgpuComputePipelineAddRef(computePipeline);
 		break;
 	}
 	case 62: {
+		WGPUComputePipeline const computePipeline = args[0].opaque_ptr;
+		wgpuComputePipelineRelease(computePipeline);
+		break;
+	}
+	case 63: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUBindGroupDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateBindGroup(device, descriptor);
 		break;
 	}
-	case 63: {
+	case 64: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUBindGroupLayoutDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateBindGroupLayout(device, descriptor);
 		break;
 	}
-	case 64: {
+	case 65: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUBufferDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateBuffer(device, descriptor);
 		break;
 	}
-	case 65: {
+	case 66: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUCommandEncoderDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateCommandEncoder(device, descriptor);
 		break;
 	}
-	case 66: {
+	case 67: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUComputePipelineDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateComputePipeline(device, descriptor);
 		break;
 	}
-	case 67: {
+	case 68: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUComputePipelineDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
-		WGPUDeviceCreateComputePipelineAsyncCallback const callback = args[2].opaque_ptr;
-		void * const userdata = args[3].opaque_ptr;
-		wgpuDeviceCreateComputePipelineAsync(device, descriptor, callback, userdata);
+		WGPUCreateComputePipelineAsyncCallbackInfo const callbackInfo = *(WGPUCreateComputePipelineAsyncCallbackInfo*) args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuDeviceCreateComputePipelineAsync(device, descriptor, callbackInfo).id;
 		break;
 	}
-	case 68: {
+	case 69: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUPipelineLayoutDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreatePipelineLayout(device, descriptor);
 		break;
 	}
-	case 69: {
+	case 70: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUQuerySetDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateQuerySet(device, descriptor);
 		break;
 	}
-	case 70: {
+	case 71: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPURenderBundleEncoderDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateRenderBundleEncoder(device, descriptor);
 		break;
 	}
-	case 71: {
+	case 72: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPURenderPipelineDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateRenderPipeline(device, descriptor);
 		break;
 	}
-	case 72: {
+	case 73: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPURenderPipelineDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
-		WGPUDeviceCreateRenderPipelineAsyncCallback const callback = args[2].opaque_ptr;
-		void * const userdata = args[3].opaque_ptr;
-		wgpuDeviceCreateRenderPipelineAsync(device, descriptor, callback, userdata);
+		WGPUCreateRenderPipelineAsyncCallbackInfo const callbackInfo = *(WGPUCreateRenderPipelineAsyncCallbackInfo*) args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuDeviceCreateRenderPipelineAsync(device, descriptor, callbackInfo).id;
 		break;
 	}
-	case 73: {
+	case 74: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUSamplerDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateSampler(device, descriptor);
 		break;
 	}
-	case 74: {
+	case 75: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUShaderModuleDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateShaderModule(device, descriptor);
 		break;
 	}
-	case 75: {
+	case 76: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUTextureDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateTexture(device, descriptor);
 		break;
 	}
-	case 76: {
+	case 77: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		wgpuDeviceDestroy(device);
 		break;
 	}
-	case 77: {
-		WGPUDevice const device = args[0].opaque_ptr;
-		WGPUFeatureName * const features = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *features);
-		notif.call_ret.ret.u32 = wgpuDeviceEnumerateFeatures(device, features);
-		break;
-	}
 	case 78: {
 		WGPUDevice const device = args[0].opaque_ptr;
-		WGPUSupportedLimits * const limits = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *limits);
-		notif.call_ret.ret.b = wgpuDeviceGetLimits(device, limits);
+		WGPUAdapterInfo* const ptr = malloc(sizeof(WGPUAdapterInfo));
+		assert(ptr != NULL);
+		notif.call_ret.ret.buf.ptr = (void*) ptr;
+		notif.call_ret.ret.buf.size = sizeof(WGPUAdapterInfo);
+		*ptr = wgpuDeviceGetAdapterInfo(device);;
 		break;
 	}
 	case 79: {
 		WGPUDevice const device = args[0].opaque_ptr;
-		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceGetQueue(device);
+		WGPUSupportedFeatures * const features = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *features);
+		wgpuDeviceGetFeatures(device, features);
 		break;
 	}
 	case 80: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		WGPULimits * const limits = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *limits);
+		notif.call_ret.ret.u32 = wgpuDeviceGetLimits(device, limits);
+		break;
+	}
+	case 81: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		notif.call_ret.ret.u64 = wgpuDeviceGetLostFuture(device).id;
+		break;
+	}
+	case 82: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceGetQueue(device);
+		break;
+	}
+	case 83: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUFeatureName const feature = args[1].u32;
 		notif.call_ret.ret.b = wgpuDeviceHasFeature(device, feature);
 		break;
 	}
-	case 81: {
+	case 84: {
 		WGPUDevice const device = args[0].opaque_ptr;
-		WGPUErrorCallback const callback = args[1].opaque_ptr;
-		void * const userdata = args[2].opaque_ptr;
-		wgpuDevicePopErrorScope(device, callback, userdata);
+		WGPUPopErrorScopeCallbackInfo const callbackInfo = *(WGPUPopErrorScopeCallbackInfo*) args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuDevicePopErrorScope(device, callbackInfo).id;
 		break;
 	}
-	case 82: {
+	case 85: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		WGPUErrorFilter const filter = args[1].u32;
 		wgpuDevicePushErrorScope(device, filter);
 		break;
 	}
-	case 83: {
+	case 86: {
 		WGPUDevice const device = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuDeviceSetLabel(device, label);
 		break;
 	}
-	case 84: {
+	case 87: {
 		WGPUDevice const device = args[0].opaque_ptr;
-		wgpuDeviceReference(device);
+		wgpuDeviceAddRef(device);
 		break;
 	}
-	case 85: {
+	case 88: {
 		WGPUDevice const device = args[0].opaque_ptr;
 		wgpuDeviceRelease(device);
 		break;
 	}
-	case 86: {
+	case 89: {
 		WGPUInstance const instance = args[0].opaque_ptr;
 		WGPUSurfaceDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuInstanceCreateSurface(instance, descriptor);
 		break;
 	}
-	case 87: {
+	case 90: {
+		WGPUInstance const instance = args[0].opaque_ptr;
+		WGPUSupportedWGSLLanguageFeatures * const features = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *features);
+		notif.call_ret.ret.u32 = wgpuInstanceGetWGSLLanguageFeatures(instance, features);
+		break;
+	}
+	case 91: {
 		WGPUInstance const instance = args[0].opaque_ptr;
 		wgpuInstanceProcessEvents(instance);
 		break;
 	}
-	case 88: {
+	case 92: {
 		WGPUInstance const instance = args[0].opaque_ptr;
 		WGPURequestAdapterOptions const * const options = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *options);
-		WGPUInstanceRequestAdapterCallback const callback = args[2].opaque_ptr;
-		void * const userdata = args[3].opaque_ptr;
-		wgpuInstanceRequestAdapter(instance, options, callback, userdata);
+		WGPURequestAdapterCallbackInfo const callbackInfo = *(WGPURequestAdapterCallbackInfo*) args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuInstanceRequestAdapter(instance, options, callbackInfo).id;
 		break;
 	}
-	case 89: {
+	case 93: {
 		WGPUInstance const instance = args[0].opaque_ptr;
-		wgpuInstanceReference(instance);
+		size_t const futureCount = args[1].u32;
+		WGPUFutureWaitInfo * const futures = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *futures);
+		uint64_t const timeoutNS = args[3].u64;
+		notif.call_ret.ret.u32 = wgpuInstanceWaitAny(instance, futureCount, futures, timeoutNS);
 		break;
 	}
-	case 90: {
+	case 94: {
+		WGPUInstance const instance = args[0].opaque_ptr;
+		wgpuInstanceAddRef(instance);
+		break;
+	}
+	case 95: {
 		WGPUInstance const instance = args[0].opaque_ptr;
 		wgpuInstanceRelease(instance);
 		break;
 	}
-	case 91: {
+	case 96: {
 		WGPUPipelineLayout const pipelineLayout = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuPipelineLayoutSetLabel(pipelineLayout, label);
 		break;
 	}
-	case 92: {
+	case 97: {
 		WGPUPipelineLayout const pipelineLayout = args[0].opaque_ptr;
-		wgpuPipelineLayoutReference(pipelineLayout);
+		wgpuPipelineLayoutAddRef(pipelineLayout);
 		break;
 	}
-	case 93: {
+	case 98: {
 		WGPUPipelineLayout const pipelineLayout = args[0].opaque_ptr;
 		wgpuPipelineLayoutRelease(pipelineLayout);
 		break;
 	}
-	case 94: {
+	case 99: {
 		WGPUQuerySet const querySet = args[0].opaque_ptr;
 		wgpuQuerySetDestroy(querySet);
 		break;
 	}
-	case 95: {
+	case 100: {
 		WGPUQuerySet const querySet = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuQuerySetGetCount(querySet);
 		break;
 	}
-	case 96: {
+	case 101: {
 		WGPUQuerySet const querySet = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuQuerySetGetType(querySet);
 		break;
 	}
-	case 97: {
+	case 102: {
 		WGPUQuerySet const querySet = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuQuerySetSetLabel(querySet, label);
 		break;
 	}
-	case 98: {
+	case 103: {
 		WGPUQuerySet const querySet = args[0].opaque_ptr;
-		wgpuQuerySetReference(querySet);
+		wgpuQuerySetAddRef(querySet);
 		break;
 	}
-	case 99: {
+	case 104: {
 		WGPUQuerySet const querySet = args[0].opaque_ptr;
 		wgpuQuerySetRelease(querySet);
 		break;
 	}
-	case 100: {
+	case 105: {
 		WGPUQueue const queue = args[0].opaque_ptr;
-		WGPUQueueOnSubmittedWorkDoneCallback const callback = args[1].opaque_ptr;
-		void * const userdata = args[2].opaque_ptr;
-		wgpuQueueOnSubmittedWorkDone(queue, callback, userdata);
+		WGPUQueueWorkDoneCallbackInfo const callbackInfo = *(WGPUQueueWorkDoneCallbackInfo*) args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuQueueOnSubmittedWorkDone(queue, callbackInfo).id;
 		break;
 	}
-	case 101: {
+	case 106: {
 		WGPUQueue const queue = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuQueueSetLabel(queue, label);
 		break;
 	}
-	case 102: {
+	case 107: {
 		WGPUQueue const queue = args[0].opaque_ptr;
 		size_t const commandCount = args[1].u32;
 		WGPUCommandBuffer const * const commands = args[2].buf.ptr;
@@ -829,7 +891,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuQueueSubmit(queue, commandCount, commands);
 		break;
 	}
-	case 103: {
+	case 108: {
 		WGPUQueue const queue = args[0].opaque_ptr;
 		WGPUBuffer const buffer = args[1].opaque_ptr;
 		uint64_t const bufferOffset = args[2].u64;
@@ -838,47 +900,49 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuQueueWriteBuffer(queue, buffer, bufferOffset, data, size);
 		break;
 	}
-	case 104: {
+	case 109: {
 		WGPUQueue const queue = args[0].opaque_ptr;
-		WGPUImageCopyTexture const * const destination = args[1].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const destination = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *destination);
 		void const * const data = args[2].opaque_ptr;
 		size_t const dataSize = args[3].u32;
-		WGPUTextureDataLayout const * const dataLayout = args[4].buf.ptr;
+		WGPUTexelCopyBufferLayout const * const dataLayout = args[4].buf.ptr;
 		assert(args[4].buf.size == sizeof *dataLayout);
 		WGPUExtent3D const * const writeSize = args[5].buf.ptr;
 		assert(args[5].buf.size == sizeof *writeSize);
 		wgpuQueueWriteTexture(queue, destination, data, dataSize, dataLayout, writeSize);
 		break;
 	}
-	case 105: {
+	case 110: {
 		WGPUQueue const queue = args[0].opaque_ptr;
-		wgpuQueueReference(queue);
+		wgpuQueueAddRef(queue);
 		break;
 	}
-	case 106: {
+	case 111: {
 		WGPUQueue const queue = args[0].opaque_ptr;
 		wgpuQueueRelease(queue);
 		break;
 	}
-	case 107: {
+	case 112: {
 		WGPURenderBundle const renderBundle = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderBundleSetLabel(renderBundle, label);
 		break;
 	}
-	case 108: {
+	case 113: {
 		WGPURenderBundle const renderBundle = args[0].opaque_ptr;
-		wgpuRenderBundleReference(renderBundle);
+		wgpuRenderBundleAddRef(renderBundle);
 		break;
 	}
-	case 109: {
+	case 114: {
 		WGPURenderBundle const renderBundle = args[0].opaque_ptr;
 		wgpuRenderBundleRelease(renderBundle);
 		break;
 	}
-	case 110: {
+	case 115: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		uint32_t const vertexCount = args[1].u32;
 		uint32_t const instanceCount = args[2].u32;
@@ -887,7 +951,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderBundleEncoderDraw(renderBundleEncoder, vertexCount, instanceCount, firstVertex, firstInstance);
 		break;
 	}
-	case 111: {
+	case 116: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		uint32_t const indexCount = args[1].u32;
 		uint32_t const instanceCount = args[2].u32;
@@ -897,47 +961,51 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderBundleEncoderDrawIndexed(renderBundleEncoder, indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
 		break;
 	}
-	case 112: {
+	case 117: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		WGPUBuffer const indirectBuffer = args[1].opaque_ptr;
 		uint64_t const indirectOffset = args[2].u64;
 		wgpuRenderBundleEncoderDrawIndexedIndirect(renderBundleEncoder, indirectBuffer, indirectOffset);
 		break;
 	}
-	case 113: {
+	case 118: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		WGPUBuffer const indirectBuffer = args[1].opaque_ptr;
 		uint64_t const indirectOffset = args[2].u64;
 		wgpuRenderBundleEncoderDrawIndirect(renderBundleEncoder, indirectBuffer, indirectOffset);
 		break;
 	}
-	case 114: {
+	case 119: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		WGPURenderBundleDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuRenderBundleEncoderFinish(renderBundleEncoder, descriptor);
 		break;
 	}
-	case 115: {
+	case 120: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
-		char const * const markerLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *markerLabel);
+		WGPUStringView const markerLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderBundleEncoderInsertDebugMarker(renderBundleEncoder, markerLabel);
 		break;
 	}
-	case 116: {
+	case 121: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		wgpuRenderBundleEncoderPopDebugGroup(renderBundleEncoder);
 		break;
 	}
-	case 117: {
+	case 122: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
-		char const * const groupLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *groupLabel);
+		WGPUStringView const groupLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderBundleEncoderPushDebugGroup(renderBundleEncoder, groupLabel);
 		break;
 	}
-	case 118: {
+	case 123: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		uint32_t const groupIndex = args[1].u32;
 		WGPUBindGroup const group = args[2].opaque_ptr;
@@ -947,7 +1015,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderBundleEncoderSetBindGroup(renderBundleEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
 		break;
 	}
-	case 119: {
+	case 124: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		WGPUBuffer const buffer = args[1].opaque_ptr;
 		WGPUIndexFormat const format = args[2].u32;
@@ -956,20 +1024,22 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderBundleEncoderSetIndexBuffer(renderBundleEncoder, buffer, format, offset, size);
 		break;
 	}
-	case 120: {
+	case 125: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderBundleEncoderSetLabel(renderBundleEncoder, label);
 		break;
 	}
-	case 121: {
+	case 126: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		WGPURenderPipeline const pipeline = args[1].opaque_ptr;
 		wgpuRenderBundleEncoderSetPipeline(renderBundleEncoder, pipeline);
 		break;
 	}
-	case 122: {
+	case 127: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		uint32_t const slot = args[1].u32;
 		WGPUBuffer const buffer = args[2].opaque_ptr;
@@ -978,23 +1048,23 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderBundleEncoderSetVertexBuffer(renderBundleEncoder, slot, buffer, offset, size);
 		break;
 	}
-	case 123: {
+	case 128: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
-		wgpuRenderBundleEncoderReference(renderBundleEncoder);
+		wgpuRenderBundleEncoderAddRef(renderBundleEncoder);
 		break;
 	}
-	case 124: {
+	case 129: {
 		WGPURenderBundleEncoder const renderBundleEncoder = args[0].opaque_ptr;
 		wgpuRenderBundleEncoderRelease(renderBundleEncoder);
 		break;
 	}
-	case 125: {
+	case 130: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const queryIndex = args[1].u32;
 		wgpuRenderPassEncoderBeginOcclusionQuery(renderPassEncoder, queryIndex);
 		break;
 	}
-	case 126: {
+	case 131: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const vertexCount = args[1].u32;
 		uint32_t const instanceCount = args[2].u32;
@@ -1003,7 +1073,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderDraw(renderPassEncoder, vertexCount, instanceCount, firstVertex, firstInstance);
 		break;
 	}
-	case 127: {
+	case 132: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const indexCount = args[1].u32;
 		uint32_t const instanceCount = args[2].u32;
@@ -1013,31 +1083,31 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
 		break;
 	}
-	case 128: {
+	case 133: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		WGPUBuffer const indirectBuffer = args[1].opaque_ptr;
 		uint64_t const indirectOffset = args[2].u64;
 		wgpuRenderPassEncoderDrawIndexedIndirect(renderPassEncoder, indirectBuffer, indirectOffset);
 		break;
 	}
-	case 129: {
+	case 134: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		WGPUBuffer const indirectBuffer = args[1].opaque_ptr;
 		uint64_t const indirectOffset = args[2].u64;
 		wgpuRenderPassEncoderDrawIndirect(renderPassEncoder, indirectBuffer, indirectOffset);
 		break;
 	}
-	case 130: {
+	case 135: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		wgpuRenderPassEncoderEnd(renderPassEncoder);
 		break;
 	}
-	case 131: {
+	case 136: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		wgpuRenderPassEncoderEndOcclusionQuery(renderPassEncoder);
 		break;
 	}
-	case 132: {
+	case 137: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		size_t const bundleCount = args[1].u32;
 		WGPURenderBundle const * const bundles = args[2].buf.ptr;
@@ -1045,26 +1115,30 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderExecuteBundles(renderPassEncoder, bundleCount, bundles);
 		break;
 	}
-	case 133: {
+	case 138: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
-		char const * const markerLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *markerLabel);
+		WGPUStringView const markerLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderPassEncoderInsertDebugMarker(renderPassEncoder, markerLabel);
 		break;
 	}
-	case 134: {
+	case 139: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		wgpuRenderPassEncoderPopDebugGroup(renderPassEncoder);
 		break;
 	}
-	case 135: {
+	case 140: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
-		char const * const groupLabel = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *groupLabel);
+		WGPUStringView const groupLabel = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderPassEncoderPushDebugGroup(renderPassEncoder, groupLabel);
 		break;
 	}
-	case 136: {
+	case 141: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const groupIndex = args[1].u32;
 		WGPUBindGroup const group = args[2].opaque_ptr;
@@ -1074,14 +1148,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
 		break;
 	}
-	case 137: {
+	case 142: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		WGPUColor const * const color = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *color);
 		wgpuRenderPassEncoderSetBlendConstant(renderPassEncoder, color);
 		break;
 	}
-	case 138: {
+	case 143: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		WGPUBuffer const buffer = args[1].opaque_ptr;
 		WGPUIndexFormat const format = args[2].u32;
@@ -1090,20 +1164,22 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, buffer, format, offset, size);
 		break;
 	}
-	case 139: {
+	case 144: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderPassEncoderSetLabel(renderPassEncoder, label);
 		break;
 	}
-	case 140: {
+	case 145: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		WGPURenderPipeline const pipeline = args[1].opaque_ptr;
 		wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipeline);
 		break;
 	}
-	case 141: {
+	case 146: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const x = args[1].u32;
 		uint32_t const y = args[2].u32;
@@ -1112,13 +1188,13 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, x, y, width, height);
 		break;
 	}
-	case 142: {
+	case 147: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const reference = args[1].u32;
 		wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, reference);
 		break;
 	}
-	case 143: {
+	case 148: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		uint32_t const slot = args[1].u32;
 		WGPUBuffer const buffer = args[2].opaque_ptr;
@@ -1127,7 +1203,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, slot, buffer, offset, size);
 		break;
 	}
-	case 144: {
+	case 149: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		float const x = args[1].f32;
 		float const y = args[2].f32;
@@ -1138,211 +1214,387 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		wgpuRenderPassEncoderSetViewport(renderPassEncoder, x, y, width, height, minDepth, maxDepth);
 		break;
 	}
-	case 145: {
+	case 150: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
-		wgpuRenderPassEncoderReference(renderPassEncoder);
+		wgpuRenderPassEncoderAddRef(renderPassEncoder);
 		break;
 	}
-	case 146: {
+	case 151: {
 		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
 		wgpuRenderPassEncoderRelease(renderPassEncoder);
 		break;
 	}
-	case 147: {
+	case 152: {
 		WGPURenderPipeline const renderPipeline = args[0].opaque_ptr;
 		uint32_t const groupIndex = args[1].u32;
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuRenderPipelineGetBindGroupLayout(renderPipeline, groupIndex);
 		break;
 	}
-	case 148: {
+	case 153: {
 		WGPURenderPipeline const renderPipeline = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuRenderPipelineSetLabel(renderPipeline, label);
 		break;
 	}
-	case 149: {
+	case 154: {
 		WGPURenderPipeline const renderPipeline = args[0].opaque_ptr;
-		wgpuRenderPipelineReference(renderPipeline);
+		wgpuRenderPipelineAddRef(renderPipeline);
 		break;
 	}
-	case 150: {
+	case 155: {
 		WGPURenderPipeline const renderPipeline = args[0].opaque_ptr;
 		wgpuRenderPipelineRelease(renderPipeline);
 		break;
 	}
-	case 151: {
+	case 156: {
 		WGPUSampler const sampler = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuSamplerSetLabel(sampler, label);
 		break;
 	}
-	case 152: {
+	case 157: {
 		WGPUSampler const sampler = args[0].opaque_ptr;
-		wgpuSamplerReference(sampler);
+		wgpuSamplerAddRef(sampler);
 		break;
 	}
-	case 153: {
+	case 158: {
 		WGPUSampler const sampler = args[0].opaque_ptr;
 		wgpuSamplerRelease(sampler);
 		break;
 	}
-	case 154: {
+	case 159: {
 		WGPUShaderModule const shaderModule = args[0].opaque_ptr;
-		WGPUShaderModuleGetCompilationInfoCallback const callback = args[1].opaque_ptr;
-		void * const userdata = args[2].opaque_ptr;
-		wgpuShaderModuleGetCompilationInfo(shaderModule, callback, userdata);
+		WGPUCompilationInfoCallbackInfo const callbackInfo = *(WGPUCompilationInfoCallbackInfo*) args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof callbackInfo);
+		notif.call_ret.ret.u64 = wgpuShaderModuleGetCompilationInfo(shaderModule, callbackInfo).id;
 		break;
 	}
-	case 155: {
+	case 160: {
 		WGPUShaderModule const shaderModule = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuShaderModuleSetLabel(shaderModule, label);
 		break;
 	}
-	case 156: {
+	case 161: {
 		WGPUShaderModule const shaderModule = args[0].opaque_ptr;
-		wgpuShaderModuleReference(shaderModule);
+		wgpuShaderModuleAddRef(shaderModule);
 		break;
 	}
-	case 157: {
+	case 162: {
 		WGPUShaderModule const shaderModule = args[0].opaque_ptr;
 		wgpuShaderModuleRelease(shaderModule);
 		break;
 	}
-	case 158: {
+	case 163: {
+		WGPUSupportedFeatures const supportedFeatures = *(WGPUSupportedFeatures*) args[0].buf.ptr;
+		assert(args[0].buf.size == sizeof supportedFeatures);
+		wgpuSupportedFeaturesFreeMembers(supportedFeatures);
+		break;
+	}
+	case 164: {
+		WGPUSupportedWGSLLanguageFeatures const supportedWGSLLanguageFeatures = *(WGPUSupportedWGSLLanguageFeatures*) args[0].buf.ptr;
+		assert(args[0].buf.size == sizeof supportedWGSLLanguageFeatures);
+		wgpuSupportedWGSLLanguageFeaturesFreeMembers(supportedWGSLLanguageFeatures);
+		break;
+	}
+	case 165: {
 		WGPUSurface const surface = args[0].opaque_ptr;
 		WGPUSurfaceConfiguration const * const config = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *config);
 		wgpuSurfaceConfigure(surface, config);
 		break;
 	}
-	case 159: {
+	case 166: {
 		WGPUSurface const surface = args[0].opaque_ptr;
 		WGPUAdapter const adapter = args[1].opaque_ptr;
 		WGPUSurfaceCapabilities * const capabilities = args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *capabilities);
-		wgpuSurfaceGetCapabilities(surface, adapter, capabilities);
+		notif.call_ret.ret.u32 = wgpuSurfaceGetCapabilities(surface, adapter, capabilities);
 		break;
 	}
-	case 160: {
+	case 167: {
 		WGPUSurface const surface = args[0].opaque_ptr;
 		WGPUSurfaceTexture * const surfaceTexture = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *surfaceTexture);
 		wgpuSurfaceGetCurrentTexture(surface, surfaceTexture);
 		break;
 	}
-	case 161: {
+	case 168: {
 		WGPUSurface const surface = args[0].opaque_ptr;
-		wgpuSurfacePresent(surface);
+		notif.call_ret.ret.u32 = wgpuSurfacePresent(surface);
 		break;
 	}
-	case 162: {
+	case 169: {
 		WGPUSurface const surface = args[0].opaque_ptr;
 		wgpuSurfaceUnconfigure(surface);
 		break;
 	}
-	case 163: {
+	case 170: {
 		WGPUSurface const surface = args[0].opaque_ptr;
-		wgpuSurfaceReference(surface);
+		wgpuSurfaceAddRef(surface);
 		break;
 	}
-	case 164: {
+	case 171: {
 		WGPUSurface const surface = args[0].opaque_ptr;
 		wgpuSurfaceRelease(surface);
 		break;
 	}
-	case 165: {
+	case 172: {
 		WGPUSurfaceCapabilities const surfaceCapabilities = *(WGPUSurfaceCapabilities*) args[0].opaque_ptr;
 		wgpuSurfaceCapabilitiesFreeMembers(surfaceCapabilities);
 		break;
 	}
-	case 166: {
+	case 173: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		WGPUTextureViewDescriptor const * const descriptor = args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = (void*) wgpuTextureCreateView(texture, descriptor);
 		break;
 	}
-	case 167: {
+	case 174: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		wgpuTextureDestroy(texture);
 		break;
 	}
-	case 168: {
+	case 175: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetDepthOrArrayLayers(texture);
 		break;
 	}
-	case 169: {
+	case 176: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetDimension(texture);
 		break;
 	}
-	case 170: {
+	case 177: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetFormat(texture);
 		break;
 	}
-	case 171: {
+	case 178: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetHeight(texture);
 		break;
 	}
-	case 172: {
+	case 179: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetMipLevelCount(texture);
 		break;
 	}
-	case 173: {
+	case 180: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetSampleCount(texture);
 		break;
 	}
-	case 174: {
+	case 181: {
 		WGPUTexture const texture = args[0].opaque_ptr;
-		notif.call_ret.ret.u32 = wgpuTextureGetUsage(texture);
+		notif.call_ret.ret.u64 = wgpuTextureGetUsage(texture);
 		break;
 	}
-	case 175: {
+	case 182: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		notif.call_ret.ret.u32 = wgpuTextureGetWidth(texture);
 		break;
 	}
-	case 176: {
+	case 183: {
 		WGPUTexture const texture = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuTextureSetLabel(texture, label);
 		break;
 	}
-	case 177: {
+	case 184: {
 		WGPUTexture const texture = args[0].opaque_ptr;
-		wgpuTextureReference(texture);
+		wgpuTextureAddRef(texture);
 		break;
 	}
-	case 178: {
+	case 185: {
 		WGPUTexture const texture = args[0].opaque_ptr;
 		wgpuTextureRelease(texture);
 		break;
 	}
-	case 179: {
+	case 186: {
 		WGPUTextureView const textureView = args[0].opaque_ptr;
-		char const * const label = args[1].buf.ptr;
-		assert(args[1].buf.size == sizeof *label);
+		WGPUStringView const label = {
+			.data = args[1].buf.ptr,
+			.length = args[1].buf.size,
+		};
 		wgpuTextureViewSetLabel(textureView, label);
 		break;
 	}
-	case 180: {
+	case 187: {
 		WGPUTextureView const textureView = args[0].opaque_ptr;
-		wgpuTextureViewReference(textureView);
+		wgpuTextureViewAddRef(textureView);
 		break;
 	}
-	case 181: {
+	case 188: {
 		WGPUTextureView const textureView = args[0].opaque_ptr;
 		wgpuTextureViewRelease(textureView);
+		break;
+	}
+	case 189: {
+		WGPUInstance const instance = args[0].opaque_ptr;
+		WGPUGlobalReport * const report = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *report);
+		wgpuGenerateReport(instance, report);
+		break;
+	}
+	case 190: {
+		WGPUInstance const instance = args[0].opaque_ptr;
+		WGPUInstanceEnumerateAdapterOptions const * const options = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *options);
+		WGPUAdapter * const adapters = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *adapters);
+		notif.call_ret.ret.u32 = wgpuInstanceEnumerateAdapters(instance, options, adapters);
+		break;
+	}
+	case 191: {
+		WGPUQueue const queue = args[0].opaque_ptr;
+		size_t const commandCount = args[1].u32;
+		WGPUCommandBuffer const * const commands = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *commands);
+		notif.call_ret.ret.u64 = wgpuQueueSubmitForIndex(queue, commandCount, commands);
+		break;
+	}
+	case 192: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		WGPUBool const wait = args[1].b;
+		WGPUSubmissionIndex const * const submissionIndex = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *submissionIndex);
+		notif.call_ret.ret.b = wgpuDevicePoll(device, wait, submissionIndex);
+		break;
+	}
+	case 193: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		WGPUShaderModuleDescriptorSpirV const * const descriptor = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *descriptor);
+		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateShaderModuleSpirV(device, descriptor);
+		break;
+	}
+	case 194: {
+		WGPULogCallback const callback = args[0].opaque_ptr;
+		void * const userdata = args[1].opaque_ptr;
+		wgpuSetLogCallback(callback, userdata);
+		break;
+	}
+	case 195: {
+		WGPULogLevel const level = args[0].u32;
+		wgpuSetLogLevel(level);
+		break;
+	}
+	case 196: {
+		notif.call_ret.ret.u32 = wgpuGetVersion();
+		break;
+	}
+	case 197: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUShaderStage const stages = args[1].u64;
+		uint32_t const offset = args[2].u32;
+		uint32_t const sizeBytes = args[3].u32;
+		void const * const data = args[4].opaque_ptr;
+		wgpuRenderPassEncoderSetPushConstants(encoder, stages, offset, sizeBytes, data);
+		break;
+	}
+	case 198: {
+		WGPUComputePassEncoder const encoder = args[0].opaque_ptr;
+		uint32_t const offset = args[1].u32;
+		uint32_t const sizeBytes = args[2].u32;
+		void const * const data = args[3].opaque_ptr;
+		wgpuComputePassEncoderSetPushConstants(encoder, offset, sizeBytes, data);
+		break;
+	}
+	case 199: {
+		WGPURenderBundleEncoder const encoder = args[0].opaque_ptr;
+		WGPUShaderStage const stages = args[1].u64;
+		uint32_t const offset = args[2].u32;
+		uint32_t const sizeBytes = args[3].u32;
+		void const * const data = args[4].opaque_ptr;
+		wgpuRenderBundleEncoderSetPushConstants(encoder, stages, offset, sizeBytes, data);
+		break;
+	}
+	case 200: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		uint32_t const count = args[3].u32;
+		wgpuRenderPassEncoderMultiDrawIndirect(encoder, buffer, offset, count);
+		break;
+	}
+	case 201: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		uint32_t const count = args[3].u32;
+		wgpuRenderPassEncoderMultiDrawIndexedIndirect(encoder, buffer, offset, count);
+		break;
+	}
+	case 202: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		WGPUBuffer const count_buffer = args[3].opaque_ptr;
+		uint64_t const count_buffer_offset = args[4].u64;
+		uint32_t const max_count = args[5].u32;
+		wgpuRenderPassEncoderMultiDrawIndirectCount(encoder, buffer, offset, count_buffer, count_buffer_offset, max_count);
+		break;
+	}
+	case 203: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		WGPUBuffer const count_buffer = args[3].opaque_ptr;
+		uint64_t const count_buffer_offset = args[4].u64;
+		uint32_t const max_count = args[5].u32;
+		wgpuRenderPassEncoderMultiDrawIndexedIndirectCount(encoder, buffer, offset, count_buffer, count_buffer_offset, max_count);
+		break;
+	}
+	case 204: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuComputePassEncoderBeginPipelineStatisticsQuery(computePassEncoder, querySet, queryIndex);
+		break;
+	}
+	case 205: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		wgpuComputePassEncoderEndPipelineStatisticsQuery(computePassEncoder);
+		break;
+	}
+	case 206: {
+		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuRenderPassEncoderBeginPipelineStatisticsQuery(renderPassEncoder, querySet, queryIndex);
+		break;
+	}
+	case 207: {
+		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
+		wgpuRenderPassEncoderEndPipelineStatisticsQuery(renderPassEncoder);
+		break;
+	}
+	case 208: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuComputePassEncoderWriteTimestamp(computePassEncoder, querySet, queryIndex);
+		break;
+	}
+	case 209: {
+		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuRenderPassEncoderWriteTimestamp(renderPassEncoder, querySet, queryIndex);
 		break;
 	}
 // CALL_HANDLERS:END

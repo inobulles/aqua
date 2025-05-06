@@ -1,30 +1,24 @@
 # This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+# v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
 import bob
 
-# TODO Put this all in a 'src' directory.
+deps = [
+	Dep.local("../kos"),
+]
 
-let gvd_src = ["main.c", "elp.c", "conn.c", "query.c", "vdev.c"]
-let libgv_src = ["libgv.c"]
+let src = Fs.list(".").where(|path| path.endswith(".c"))
 
-let cc = Cc([
+let obj = Cc([
 	"-std=c11", "-g",
 	"-Wall", "-Wextra", "-Werror",
 	"-fPIC",
-])
+]).compile(src)
 
-let gvd_obj = cc.compile(gvd_src)
-let libgv_obj = cc.compile(libgv_src)
-
-let gvd = Linker(["-lpthread"]).link(gvd_obj)
-let libgv = Linker(["-shared"]).link(libgv_obj)
-let libgv_a = Linker([]).archive(libgv_obj)
+let gvd = Linker(["-lpthread"]).link(obj)
 
 install = {
 	gvd: "bin/gvd",
-	libgv: "lib/libgv.so",
-	libgv_a: "lib/libgv.a",
 }
 
 run = ["gvd"]

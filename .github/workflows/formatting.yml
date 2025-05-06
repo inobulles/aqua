@@ -12,10 +12,26 @@ jobs:
         with:
           clang-format-version: 18
           check-path: .
+          exclude-regex: "external/webgpu-headers"
   check_rust_formatting:
-     runs-on: ubuntu-latest
-     steps:
-       - uses: actions/checkout@v4
-       - uses: actions-rust-lang/rustfmt@v1
-         with:
-           manifest-path: vdev/win/Cargo.toml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/rustfmt@v1
+        with:
+          manifest-path: vdev/win/Cargo.toml
+  check_go_formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Go formatting
+        run: |
+          gofmt -l -s -w .
+          git diff --exit-code -- . ":!external/go-webgpu"
+  check_python_formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check --diff
