@@ -8,8 +8,8 @@
 
 #include <aqua/kos.h>
 
-#include <webgpu/wgpu.h>
 #include <webgpu/webgpu.h>
+#include <webgpu/wgpu.h>
 
 /**
  * WebGPU library component context.
