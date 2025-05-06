@@ -27,7 +27,7 @@ jobs:
       - name: Check Go formatting
         run: |
           gofmt -l -s -w .
-          git diff --exit-code
+          git diff --exit-code -- . ":!external/go-webgpu"
   check_python_formatting:
     runs-on: ubuntu-latest
     steps:
