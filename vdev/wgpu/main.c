@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include <webgpu/webgpu.h>
+#include <webgpu/wgpu.h>
 
 #include "apple.h"
 
@@ -1440,6 +1441,160 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 188: {
 		WGPUTextureView const textureView = args[0].opaque_ptr;
 		wgpuTextureViewRelease(textureView);
+		break;
+	}
+	case 189: {
+		WGPUInstance const instance = args[0].opaque_ptr;
+		WGPUGlobalReport * const report = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *report);
+		wgpuGenerateReport(instance, report);
+		break;
+	}
+	case 190: {
+		WGPUInstance const instance = args[0].opaque_ptr;
+		WGPUInstanceEnumerateAdapterOptions const * const options = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *options);
+		WGPUAdapter * const adapters = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *adapters);
+		notif.call_ret.ret.u32 = wgpuInstanceEnumerateAdapters(instance, options, adapters);
+		break;
+	}
+	case 191: {
+		WGPUQueue const queue = args[0].opaque_ptr;
+		size_t const commandCount = args[1].u32;
+		WGPUCommandBuffer const * const commands = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *commands);
+		notif.call_ret.ret.u64 = wgpuQueueSubmitForIndex(queue, commandCount, commands);
+		break;
+	}
+	case 192: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		WGPUBool const wait = args[1].b;
+		WGPUSubmissionIndex const * const submissionIndex = args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *submissionIndex);
+		notif.call_ret.ret.b = wgpuDevicePoll(device, wait, submissionIndex);
+		break;
+	}
+	case 193: {
+		WGPUDevice const device = args[0].opaque_ptr;
+		WGPUShaderModuleDescriptorSpirV const * const descriptor = args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *descriptor);
+		notif.call_ret.ret.opaque_ptr = (void*) wgpuDeviceCreateShaderModuleSpirV(device, descriptor);
+		break;
+	}
+	case 194: {
+		WGPULogCallback const callback = args[0].opaque_ptr;
+		void * const userdata = args[1].opaque_ptr;
+		wgpuSetLogCallback(callback, userdata);
+		break;
+	}
+	case 195: {
+		WGPULogLevel const level = args[0].u32;
+		wgpuSetLogLevel(level);
+		break;
+	}
+	case 196: {
+		notif.call_ret.ret.u32 = wgpuGetVersion();
+		break;
+	}
+	case 197: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUShaderStage const stages = args[1].u64;
+		uint32_t const offset = args[2].u32;
+		uint32_t const sizeBytes = args[3].u32;
+		void const * const data = args[4].opaque_ptr;
+		wgpuRenderPassEncoderSetPushConstants(encoder, stages, offset, sizeBytes, data);
+		break;
+	}
+	case 198: {
+		WGPUComputePassEncoder const encoder = args[0].opaque_ptr;
+		uint32_t const offset = args[1].u32;
+		uint32_t const sizeBytes = args[2].u32;
+		void const * const data = args[3].opaque_ptr;
+		wgpuComputePassEncoderSetPushConstants(encoder, offset, sizeBytes, data);
+		break;
+	}
+	case 199: {
+		WGPURenderBundleEncoder const encoder = args[0].opaque_ptr;
+		WGPUShaderStage const stages = args[1].u64;
+		uint32_t const offset = args[2].u32;
+		uint32_t const sizeBytes = args[3].u32;
+		void const * const data = args[4].opaque_ptr;
+		wgpuRenderBundleEncoderSetPushConstants(encoder, stages, offset, sizeBytes, data);
+		break;
+	}
+	case 200: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		uint32_t const count = args[3].u32;
+		wgpuRenderPassEncoderMultiDrawIndirect(encoder, buffer, offset, count);
+		break;
+	}
+	case 201: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		uint32_t const count = args[3].u32;
+		wgpuRenderPassEncoderMultiDrawIndexedIndirect(encoder, buffer, offset, count);
+		break;
+	}
+	case 202: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		WGPUBuffer const count_buffer = args[3].opaque_ptr;
+		uint64_t const count_buffer_offset = args[4].u64;
+		uint32_t const max_count = args[5].u32;
+		wgpuRenderPassEncoderMultiDrawIndirectCount(encoder, buffer, offset, count_buffer, count_buffer_offset, max_count);
+		break;
+	}
+	case 203: {
+		WGPURenderPassEncoder const encoder = args[0].opaque_ptr;
+		WGPUBuffer const buffer = args[1].opaque_ptr;
+		uint64_t const offset = args[2].u64;
+		WGPUBuffer const count_buffer = args[3].opaque_ptr;
+		uint64_t const count_buffer_offset = args[4].u64;
+		uint32_t const max_count = args[5].u32;
+		wgpuRenderPassEncoderMultiDrawIndexedIndirectCount(encoder, buffer, offset, count_buffer, count_buffer_offset, max_count);
+		break;
+	}
+	case 204: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuComputePassEncoderBeginPipelineStatisticsQuery(computePassEncoder, querySet, queryIndex);
+		break;
+	}
+	case 205: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		wgpuComputePassEncoderEndPipelineStatisticsQuery(computePassEncoder);
+		break;
+	}
+	case 206: {
+		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuRenderPassEncoderBeginPipelineStatisticsQuery(renderPassEncoder, querySet, queryIndex);
+		break;
+	}
+	case 207: {
+		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
+		wgpuRenderPassEncoderEndPipelineStatisticsQuery(renderPassEncoder);
+		break;
+	}
+	case 208: {
+		WGPUComputePassEncoder const computePassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuComputePassEncoderWriteTimestamp(computePassEncoder, querySet, queryIndex);
+		break;
+	}
+	case 209: {
+		WGPURenderPassEncoder const renderPassEncoder = args[0].opaque_ptr;
+		WGPUQuerySet const querySet = args[1].opaque_ptr;
+		uint32_t const queryIndex = args[2].u32;
+		wgpuRenderPassEncoderWriteTimestamp(renderPassEncoder, querySet, queryIndex);
 		break;
 	}
 // CALL_HANDLERS:END

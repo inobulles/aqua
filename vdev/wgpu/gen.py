@@ -24,7 +24,7 @@ WGPU_BLACKLIST = (
 with open(".bob/prefix/include/webgpu/webgpu.h") as f:
 	(*lines,) = map(str.rstrip, f.readlines())
 
-with open(".bob/prefix/include/wgpu.h") as f:
+with open(".bob/prefix/include/webgpu/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
 
 
@@ -49,9 +49,12 @@ def wgpu_type_to_kos(t: str):
 		"uint64_t": "KOS_TYPE_U64",
 		"float": "KOS_TYPE_F32",
 		"WGPUBool": "KOS_TYPE_BOOL",
+		# TODO Just make some list of flag types.
 		"WGPUMapMode": "KOS_TYPE_U64",
 		"WGPUBufferUsage": "KOS_TYPE_U64",
 		"WGPUTextureUsage": "KOS_TYPE_U64",
+		"WGPUShaderStage": "KOS_TYPE_U64",
+		"WGPUSubmissionIndex": "KOS_TYPE_U64",
 		"void const *": "KOS_TYPE_OPAQUE_PTR",
 		"void *": "KOS_TYPE_OPAQUE_PTR",
 	}
@@ -105,22 +108,25 @@ for line in lines:
 		c_types += line + "\n"
 		continue
 
-	type_and_name, params = line.split("(")
+	type_and_name, raw_params = line.split("(")
 	_, *ret_type, name = type_and_name.split()
 	ret_type = " ".join(ret_type)
 
 	if name in WGPU_BLACKLIST:
 		continue
 
-	raw_params = params.split(")")[0]
-	params = raw_params.split(", ")
+	raw_params = raw_params.split(")")[0]
+	params = []
 	param_types = []
 	param_names = []
 
-	for arg in params:
-		*t, arg_name = arg.split()
-		param_types.append(" ".join(t).removeprefix("WGPU_NULLABLE "))
-		param_names.append(arg_name)
+	if raw_params != "void":
+		params = raw_params.split(", ")
+
+		for arg in params:
+			*t, arg_name = arg.split()
+			param_types.append(" ".join(t).removeprefix("WGPU_NULLABLE "))
+			param_names.append(arg_name)
 
 	# Generate function struct.
 
@@ -209,7 +215,8 @@ for line in lines:
 
 	# Generate library prototype and function IDs.
 
-	lib_protos += f"{ret_type} aqua_{name}(wgpu_ctx_t ctx, {raw_params});\n"
+	lib_fn_sig = f"{ret_type} aqua_{name}({','.join(['wgpu_ctx_t ctx'] + params)})"
+	lib_protos += f"{lib_fn_sig};\n"
 	lib_fn_ids += f"\t\tuint32_t {name};\n"
 
 	# Generate function validator.
@@ -276,9 +283,9 @@ for line in lines:
 		union = kos_type_to_union(kos_ret_type)
 		ret = f"\n\treturn ctx->last_ret.{union};"
 
-	lib_impls += f"""{ret_type} aqua_{name}(wgpu_ctx_t ctx, {raw_params}) {{
+	lib_impls += f"""{lib_fn_sig} {{
 	kos_val_t const args[] = {{
-		{args},
+		{args}
 	}};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.{name}, args);
