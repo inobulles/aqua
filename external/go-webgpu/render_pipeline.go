@@ -6,6 +6,7 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 */
 import "C"

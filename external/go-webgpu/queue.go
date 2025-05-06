@@ -6,37 +6,38 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 extern void gowebgpu_queue_work_done_callback_c(WGPUQueueWorkDoneStatus status, void * userdata);
 
 static inline void gowebgpu_queue_write_buffer(WGPUQueue queue, WGPUBuffer buffer, uint64_t bufferOffset, void const * data, size_t size, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuQueueWriteBuffer(queue, buffer, bufferOffset, data, size);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuQueueWriteBuffer(gowebgpu_ctx, queue, buffer, bufferOffset, data, size);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_queue_write_texture(WGPUQueue queue, WGPUTexelCopyTextureInfo const * destination, void const * data, size_t dataSize, WGPUTexelCopyBufferLayout const * dataLayout, WGPUExtent3D const * writeSize, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuQueueWriteTexture(queue, destination, data, dataSize, dataLayout, writeSize);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuQueueWriteTexture(gowebgpu_ctx, queue, destination, data, dataSize, dataLayout, writeSize);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_queue_release(WGPUQueue queue, WGPUDevice device) {
-	wgpuDeviceRelease(device);
-	wgpuQueueRelease(queue);
+	aqua_wgpuDeviceRelease(gowebgpu_ctx, device);
+	aqua_wgpuQueueRelease(gowebgpu_ctx, queue);
 }
 
 */

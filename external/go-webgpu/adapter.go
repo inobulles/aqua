@@ -6,6 +6,7 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_request_device_callback_c(WGPURequestDeviceStatus status, WGPUDevice device, char const *message, void *userdata);
 extern void gowebgpu_device_lost_callback_c(WGPUDeviceLostReason reason, char const * message, void * userdata);

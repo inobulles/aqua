@@ -6,72 +6,73 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 
 static inline void gowebgpu_command_encoder_clear_buffer(WGPUCommandEncoder commandEncoder, WGPUBuffer buffer, uint64_t offset, uint64_t size, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderClearBuffer(commandEncoder, buffer, offset, size);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderClearBuffer(gowebgpu_ctx, commandEncoder, buffer, offset, size);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_copy_buffer_to_buffer(WGPUCommandEncoder commandEncoder, WGPUBuffer source, uint64_t sourceOffset, WGPUBuffer destination, uint64_t destinationOffset, uint64_t size, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderCopyBufferToBuffer(commandEncoder, source, sourceOffset, destination, destinationOffset, size);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderCopyBufferToBuffer(gowebgpu_ctx, commandEncoder, source, sourceOffset, destination, destinationOffset, size);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_copy_buffer_to_texture(WGPUCommandEncoder commandEncoder, WGPUTexelCopyBufferInfo const * source, WGPUTexelCopyTextureInfo const * destination, WGPUExtent3D const * copySize, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderCopyBufferToTexture(commandEncoder, source, destination, copySize);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderCopyBufferToTexture(gowebgpu_ctx, commandEncoder, source, destination, copySize);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_copy_texture_to_buffer(WGPUCommandEncoder commandEncoder, WGPUTexelCopyTextureInfo const * source, WGPUTexelCopyBufferInfo const * destination, WGPUExtent3D const * copySize, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderCopyTextureToBuffer(commandEncoder, source, destination, copySize);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderCopyTextureToBuffer(gowebgpu_ctx, commandEncoder, source, destination, copySize);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_copy_texture_to_texture(WGPUCommandEncoder commandEncoder, WGPUTexelCopyTextureInfo const * source, WGPUTexelCopyTextureInfo const * destination, WGPUExtent3D const * copySize, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderCopyTextureToTexture(commandEncoder, source, destination, copySize);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderCopyTextureToTexture(gowebgpu_ctx, commandEncoder, source, destination, copySize);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline WGPUCommandBuffer gowebgpu_command_encoder_finish(WGPUCommandEncoder commandEncoder, WGPUCommandBufferDescriptor const * descriptor, WGPUDevice device, void * error_userdata) {
 	WGPUCommandBuffer ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuCommandEncoderFinish(commandEncoder, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -79,74 +80,74 @@ static inline WGPUCommandBuffer gowebgpu_command_encoder_finish(WGPUCommandEncod
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline void gowebgpu_command_encoder_insert_debug_marker(WGPUCommandEncoder commandEncoder, char const * markerLabel, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderInsertDebugMarker(commandEncoder, (WGPUStringView) {markerLabel, WGPU_STRLEN});
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderInsertDebugMarker(gowebgpu_ctx, commandEncoder, (WGPUStringView) {markerLabel, WGPU_STRLEN});
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_pop_debug_group(WGPUCommandEncoder commandEncoder, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderPopDebugGroup(commandEncoder);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderPopDebugGroup(gowebgpu_ctx, commandEncoder);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_push_debug_group(WGPUCommandEncoder commandEncoder, char const * groupLabel, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderPushDebugGroup(commandEncoder, (WGPUStringView) {groupLabel, WGPU_STRLEN});
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderPushDebugGroup(gowebgpu_ctx, commandEncoder, (WGPUStringView) {groupLabel, WGPU_STRLEN});
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_resolve_query_set(WGPUCommandEncoder commandEncoder, WGPUQuerySet querySet, uint32_t firstQuery, uint32_t queryCount, WGPUBuffer destination, uint64_t destinationOffset, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderResolveQuerySet(commandEncoder, querySet, firstQuery, queryCount, destination, destinationOffset);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderResolveQuerySet(gowebgpu_ctx, commandEncoder, querySet, firstQuery, queryCount, destination, destinationOffset);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_write_timestamp(WGPUCommandEncoder commandEncoder, WGPUQuerySet querySet, uint32_t queryIndex, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuCommandEncoderWriteTimestamp(commandEncoder, querySet, queryIndex);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuCommandEncoderWriteTimestamp(gowebgpu_ctx, commandEncoder, querySet, queryIndex);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_command_encoder_release(WGPUCommandEncoder commandEncoder, WGPUDevice device) {
-	wgpuDeviceRelease(device);
-	wgpuCommandEncoderRelease(commandEncoder);
+	aqua_wgpuDeviceRelease(gowebgpu_ctx, device);
+	aqua_wgpuCommandEncoderRelease(gowebgpu_ctx, commandEncoder);
 }
 
 */

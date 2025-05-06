@@ -7,6 +7,7 @@ package wgpu
 #cgo LDFLAGS: -laqua_webgpu
 
 #include <aqua/wgpu.h>
+wgpu_ctx_t gowebgpu_ctx;
 */
 import "C"
 import "unsafe"
@@ -44,7 +45,9 @@ func Conn(vdev *aqua.VdevDescr) *WgpuCtx {
 		return nil
 	}
 
+	C.gowebgpu_ctx = ctx
 	global_ctx = &WgpuCtx{ctx: ctx}
+
 	return global_ctx
 }
 

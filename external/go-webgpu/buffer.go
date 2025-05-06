@@ -6,37 +6,38 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 extern void gowebgpu_buffer_map_callback_c(WGPUMapAsyncStatus status, void *userdata);
 
 static inline void gowebgpu_buffer_map_async(WGPUBuffer buffer, WGPUMapMode mode, size_t offset, size_t size, WGPUBufferMapCallbackInfo callback, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuBufferMapAsync(buffer, mode, offset, size, callback);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuBufferMapAsync(gowebgpu_ctx, buffer, mode, offset, size, callback);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_buffer_unmap(WGPUBuffer buffer, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuBufferUnmap(buffer);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuBufferUnmap(gowebgpu_ctx, buffer);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_buffer_release(WGPUBuffer buffer, WGPUDevice device) {
-	wgpuDeviceRelease(device);
-	wgpuBufferRelease(buffer);
+	aqua_wgpuDeviceRelease(gowebgpu_ctx, device);
+	aqua_wgpuBufferRelease(gowebgpu_ctx, buffer);
 }
 
 */

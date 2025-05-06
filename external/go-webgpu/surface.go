@@ -6,20 +6,21 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 
 static inline WGPUTexture gowebgpu_surface_get_current_texture(WGPUSurface surface, WGPUDevice device, void * error_userdata) {
 	WGPUSurfaceTexture ref;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuSurfaceGetCurrentTexture(surface, &ref);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuSurfaceGetCurrentTexture(gowebgpu_ctx, surface, &ref);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref.texture;
 }

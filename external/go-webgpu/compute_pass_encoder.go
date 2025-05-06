@@ -6,24 +6,25 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 
 static inline void gowebgpu_compute_pass_encoder_end(WGPUComputePassEncoder computePassEncoder, WGPUDevice device, void * error_userdata) {
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
-	wgpuComputePassEncoderEnd(computePassEncoder);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
+	aqua_wgpuComputePassEncoderEnd(gowebgpu_ctx, computePassEncoder);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 }
 
 static inline void gowebgpu_compute_pass_encoder_release(WGPUComputePassEncoder computePassEncoder, WGPUDevice device) {
-	wgpuDeviceRelease(device);
-	wgpuComputePassEncoderRelease(computePassEncoder);
+	aqua_wgpuDeviceRelease(gowebgpu_ctx, device);
+	aqua_wgpuComputePassEncoderRelease(gowebgpu_ctx, computePassEncoder);
 }
 
 */

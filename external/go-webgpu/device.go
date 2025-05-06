@@ -6,12 +6,13 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 
 static inline WGPUBindGroup gowebgpu_device_create_bind_group(WGPUDevice device, WGPUBindGroupDescriptor const * descriptor, void * error_userdata) {
 	WGPUBindGroup ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateBindGroup(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -19,14 +20,14 @@ static inline WGPUBindGroup gowebgpu_device_create_bind_group(WGPUDevice device,
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUBindGroupLayout gowebgpu_device_create_bind_group_layout(WGPUDevice device, WGPUBindGroupLayoutDescriptor const * descriptor, void * error_userdata) {
 	WGPUBindGroupLayout ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateBindGroupLayout(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -34,14 +35,14 @@ static inline WGPUBindGroupLayout gowebgpu_device_create_bind_group_layout(WGPUD
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUBuffer gowebgpu_device_create_buffer(WGPUDevice device, WGPUBufferDescriptor const * descriptor, void * error_userdata) {
 	WGPUBuffer ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateBuffer(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -49,14 +50,14 @@ static inline WGPUBuffer gowebgpu_device_create_buffer(WGPUDevice device, WGPUBu
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUCommandEncoder gowebgpu_device_create_command_encoder(WGPUDevice device, WGPUCommandEncoderDescriptor const * descriptor, void * error_userdata) {
 	WGPUCommandEncoder ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateCommandEncoder(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -64,14 +65,14 @@ static inline WGPUCommandEncoder gowebgpu_device_create_command_encoder(WGPUDevi
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUComputePipeline gowebgpu_device_create_compute_pipeline(WGPUDevice device, WGPUComputePipelineDescriptor const * descriptor, void * error_userdata) {
 	WGPUComputePipeline ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateComputePipeline(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -79,14 +80,14 @@ static inline WGPUComputePipeline gowebgpu_device_create_compute_pipeline(WGPUDe
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUPipelineLayout gowebgpu_device_create_pipeline_layout(WGPUDevice device, WGPUPipelineLayoutDescriptor const * descriptor, void * error_userdata) {
 	WGPUPipelineLayout ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreatePipelineLayout(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -94,14 +95,14 @@ static inline WGPUPipelineLayout gowebgpu_device_create_pipeline_layout(WGPUDevi
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUQuerySet gowebgpu_device_create_query_set(WGPUDevice device, WGPUQuerySetDescriptor const * descriptor, void * error_userdata) {
 	WGPUQuerySet ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateQuerySet(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -109,14 +110,14 @@ static inline WGPUQuerySet gowebgpu_device_create_query_set(WGPUDevice device, W
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPURenderPipeline gowebgpu_device_create_render_pipeline(WGPUDevice device, WGPURenderPipelineDescriptor const * descriptor, void * error_userdata) {
 	WGPURenderPipeline ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateRenderPipeline(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -124,14 +125,14 @@ static inline WGPURenderPipeline gowebgpu_device_create_render_pipeline(WGPUDevi
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUSampler gowebgpu_device_create_sampler(WGPUDevice device, WGPUSamplerDescriptor const * descriptor, void * error_userdata) {
 	WGPUSampler ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateSampler(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -139,14 +140,14 @@ static inline WGPUSampler gowebgpu_device_create_sampler(WGPUDevice device, WGPU
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUShaderModule gowebgpu_device_create_shader_module(WGPUDevice device, WGPUShaderModuleDescriptor const * descriptor, void * error_userdata) {
 	WGPUShaderModule ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateShaderModule(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -154,14 +155,14 @@ static inline WGPUShaderModule gowebgpu_device_create_shader_module(WGPUDevice d
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline WGPUTexture gowebgpu_device_create_texture(WGPUDevice device, WGPUTextureDescriptor const * descriptor, void * error_userdata) {
 	WGPUTexture ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuDeviceCreateTexture(device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -169,7 +170,7 @@ static inline WGPUTexture gowebgpu_device_create_texture(WGPUDevice device, WGPU
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }

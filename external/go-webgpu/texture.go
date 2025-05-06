@@ -6,12 +6,13 @@ package wgpu
 
 #include <stdlib.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void * userdata, void * userdata2);
 
 static inline WGPUTextureView gowebgpu_texture_create_view(WGPUTexture texture, WGPUTextureViewDescriptor const * descriptor, WGPUDevice device, void * error_userdata) {
 	WGPUTextureView ref = NULL;
-	wgpuDevicePushErrorScope(device, WGPUErrorFilter_Validation);
+	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
 	ref = wgpuTextureCreateView(texture, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
@@ -19,14 +20,14 @@ static inline WGPUTextureView gowebgpu_texture_create_view(WGPUTexture texture, 
 		.userdata1 = error_userdata,
 	};
 
-	wgpuDevicePopErrorScope(device, err_cb);
+	aqua_wgpuDevicePopErrorScope(gowebgpu_ctx, device, err_cb);
 
 	return ref;
 }
 
 static inline void gowebgpu_texture_release(WGPUTexture texture, WGPUDevice device) {
-	wgpuDeviceRelease(device);
-	wgpuTextureRelease(texture);
+	aqua_wgpuDeviceRelease(gowebgpu_ctx, device);
+	aqua_wgpuTextureRelease(gowebgpu_ctx, texture);
 }
 
 */

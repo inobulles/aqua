@@ -36,6 +36,7 @@ package wgpu
 
 #include <stdio.h>
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 #ifdef __ANDROID__
 #include <android/log.h>

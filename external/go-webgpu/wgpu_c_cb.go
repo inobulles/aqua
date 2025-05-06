@@ -5,6 +5,7 @@ package wgpu
 /*
 
 #include <aqua/wgpu.h>
+extern wgpu_ctx_t gowebgpu_ctx;
 
 void gowebgpu_buffer_map_callback_c(WGPUMapAsyncStatus status, void *userdata) {
   extern void gowebgpu_buffer_map_callback_go(WGPUMapAsyncStatus status, void *userdata);
