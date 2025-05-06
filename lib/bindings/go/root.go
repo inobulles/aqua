@@ -12,11 +12,11 @@ import "C"
 import "unsafe"
 
 type Context struct {
-	ctx C.aqua_ctx_t
+	internal C.aqua_ctx_t
 }
 
 type Component struct {
-	comp C.aqua_component_t
+	internal C.aqua_component_t
 }
 
 type VdevIter struct {
@@ -45,11 +45,23 @@ func Init() *Context {
 		return nil
 	}
 
-	return &Context{ctx: ctx}
+	return &Context{internal: ctx}
+}
+
+func (c *Context) GetInternal() C.aqua_ctx_t {
+	return c.internal
+}
+
+func ComponentFromInternal(internal unsafe.Pointer) *Component {
+	return &Component{internal: (C.aqua_component_t)(internal)}
+}
+
+func (v *VdevDescr) GetInternal() *C.kos_vdev_descr_t {
+	return &v.internal
 }
 
 func (c *Context) GetKosDescr() KosDescr {
-	descr := C.aqua_get_kos_descr(c.ctx)
+	descr := C.aqua_get_kos_descr(c.internal)
 
 	return KosDescr{
 		ApiVers:     uint64(descr.api_vers),
@@ -59,7 +71,7 @@ func (c *Context) GetKosDescr() KosDescr {
 }
 
 func (c *Component) NewVdevIter() *VdevIter {
-	it := C.aqua_vdev_it(c.comp)
+	it := C.aqua_vdev_it(c.internal)
 	return &VdevIter{it: it}
 }
 

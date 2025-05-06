@@ -11,11 +11,11 @@ package aqua
 import "C"
 
 func (c *Context) UiInit() *Component {
-	comp := C.ui_init(c.ctx)
+	comp := C.ui_init(c.internal)
 
 	if comp == nil {
 		return nil
 	}
 
-	return &Component{comp: comp}
+	return &Component{internal: comp}
 }

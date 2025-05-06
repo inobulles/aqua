@@ -20,13 +20,13 @@ type Win struct {
 }
 
 func (c *Context) WinInit() *Component {
-	comp := C.win_init(c.ctx)
+	comp := C.win_init(c.internal)
 
 	if comp == nil {
 		return nil
 	}
 
-	return &Component{comp: comp}
+	return &Component{internal: comp}
 }
 
 func (c *Component) Conn(vdev *VdevDescr) *WinCtx {
