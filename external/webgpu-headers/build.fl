@@ -5,6 +5,7 @@ import bob
 
 install = {
 	"webgpu.h" : "include/webgpu/webgpu.h",
+	"wgpu.h" : "include/webgpu/wgpu.h",
 }
 
 run = none
