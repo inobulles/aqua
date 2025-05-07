@@ -33,9 +33,17 @@ typedef struct ui_elem_t* ui_elem_t;
  * See {@link ui_add} for more information.
  */
 typedef enum {
-	UI_ELEM_KIND_DIV = 0,
-	UI_ELEM_KIND_TEXT = 1,
+	UI_ELEM_KIND_DIV,
+	UI_ELEM_KIND_TEXT,
 } ui_elem_kind_t;
+
+/**
+ * Supported UI backends.
+ */
+typedef enum {
+	UI_BACKEND_NONE = 0b01,
+	UI_BACKEND_WGPU = 0b10,
+} ui_supported_backends_t;
 
 /**
  * Initialize the UI library component.
@@ -53,7 +61,7 @@ aqua_component_t ui_init(aqua_ctx_t ctx);
  * @param vdev The descriptor of the UI VDEV to connect to.
  * @return The UI library component context or `NULL` if allocation failed.
  */
-ui_ctx_t win_conn(kos_vdev_descr_t const* vdev);
+ui_ctx_t ui_conn(kos_vdev_descr_t const* vdev);
 
 /**
  * Disconnect from a UI VDEV.
@@ -63,6 +71,17 @@ ui_ctx_t win_conn(kos_vdev_descr_t const* vdev);
  * @param ctx The UI library component context.
  */
 void ui_disconn(ui_ctx_t ctx);
+
+/**
+ * Get supported backends for this UI connection.
+ *
+ * These are the backends you may call the init function for.
+ * TODO Where should these be included from?
+ *
+ * @param ctx The UI library component context.
+ * @return The supported backends.
+ */
+ui_supported_backends_t ui_get_supported_backends(ui_ctx_t ctx);
 
 /**
  * Create a new UI.
