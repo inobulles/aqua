@@ -3,6 +3,21 @@
 
 #include "wgpu.h"
 
+#include <umber.h>
+#define UMBER_COMPONENT "aqua.lib.ui.wgpu"
+
+int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQueue queue) {
+	(void) ui;
+	(void) hid;
+	(void) vid;
+	(void) device;
+	(void) queue;
+
+	// TODO
+
+	return -1;
+}
+
 // "Easy" functions.
 
 int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t wgpu_ctx) {
@@ -16,8 +31,11 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
 	state->instance = aqua_wgpuCreateInstance(wgpu_ctx, &create_instance_descr);
 
 	if (state->instance == NULL) {
+		LOG_ERROR("Failed to create instance.");
 		return -1;
 	}
+
+	LOG_VERBOSE("Created instance: %p.", state->instance);
 
 	// The surface is set to NULL here.
 	// When ui_wgpu_ez_render is called, it will be created.
@@ -27,7 +45,7 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
 	return 0;
 }
 
-static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView msg, void* data, void* data2) {
+static void req_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView msg, void* data, void* data2) {
 	ui_wgpu_ez_state_t* const state = data;
 	(void) data2;
 
@@ -36,11 +54,11 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
 	}
 
 	else {
-		(void) msg; // TODO Error message.
+		LOG_ERROR("Failed to request adapter (status=%#.8x, message=\"%.*s\").", status, (int) msg.length, msg.data);
 	}
 }
 
-static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView msg, void* data, void* data2) {
+static void req_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView msg, void* data, void* data2) {
 	ui_wgpu_ez_state_t* const state = data;
 	(void) data2;
 
@@ -49,7 +67,7 @@ static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device,
 	}
 
 	else {
-		(void) msg; // TODO Error message.
+		LOG_ERROR("Failed to request device (status=%#.8x, message=\"%.*s\").", status, (int) msg.length, msg.data);
 	}
 }
 
@@ -64,53 +82,72 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	// Get adapter.
 
-	WGPURequestAdapterOptions const request_adapter_options = {
+	WGPURequestAdapterOptions const req_adapter_opts = {
 		.compatibleSurface = state->surface,
 		.backendType = WGPUBackendType_Undefined, // Will use anything.
 	};
 
-	WGPURequestAdapterCallbackInfo const request_adapter_cb_info = {
-		.callback = request_adapter_cb,
+	WGPURequestAdapterCallbackInfo const req_adapter_cb_info = {
+		.callback = req_adapter_cb,
 		.userdata1 = state,
 	};
 
-	aqua_wgpuInstanceRequestAdapter(state->wgpu_ctx, state->instance, &request_adapter_options, request_adapter_cb_info);
+	aqua_wgpuInstanceRequestAdapter(state->wgpu_ctx, state->instance, &req_adapter_opts, req_adapter_cb_info);
 
 	if (state->adapter == NULL) {
+		LOG_ERROR("Failed to get adapter.");
 		goto err_req_adapter;
 	}
 
+	LOG_VERBOSE("Got adapter: %p.", state->adapter);
+
 	aqua_wgpuAdapterGetInfo(state->wgpu_ctx, state->adapter, &state->adapter_info);
+
+	LOG_INFO("Adapter vendor: %.*s.", (int) state->adapter_info.vendor.length, state->adapter_info.vendor.data);
+	LOG_INFO("Adapter architecture: %.*s.", (int) state->adapter_info.architecture.length, state->adapter_info.architecture.data);
+	LOG_INFO("Adapter device: %.*s.", (int) state->adapter_info.device.length, state->adapter_info.device.data);
+	LOG_INFO("Adapter description: %.*s.", (int) state->adapter_info.description.length, state->adapter_info.description.data);
 
 	// Get device.
 
-	WGPURequestDeviceCallbackInfo const request_device_cb_info = {
-		.callback = request_device_cb,
+	WGPURequestDeviceCallbackInfo const req_device_cb_info = {
+		.callback = req_device_cb,
 		.userdata1 = state,
 	};
 
-	aqua_wgpuAdapterRequestDevice(state->wgpu_ctx, state->adapter, NULL, request_device_cb_info);
+	aqua_wgpuAdapterRequestDevice(state->wgpu_ctx, state->adapter, NULL, req_device_cb_info);
 
 	if (state->device == NULL) {
+		LOG_ERROR("Failed to get device.");
 		goto err_req_device;
 	}
+
+	LOG_VERBOSE("Got device: %p.", state->device);
 
 	// Get queue from device.
 
 	state->queue = aqua_wgpuDeviceGetQueue(state->wgpu_ctx, state->device);
 
 	if (state->queue == NULL) {
+		LOG_ERROR("Failed to get queue.");
 		goto err_get_queue;
 	}
+
+	LOG_VERBOSE("Got queue: %p.", state->queue);
 
 	// Create WebGPU backend on UI object.
 
 	uint64_t const hid = wgpu_get_hid(state->wgpu_ctx);
 	uint64_t const vid = wgpu_get_vid(state->wgpu_ctx);
 
+	LOG_VERBOSE("Creating WebGPU UI backend with WebGPU device %lu:%lu.", hid, vid);
+
 	if (ui_wgpu_init(state->ui, hid, vid, state->device, state->queue) < 0) {
+		LOG_ERROR("Failed to create WebGPU UI backend.");
 		goto err_backend_init;
 	}
+
+	LOG_VERBOSE("Created WebGPU UI backend.");
 
 	// Done!
 
@@ -135,7 +172,18 @@ err_create_surface:
 }
 
 void ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
+	// If not yet set up, setup surface.
+
 	if (state->surface == NULL) {
-		setup_surface(state);
+		if (setup_surface(state) < 0) {
+			return; // TODO
+		}
 	}
+
+	// Actually render.
+
+	WGPUSurfaceTexture surf_tex;
+	aqua_wgpuSurfaceGetCurrentTexture(state->wgpu_ctx, state->surface, &surf_tex);
+
+	// TODO The rest.
 }

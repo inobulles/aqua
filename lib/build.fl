@@ -1,9 +1,10 @@
-# This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2025 Aymeric Wibo
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
 
 import bob
 
 deps = [
+	Dep.git("https://github.com/inobulles/umber", "v0.2.0"),
 	Dep.local("../kos"),
 	Dep.local("../external/webgpu-headers"),
 ]
