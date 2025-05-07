@@ -11,7 +11,7 @@ This does mean I need to first write a Go library.
 ## Semantics
 
 Previously, the UI VDEV provided quite a few different element types for different semantic elements (e.g. paragraph, title, subtitle, log, etc, which are all just text elements behind the scenes).
-I think a much more elegant and scalable solution is for there to be only a few super generic elements (e.g. div, title, text, text input) and then to be able to add a semantic tag to them (e.g. button, link, title, subtitle, etc).
+I think a much more elegant and scalable solution is for there to be only a few super generic elements (e.g. div, text, text input) and then to be able to add a semantic tag to them (e.g. button, link, title, subtitle, etc).
 With this semantic tag, the device can then decide which styles it wants to apply to the element, depending on what platform its running on e.g.
 
 TODO Should buttons be semantics or elements? Because we could want to be able to set an icon on a button.
@@ -26,7 +26,7 @@ If we force a semantic tag to be used for everything, it will force people to de
 ## Backends
 
 I don't want to focus on a FB backend anymore, because I think it'd be anyway nice to ship the installer with DRM at minimum, and then maybe ship Mesa with just swrast.
-This will probably be faster than actually rolling my own FB backend.
+This will probably be more performant than an FB backend rolled myself.
 
 Either way, I want very little backend creation and management to be done in the UI VDEV.
 There's really two things the VDEV needs:
@@ -36,6 +36,10 @@ There's really two things the VDEV needs:
 
 So the VDEV needs a backend context object which can store the backend-specific data for each element across renders.
 Stuff like text rendering will be done on the fly before rendering if needed, so previous UI steps don't actually need the backend context (TODO except the layout step will need information about how big text is rendered actually).
+
+The WebGPU device should be chosen by the client and passed to the backend (through its host and VDEV IDs -> what about passing the context?).
+The window device and window itself should also be passed to the backend, but this makes things a tad more complicated because it means a given window must be usable by more than one device and potentially host at a time.
+In the meantime, since it only makes sense for the WebGPU and window devices to be on the same host, I guess we can just limit them to being on the same host.
 
 ### Async
 
