@@ -318,6 +318,14 @@ void wgpu_disconn(wgpu_ctx_t ctx) {
 	free(ctx);
 }
 
+uint64_t wgpu_get_hid(wgpu_ctx_t ctx) {
+	return ctx->hid;
+}
+
+uint64_t wgpu_get_vid(wgpu_ctx_t ctx) {
+	return ctx->vid;
+}
+
 static void notif_conn(kos_notif_t const* notif, void* data) {
 	wgpu_ctx_t const ctx = data;
 

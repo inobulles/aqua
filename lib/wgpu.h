@@ -43,6 +43,22 @@ wgpu_ctx_t wgpu_conn(kos_vdev_descr_t const* vdev);
  */
 void wgpu_disconn(wgpu_ctx_t ctx);
 
+/**
+ * Get the WebGPU connection's host ID.
+ *
+ * @param ctx The WebGPU library component context.
+ * @return The host ID.
+ */
+uint64_t wgpu_get_hid(wgpu_ctx_t ctx);
+
+/**
+ * Get the WebGPU connection's VDEV ID.
+ *
+ * @param ctx The WebGPU library component context.
+ * @return The VDEV ID.
+ */
+uint64_t wgpu_get_vid(wgpu_ctx_t ctx);
+
 WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t win);
 
 // clang-format off
