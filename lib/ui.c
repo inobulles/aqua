@@ -101,6 +101,10 @@ void ui_disconn(ui_ctx_t ctx) {
 	free(ctx);
 }
 
+ui_supported_backends_t ui_get_supported_backends(ui_ctx_t ctx) {
+	return ctx->supported_backends;
+}
+
 static void notif_conn(kos_notif_t const* notif, void* data) {
 	ui_ctx_t const ctx = data;
 
