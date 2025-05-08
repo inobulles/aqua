@@ -49,7 +49,7 @@ func GoUiBackendWgpuRender(
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	backend := ui.backend.(*WgpuBackend)
 
-	cmd_enc := backend.dev.ComamndEncoderFromRaw(cmd_enc_raw)
+	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
 	frame := wgpu.TextureViewFromRaw(frame_raw)
 
 	render_pass_descr := wgpu.RenderPassDescriptor{

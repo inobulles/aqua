@@ -71,7 +71,7 @@ func CreateDeviceFromRaw(dev_raw unsafe.Pointer) Device {
 	}
 }
 
-func (d *Device) ComamndEncoderFromRaw(cmd_enc_raw unsafe.Pointer) CommandEncoder {
+func (d *Device) CommandEncoderFromRaw(cmd_enc_raw unsafe.Pointer) CommandEncoder {
 	return CommandEncoder{
 		deviceRef: d.ref,
 		ref:       (C.WGPUCommandEncoder)(cmd_enc_raw),
