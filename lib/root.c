@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <umber.h>
+#define UMBER_COMPONENT "aqua.lib.root"
+
 struct aqua_ctx_t {
 	kos_descr_v4_t descr;
 
@@ -216,6 +219,33 @@ void aqua_vdev_it_next(aqua_vdev_it_t* it) {
 
 	it->vdev = &c->vdevs[it->__i];
 	assert(it->vdev != NULL);
+}
+
+kos_vdev_descr_t* aqua_get_best_vdev(aqua_component_t comp) {
+	assert(comp != NULL);
+
+	aqua_vdev_it_t it = aqua_vdev_it(comp);
+	kos_vdev_descr_t* best = NULL;
+
+	for (; it.vdev != NULL; aqua_vdev_it_next(&it)) {
+		kos_vdev_descr_t* const vdev = it.vdev;
+
+		LOG_VERBOSE("Looking for best VDEV: %s (spec=%s, pref=%d).", vdev->human, vdev->spec, vdev->pref);
+
+		if (best == NULL || vdev->pref > best->pref) {
+			best = vdev;
+		}
+	}
+
+	if (best == NULL) {
+		LOG_VERBOSE("No VDEV found.");
+	}
+
+	else {
+		LOG_VERBOSE("Best VDEV found: %s.", best->human);
+	}
+
+	return best;
 }
 
 void aqua_add_pending_conn(aqua_ctx_t ctx, cookie_notif_conn_tuple_t* tuple) {

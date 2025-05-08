@@ -86,3 +86,14 @@ aqua_vdev_it_t aqua_vdev_it(aqua_component_t comp);
  * @param it The VDEV iterator object.
  */
 void aqua_vdev_it_next(aqua_vdev_it_t* it);
+
+/**
+ * Get best VDEV for a component.
+ *
+ * Note that for now, the only heuristic for what the "best" VDEV is is the first one with the highest "pref" value.
+ * TODO Make this more sophisticated, by taking into account proximity for example.
+ *
+ * @param comp The component to get the best VDEV for.
+ * @return The best VDEV for the component or `NULL` if no VDEV was found.
+ */
+kos_vdev_descr_t* aqua_get_best_vdev(aqua_component_t comp);
