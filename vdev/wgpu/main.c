@@ -53,6 +53,7 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 	if (vid != only_vid) {
 		kos_notif_t const notif = {
 			.kind = KOS_NOTIF_CONN_FAIL,
+			.cookie = cookie,
 		};
 
 		VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
@@ -74,8 +75,6 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	assert(VDRIVER.notif_cb != NULL);
-
-	(void) conn_id;
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CALL_RET,
