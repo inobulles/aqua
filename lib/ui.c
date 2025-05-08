@@ -6,7 +6,11 @@
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"
 
+#include <assert.h>
 #include <string.h>
+
+#include <umber.h>
+#define UMBER_COMPONENT "aqua.lib.ui"
 
 #define SPEC "aquabsd.black.ui"
 
@@ -22,6 +26,8 @@ struct ui_ctx_t {
 	uint64_t vid;
 
 	kos_cookie_t last_cookie;
+	kos_val_t last_ret;
+	bool last_success;
 
 	bool is_conn;
 	uint64_t conn_id;
@@ -42,6 +48,11 @@ struct ui_ctx_t {
 
 	ui_supported_backends_t supported_backends;
 	backend_fns_t backend_wgpu_fns;
+};
+
+struct ui_t {
+	ui_ctx_t ctx;
+	void* opaque_ptr;
 };
 
 static component_t comp;
@@ -84,6 +95,11 @@ ui_ctx_t ui_conn(kos_vdev_descr_t const* vdev) {
 
 	kos_flush(true);
 
+	if (!ctx->is_conn) {
+		free(ctx);
+		return NULL;
+	}
+
 	return ctx;
 }
 
@@ -106,12 +122,47 @@ ui_supported_backends_t ui_get_supported_backends(ui_ctx_t ctx) {
 }
 
 ui_t ui_create(ui_ctx_t ctx) {
-	(void) ctx; // TODO
-	return NULL;
+	assert(ctx != NULL && ctx->is_conn);
+	ui_t const ui = calloc(1, sizeof *ui);
+
+	if (ui == NULL) {
+		LOG_ERROR("Failed to allocate UI object.");
+		return NULL;
+	}
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.create, NULL);
+	kos_flush(true);
+
+	ui->ctx = ctx;
+	ui->opaque_ptr = ctx->last_ret.opaque_ptr;
+
+	return ui;
 }
 
 void ui_destroy(ui_t ui) {
-	(void) ui; // TODO
+	ui_ctx_t const ctx = ui->ctx;
+
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = ui->opaque_ptr,
+		},
+	};
+
+	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
+	kos_flush(true);
+
+	free(ui);
+}
+
+static void notif_call_ret(kos_notif_t const* notif, void* data) {
+	ui_ctx_t const ctx = data;
+
+	if (ctx == NULL || !ctx->is_conn || notif->cookie != ctx->last_cookie) {
+		return;
+	}
+
+	ctx->last_success = true;
+	ctx->last_ret = notif->call_ret.ret;
 }
 
 static void notif_conn(kos_notif_t const* notif, void* data) {
@@ -143,6 +194,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
 		if (((uint32_t*) &ctx->consts)[i] == -1u) {
+			LOG_WARN("Missing constant %zu. Refusing connection.", i);
 			ctx->is_conn = false;
 			break;
 		}
@@ -201,6 +253,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
 		if (((uint32_t*) &ctx->fns)[i] == -1u) {
+			LOG_WARN("Missing function %zu. Refusing connection.", i);
 			ctx->is_conn = false;
 			break;
 		}
@@ -250,11 +303,19 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 	}
 
-	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
-		if (((uint32_t*) &ctx->fns)[i] == -1u) {
+	for (size_t i = 0; i < sizeof ctx->backend_wgpu_fns / sizeof(uint32_t); i++) {
+		if (((uint32_t*) &ctx->backend_wgpu_fns)[i] == -1u) {
 			ctx->supported_backends &= ~UI_BACKEND_WGPU;
 			break;
 		}
+	}
+
+	if (ctx->supported_backends & UI_BACKEND_WGPU) {
+		LOG_INFO("WebGPU UI backend is supported.");
+	}
+
+	else {
+		LOG_WARN("WebGPU UI backend is not supported.");
 	}
 }
 
@@ -262,7 +323,7 @@ static component_t comp = {
 	.probe = probe,
 	.notif_conn = notif_conn,
 	.notif_conn_fail = NULL,
-	.notif_call_ret = NULL,
+	.notif_call_ret = notif_call_ret,
 	.notif_call_fail = NULL,
 	.interrupt = NULL,
 	.vdev_count = 0,
