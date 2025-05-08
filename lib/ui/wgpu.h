@@ -100,5 +100,6 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
  * You can also write the rendering code manually, which is useful if you're rendering more than just the UI to the screen.
  *
  * @param state The state object to use for the WebGPU backend.
+ * @return 0 on success, or a negative error code on failure.
  */
-void ui_wgpu_ez_render(ui_wgpu_ez_state_t* state);
+int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state);

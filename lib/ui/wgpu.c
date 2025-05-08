@@ -74,9 +74,11 @@ static void req_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGP
 static int setup_surface(ui_wgpu_ez_state_t* state) {
 	// Create surface from window.
 
+	LOG_VERBOSE("Creating surface from window %p.", state->win);
 	state->surface = wgpu_surface_from_win(state->wgpu_ctx, state->instance, state->win);
 
 	if (state->surface == NULL) {
+		LOG_ERROR("Failed to create surface.");
 		goto err_create_surface;
 	}
 
@@ -171,12 +173,14 @@ err_create_surface:
 	return -1;
 }
 
-void ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
+int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 	// If not yet set up, setup surface.
 
 	if (state->surface == NULL) {
+		LOG_VERBOSE("Surface needs to be set up.");
+
 		if (setup_surface(state) < 0) {
-			return; // TODO
+			return -1;
 		}
 	}
 
@@ -186,4 +190,6 @@ void ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 	aqua_wgpuSurfaceGetCurrentTexture(state->wgpu_ctx, state->surface, &surf_tex);
 
 	// TODO The rest.
+
+	return 0;
 }

@@ -9,28 +9,65 @@ deps = [
 	Dep.local("../external/webgpu-headers"),
 ]
 
-let flags = [
+let libs = {
+	"root": {
+		"src": ["root.c"],
+		"include": ["root.h"],
+	},
+	"win": {
+		"src": ["win.c"],
+		"include": ["win.h"],
+	},
+	"wgpu": {
+		"src": ["wgpu.c"],
+		"include": ["wgpu.h"],
+	},
+	"ui": {
+		"src": ["ui.c", "ui/wgpu.c"],
+		"include": ["ui.h", "ui/wgpu.h"],
+		"linker_flags": ["-laqua_wgpu"],
+	},
+}
+
+# Compile the source files into object files.
+# This will be parallelized by Bob, as the buildsteps can be merged here.
+
+let cc = Cc([
 	"-std=c11", "-g",
 	"-Wall", "-Wextra", "-Werror",
-]
+])
 
-# TODO Should I even build the archives? If I kept everything always shared, then I could use ctors/dtors for the root part.
-# TODO We could parallelize this if we ran all the CC steps at once.
+for lib in libs {
+	libs[lib]["obj"] = cc.compile(libs[lib]["src"])
+}
+
+# Link the libraries and install everything.
 
 install = {}
 
-for lib in ["root", "win", "wgpu", "ui"] {
-	let linker_args = ["-laqua", "-shared"]
+for lib in libs {
+	# Install the headers.
 
-	if lib != "root" {
-		linker_args = linker_args + ["-laqua_root"]
+	for header in libs[lib]["include"] {
+		install[header] = "include/aqua/" + header
 	}
 
-	let obj = Cc(flags).compile([lib + ".c"])
+	# Link and install the shared library.
 
-	install[lib + ".h"] = "include/aqua/" + lib + ".h"
-	install[Linker([]).archive(obj)] = "lib/libaqua_" + lib + ".a"
-	install[Linker(linker_args).link(obj)] = "lib/libaqua_" + lib + ".so"
+	let flags = ["-laqua", "-lumber", "-shared"]
+
+	if lib != "root" {
+		flags = flags + ["-laqua_root"]
+	}
+
+	let extra = libs[lib]["linker_flags"]
+
+	if extra != none {
+		flags = flags + extra
+	}
+
+	let obj = libs[lib]["obj"]
+	install[Linker(flags).link(obj)] = "lib/libaqua_" + lib + ".so"
 }
 
 run = none
