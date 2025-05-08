@@ -343,6 +343,8 @@ static void redraw(win_t win, void* data) {
 			aqua_wgpuTextureRelease(state->wgpu_ctx, surface_texture.texture);
 		}
 
+		// TODO I am sort of confused about what this code is tryna accomplish?
+
 		uint32_t const width = 1600;
 		uint32_t const height = 1200;
 
@@ -367,7 +369,10 @@ static void redraw(win_t win, void* data) {
 	WGPUTextureView const frame = aqua_wgpuTextureCreateView(state->wgpu_ctx, surface_texture.texture, NULL);
 	assert(frame != NULL);
 
-	WGPUCommandEncoderDescriptor const encoder_descr = {.label = {"command_encoder", WGPU_STRLEN}};
+	WGPUCommandEncoderDescriptor const encoder_descr = {
+		.label = {"command_encoder", WGPU_STRLEN}
+	};
+
 	WGPUCommandEncoder const encoder = aqua_wgpuDeviceCreateCommandEncoder(state->wgpu_ctx, state->device, &encoder_descr);
 	assert(encoder != NULL);
 
@@ -402,16 +407,19 @@ static void redraw(win_t win, void* data) {
 
 	// Create final command buffer.
 
-	WGPUCommandBufferDescriptor const command_buffer_descr = {.label = {"command_buffer", WGPU_STRLEN}};
-	WGPUCommandBuffer const command_buffer = aqua_wgpuCommandEncoderFinish(state->wgpu_ctx, encoder, &command_buffer_descr);
+	WGPUCommandBufferDescriptor const cmd_buf_descr = {
+		.label = {"command_buffer", WGPU_STRLEN}
+	};
+
+	WGPUCommandBuffer const cmd_buf = aqua_wgpuCommandEncoderFinish(state->wgpu_ctx, encoder, &cmd_buf_descr);
 
 	// Submit command buffer to queue.
 
-	WGPUCommandBuffer const command_buffers[] = {command_buffer};
-	aqua_wgpuQueueSubmit(state->wgpu_ctx, state->queue, sizeof command_buffers / sizeof *command_buffers, command_buffers);
+	WGPUCommandBuffer const cmd_bufs[] = {cmd_buf};
+	aqua_wgpuQueueSubmit(state->wgpu_ctx, state->queue, sizeof cmd_bufs / sizeof *cmd_bufs, cmd_bufs);
 	aqua_wgpuSurfacePresent(state->wgpu_ctx, state->surface);
 
-	aqua_wgpuCommandBufferRelease(state->wgpu_ctx, command_buffer);
+	aqua_wgpuCommandBufferRelease(state->wgpu_ctx, cmd_buf);
 	aqua_wgpuCommandEncoderRelease(state->wgpu_ctx, encoder);
 	aqua_wgpuTextureViewRelease(state->wgpu_ctx, frame);
 	aqua_wgpuTextureRelease(state->wgpu_ctx, surface_texture.texture);
