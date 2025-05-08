@@ -76,7 +76,6 @@ void ui_disconn(ui_ctx_t ctx);
  * Get supported backends for this UI connection.
  *
  * These are the backends you may call the init function for.
- * TODO Where should these be included from?
  *
  * @param ctx The UI library component context.
  * @return The supported backends.

@@ -3,29 +3,67 @@
 
 #include "wgpu.h"
 
+#define __AQUA_LIB_COMPONENT__
+#include "../ui_internal.h"
+
 #include <umber.h>
 #define UMBER_COMPONENT "aqua.lib.ui.wgpu"
 
 #include <assert.h>
 #include <string.h>
 
-int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQueue queue) {
-	(void) ui;
-	(void) hid;
-	(void) vid;
-	(void) device;
-	(void) queue;
+int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device) {
+	assert(ui != NULL);
+	ui_ctx_t const ctx = ui->ctx;
 
-	// TODO
+	if (!(ctx->supported_backends & UI_BACKEND_WGPU)) {
+		LOG_ERROR("WebGPU backend not supported.");
+		return -1;
+	}
+
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = ui->opaque_ptr,
+		},
+		{.u64 = hid},
+		{.u64 = vid},
+		{.opaque_ptr = device},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->backend_wgpu_fns.init, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_ERROR("Failed to initialize WebGPU backend.");
+		return -1;
+	}
+
+	LOG_VERBOSE("Initialized WebGPU backend.");
 
 	return 0;
 }
 
-int ui_wgpu_render(ui_t ui, WGPUCommandEncoder command_encoder) {
-	(void) ui;
-	(void) command_encoder;
+int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder) {
+	assert(ui != NULL);
+	ui_ctx_t const ctx = ui->ctx;
 
-	// TODO
+	kos_val_t const args[] = {
+		{.opaque_ptr = ui->opaque_ptr},
+		{.opaque_ptr = frame},
+		{.opaque_ptr = command_encoder},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->backend_wgpu_fns.render, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_ERROR("Failed to render WebGPU backend.");
+		return -1;
+	}
+
+	LOG_VERBOSE("Rendered UI with WebGPU backend.");
 
 	return 0;
 }
@@ -173,12 +211,12 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	// Create WebGPU backend on UI object.
 
-	uint64_t const hid = wgpu_get_hid(state->wgpu_ctx);
+	uint64_t const hid = (uint64_t) state->wgpu_ctx; // TODO wgpu_get_hid(state->wgpu_ctx);
 	uint64_t const vid = wgpu_get_vid(state->wgpu_ctx);
 
 	LOG_VERBOSE("Creating WebGPU UI backend with WebGPU device %lu:%lu.", hid, vid);
 
-	if (ui_wgpu_init(state->ui, hid, vid, state->device, state->queue) < 0) {
+	if (ui_wgpu_init(state->ui, hid, vid, state->device) < 0) {
 		LOG_ERROR("Failed to create WebGPU UI backend.");
 		goto err_backend_init;
 	}
@@ -280,7 +318,7 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 
 	LOG_VERBOSE("Rendering UI itself.");
 
-	if (ui_wgpu_render(state->ui, encoder) < 0) {
+	if (ui_wgpu_render(state->ui, frame, encoder) < 0) {
 		LOG_ERROR("Failed to render UI.");
 		goto err_render_ui;
 	}

@@ -15,10 +15,9 @@
  * @param hid The host ID of the WebGPU VDEV.
  * @param vid The VDEV ID of the WebGPU VDEV.
  * @param device The WebGPU device to use.
- * @param queue The WebGPU queue to use.
  * @return 0 on success, or a negative error code on failure.
  */
-int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQueue queue);
+int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device);
 
 /**
  * Render the UI using the WebGPU backend.
@@ -27,10 +26,11 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQue
  * You must finish the command encoder yourself and create a command buffer from it with {@link aqua_wgpuCommandEncoderFinish}.
  *
  * @param ui The UI object to render.
+ * @param frame The WebGPU frame texture view to render to.
  * @param command_encoder The WebGPU command encoder to use for rendering.
  * @return 0 on success, or a negative error code on failure.
  */
-int ui_wgpu_render(ui_t ui, WGPUCommandEncoder command_encoder);
+int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder);
 
 /**
  * Easy setup WebGPU UI backend state.
