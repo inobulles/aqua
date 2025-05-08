@@ -105,6 +105,15 @@ ui_supported_backends_t ui_get_supported_backends(ui_ctx_t ctx) {
 	return ctx->supported_backends;
 }
 
+ui_t ui_create(ui_ctx_t ctx) {
+	(void) ctx; // TODO
+	return NULL;
+}
+
+void ui_destroy(ui_t ui) {
+	(void) ui; // TODO
+}
+
 static void notif_conn(kos_notif_t const* notif, void* data) {
 	ui_ctx_t const ctx = data;
 
