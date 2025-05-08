@@ -25,11 +25,16 @@ int main(void) {
 
 	if (win_vdev == NULL) {
 		LOG_FATAL("No window VDEV found.");
-		goto err_no_win_vdev_found;
+		goto err_no_win_vdev;
 	}
 
 	LOG_INFO("Using window VDEV \"%s\".", (char*) win_vdev->human);
 	win_ctx_t win_ctx = win_conn(win_vdev);
+
+	if (win_ctx == NULL) {
+		LOG_FATAL("Failed to connect to window VDEV.");
+		goto err_no_win_vdev;
+	}
 
 	// Get the best WebGPU VDEV.
 
@@ -37,11 +42,16 @@ int main(void) {
 
 	if (wgpu_vdev == NULL) {
 		LOG_FATAL("No WebGPU VDEV found.");
-		goto err_no_wgpu_vdev_found;
+		goto err_no_wgpu_vdev;
 	}
 
 	LOG_INFO("Using WebGPU VDEV \"%s\".", (char*) wgpu_vdev->human);
 	wgpu_ctx_t wgpu_ctx = wgpu_conn(wgpu_vdev);
+
+	if (wgpu_ctx == NULL) {
+		LOG_FATAL("Failed to connect to WebGPU VDEV.");
+		goto err_no_wgpu_vdev;
+	}
 
 	// Get the best UI VDEV.
 
@@ -49,11 +59,16 @@ int main(void) {
 
 	if (ui_vdev == NULL) {
 		LOG_FATAL("No UI VDEV found.");
-		goto err_no_ui_vdev_found;
+		goto err_no_ui_vdev;
 	}
 
 	LOG_INFO("Using UI VDEV \"%s\".", (char*) ui_vdev->human);
 	ui_ctx_t ui_ctx = ui_conn(ui_vdev);
+
+	if (ui_ctx == NULL) {
+		LOG_FATAL("Failed to connect to UI VDEV.");
+		goto err_no_ui_vdev;
+	}
 
 	// Create a window.
 
@@ -100,15 +115,15 @@ err_win_create:
 
 	ui_disconn(ui_ctx);
 
-err_no_ui_vdev_found:
+err_no_ui_vdev:
 
 	wgpu_disconn(wgpu_ctx);
 
-err_no_wgpu_vdev_found:
+err_no_wgpu_vdev:
 
 	win_disconn(win_ctx);
 
-err_no_win_vdev_found:
+err_no_win_vdev:
 err_aqua_init:
 
 	return rv;
