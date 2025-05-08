@@ -24,6 +24,7 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
 	state->ui = ui;
 	state->win = win;
 	state->wgpu_ctx = wgpu_ctx;
+	state->configured = false;
 
 	// Create instance.
 
@@ -148,6 +149,13 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	LOG_VERBOSE("Got queue: %p.", state->queue);
 
+	// Get surface capabilities.
+	// TODO I'll want to intelligently select the format and alpha mode I want.
+	//      Should probably accept some hints argument for flags that the caller can pass to this function to select the format and alpha mode.
+
+	aqua_wgpuSurfaceGetCapabilities(state->wgpu_ctx, state->surface, state->adapter, &state->caps);
+	LOG_VERBOSE("Got surface capabilities.");
+
 	// Create WebGPU backend on UI object.
 
 	uint64_t const hid = wgpu_get_hid(state->wgpu_ctx);
@@ -197,10 +205,30 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 
 	// Actually render.
 
+	if (!state->configured) {
+		LOG_VERBOSE("Surface not yet configured for this frame.");
+		return 0;
+	}
+
 	WGPUSurfaceTexture surf_tex;
 	aqua_wgpuSurfaceGetCurrentTexture(state->wgpu_ctx, state->surface, &surf_tex);
 
 	// TODO The rest.
 
 	return 0;
+}
+
+void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res) {
+	LOG_VERBOSE("Resizing to %ux%u and (re)configuring surface.", x_res, y_res);
+
+	state->config.device = state->device;
+	state->config.usage = WGPUTextureUsage_RenderAttachment;
+	state->config.format = state->caps.formats[0];
+	state->config.presentMode = WGPUPresentMode_Fifo;
+	state->config.alphaMode = state->caps.alphaModes[0];
+	state->config.width = x_res;
+	state->config.height = y_res;
+
+	aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
+	state->configured = true;
 }

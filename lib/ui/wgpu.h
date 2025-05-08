@@ -76,6 +76,16 @@ typedef struct {
 	 * The WebGPU surface capabilities.
 	 */
 	WGPUSurfaceCapabilities caps;
+	/**
+	 * The WebGPU surface configuration object.
+	 */
+	WGPUSurfaceConfiguration config;
+	/**
+	 * Has the surface been configured yet?
+	 *
+	 * For the surface to be configured, you must call the {@link ui_wgpu_ez_resize} function whenever the window is resized.
+	 */
+	bool configured;
 } ui_wgpu_ez_state_t;
 
 /**
@@ -103,3 +113,16 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
  * @return 0 on success, or a negative error code on failure.
  */
 int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state);
+
+/**
+ * Resize the WebGPU backend.
+ *
+ * This function should be called whenever the window is resized.
+ * It will reconfigure the WebGPU surface to match the new window size.
+ * This function must be called, otherwise the WebGPU backend will not render anything!
+ *
+ * @param state The state object to use for the WebGPU backend.
+ * @param x_res The new width (i.e. X resolution) of the window.
+ * @param y_res The new height (i.e. Y resolution) of the window.
+ */
+void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res);
