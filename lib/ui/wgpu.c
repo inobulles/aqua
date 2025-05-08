@@ -6,6 +6,9 @@
 #include <umber.h>
 #define UMBER_COMPONENT "aqua.lib.ui.wgpu"
 
+#include <assert.h>
+#include <string.h>
+
 int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQueue queue) {
 	(void) ui;
 	(void) hid;
@@ -15,7 +18,16 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQue
 
 	// TODO
 
-	return -1;
+	return 0;
+}
+
+int ui_wgpu_render(ui_t ui, WGPUCommandEncoder command_encoder) {
+	(void) ui;
+	(void) command_encoder;
+
+	// TODO
+
+	return 0;
 }
 
 // "Easy" functions.
@@ -24,7 +36,6 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
 	state->ui = ui;
 	state->win = win;
 	state->wgpu_ctx = wgpu_ctx;
-	state->configured = false;
 
 	// Create instance.
 
@@ -42,6 +53,8 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
 	// When ui_wgpu_ez_render is called, it will be created.
 
 	state->surface = NULL;
+	memset(&state->config, 0, sizeof state->config);
+	state->configured = false;
 
 	return 0;
 }
@@ -73,6 +86,8 @@ static void req_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGP
 }
 
 static int setup_surface(ui_wgpu_ez_state_t* state) {
+	assert(state->surface == NULL);
+
 	// Create surface from window.
 
 	LOG_VERBOSE("Creating surface from window %p.", state->win);
@@ -210,15 +225,113 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 		return 0;
 	}
 
+	LOG_VERBOSE("Getting current surface texture.");
+
 	WGPUSurfaceTexture surf_tex;
 	aqua_wgpuSurfaceGetCurrentTexture(state->wgpu_ctx, state->surface, &surf_tex);
 
-	// TODO The rest.
+	switch (surf_tex.status) {
+	case WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal:
+	case WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal:
+		break;
+	case WGPUSurfaceGetCurrentTextureStatus_Error:
+	case WGPUSurfaceGetCurrentTextureStatus_Timeout:
+	case WGPUSurfaceGetCurrentTextureStatus_Outdated:
+	case WGPUSurfaceGetCurrentTextureStatus_Lost:
+		if (surf_tex.texture != NULL) {
+			aqua_wgpuTextureRelease(state->wgpu_ctx, surf_tex.texture);
+		}
 
-	return 0;
+		LOG_WARN("Surface texture lost, reconfiguring surface.");
+
+		aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
+		return 0;
+	case WGPUSurfaceGetCurrentTextureStatus_OutOfMemory:
+	case WGPUSurfaceGetCurrentTextureStatus_DeviceLost:
+	case WGPUSurfaceGetCurrentTextureStatus_Force32:
+		LOG_ERROR("Failed to get current surface texture (status=%#.8x).", surf_tex.status);
+		return -1;
+	}
+
+	assert(surf_tex.texture != NULL);
+	int rv = -1;
+
+	LOG_VERBOSE("Creating texture view from surface texture.");
+
+	WGPUTextureView const frame = aqua_wgpuTextureCreateView(state->wgpu_ctx, surf_tex.texture, NULL);
+
+	if (frame == NULL) {
+		LOG_ERROR("Failed to create texture view.");
+		goto err_create_view;
+	}
+
+	LOG_VERBOSE("Creating command encoder.");
+
+	WGPUCommandEncoderDescriptor const encoder_descr = {
+		.label = {"command_encoder", WGPU_STRLEN}
+	};
+
+	WGPUCommandEncoder const encoder = aqua_wgpuDeviceCreateCommandEncoder(state->wgpu_ctx, state->device, &encoder_descr);
+
+	if (encoder == NULL) {
+		LOG_ERROR("Failed to create command encoder.");
+		goto err_create_encoder;
+	}
+
+	LOG_VERBOSE("Rendering UI itself.");
+
+	if (ui_wgpu_render(state->ui, encoder) < 0) {
+		LOG_ERROR("Failed to render UI.");
+		goto err_render_ui;
+	}
+
+	LOG_VERBOSE("Creating final command buffer.");
+
+	WGPUCommandBufferDescriptor const cmd_buf_descr = {
+		.label = {"command_buffer", WGPU_STRLEN}
+	};
+
+	WGPUCommandBuffer const cmd_buf = aqua_wgpuCommandEncoderFinish(state->wgpu_ctx, encoder, &cmd_buf_descr);
+
+	if (cmd_buf == NULL) {
+		LOG_ERROR("Failed to create command buffer.");
+		goto err_cmd_buf;
+	}
+
+	LOG_VERBOSE("Submitting command buffer to queue.");
+
+	WGPUCommandBuffer const cmd_bufs[] = {cmd_buf};
+	aqua_wgpuQueueSubmit(state->wgpu_ctx, state->queue, sizeof cmd_bufs / sizeof *cmd_bufs, cmd_bufs);
+
+	LOG_VERBOSE("Presenting frame.");
+
+	aqua_wgpuSurfacePresent(state->wgpu_ctx, state->surface);
+
+	LOG_VERBOSE("Rendered frame successfully.");
+	rv = 0;
+
+err_cmd_buf:
+err_render_ui:
+
+	aqua_wgpuCommandEncoderRelease(state->wgpu_ctx, encoder);
+
+err_create_encoder:
+
+	aqua_wgpuTextureViewRelease(state->wgpu_ctx, frame);
+
+err_create_view:
+
+	aqua_wgpuTextureRelease(state->wgpu_ctx, surf_tex.texture);
+
+	return rv;
 }
 
 void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res) {
+	if (state->surface == NULL) {
+		LOG_VERBOSE("Surface not yet created, skipping resize.");
+		return;
+	}
+
 	LOG_VERBOSE("Resizing to %ux%u and (re)configuring surface.", x_res, y_res);
 
 	state->config.device = state->device;

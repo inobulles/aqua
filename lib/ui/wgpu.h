@@ -24,11 +24,13 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUQue
  * Render the UI using the WebGPU backend.
  *
  * This function should be called in your WebGPU rendering loop, and it will add the commands necessary to render the UI to the given command encoder.
+ * You must finish the command encoder yourself and create a command buffer from it with {@link aqua_wgpuCommandEncoderFinish}.
  *
  * @param ui The UI object to render.
  * @param command_encoder The WebGPU command encoder to use for rendering.
+ * @return 0 on success, or a negative error code on failure.
  */
-void ui_wgpu_render(ui_t ui, WGPUCommandEncoder command_encoder);
+int ui_wgpu_render(ui_t ui, WGPUCommandEncoder command_encoder);
 
 /**
  * Easy setup WebGPU UI backend state.
