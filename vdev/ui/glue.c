@@ -126,8 +126,8 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
-extern void* GoCreate(void);
-extern void GoDestroy(void* ui);
+extern void* GoUiCreate(void);
+extern void GoUiDestroy(void* ui);
 
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	assert(VDRIVER.notif_cb != NULL);
@@ -140,10 +140,10 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 	switch (fn_id) {
 	case 0:
-		notif.call_ret.ret.opaque_ptr = GoCreate();
+		notif.call_ret.ret.opaque_ptr = GoUiCreate();
 		break;
 	case 1:
-		GoDestroy(args[0].opaque_ptr);
+		GoUiDestroy(args[0].opaque_ptr);
 		break;
 	default:
 		assert(false); // TODO This should probably return CALL_FAIL or something.

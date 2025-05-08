@@ -14,14 +14,14 @@ import "unsafe"
 type Ui struct {
 }
 
-//export GoCreate
-func GoCreate() unsafe.Pointer {
+//export GoUiCreate
+func GoUiCreate() unsafe.Pointer {
 	ui := &Ui{}
 	return unsafe.Pointer(ui)
 }
 
-//export GoDestroy
-func GoDestroy(ui_raw unsafe.Pointer) {
+//export GoUiDestroy
+func GoUiDestroy(ui_raw unsafe.Pointer) {
 	// ui := (*Ui)(ui_raw)
 }
 
