@@ -8,6 +8,22 @@
 #include <umber.h>
 #define UMBER_COMPONENT "demo.hello_ui_c"
 
+static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
+	ui_wgpu_ez_state_t* const state = data;
+
+	(void) win;
+
+	LOG_INFO("Window resized to %ux%u.", x_res, y_res);
+	ui_wgpu_ez_resize(state, x_res, y_res);
+}
+
+static void redraw(win_t win, void* data) {
+	ui_wgpu_ez_state_t* const state = data;
+	(void) win;
+
+	ui_wgpu_ez_render(state);
+}
+
 int main(void) {
 	int rv = EXIT_FAILURE;
 	aqua_ctx_t const ctx = aqua_init();
@@ -96,6 +112,13 @@ int main(void) {
 		LOG_FATAL("Failed to set up WebGPU UI backend.");
 		goto err_ui_wgpu_ez_setup;
 	}
+
+	// Start window loop.
+
+	win_register_redraw_cb(win, redraw, &state);
+	win_register_resize_cb(win, resize, &state);
+
+	win_loop(win);
 
 	// Success!
 
