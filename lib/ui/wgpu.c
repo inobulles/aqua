@@ -105,10 +105,21 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	aqua_wgpuAdapterGetInfo(state->wgpu_ctx, state->adapter, &state->adapter_info);
 
-	LOG_INFO("Adapter vendor: %.*s.", (int) state->adapter_info.vendor.length, state->adapter_info.vendor.data);
-	LOG_INFO("Adapter architecture: %.*s.", (int) state->adapter_info.architecture.length, state->adapter_info.architecture.data);
-	LOG_INFO("Adapter device: %.*s.", (int) state->adapter_info.device.length, state->adapter_info.device.data);
-	LOG_INFO("Adapter description: %.*s.", (int) state->adapter_info.description.length, state->adapter_info.description.data);
+	if (state->adapter_info.vendor.length) {
+		LOG_INFO("Adapter vendor: %.*s.", (int) state->adapter_info.vendor.length, state->adapter_info.vendor.data);
+	}
+
+	if (state->adapter_info.architecture.length) {
+		LOG_INFO("Adapter architecture: %.*s.", (int) state->adapter_info.architecture.length, state->adapter_info.architecture.data);
+	}
+
+	if (state->adapter_info.device.length) {
+		LOG_INFO("Adapter device ID: %.*s.", (int) state->adapter_info.device.length, state->adapter_info.device.data);
+	}
+
+	if (state->adapter_info.description.length) {
+		LOG_INFO("Adapter description: %.*s.", (int) state->adapter_info.description.length, state->adapter_info.description.data);
+	}
 
 	// Get device.
 
