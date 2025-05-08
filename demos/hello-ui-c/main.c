@@ -86,6 +86,11 @@ int main(void) {
 		goto err_no_ui_vdev;
 	}
 
+	if (!(ui_get_supported_backends(ui_ctx) & UI_BACKEND_WGPU)) {
+		LOG_FATAL("WebGPU UI backend is not supported.");
+		goto err_no_ui_vdev;
+	}
+
 	// Create a window.
 
 	win_t const win = win_create(win_ctx);
