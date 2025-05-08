@@ -45,9 +45,7 @@ func Conn(vdev *aqua.VdevDescr) *WgpuCtx {
 		return nil
 	}
 
-	C.gowebgpu_ctx = ctx
-	global_ctx = &WgpuCtx{ctx: ctx}
-
+	SetGlobalCtx(unsafe.Pointer(ctx))
 	return global_ctx
 }
 
@@ -62,9 +60,20 @@ func Disconn() {
 
 // TODO Should this be brought out into its own source file?
 
-func CommandEncoderFromRaw(dev_raw unsafe.Pointer, cmd_enc_raw unsafe.Pointer) CommandEncoder {
+func SetGlobalCtx(c unsafe.Pointer) {
+	C.gowebgpu_ctx = C.wgpu_ctx_t(c)
+	global_ctx = &WgpuCtx{ctx: C.wgpu_ctx_t(c)}
+}
+
+func CreateDeviceFromRaw(dev_raw unsafe.Pointer) Device {
+	return Device{
+		ref: (C.WGPUDevice)(dev_raw),
+	}
+}
+
+func (d *Device) ComamndEncoderFromRaw(cmd_enc_raw unsafe.Pointer) CommandEncoder {
 	return CommandEncoder{
-		deviceRef: (C.WGPUDevice)(dev_raw),
+		deviceRef: d.ref,
 		ref:       (C.WGPUCommandEncoder)(cmd_enc_raw),
 	}
 }

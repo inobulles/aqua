@@ -83,9 +83,11 @@ void logCallback_cgo(WGPULogLevel level, char const *msg) {
 */
 import "C"
 
+/*
 func init() {
 	C.aqua_wgpuSetLogCallback(global_ctx.ctx, C.WGPULogCallback(C.logCallback_cgo), nil)
 }
+*/
 
 func SetLogLevel(level LogLevel) {
 	C.aqua_wgpuSetLogLevel(global_ctx.ctx, C.WGPULogLevel(level))
