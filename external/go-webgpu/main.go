@@ -4,7 +4,7 @@
 package wgpu
 
 /*
-#cgo LDFLAGS: -laqua_webgpu
+#cgo LDFLAGS: -laqua_wgpu
 
 #include <aqua/wgpu.h>
 wgpu_ctx_t gowebgpu_ctx;
