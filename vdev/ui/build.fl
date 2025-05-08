@@ -5,9 +5,7 @@ import bob
 import bob.go
 
 deps = [
-	# TODO Bob bug when including this guy too:
-	# Assertion failed: (leaf_count <= max_child_count), function deps_build, file deps.c, line 137.
-	# Dep.local("../wgpu"),
+	Dep.local("../wgpu"),
 	Dep.local("../../lib"),
 ]
 
