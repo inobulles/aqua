@@ -96,6 +96,49 @@ static kos_fn_t const FNS[] = {
 			},
 		},
 	},
+	// WebGPU backend specific stuff.
+	{
+		.name = "backend_wgpu_init",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "ui",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "hid",
+			},
+			{
+				.type = KOS_TYPE_U64,
+				.name = "vid",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "device",
+			},
+		},
+	},
+	{
+		.name = "backend_wgpu_render",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "ui",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "frame",
+			},
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "command_encoder",
+			},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -126,8 +169,11 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
-extern void* GoUiCreate(void);
-extern void GoUiDestroy(void* ui);
+extern uintptr_t GoUiCreate(void);
+extern void GoUiDestroy(uintptr_t ui);
+
+extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t vid, void* device);
+extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
 
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	assert(VDRIVER.notif_cb != NULL);
@@ -140,10 +186,17 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 	switch (fn_id) {
 	case 0:
-		notif.call_ret.ret.opaque_ptr = GoUiCreate();
+		notif.call_ret.ret.opaque_ptr = (void*) GoUiCreate();
 		break;
 	case 1:
-		GoUiDestroy(args[0].opaque_ptr);
+		GoUiDestroy((uintptr_t) args[0].opaque_ptr);
+		break;
+	// WebGPU backend specific stuff.
+	case 4:
+		GoUiBackendWgpuInit((uintptr_t) args[0].opaque_ptr, args[1].u64, args[2].u64, args[3].opaque_ptr);
+		break;
+	case 5:
+		GoUiBackendWgpuRender((uintptr_t) args[0].opaque_ptr, args[1].opaque_ptr, args[2].opaque_ptr);
 		break;
 	default:
 		assert(false); // TODO This should probably return CALL_FAIL or something.

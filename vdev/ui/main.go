@@ -9,20 +9,28 @@ package main
 #include "../../kos/vdev.h"
 */
 import "C"
-import "unsafe"
+import "runtime/cgo"
+
+type Backend interface {
+}
 
 type Ui struct {
+	backend Backend
 }
 
 //export GoUiCreate
-func GoUiCreate() unsafe.Pointer {
+func GoUiCreate() C.uintptr_t {
 	ui := &Ui{}
-	return unsafe.Pointer(ui)
+	handle := cgo.NewHandle(ui)
+	return C.uintptr_t(handle)
 }
 
 //export GoUiDestroy
-func GoUiDestroy(ui_raw unsafe.Pointer) {
-	// ui := (*Ui)(ui_raw)
+func GoUiDestroy(ui_raw C.uintptr_t) {
+	handle := cgo.Handle(ui_raw)
+	defer handle.Delete()
+
+	// ui := handle.Value().(*Ui)
 }
 
 func main() {}

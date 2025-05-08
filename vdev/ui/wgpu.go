@@ -3,18 +3,53 @@
 
 package main
 
-import "obiw.ac/aqua/wgpu"
-import "unsafe"
+/*
+#include "../../kos/vdev.h"
+*/
+import "C"
+import (
+	"runtime/cgo"
+	"unsafe"
+
+	"obiw.ac/aqua/wgpu"
+)
+
+type WgpuBackend struct {
+	Backend
+	dev wgpu.Device
+}
 
 //export GoUiBackendWgpuInit
-func GoUiBackendWgpuInit() {
-	// Have to set global context somehow.
+func GoUiBackendWgpuInit(
+	ui_raw C.uintptr_t,
+	hid C.uint64_t,
+	vid C.uint64_t,
+	dev_raw unsafe.Pointer,
+) {
+	ui := cgo.Handle(ui_raw).Value().(*Ui)
+
+	ui.backend = &WgpuBackend{
+		dev: wgpu.CreateDeviceFromRaw(dev_raw),
+	}
+
+	wgpu.SetGlobalCtx(unsafe.Pointer(uintptr(hid)))
+
+	// TODO Have to set global context somehow.
 	// Oof, this is gonna be complicated actually.
+	// Okay, so this is how I'm gonna approach this:
+	// - First, we gonna wanna
 }
 
 //export GoUiBackendWgpuRender
-func GoUiBackendWgpuRender(dev_raw unsafe.Pointer, frame_raw unsafe.Pointer, cmd_enc_raw unsafe.Pointer) {
-	cmd_enc := wgpu.CommandEncoderFromRaw(dev_raw, cmd_enc_raw)
+func GoUiBackendWgpuRender(
+	ui_raw C.uintptr_t,
+	frame_raw unsafe.Pointer,
+	cmd_enc_raw unsafe.Pointer,
+) {
+	ui := cgo.Handle(ui_raw).Value().(*Ui)
+	backend := ui.backend.(*WgpuBackend)
+
+	cmd_enc := backend.dev.ComamndEncoderFromRaw(cmd_enc_raw)
 	frame := wgpu.TextureViewFromRaw(frame_raw)
 
 	render_pass_descr := wgpu.RenderPassDescriptor{
