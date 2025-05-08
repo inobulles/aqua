@@ -59,3 +59,18 @@ func Disconn() {
 	C.wgpu_disconn(global_ctx.ctx)
 	global_ctx = nil
 }
+
+// TODO Should this be brought out into its own source file?
+
+func CommandEncoderFromRaw(dev_raw unsafe.Pointer, cmd_enc_raw unsafe.Pointer) CommandEncoder {
+	return CommandEncoder{
+		deviceRef: (C.WGPUDevice)(dev_raw),
+		ref:       (C.WGPUCommandEncoder)(cmd_enc_raw),
+	}
+}
+
+func TextureViewFromRaw(view_raw unsafe.Pointer) TextureView {
+	return TextureView{
+		ref: (C.WGPUTextureView)(view_raw),
+	}
+}
