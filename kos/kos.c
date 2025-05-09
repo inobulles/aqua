@@ -17,9 +17,12 @@
 
 #include <dlfcn.h>
 
+#include <umber.h>
+#define UMBER_COMPONENT "aqua.kos"
+
 #define VDRIVER_PATH_ENVVAR "VDRIVER_PATH"
-#define DEFAULT_PREFIX "/usr/local"
-#define DEFAULT_VDRIVER_PATH "lib/vdriver"
+#define DEFAULT_PREFIX "/usr/local/lib"
+#define DEFAULT_VDRIVER_PATH "vdriver"
 
 static bool has_init = false;
 static uint64_t local_host_id;
@@ -84,7 +87,7 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 	void* const lib = dlopen(path, RTLD_LAZY);
 
 	if (lib == NULL) {
-		fprintf(stderr, "Failed to load VDEV driver library: dlopen(\"%s\"): %s\n", path, dlerror());
+		LOG_ERROR("Failed to load VDEV driver library: dlopen(\"%s\"): %s", path, dlerror());
 		return -1;
 	}
 
@@ -94,7 +97,7 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 	vdriver_t* const vdriver = dlsym(lib, "VDRIVER");
 
 	if (vdriver == NULL) {
-		fprintf(stderr, "Failed to load VDEV driver 'VDRIVER' symbol: %s\n", dlerror());
+		LOG_ERROR("Failed to load VDEV driver 'VDRIVER' symbol: %s\n", dlerror());
 		dlclose(lib);
 		return -1;
 	}
@@ -120,8 +123,11 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 	// TODO Maybe these should return errors idk.
 
 	if (vdriver->init != NULL) {
+		LOG_VERBOSE("Calling init function on VDRIVER.");
 		vdriver->init();
 	}
+
+	LOG_VERBOSE("VDRIVER loaded and linked from '%s'.", path);
 
 	return 0;
 }
@@ -142,22 +148,26 @@ static void strfree(char** str) {
 void kos_req_vdev(char const* spec) {
 	assert(has_init);
 
-	// Try to find the VDEV locally.
+	LOG_VERBOSE("Trying to find local VDEV for spec \"%s\".", spec);
 
 	char* __attribute__((cleanup(strfree))) vdriver_path_tmp = NULL;
 	char* vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
 
 	if (vdriver_path == NULL) {
-		char* prefix = getenv("PREFIX");
+		char* prefix = getenv("LD_LIBRARY_PATH");
 
 		if (prefix == NULL) {
-			prefix = "/usr/local";
+			vdriver_path = DEFAULT_PREFIX "/" DEFAULT_VDRIVER_PATH;
 		}
 
-		asprintf(&vdriver_path_tmp, "%s/%s:%s/%s", prefix, DEFAULT_VDRIVER_PATH, DEFAULT_PREFIX, DEFAULT_VDRIVER_PATH);
-		assert(vdriver_path_tmp != NULL);
-		vdriver_path = vdriver_path_tmp;
+		else {
+			asprintf(&vdriver_path_tmp, "%s/%s:%s/%s", prefix, DEFAULT_VDRIVER_PATH, DEFAULT_PREFIX, DEFAULT_VDRIVER_PATH);
+			assert(vdriver_path_tmp != NULL);
+			vdriver_path = vdriver_path_tmp;
+		}
 	}
+
+	LOG_VERBOSE("VDRIVER path is '%s'.", vdriver_path);
 
 	char* const path_copy_orig = strdup(vdriver_path);
 	char* path_copy = path_copy_orig;
@@ -177,6 +187,7 @@ void kos_req_vdev(char const* spec) {
 		kos_vdriver_t vdriver;
 
 		if (load_vdriver_from_path(&vdriver, candidate) < 0) {
+			LOG_ERROR("Failed to load VDRIVER from '%s'.", candidate);
 			continue;
 		}
 
@@ -187,16 +198,17 @@ void kos_req_vdev(char const* spec) {
 		// Probe for VDEVs on that driver.
 
 		if (vdriver.vdriver->probe == NULL) {
-			fprintf(stderr, "VDEV driver '%s' doesn't implement a probe function.\n", spec);
+			LOG_ERROR("VDRIVER '%s' doesn't implement a probe function.", spec);
 			continue;
 		}
 
+		LOG_VERBOSE("Probing VDRIVER for '%s' VDEVs.", spec);
 		vdriver.vdriver->probe();
 	}
 
 	free(path_copy_orig);
 
-	// Try to find the VDEV on the GrapeVine.
+	LOG_VERBOSE("Trying to find VDEV on the GrapeVine for spec '%s'.", spec);
 
 	kos_vdev_descr_t* gv_vdevs;
 	ssize_t const gv_vdev_count = gv_query_vdevs(&gv_vdevs);
@@ -212,6 +224,8 @@ void kos_req_vdev(char const* spec) {
 			continue;
 		}
 
+		LOG_VERBOSE("Found GrapeVine VDEV for '%s' spec ('%s').", spec, gv_vdev->human);
+
 		kos_notif_t notif = {
 			.kind = KOS_NOTIF_ATTACH,
 			.attach.vdev = *gv_vdev,
@@ -221,6 +235,8 @@ void kos_req_vdev(char const* spec) {
 	}
 
 	free(gv_vdevs);
+
+	LOG_VERBOSE("Done looking for VDEVs.");
 }
 
 static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
@@ -240,7 +256,7 @@ static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	// If we couldn't find anything, emit a connection failure.
 
-	fprintf(stderr, "Could not find a VDRIVER associated with VDEV ID %" PRIu64 "\n", action->conn.vdev_id);
+	LOG_ERROR("Could not find a VDRIVER associated with VDEV ID %" PRIu64, action->conn.vdev_id);
 
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CONN_FAIL,
@@ -264,7 +280,7 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	// If not, we should return straight away but I do need a way to tell libgv to call the callback when the connection is established (or when it receives other events for a VDEV).
 	// Since this is done in a VDEV connection thread, we're going to need some mutex for the callback, which can probably be created here in the KOS and passe on to libgv for each VDEV connection we make.
 
-	fprintf(stderr, "Connecting to GrapeVine VDEVs is not yet implemented.\n");
+	LOG_ERROR("Connecting to GrapeVine VDEVs is not yet implemented.");
 
 	return;
 
@@ -295,7 +311,7 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 	PUSH_QUEUE(action);
 
 	if (action_queue_tail - action_queue_head > ACTION_QUEUE_SIZE) {
-		fprintf(stderr, "Too many actions in the KOS' action queue, dropping the most recent one.\n");
+		LOG_ERROR("Too many actions in the KOS' action queue, dropping the most recent one.");
 		action_queue_tail--;
 	}
 
@@ -334,14 +350,14 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 	// Find connection.
 
 	if (conn_id >= conn_count) {
-		fprintf(stderr, "Connection ID %" PRIu64 " invalid.\n", conn_id);
+		LOG_ERROR("Connection ID %" PRIu64 " invalid.", conn_id);
 		goto fail;
 	}
 
 	conn_t* const conn = &conns[conn_id];
 
 	if (!conn->alive) {
-		fprintf(stderr, "Connection ID %" PRIu64 " is not alive.\n", conn_id);
+		LOG_ERROR("Connection ID %" PRIu64 " is not alive.", conn_id);
 		goto fail;
 	}
 
@@ -351,7 +367,7 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 	assert(vdriver != NULL);
 
 	if (fn_id >= conn->fn_count) {
-		fprintf(stderr, "Function ID %u is invalid.\n", fn_id);
+		LOG_ERROR("Function ID %u is invalid.", fn_id);
 		goto fail;
 	}
 
@@ -371,7 +387,7 @@ fail:;
 	PUSH_QUEUE(action);
 
 	if (action_queue_tail - action_queue_head > ACTION_QUEUE_SIZE) {
-		fprintf(stderr, "Too many actions in the KOS' action queue, dropping the most recent one.\n");
+		LOG_ERROR("Too many actions in the KOS' action queue, dropping the most recent one.");
 		action_queue_tail--;
 	}
 
@@ -390,7 +406,7 @@ void kos_flush(bool sync) {
 
 void kos_vdev_disconn(uint64_t conn_id) {
 	if (conn_id >= conn_count) {
-		fprintf(stderr, "Connection ID %" PRIu64 " invalid.\n", conn_id);
+		LOG_ERROR("Connection ID %" PRIu64 " invalid.", conn_id);
 		return;
 	}
 

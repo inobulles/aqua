@@ -3,6 +3,10 @@
 
 import bob
 
+deps = [
+	Dep.git("https://github.com/inobulles/umber", "v0.2.0"),
+]
+
 let src = Fs.list(".").where(|path| path.endswith(".c"))
 
 let obj = Cc([
@@ -13,7 +17,7 @@ let obj = Cc([
 
 # TODO 'aqua' command ofc.
 
-let lib = Linker(["-L/usr/local/lib", "-shared"]).link(obj)
+let lib = Linker(["-L/usr/local/lib", "-shared", "-lumber"]).link(obj)
 
 install = {
 	lib: "lib/libaqua.so",
