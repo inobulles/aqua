@@ -97,10 +97,12 @@ static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) 
 	vdriver_t* const vdriver = dlsym(lib, "VDRIVER");
 
 	if (vdriver == NULL) {
-		LOG_ERROR("Failed to load VDEV driver 'VDRIVER' symbol: %s\n", dlerror());
+		LOG_ERROR("Failed to load VDRIVER 'VDRIVER' symbol: %s\n", dlerror());
 		dlclose(lib);
 		return -1;
 	}
+
+	LOG_VERBOSE("VDRIVER name is '%s'.", vdriver->human);
 
 	kos_vdriver->lib = lib;
 	kos_vdriver->vdriver = vdriver;
