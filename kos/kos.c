@@ -156,7 +156,12 @@ void kos_req_vdev(char const* spec) {
 	char* vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
 
 	if (vdriver_path == NULL) {
-		char* prefix = getenv("LD_LIBRARY_PATH");
+		char* prefix = getenv(
+#if defined(__APPLE__)
+			"DY" // dyld(1) doesn't recognize `LD_LIBRARY_PATH`.
+#endif
+			"LD_LIBRARY_PATH"
+		);
 
 		if (prefix == NULL) {
 			vdriver_path = DEFAULT_PREFIX "/" DEFAULT_VDRIVER_PATH;
