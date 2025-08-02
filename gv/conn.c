@@ -2,7 +2,7 @@
 // v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
 #include "conn.h"
-#include "internal.h"
+#include "gv.h"
 #include "query.h"
 
 #include <errno.h>

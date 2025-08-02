@@ -3,7 +3,7 @@
 
 #include "conn.h"
 #include "elp.h"
-#include "internal.h"
+#include "gv.h"
 #include "vdev.h"
 
 #include <assert.h>

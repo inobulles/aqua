@@ -2,7 +2,7 @@
 // v. 1.0. Copyright (c) 2024 Aymeric Wibo
 
 #include "../kos/vdev.h"
-#include "internal.h"
+#include "gv.h"
 
 #include <assert.h>
 #include <dirent.h>
@@ -15,7 +15,6 @@
 #include <dlfcn.h>
 
 // TODO A lot of this code is common with KOS; should we bring this out into a libvdev library or something like that.
-//      Or simply link with KOS? That would really make things quite complicated, as we'd need the KOS to expose a vdriver interface which I'm not too keen on.
 
 #define VDRIVER_PATH_ENVVAR "VDRIVER_PATH"
 #define DEFAULT_VDRIVER_PATH "/usr/local/share/aqua/vdriver/"

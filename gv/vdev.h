@@ -3,6 +3,6 @@
 
 #pragma once
 
-#include "internal.h"
+#include "gv.h"
 
 int vdev_inventory(state_t* state);
