@@ -4,7 +4,10 @@ Mono-repo for all things AQUA 🏄
 
 ## What is AQUA?
 
-TBD. Short description with a link to more info.
+The fundamental idea behind AQUA is to create a "utopia" of sorts for applications, in which they can access virtual devices (VDEVs) through standardized interfaces, regardless of which machine they are physically located on.
+The AQUA infrastructure (GrapeVine, the KOS, and VDRIVERs) is what handles the actual implementation of these interfaces and sharing these over the network.
+
+You can read more about AQUA's architecture in the [architecture document](docs/architecture.md).
 
 ## Basic build instructions
 
@@ -53,6 +56,7 @@ Here is a list of the components and their respective subdirectories held within
 |Path|Description|
 |-|-|
 |`demos`|Demo apps that showcase AQUA's capabilities and serve as simple examples.|
+|`docs`|Documentation for AQUA.|
 |`external`|Any external dependencies which can't directly be depended on.|
 |`gv`|GrapeVine sources for `gvd` (GrapeVine daemon) and `libgv`.|
 |`kos`|KOS sources, i.e. platform-specific "glue" to run AQUA apps and interact with VDEVs and GrapeVine.|
