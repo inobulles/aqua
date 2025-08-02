@@ -8,3 +8,5 @@ They are what abstract away the details of the real world and provide a standard
 
 This directory contains reference VDRIVER implementations, which already support multiple different platforms (mostly FreeBSD, Linux, and macOS to some extent).
 One could substitute in a completely different VDEV however to support any other platform or hardware, or really to do any number of crazy and unholy things.
+
+Practically, a VDRIVER is a shared library that can be dynamically loaded and linked by the KOS or the GrapeVine daemon.
