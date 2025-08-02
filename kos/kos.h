@@ -237,12 +237,35 @@ typedef union {
 
 	/**
 	 * The opaque pointer value.
+	 *
+	 * The client may not vitrify this pointer to access the memory it is pointing to.
 	 */
-	void* opaque_ptr;
+	struct {
+		/**
+		 * The ID of the host on which this opaque pointer is.
+		 */
+		uint64_t host_id;
+		/**
+		 * The host-defined pointer.
+		 */
+		uint64_t ptr;
+	} opaque_ptr;
+
 	/**
 	 * The pointer value.
+	 *
+	 * The client must vitrify this pointer to access the memory it is pointing to.
 	 */
-	void* ptr;
+	struct {
+		/**
+		 * The ID of the host on which this pointer is.
+		 */
+		uint64_t host_id;
+		/**
+		 * The host-defined pointer.
+		 */
+		uint64_t ptr;
+	} ptr;
 } kos_val_t;
 
 /**
