@@ -6,6 +6,15 @@ It is what provides the interface for interacting with VDEVs and is responsible 
 It takes the form of a library that can be linked to the application, though in theory the idea could be extended.
 E.g., one could write a KOS that is a VM running some special bytecode (similar to the ZVM in AQUA 3.X).
 
+## VDEV discovery
+
+The KOS discovers VDEVs in two ways:
+
+- Locally, by reading the VDRIVERs in `VDRIVER_PATH`. It does not automatically load these VDRIVERs, but waits for the application to request a specific VDEV specification through `kos_req_vdev`, at which point it will load the VDRIVER and ask for the VDEVs it exposes.
+- If the GrapeVine daemon is running (gvd), it will read the VDEVs available on the GrapeVine network that the daemon has discovered.
+
+If a VDEV made aware to the KOS matches one of the specifications requested through `kos_req_vdev`, it will send a `KOS_NOTIF_ATTACH_VDEV` notification to the application containing the VDEV's descriptor.
+
 ## Why is it called a KOS?
 
 "KOS" is a historical term which originally meant "Kernel/OS" back in AQUA 2.X.
