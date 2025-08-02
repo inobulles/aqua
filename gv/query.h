@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "internal.h"
+#include "gv.h"
 
 int query(in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_t** vdevs_ref);
 int query_res(conn_t* conn);

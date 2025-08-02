@@ -2,7 +2,7 @@
 // v. 1.0. Copyright (c) 2024 Aymeric Wibo
 
 #include "elp.h"
-#include "internal.h"
+#include "gv.h"
 #include "query.h"
 
 #include <assert.h>

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "internal.h"
+#include "gv.h"
 
 int elp(state_t* state);
 void elp_free(state_t* state);

@@ -4,9 +4,8 @@
 #include "kos.h"
 #include "action.h"
 #include "conn.h"
+#include "gv.h"
 #include "vdev.h"
-
-#include "../gv/gv.h" // TODO NO!
 
 #include <assert.h>
 #include <inttypes.h>
@@ -218,7 +217,7 @@ void kos_req_vdev(char const* spec) {
 	LOG_VERBOSE("Trying to find VDEV on the GrapeVine for spec '%s'.", spec);
 
 	kos_vdev_descr_t* gv_vdevs;
-	ssize_t const gv_vdev_count = gv_query_vdevs(&gv_vdevs);
+	ssize_t const gv_vdev_count = query_gv_vdevs(&gv_vdevs);
 
 	if (gv_vdev_count < 0) {
 		return;

@@ -1,8 +1,7 @@
 // This Source Form is subject to the terms of the AQUA Software License,
 // v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
-#include "../gv/gv.h"       // TODO Where to put this?
-#include "../gv/internal.h" // TODO Where to put this?
+#include "../gv/gv.h" // TODO Where to put this?
 #include "../kos/kos.h"
 
 #include <assert.h>
@@ -46,7 +45,7 @@ static bool is_gvd_running(void) {
 	return true;
 }
 
-ssize_t gv_query_vdevs(kos_vdev_descr_t** vdevs_out) {
+ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 	*vdevs_out = NULL;
 
 	if (!is_gvd_running()) {
@@ -114,104 +113,4 @@ done:
 	*vdevs_out = vdevs;
 
 	return vdev_count;
-}
-
-static void* vdev_conn_thread(void* arg) {
-	gv_vdev_conn_t* const conn = arg;
-
-	packet_t buf;
-	int len;
-
-	while ((len = recv(conn->sock, &buf, sizeof buf, 0)) > 0) {
-		switch (buf.header.type) {
-		case ELP:
-			fprintf(stderr, "Received ELP from host %" PRIx64 " on TCP. This should not happen!\n", buf.elp.host);
-			break;
-		case QUERY:
-			fprintf(stderr, "Received QUERY on VDEV connection. This should not happen!\n");
-			break;
-		case QUERY_RES:
-			fprintf(stderr, "Received QUERY_RES on VDEV connection. This should not happen!\n");
-			break;
-		case CONN_VDEV:
-			fprintf(stderr, "Received CONN_VDEV on VDEV connection. This should not happen!\n");
-			break;
-		case CONN_VDEV_RES:
-			// TODO Here we're going to need to call back to the KOS.
-			printf("TODO CONN_VDEV_RES\n");
-			break;
-		}
-	}
-
-	close(conn->sock);
-	return NULL;
-}
-
-int gv_conn(gv_vdev_conn_t* conn, uint64_t host_id, uint64_t vdev_id) {
-	// First, find the node with the host ID.
-
-	if (!is_gvd_running()) {
-		return -1;
-	}
-
-	node_ent_t* found = NULL;
-
-	for (size_t i = 0; i < node_count; i++) {
-		if (nodes[i].host == host_id) {
-			if (found != NULL) {
-				fprintf(stderr, "Found multiple nodes with host ID %" PRIx64 "\n", host_id);
-				return -1;
-			}
-
-			found = &nodes[i];
-		}
-	}
-
-	if (found == NULL) {
-		fprintf(stderr, "Could not find a node with host ID %" PRIx64 "\n", host_id);
-		return -1;
-	}
-
-	// Now, establish a TCP connection to that node.
-
-	int const sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	if (sock < 0) {
-		fprintf(stderr, "socket: %s\n", strerror(errno));
-		return -1;
-	}
-
-	// Connect to the node.
-
-	struct sockaddr_in addr = {
-		.sin_family = AF_INET,
-		.sin_port = htons(GV_PORT),
-		.sin_addr.s_addr = found->ipv4,
-	};
-
-	if (connect(sock, (struct sockaddr*) &addr, sizeof addr) < 0) {
-		fprintf(stderr, "connect: %s\n", strerror(errno));
-		return -1;
-	}
-
-	// Send CONN_VDEV packet.
-
-	packet_t const packet = {
-		.header.type = CONN_VDEV,
-		.conn_vdev = {
-			.vdev_id = vdev_id,
-		},
-	};
-
-	size_t const size = sizeof packet.header + sizeof packet.conn_vdev;
-
-	if (sendto(sock, &packet, size, 0, (struct sockaddr*) &addr, sizeof addr) != size) {
-		fprintf(stderr, "sendto: %s\n", strerror(errno));
-		return -1;
-	}
-
-	conn->sock = sock;
-	pthread_create(&conn->thread, NULL, vdev_conn_thread, conn);
-
-	return 0;
 }
