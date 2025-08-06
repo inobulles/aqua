@@ -8,6 +8,8 @@
 #include <aqua/gv_ipc.h>
 #include <aqua/kos.h>
 
+#include <umber.h>
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -56,6 +58,10 @@ struct state_t {
 
 	size_t connection_count;
 	conn_t* connections;
+
+	// Logging classes.
+
+	umber_class_t const* elp_cls;
 };
 
 static inline in_addr_t sockaddr_to_in_addr(struct sockaddr* addr) {
