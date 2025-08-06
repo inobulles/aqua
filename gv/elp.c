@@ -18,10 +18,11 @@
 #include <arpa/inet.h>
 
 static void write_nodes(state_t* state) {
+	LOG_V(state->elp_cls, "Writing nodes to %s.", GV_NODES_PATH);
 	FILE* const f = fopen(GV_NODES_PATH, "w");
 
 	if (f == NULL) {
-		fprintf(stderr, "fopen: %s\n", strerror(errno));
+		LOG_E(state->elp_cls, "fopen: %s", strerror(errno));
 		exit(EXIT_FAILURE); // XXX
 	}
 
@@ -36,15 +37,18 @@ static void write_nodes(state_t* state) {
 	}
 
 	fclose(f);
+	LOG_V(state->elp_cls, "Wrote %zu nodes to %s.", state->node_count, GV_NODES_PATH);
 }
 
 static void* elp_sender(void* arg) {
 	state_t* const state = arg;
 
-	// Build ELP packet and address info.
+	LOG_V(state->elp_cls, "Building ELP packet and address info.");
 
 	uint64_t const mac = sockaddr_to_mac(state->found_ether->ifa_addr) | 0x11AD; // Approximation of Link-Local ADdress.
 	srand(time(NULL));
+
+	LOG_I(state->elp_cls, "Using host ID 0x%" PRIx64 " for ELP packets.", mac);
 
 	packet_t const packet = {
 		.header.type = ELP,
@@ -62,15 +66,14 @@ static void* elp_sender(void* arg) {
 	};
 
 	for (;;) {
-		// Send ELP packet.
+		LOG_V(state->elp_cls, "Broadcasting ELP packet.");
 
 		if (sendto(state->elp_sock, &packet, packet_size, 0, (struct sockaddr*) &addr, sizeof addr) != sizeof packet) {
-			fprintf(stderr, "sendto: %s\n", strerror(errno));
+			LOG_E(state->elp_cls, "sendto: %s", strerror(errno));
 			exit(EXIT_FAILURE); // XXX
 		}
 
-		// Decrement TTL of all known nodes.
-
+		LOG_V(state->elp_cls, "Decrementing TTL of all known nodes.");
 		pthread_mutex_lock(&state->nodes_mutex);
 
 		for (size_t i = 0; i < state->node_count; i++) {
@@ -83,7 +86,7 @@ static void* elp_sender(void* arg) {
 			node->ttl -= ELP_DELAY;
 
 			if (node->ttl <= 0) {
-				printf("Node with host ID %" PRIx64 " is considered dead.\n", node->host);
+				LOG_I(state->elp_cls, "Node with host ID 0x%" PRIx64 " is considered dead.", node->host);
 				node->slot_used = false;
 				write_nodes(state);
 			}
@@ -91,8 +94,7 @@ static void* elp_sender(void* arg) {
 
 		pthread_mutex_unlock(&state->nodes_mutex);
 
-		// Wait for $ELP_DELAY seconds.
-
+		LOG_V(state->elp_cls, "Waiting for %d seconds before sending the next ELP packet.", ELP_DELAY);
 		sleep(ELP_DELAY);
 	}
 
@@ -104,7 +106,11 @@ static void* elp_listener(void* arg) {
 
 	in_addr_t const my_in_addr = sockaddr_to_in_addr(state->found_ipv4->ifa_addr);
 
+	LOG_I(state->elp_cls, "Listening for ELP packets on %s.", inet_ntoa(*(struct in_addr*) &my_in_addr));
+
 	for (;;) {
+		LOG_V(state->elp_cls, "Waiting for ELP packet.");
+
 		struct sockaddr_in recv_addr;
 		socklen_t recv_addr_len = sizeof recv_addr;
 
@@ -112,7 +118,7 @@ static void* elp_listener(void* arg) {
 		ssize_t const len = recvfrom(state->elp_sock, &buf, sizeof buf, 0, (struct sockaddr*) &recv_addr, &recv_addr_len);
 
 		if (len < 0) {
-			fprintf(stderr, "recvfrom: %s\n", strerror(errno));
+			LOG_E(state->elp_cls, "recvfrom: %s", strerror(errno));
 			exit(EXIT_FAILURE); // XXX
 		}
 
@@ -121,23 +127,25 @@ static void* elp_listener(void* arg) {
 		}
 
 		if (buf.header.type != ELP) {
-			fprintf(stderr, "Received unknown packet type %d of length %zu.\n", buf.header.type, len);
+			LOG_W(state->elp_cls, "Received unknown packet type %d of length %zu. Ignoring.", buf.header.type, len);
 			continue;
 		}
 
 		if (len != sizeof buf.header + sizeof buf.elp) {
-			fprintf(stderr, "Received packet of unexpected length %zu.\n", len);
+			LOG_W(state->elp_cls, "Received packet of unexpected length %zu. Ignoring.", len);
 			continue;
 		}
 
 		if (buf.elp.vers != ELP_VERS) {
-			fprintf(stderr, "Received ELP packet with unknown version %d.\n", buf.elp.vers);
+			LOG_W(state->elp_cls, "Received ELP packet with unsupported version %d. Ignoring.", buf.elp.vers);
 			continue;
 		}
 
 		// Look for the host ID in the list of known nodes.
 		// If we already have a node with this host ID, just refresh its TTL.
 		// If it's unique has changed since last time we saw it, discard the previous one and start over.
+
+		LOG_V(state->elp_cls, "Received ELP packet from %s:0x%x (host_id=0x%" PRIx64 ").", inet_ntoa(recv_addr.sin_addr), ntohs(recv_addr.sin_port), buf.elp.host);
 
 		pthread_mutex_lock(&state->nodes_mutex);
 		node_t* found = NULL;
@@ -155,6 +163,7 @@ static void* elp_listener(void* arg) {
 				node->ttl = NODE_TTL;
 
 				if (node->unique == buf.elp.unique) {
+					LOG_V(state->elp_cls, "Is existing node and unique has not changed.", node->host);
 					goto nodes_mutex_unlock;
 				}
 
@@ -168,16 +177,21 @@ static void* elp_listener(void* arg) {
 		// We know we're going to have to fill in the node data by this point.
 		// Before we do anything, query a list of VDEV's from the node.
 
+		LOG_V(state->elp_cls, "Querying VDEVs from node.");
+
 		size_t vdev_count;
 		kos_vdev_descr_t* vdevs;
 
 		if (query(recv_addr.sin_addr.s_addr, &vdev_count, &vdevs) < 0) {
+			LOG_E(state->elp_cls, "Failed to query VDEVs.");
 			goto nodes_mutex_unlock;
 		}
 
 		// If we didn't find an empty slot or a matching host ID, create a new node.
 
 		if (found == NULL) {
+			LOG_V(state->elp_cls, "No matching node found, creating a new one.");
+
 			state->nodes = realloc(state->nodes, ++state->node_count * sizeof *state->nodes);
 			assert(state->nodes != NULL);
 			found = &state->nodes[state->node_count - 1];
@@ -186,7 +200,7 @@ static void* elp_listener(void* arg) {
 		// Fill in the node information.
 
 		char const* const verb = unique_changed ? "Updated" : "Found new";
-		printf("%s node with host ID %" PRIx64 " (at %s) with %zu VDEVs.\n", verb, buf.elp.host, inet_ntoa(recv_addr.sin_addr), vdev_count);
+		LOG_I(state->elp_cls, "%s node with host ID 0x%" PRIx64 " (at %s) with %zu VDEVs.", verb, buf.elp.host, inet_ntoa(recv_addr.sin_addr), vdev_count);
 
 		found->slot_used = true;
 		found->unique = buf.elp.unique;
@@ -223,19 +237,19 @@ int elp(state_t* state) {
 
 	state->elp_threads_started = false;
 
-	// Create socket, set options, and bind it.
+	LOG_V(state->elp_cls, "Creating & binding ELP socket.");
 
 	state->elp_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	if (state->elp_sock < 0) {
-		fprintf(stderr, "socket: %s\n", strerror(errno));
+		LOG_F(state->elp_cls, "socket: %s", strerror(errno));
 		return -1;
 	}
 
 	setsockopt(state->elp_sock, SOL_SOCKET, SO_REUSEADDR, &(int) {1}, sizeof(int));
 
 	if (setsockopt(state->elp_sock, SOL_SOCKET, SO_BROADCAST, &(int) {1}, sizeof(int)) < 0) {
-		fprintf(stderr, "setsockopt(SO_BROADCAST): %s\n", strerror(errno));
+		LOG_F(state->elp_cls, "setsockopt(SO_BROADCAST): %s", strerror(errno));
 		return -1;
 	}
 
@@ -246,11 +260,12 @@ int elp(state_t* state) {
 	};
 
 	if (bind(state->elp_sock, (struct sockaddr*) &addr, sizeof addr) < 0) {
-		fprintf(stderr, "bind: %s\n", strerror(errno));
+		LOG_F(state->elp_cls, "bind: %s", strerror(errno));
 		return -1;
 	}
 
-	// Start ELP sender and listener threads.
+	LOG_I(state->elp_cls, "ELP socket bound to port 0x%x.", ELP_PORT);
+	LOG_V(state->elp_cls, "Starting ELP sender and listener threads.");
 
 	pthread_mutex_init(&state->nodes_mutex, NULL);
 
@@ -259,10 +274,14 @@ int elp(state_t* state) {
 
 	state->elp_threads_started = true;
 
+	LOG_V(state->elp_cls, "ELP subsystem started successfully.");
+
 	return 0;
 }
 
 void elp_free(state_t* state) {
+	LOG_V(state->elp_cls, "Stopping ELP subsystem.");
+
 	if (state->elp_threads_started) {
 		pthread_join(state->elp_sender_thread, NULL);
 		pthread_join(state->elp_listener_thread, NULL);
@@ -279,4 +298,8 @@ void elp_free(state_t* state) {
 
 		free(state->nodes);
 	}
+
+	pthread_mutex_destroy(&state->nodes_mutex);
+
+	LOG_V(state->elp_cls, "ELP subsystem stopped successfully.");
 }

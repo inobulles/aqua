@@ -8,8 +8,6 @@
 
 #include <aqua/gv_ipc.h>
 
-#include <umber.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -32,6 +30,7 @@ int main(int argc, char* argv[]) {
 
 	umber_class_t const* const init_cls = umber_class_new("aqua.gvd.init", UMBER_LVL_VERBOSE, "GrapeVine daemon initialization.");
 	umber_class_t const* const conn_listener = umber_class_new("aqua.gvd.listener", UMBER_LVL_VERBOSE, "GrapeVine daemon connection listener.");
+	state.elp_cls = umber_class_new("aqua.gvd.elp", UMBER_LVL_INFO, "GrapeVine daemon echolocation (ELP) subsystem.");
 
 	LOG_V(init_cls, "Parsing options.");
 
