@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "vdev.h"
+#include "lib/vdev.h"
 
 #include <assert.h>
 #include <stdint.h>

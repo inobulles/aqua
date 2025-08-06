@@ -4,7 +4,7 @@
 import bob
 
 deps = [
-	Dep.git("https://github.com/inobulles/umber", "v0.2.0"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.0"),
 ]
 
 let src = Fs.list(".").where(|path| path.endswith(".c"))
@@ -21,7 +21,9 @@ let lib = Linker(["-L/usr/local/lib", "-shared", "-lumber"]).link(obj)
 
 install = {
 	lib: "lib/libaqua.so",
-	"kos.h": "include/aqua/kos.h",
+	"lib/kos.h": "include/aqua/kos.h",
+	"lib/vdev.h": "include/aqua/vdev.h",
+	"lib/gv_ipc.h": "include/aqua/gv_ipc.h",
 }
 
 run = none

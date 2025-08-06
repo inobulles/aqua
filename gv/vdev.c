@@ -1,8 +1,9 @@
 // This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2024 Aymeric Wibo
+// v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
-#include "../kos/vdev.h"
 #include "gv.h"
+
+#include <aqua/vdev.h>
 
 #include <assert.h>
 #include <dirent.h>

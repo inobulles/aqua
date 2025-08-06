@@ -3,8 +3,10 @@
 
 #pragma once
 
-#include "../kos/kos.h"
 #include "conn.h"
+
+#include <aqua/gv_ipc.h>
+#include <aqua/kos.h>
 
 #include <pthread.h>
 #include <stdbool.h>
@@ -19,17 +21,7 @@
 #define ELP_DELAY 1 // In seconds.
 #define NODE_TTL 5  // In seconds.
 
-#define GV_NODES_PATH "/tmp/gv.nodes"
-#define GV_LOCK_PATH "/tmp/gv.lock"
-
 _Static_assert(sizeof(in_addr_t) == sizeof(uint32_t), "in_addr_t is not 32 bits long.");
-
-typedef struct __attribute__((packed)) {
-	uint64_t host;
-	in_addr_t ipv4;
-	uint16_t vdev_count;
-	kos_vdev_descr_t vdevs[];
-} node_ent_t;
 
 typedef struct {
 	bool slot_used;
@@ -39,7 +31,7 @@ typedef struct {
 	int32_t ttl; // In seconds.
 
 	size_t ent_bytes;
-	node_ent_t* ent; // For use by IPC.
+	gv_node_ent_t* ent;
 } node_t;
 
 typedef struct state_t state_t;
