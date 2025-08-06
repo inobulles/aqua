@@ -7,8 +7,8 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-	let vdev_header = "../../kos/vdev.h";
-	let kos_header = "../../kos/kos.h";
+	let vdev_header = "../../kos/lib/vdev.h";
+	let kos_header = "../../kos/lib/kos.h";
 	let win_header = "win.h";
 
 	// Tell cargo to invalidate the built crate whenever one of the headers change.

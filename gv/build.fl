@@ -5,6 +5,7 @@ import bob
 
 deps = [
 	Dep.local("../kos"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.0"),
 ]
 
 let src = Fs.list(".").where(|path| path.endswith(".c"))
@@ -15,7 +16,7 @@ let obj = Cc([
 	"-fPIC",
 ]).compile(src)
 
-let gvd = Linker(["-lpthread"]).link(obj)
+let gvd = Linker(["-lpthread", "-lumber"]).link(obj)
 
 install = {
 	gvd: "bin/gvd",

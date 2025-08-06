@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "kos.h"
+#include "lib/kos.h"
 
 #include <unistd.h>
 

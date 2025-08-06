@@ -1,8 +1,8 @@
 // This Source Form is subject to the terms of the AQUA Software License,
 // v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
-#include "../gv/gv.h" // TODO Where to put this?
-#include "../kos/kos.h"
+#include "lib/gv_ipc.h"
+#include "lib/kos.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -15,7 +15,7 @@
 #include <sys/file.h>
 
 static size_t node_count = 0;
-static node_ent_t nodes[256];
+static gv_node_ent_t nodes[256];
 
 static void unlock(FILE* f) {
 	flock(fileno(f), LOCK_UN);
@@ -66,7 +66,7 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 	node_count = 0;
 
 	while (!feof(f)) {
-		node_ent_t header;
+		gv_node_ent_t header;
 
 		if (fread(&header, 1, sizeof header, f) != sizeof header) {
 			goto done;
@@ -82,7 +82,7 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 		size_t const vdevs_bytes = header.vdev_count * sizeof *vdevs;
 		size_t const ent_size = sizeof header + vdevs_bytes;
 
-		node_ent_t* const ent = malloc(ent_size);
+		gv_node_ent_t* const ent = malloc(ent_size);
 		assert(ent != NULL);
 		memcpy(ent, &header, sizeof header);
 
@@ -100,7 +100,7 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 		// Set the host ID of each reported VDEV to the host ID of the node.
 
 		for (size_t i = 0; i < header.vdev_count; i++) {
-			vdevs[vdev_count + i].host_id = header.host;
+			vdevs[vdev_count + i].host_id = header.host_id;
 		}
 
 		vdev_count += header.vdev_count;

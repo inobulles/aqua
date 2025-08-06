@@ -5,6 +5,8 @@
 #include "gv.h"
 #include "query.h"
 
+#include <aqua/gv_ipc.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -195,12 +197,12 @@ static void* elp_listener(void* arg) {
 		// Create node entry for writing out to file (for IPC).
 
 		size_t const vdevs_bytes = vdev_count * sizeof *vdevs;
-		found->ent_bytes = sizeof(node_ent_t) + vdevs_bytes;
+		found->ent_bytes = sizeof(gv_node_ent_t) + vdevs_bytes;
 		found->ent = malloc(found->ent_bytes);
 		assert(found->ent != NULL);
 
-		found->ent->host = found->host;
-		found->ent->ipv4 = found->addr.sin_addr.s_addr;
+		found->ent->host_id = found->host;
+		found->ent->ip.v4 = found->addr.sin_addr.s_addr;
 		found->ent->vdev_count = vdev_count;
 		memcpy(found->ent->vdevs, vdevs, vdevs_bytes);
 		free(vdevs);
