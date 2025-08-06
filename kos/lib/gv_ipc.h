@@ -1,6 +1,12 @@
 // This Source Form is subject to the terms of the AQUA Software License,
 // v. 1.0. Copyright (c) 2025 Aymeric Wibo
 
+/**
+ * This header is used both by the GrapeVine daemon and the KOS.
+ *
+ * It defines the paths and structs used for IPC between the GrapeVine daemon and the KOS.
+ */
+
 #pragma once
 
 #include "kos.h"
@@ -40,7 +46,13 @@ typedef struct __attribute__((packed)) {
 	 * The IP address of the node.
 	 */
 	union {
+		/**
+		 * IPv4 address.
+		 */
 		in_addr_t v4;
+		/**
+		 * IPv6 address.
+		 */
 		in6_addr_t v6;
 	} ip;
 
