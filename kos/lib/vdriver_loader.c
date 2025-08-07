@@ -159,3 +159,19 @@ int vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_dat
 
 	return 0;
 }
+
+vdriver_t* vdriver_loader_find_loaded_by_vid(vid_t vid) {
+	LOG_V(cls, "Trying to find VDRIVER associated with VDEV ID %" PRIu64 ".", vid);
+
+	for (size_t i = 0; i < vdriver_count; i++) {
+		vdriver_t* const vdriver = vdrivers[i];
+
+		if (vid >= vdriver->vdev_id_lo && vid <= vdriver->vdev_id_hi) {
+			LOG_V(cls, "Found VDRIVER '%s' for VDEV ID %" PRIu64 ".", vdriver->spec, vid);
+			return vdriver;
+		}
+	}
+
+	LOG_V(cls, "Could not find VDRIVER for VDEV ID %" PRIu64 ".", vid);
+	return NULL;
+}
