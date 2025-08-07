@@ -215,7 +215,7 @@ for line in lines:
 
 	# Generate library prototype and function IDs.
 
-	lib_fn_sig = f"{ret_type} aqua_{name}({", ".join(['wgpu_ctx_t ctx'] + params)})"
+	lib_fn_sig = f"{ret_type} aqua_{name}({', '.join(['wgpu_ctx_t ctx'] + params)})"
 	lib_protos += f"{lib_fn_sig};\n"
 	lib_fn_ids += f"\t\tuint32_t {name};\n"
 
