@@ -43,6 +43,8 @@ void __attribute__((constructor)) kos_init(void) {
 	conn_cls = umber_class_new("aqua.kos.conn", UMBER_LVL_WARN, "KOS connections.");
 	call_cls = umber_class_new("aqua.kos.call", UMBER_LVL_WARN, "KOS calls.");
 
+	vdriver_loader_init();
+
 	LOG_V(init_cls, "KOS initialized.");
 }
 
@@ -101,7 +103,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 void kos_sub_to_notif(kos_notif_cb_t cb, void* data) {
 	assert(has_init);
 
-	LOG_V(init_cls, "Subscribing to KOS notifications (cb=%p, data=%p)).", cb, data);
+	LOG_V(init_cls, "Subscribing to KOS notifications (cb=%p, data=%p).", cb, data);
 
 	client_notif_cb = cb;
 	client_notif_data = data;
