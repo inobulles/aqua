@@ -8,15 +8,19 @@
 
 #include "ui_internal.h"
 
+#include <umber.h>
+
 #include <assert.h>
 #include <string.h>
-
-#include <umber.h>
-#define UMBER_COMPONENT "aqua.lib.ui"
 
 #define SPEC "aquabsd.black.ui"
 
 static component_t comp;
+struct umber_class_t const* cls = NULL;
+
+static __attribute__((constructor)) void init(void) {
+	cls = umber_class_new("aqua.lib.ui", UMBER_LVL_INFO, "AQUA standard library: UI.");
+}
 
 aqua_component_t ui_init(aqua_ctx_t ctx) {
 	aqua_register_component(ctx, &comp);
@@ -87,7 +91,7 @@ ui_t ui_create(ui_ctx_t ctx) {
 	ui_t const ui = calloc(1, sizeof *ui);
 
 	if (ui == NULL) {
-		LOG_ERROR("Failed to allocate UI object.");
+		LOG_E(cls, "Failed to allocate UI object.");
 		return NULL;
 	}
 
@@ -95,7 +99,7 @@ ui_t ui_create(ui_ctx_t ctx) {
 	kos_flush(true);
 
 	ui->ctx = ctx;
-	ui->opaque_ptr = ctx->last_ret.opaque_ptr;
+	ui->opaque_ptr = (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
 
 	return ui;
 }
@@ -104,7 +108,7 @@ void ui_destroy(ui_t ui) {
 	ui_ctx_t const ctx = ui->ctx;
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = ui->opaque_ptr},
+		{.opaque_ptr = (uintptr_t) ui->opaque_ptr},
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
@@ -153,7 +157,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
 		if (((uint32_t*) &ctx->consts)[i] == -1u) {
-			LOG_WARN("Missing constant %zu. Refusing connection.", i);
+			LOG_W(cls, "Missing constant %zu. Refusing connection.", i);
 			ctx->is_conn = false;
 			break;
 		}
@@ -212,7 +216,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
 		if (((uint32_t*) &ctx->fns)[i] == -1u) {
-			LOG_WARN("Missing function %zu. Refusing connection.", i);
+			LOG_W(cls, "Missing function %zu. Refusing connection.", i);
 			ctx->is_conn = false;
 			break;
 		}
@@ -268,11 +272,11 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 	}
 
 	if (ctx->supported_backends & UI_BACKEND_WGPU) {
-		LOG_INFO("WebGPU UI backend is supported.");
+		LOG_I(cls, "WebGPU UI backend is supported.");
 	}
 
 	else {
-		LOG_WARN("WebGPU UI backend is not supported.");
+		LOG_W(cls, "WebGPU UI backend is not supported.");
 	}
 }
 

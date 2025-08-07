@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 // TODO In fine, we should support everything shown off in the winit example:
 // https://github.com/rust-windowing/winit/blob/master/examples/window.rs
@@ -228,7 +228,7 @@ static FNS: [Fn; 4] = [
 			});
 
 			Some(kos_val_t {
-				opaque_ptr: Box::into_raw(win) as *mut c_void,
+				opaque_ptr: Box::into_raw(win) as *mut c_void as u64,
 			})
 		},
 	},

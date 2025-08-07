@@ -145,7 +145,7 @@ typedef enum : uint8_t {
 	/**
 	 * The number of KOS types.
 	 */
-	KOS_TYPE_COUNT,
+#define KOS_TYPE_COUNT (KOS_TYPE_PTR + 1)
 } kos_type_t;
 
 /**
@@ -247,32 +247,34 @@ typedef union {
 	 *
 	 * The client may not vitrify this pointer to access the memory it is pointing to.
 	 */
-	struct {
-		/**
-		 * The ID of the host on which this opaque pointer is.
-		 */
-		uint64_t host_id;
-		/**
-		 * The host-defined pointer.
-		 */
-		uint64_t ptr;
-	} opaque_ptr;
+	uint64_t opaque_ptr;
+	// struct {
+	// 	/**
+	// 	 * The ID of the host on which this opaque pointer is.
+	// 	 */
+	// 	uint64_t host_id;
+	// 	/**
+	// 	 * The host-defined pointer.
+	// 	 */
+	// 	uint64_t ptr;
+	// } opaque_ptr;
 
 	/**
 	 * The pointer value.
 	 *
 	 * The client must vitrify this pointer to access the memory it is pointing to.
 	 */
-	struct {
-		/**
-		 * The ID of the host on which this pointer is.
-		 */
-		uint64_t host_id;
-		/**
-		 * The host-defined pointer.
-		 */
-		uint64_t ptr;
-	} ptr;
+	uint64_t ptr;
+	// struct {
+	// 	/**
+	// 	 * The ID of the host on which this pointer is.
+	// 	 */
+	// 	uint64_t host_id;
+	// 	/**
+	// 	 * The host-defined pointer.
+	// 	 */
+	// 	uint64_t ptr;
+	// } ptr;
 } kos_val_t;
 
 /**
@@ -427,7 +429,7 @@ typedef enum {
 	/**
 	 * The number of notification kinds.
 	 */
-	KOS_NOTIF_KIND_COUNT,
+#define KOS_NOTIF_KIND_COUNT (KOS_NOTIF_INTERRUPT + 1)
 } kos_notif_kind_t;
 
 /**

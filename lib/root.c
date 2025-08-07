@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 #include "root.h"
 
@@ -8,12 +8,12 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <umber.h>
-#define UMBER_COMPONENT "aqua.lib.root"
+
+struct umber_class_t const* cls = NULL;
 
 struct aqua_ctx_t {
 	kos_descr_v4_t descr;
@@ -34,13 +34,17 @@ struct aqua_ctx_t {
 	char err_msg[256];
 };
 
+static __attribute__((constructor)) void init(void) {
+	cls = umber_class_new("aqua.lib.root", UMBER_LVL_INFO, "AQUA standard library.");
+}
+
 // TODO Really good error reporting and tracing.
 
 static void error(aqua_ctx_t const ctx, char const* msg) {
 	ctx->err = true;
 	strncpy(ctx->err_msg, msg, sizeof ctx->err_msg);
 
-	fprintf(stderr, "TODO better error handling: %s\n", msg);
+	LOG_E(cls, "TODO better error handling: %s", msg);
 }
 
 void aqua_register_component(aqua_ctx_t ctx, component_t* comp) {
@@ -230,7 +234,7 @@ kos_vdev_descr_t* aqua_get_best_vdev(aqua_component_t comp) {
 	for (; it.vdev != NULL; aqua_vdev_it_next(&it)) {
 		kos_vdev_descr_t* const vdev = it.vdev;
 
-		LOG_VERBOSE("Looking for best VDEV: %s (spec=%s, pref=%d).", vdev->human, vdev->spec, vdev->pref);
+		LOG_V(cls, "Looking for best VDEV: %s (spec=%s, pref=%d).", vdev->human, vdev->spec, vdev->pref);
 
 		if (best == NULL || vdev->pref > best->pref) {
 			best = vdev;
@@ -238,11 +242,11 @@ kos_vdev_descr_t* aqua_get_best_vdev(aqua_component_t comp) {
 	}
 
 	if (best == NULL) {
-		LOG_VERBOSE("No VDEV found.");
+		LOG_V(cls, "No VDEV found.");
 	}
 
 	else {
-		LOG_VERBOSE("Best VDEV found: %s.", best->human);
+		LOG_V(cls, "Best VDEV found: %s.", best->human);
 	}
 
 	return best;

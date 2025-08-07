@@ -173,7 +173,7 @@ for line in lines:
 			parser += f"\t\tassert(args[{i}].buf.size == sizeof *{p});\n"
 
 		elif kos_t == "KOS_TYPE_OPAQUE_PTR":
-			parser += f"\t\t{t} const {p} = args[{i}].opaque_ptr;\n"
+			parser += f"\t\t{t} const {p} = (void*) (uintptr_t) args[{i}].opaque_ptr;\n"
 
 		else:
 			union = kos_type_to_union(kos_t)
@@ -191,7 +191,7 @@ for line in lines:
 	elif ret_type == "WGPUAdapterInfo":
 		ret = f"""{ret_type}* const ptr = malloc(sizeof({ret_type}));
 		assert(ptr != NULL);
-		notif.call_ret.ret.buf.ptr = (void*) ptr;
+		notif.call_ret.ret.buf.ptr = ptr;
 		notif.call_ret.ret.buf.size = sizeof({ret_type});
 		*ptr = {call};"""
 
@@ -199,7 +199,7 @@ for line in lines:
 		ret = call
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
-		ret = f"notif.call_ret.ret.opaque_ptr = (void*) {call}"
+		ret = f"notif.call_ret.ret.opaque_ptr = (uintptr_t) {call}"
 
 	else:
 		union = kos_type_to_union(kos_ret_type)
@@ -215,7 +215,7 @@ for line in lines:
 
 	# Generate library prototype and function IDs.
 
-	lib_fn_sig = f"{ret_type} aqua_{name}({','.join(['wgpu_ctx_t ctx'] + params)})"
+	lib_fn_sig = f"{ret_type} aqua_{name}({", ".join(['wgpu_ctx_t ctx'] + params)})"
 	lib_protos += f"{lib_fn_sig};\n"
 	lib_fn_ids += f"\t\tuint32_t {name};\n"
 
@@ -259,7 +259,7 @@ for line in lines:
 			args.append(f".buf.size = sizeof *{p},\n\t\t\t.buf.ptr = (void*) {p},")
 
 		elif kos_t == "KOS_TYPE_OPAQUE_PTR":
-			args.append(f".opaque_ptr = (void*) {p},")
+			args.append(f".opaque_ptr = (uintptr_t) {p},")
 
 		else:
 			union = kos_type_to_union(kos_t)
@@ -277,7 +277,7 @@ for line in lines:
 		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;"
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
-		ret = f"\n\treturn ctx->last_ret.opaque_ptr;"
+		ret = f"\n\treturn (void*) (uintptr_t) ctx->last_ret.opaque_ptr;"
 
 	else:
 		union = kos_type_to_union(kos_ret_type)

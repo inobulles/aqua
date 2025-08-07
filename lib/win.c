@@ -234,16 +234,12 @@ win_t win_create(win_ctx_t ctx) {
 	kos_flush(true);
 
 	win->ctx = ctx;
-	win->opaque_ptr = ctx->last_ret.opaque_ptr;
+	win->opaque_ptr = (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
 	win->ino = kos_gen_ino();
 
 	kos_val_t const args[] = {
-		{
-			.opaque_ptr = win->opaque_ptr,
-		},
-		{
-			.u32 = 0,
-		},
+		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
+		{.u32 = 0},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.register_interrupt, args);
@@ -270,9 +266,7 @@ void win_destroy(win_t win) {
 	}
 
 	kos_val_t const args[] = {
-		{
-			.opaque_ptr = win->opaque_ptr,
-		},
+		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
@@ -299,9 +293,7 @@ void win_loop(win_t win) {
 	}
 
 	kos_val_t const args[] = {
-		{
-			.opaque_ptr = win->opaque_ptr,
-		},
+		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);

@@ -4,7 +4,7 @@
 package main
 
 /*
-#include "../../kos/vdev.h"
+#include "../../kos/lib/vdev.h"
 */
 import "C"
 import (
