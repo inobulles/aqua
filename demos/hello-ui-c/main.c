@@ -6,14 +6,15 @@
 #include <aqua/win.h>
 
 #include <umber.h>
-#define UMBER_COMPONENT "demo.hello_ui_c"
+
+static umber_class_t const* init_cls = NULL;
 
 static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
 	ui_wgpu_ez_state_t* const state = data;
 
 	(void) win;
 
-	LOG_INFO("Window resized to %ux%u.", x_res, y_res);
+	LOG_I(init_cls, "Window resized to %ux%u.", x_res, y_res);
 	ui_wgpu_ez_resize(state, x_res, y_res);
 }
 
@@ -26,29 +27,31 @@ static void redraw(win_t win, void* data) {
 
 int main(void) {
 	int rv = EXIT_FAILURE;
+
+	init_cls = umber_class_new("aqua.demo.hello_ui_c", UMBER_LVL_INFO, "Hello UI C demo");
 	aqua_ctx_t const ctx = aqua_init();
 
 	if (ctx == NULL) {
-		LOG_FATAL("Failed to initialize AQUA library.");
+		LOG_F(init_cls, "Failed to initialize AQUA library.");
 		goto err_aqua_init;
 	}
 
-	LOG_INFO("KOS name: %s.", aqua_get_kos_descr(ctx)->name);
+	LOG_I(init_cls, "KOS name: %s.", aqua_get_kos_descr(ctx)->name);
 
 	// Get the best window VDEV.
 
 	kos_vdev_descr_t* const win_vdev = aqua_get_best_vdev(win_init(ctx));
 
 	if (win_vdev == NULL) {
-		LOG_FATAL("No window VDEV found.");
+		LOG_F(init_cls, "No window VDEV found.");
 		goto err_no_win_vdev;
 	}
 
-	LOG_INFO("Using window VDEV \"%s\".", (char*) win_vdev->human);
+	LOG_I(init_cls, "Using window VDEV \"%s\".", (char*) win_vdev->human);
 	win_ctx_t win_ctx = win_conn(win_vdev);
 
 	if (win_ctx == NULL) {
-		LOG_FATAL("Failed to connect to window VDEV.");
+		LOG_F(init_cls, "Failed to connect to window VDEV.");
 		goto err_no_win_vdev;
 	}
 
@@ -57,15 +60,15 @@ int main(void) {
 	kos_vdev_descr_t* const wgpu_vdev = aqua_get_best_vdev(wgpu_init(ctx));
 
 	if (wgpu_vdev == NULL) {
-		LOG_FATAL("No WebGPU VDEV found.");
+		LOG_F(init_cls, "No WebGPU VDEV found.");
 		goto err_no_wgpu_vdev;
 	}
 
-	LOG_INFO("Using WebGPU VDEV \"%s\".", (char*) wgpu_vdev->human);
+	LOG_I(init_cls, "Using WebGPU VDEV \"%s\".", (char*) wgpu_vdev->human);
 	wgpu_ctx_t wgpu_ctx = wgpu_conn(wgpu_vdev);
 
 	if (wgpu_ctx == NULL) {
-		LOG_FATAL("Failed to connect to WebGPU VDEV.");
+		LOG_F(init_cls, "Failed to connect to WebGPU VDEV.");
 		goto err_no_wgpu_vdev;
 	}
 
@@ -74,20 +77,20 @@ int main(void) {
 	kos_vdev_descr_t* const ui_vdev = aqua_get_best_vdev(ui_init(ctx));
 
 	if (ui_vdev == NULL) {
-		LOG_FATAL("No UI VDEV found.");
+		LOG_F(init_cls, "No UI VDEV found.");
 		goto err_no_ui_vdev;
 	}
 
-	LOG_INFO("Using UI VDEV \"%s\".", (char*) ui_vdev->human);
+	LOG_I(init_cls, "Using UI VDEV \"%s\".", (char*) ui_vdev->human);
 	ui_ctx_t ui_ctx = ui_conn(ui_vdev);
 
 	if (ui_ctx == NULL) {
-		LOG_FATAL("Failed to connect to UI VDEV.");
+		LOG_F(init_cls, "Failed to connect to UI VDEV.");
 		goto err_no_ui_vdev;
 	}
 
 	if (!(ui_get_supported_backends(ui_ctx) & UI_BACKEND_WGPU)) {
-		LOG_FATAL("WebGPU UI backend is not supported.");
+		LOG_F(init_cls, "WebGPU UI backend is not supported.");
 		goto err_no_ui_vdev;
 	}
 
@@ -96,7 +99,7 @@ int main(void) {
 	win_t const win = win_create(win_ctx);
 
 	if (win == NULL) {
-		LOG_FATAL("Failed to create window.");
+		LOG_F(init_cls, "Failed to create window.");
 		goto err_win_create;
 	}
 
@@ -105,7 +108,7 @@ int main(void) {
 	ui_t const ui = ui_create(ui_ctx);
 
 	if (ui == NULL) {
-		LOG_FATAL("Failed to create UI.");
+		LOG_F(init_cls, "Failed to create UI.");
 		goto err_ui_create;
 	}
 
@@ -114,7 +117,7 @@ int main(void) {
 	ui_wgpu_ez_state_t state;
 
 	if (ui_wgpu_ez_setup(&state, ui, win, wgpu_ctx) < 0) {
-		LOG_FATAL("Failed to set up WebGPU UI backend.");
+		LOG_F(init_cls, "Failed to set up WebGPU UI backend.");
 		goto err_ui_wgpu_ez_setup;
 	}
 
