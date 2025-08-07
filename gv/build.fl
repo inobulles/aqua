@@ -1,11 +1,11 @@
-# This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2024-2025 Aymeric Wibo
 
 import bob
 
 deps = [
 	Dep.local("../kos"),
-	Dep.git("https://github.com/inobulles/umber", "v0.3.0"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.1"),
 ]
 
 let src = Fs.list(".").where(|path| path.endswith(".c"))
@@ -16,7 +16,7 @@ let obj = Cc([
 	"-fPIC",
 ]).compile(src)
 
-let gvd = Linker(["-lpthread", "-lumber"]).link(obj)
+let gvd = Linker(["-lpthread", "-lumber", "-lvdriver_loader"]).link(obj)
 
 install = {
 	gvd: "bin/gvd",
