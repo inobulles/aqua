@@ -6,6 +6,8 @@
 #include <umber.h>
 
 #include <assert.h>
+#include <dirent.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -17,9 +19,16 @@
 
 static umber_class_t const* cls = NULL;
 
+static char* vdriver_path = NULL;
 static uint64_t cur_vid_slice = 0;
 static size_t vdriver_count = 0;
 static vdriver_t** vdrivers = NULL;
+
+static void strfree(char** str) {
+	if (str != NULL) {
+		free(*str);
+	}
+}
 
 void vdriver_loader_init(void) {
 	assert(cls == NULL);
@@ -28,6 +37,32 @@ void vdriver_loader_init(void) {
 	assert(vdrivers == NULL);
 	assert(vdriver_count == 0);
 	assert(cur_vid_slice == 0);
+
+	LOG_V(cls, "VDRIVER loader init.");
+
+	// Get the VDRIVER path.
+
+	vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
+
+	if (vdriver_path == NULL) {
+		char* const prefix = getenv(
+#if defined(__APPLE__)
+			"DY" // dyld(1) doesn't recognize `LD_LIBRARY_PATH`.
+#endif
+			"LD_LIBRARY_PATH"
+		);
+
+		if (prefix == NULL) {
+			vdriver_path = "/usr/local/lib/" DEFAULT_VDRIVER_PATH;
+		}
+
+		else {
+			asprintf(&vdriver_path, "%s/%s:/usr/local/lib/%s", prefix, DEFAULT_VDRIVER_PATH, DEFAULT_VDRIVER_PATH);
+			assert(vdriver_path != NULL);
+		}
+	}
+
+	LOG_V(cls, "VDRIVER path is '%s'.", vdriver_path);
 }
 
 static vdriver_t* load_from_path(char const* path, kos_notif_cb_t notif_cb, void* notif_data) {
@@ -81,40 +116,12 @@ static vdriver_t* load_from_path(char const* path, kos_notif_cb_t notif_cb, void
 	return vdriver;
 }
 
-static void strfree(char** str) {
-	if (str != NULL) {
-		free(*str);
-	}
-}
-
 void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, void* notif_data) {
 	LOG_V(cls, "Trying to find local VDRIVER providing spec \"%s\".", spec);
 
-	char* __attribute__((cleanup(strfree))) vdriver_path_tmp = NULL;
-	char* vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
+	char* __attribute__((cleanup(strfree))) path_copy_orig = strdup(vdriver_path);
+	assert(path_copy_orig != NULL);
 
-	if (vdriver_path == NULL) {
-		char* const prefix = getenv(
-#if defined(__APPLE__)
-			"DY" // dyld(1) doesn't recognize `LD_LIBRARY_PATH`.
-#endif
-			"LD_LIBRARY_PATH"
-		);
-
-		if (prefix == NULL) {
-			vdriver_path = "/usr/local/lib/" DEFAULT_VDRIVER_PATH;
-		}
-
-		else {
-			asprintf(&vdriver_path_tmp, "%s/%s:/usr/local/lib/%s", prefix, DEFAULT_VDRIVER_PATH, DEFAULT_VDRIVER_PATH);
-			assert(vdriver_path_tmp != NULL);
-			vdriver_path = vdriver_path_tmp;
-		}
-	}
-
-	LOG_V(cls, "VDRIVER path is '%s' - going through each path and trying to load VDRIVER.", vdriver_path);
-
-	char* const path_copy_orig = strdup(vdriver_path);
 	char* path_copy = path_copy_orig;
 	char* tok;
 
@@ -145,19 +152,61 @@ void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, vo
 		LOG_V(cls, "Probing VDRIVER for '%s' VDEVs.", spec);
 		vdriver->probe();
 	}
-
-	free(path_copy_orig);
 }
 
-int vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_data) {
+void vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_data) {
 	LOG_V(cls, "Taking inventory of all VDEVs available on the system.");
 
-	// TODO
+	char* __attribute__((cleanup(strfree))) path_copy_orig = strdup(vdriver_path);
+	assert(path_copy_orig != NULL);
 
-	(void) notif_cb;
-	(void) notif_data;
+	char* path_copy = path_copy_orig;
+	char* tok;
 
-	return 0;
+	while ((tok = strsep(&path_copy, ":")) != NULL) {
+		LOG_V(cls, "Taking inventory in '%s'.", tok);
+
+		DIR* const dir = opendir(tok);
+
+		if (dir == NULL) {
+			LOG_W(cls, "opendir(\"%s\"): %s", tok, strerror(errno));
+			continue;
+		}
+
+		struct dirent* ent;
+
+		while ((ent = readdir(dir)) != NULL) {
+			if (ent->d_type != DT_REG) {
+				continue;
+			}
+
+			if (strstr(ent->d_name, VDRIVER_EXT) != ent->d_name + strlen(ent->d_name) - strlen(VDRIVER_EXT)) {
+				continue;
+			}
+
+			char* __attribute__((cleanup(strfree))) candidate = NULL;
+			asprintf(&candidate, "%s/%s", tok, ent->d_name);
+			assert(candidate != NULL);
+
+			vdriver_t* const vdriver = load_from_path(candidate, notif_cb, notif_data);
+
+			if (vdriver == NULL) {
+				continue;
+			}
+
+			// Probe for VDEVs on that driver.
+
+			if (vdriver->probe == NULL) {
+				LOG_E(cls, "VDRIVER '%s' doesn't implement a probe function.", vdriver->spec);
+				continue;
+			}
+
+			LOG_V(cls, "Probing VDRIVER for '%s' VDEVs.", vdriver->spec);
+			vdriver->probe();
+		}
+
+		closedir(dir);
+	}
 }
 
 vdriver_t* vdriver_loader_find_loaded_by_vid(vid_t vid) {

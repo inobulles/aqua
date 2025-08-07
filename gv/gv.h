@@ -61,6 +61,8 @@ struct state_t {
 
 	// Logging classes.
 
+	umber_class_t const* init_cls;
+	umber_class_t const* listener_cls;
 	umber_class_t const* elp_cls;
 };
 
