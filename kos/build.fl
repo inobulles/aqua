@@ -1,5 +1,5 @@
 # This Source Form is subject to the terms of the AQUA Software License,
-# v. 1.0. Copyright (c) 2024 Aymeric Wibo
+# v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
 
 import bob
 
@@ -7,23 +7,30 @@ deps = [
 	Dep.git("https://github.com/inobulles/umber", "v0.3.0"),
 ]
 
-let src = Fs.list(".").where(|path| path.endswith(".c"))
-
-let obj = Cc([
+let cc = Cc([
 	"-std=c11", "-g",
 	"-Wall", "-Wextra", "-Werror",
 	"-fPIC",
-]).compile(src)
+])
 
-# TODO 'aqua' command ofc.
+let kos_obj = cc.compile(["kos.c", "gv.c"])
+let vdriver_loader_obj = cc.compile(["lib/vdriver_loader.c"])
 
-let lib = Linker(["-L/usr/local/lib", "-shared", "-lumber"]).link(obj)
+let vdriver_loader_lib = Linker([
+	"-L/usr/local/lib", "-shared", "-lumber"
+]).link(vdriver_loader_obj)
+
+let kos_lib = Linker([
+	"-L/usr/local/lib", "-shared", "-lumber", "-lvdriver_loader"
+]).link(kos_obj)
 
 install = {
-	lib: "lib/libaqua.so",
+	kos_lib: "lib/libaqua.so",
+	vdriver_loader_lib: "lib/libvdriver_loader.so",
 	"lib/kos.h": "include/aqua/kos.h",
 	"lib/vdev.h": "include/aqua/vdev.h",
 	"lib/gv_ipc.h": "include/aqua/gv_ipc.h",
+	"lib/vdriver_loader.h": "include/aqua/vdriver_loader.h",
 }
 
 run = none

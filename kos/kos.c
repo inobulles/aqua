@@ -1,11 +1,15 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2024 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2024-2025 Aymeric Wibo
 
-#include "lib/kos.h"
 #include "action.h"
 #include "conn.h"
 #include "gv.h"
+
+#include "lib/kos.h"
 #include "lib/vdev.h"
+#include "lib/vdriver_loader.h"
+
+#include <umber.h>
 
 #include <assert.h>
 #include <inttypes.h>
@@ -16,12 +20,11 @@
 
 #include <dlfcn.h>
 
-#include <umber.h>
-#define UMBER_COMPONENT "aqua.kos"
-
-#define VDRIVER_PATH_ENVVAR "VDRIVER_PATH"
-#define DEFAULT_PREFIX "/usr/local/lib"
-#define DEFAULT_VDRIVER_PATH "vdriver"
+static umber_class_t const* init_cls = NULL;
+static umber_class_t const* notif_cls = NULL;
+static umber_class_t const* action_cls = NULL;
+static umber_class_t const* conn_cls = NULL;
+static umber_class_t const* call_cls = NULL;
 
 static bool has_init = false;
 static uint64_t local_host_id;
@@ -33,13 +36,24 @@ static kos_ino_t inos = 0;
 
 void __attribute__((constructor)) kos_init(void) {
 	has_init = true;
+
+	init_cls = umber_class_new("aqua.kos.init", UMBER_LVL_VERBOSE, "KOS initialization.");
+	notif_cls = umber_class_new("aqua.kos.notif", UMBER_LVL_WARN, "KOS notifications.");
+	action_cls = umber_class_new("aqua.kos.action", UMBER_LVL_WARN, "KOS action queue.");
+	conn_cls = umber_class_new("aqua.kos.conn", UMBER_LVL_WARN, "KOS connections.");
+	call_cls = umber_class_new("aqua.kos.call", UMBER_LVL_WARN, "KOS calls.");
+
+	LOG_V(init_cls, "KOS initialized.");
 }
 
 kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t* descr) {
 	assert(min <= max);
 	assert(has_init);
 
+	LOG_V(init_cls, "KOS hello.");
+
 	if (min > KOS_API_V4 || max < KOS_API_V4) {
+		LOG_E(init_cls, "KOS API version mismatch: requested [%" PRIu64 ", %" PRIu64 "], but only KOS_API_V4 is supported.", min, max);
 		return KOS_API_VERS_NONE;
 	}
 
@@ -49,22 +63,25 @@ kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t*
 
 	local_host_id = 0; // TODO This should be the actual ID that we're gonna advertise on the GV.
 
+	LOG_I(init_cls, "KOS hello successful: API version %" PRIu64 ", best API version %" PRIu64 ", name \"%s\".", descr->api_vers, descr->best_api_vers, descr->name);
+
 	return descr->api_vers;
 }
 
-typedef struct {
-	void* lib; // TODO Should I just define this on vdriver_t? As like a reserved opaque pointer for the KOS?
-	vdriver_t* vdriver;
-} kos_vdriver_t;
-
-static uint64_t cur_vid_slice = 0;
-
-static size_t vdriver_count = 0;
-static kos_vdriver_t* vdrivers = NULL;
-
 static void notif_cb(kos_notif_t const* notif, void* data) {
+	if (notif->kind >= KOS_NOTIF_KIND_COUNT) {
+		LOG_E(notif_cls, "Received notification of unknown kind %d.", notif->kind);
+		return;
+	}
+
+	LOG_V(notif_cls, "Received notification of kind %s.", kos_notif_kind_str[notif->kind]);
+
 	switch (notif->kind) {
 	case KOS_NOTIF_CONN:
+		// TODO Describe what this is doing exactly, cuz even I'm not sure anymore.
+
+		LOG_V(notif_cls, "Received connection notification for connection ID %" PRIu64 ".", notif->conn_id);
+
 		assert(notif->conn_id < conn_count);
 		conn_t* const conn = &conns[notif->conn_id];
 
@@ -77,144 +94,28 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		break;
 	}
 
-	// Forward the notification to the client.
-
+	LOG_V(notif_cls, "Forwarding notification to client.");
 	client_notif_cb(notif, data);
-}
-
-static int load_vdriver_from_path(kos_vdriver_t* kos_vdriver, char const* path) {
-	void* const lib = dlopen(path, RTLD_LAZY);
-
-	if (lib == NULL) {
-		LOG_ERROR("Failed to load VDEV driver library: dlopen(\"%s\"): %s", path, dlerror());
-		return -1;
-	}
-
-	// Load the VDEV symbol itself.
-
-	dlerror(); // Clear last error message.
-	vdriver_t* const vdriver = dlsym(lib, "VDRIVER");
-
-	if (vdriver == NULL) {
-		LOG_ERROR("Failed to load VDRIVER 'VDRIVER' symbol: %s\n", dlerror());
-		dlclose(lib);
-		return -1;
-	}
-
-	LOG_VERBOSE("VDRIVER name is '%s'.", vdriver->human);
-
-	kos_vdriver->lib = lib;
-	kos_vdriver->vdriver = vdriver;
-
-	// Allocate a VID slice for the vdriver.
-
-	assert(cur_vid_slice < UINT32_MAX);
-
-	vdriver->vdev_id_lo = cur_vid_slice << 32;
-	vdriver->vdev_id_hi = ((cur_vid_slice + 1) << 32) - 1;
-
-	cur_vid_slice++;
-
-	// Set other miscellaneous values on VDRIVER.
-
-	vdriver->notif_cb = notif_cb;
-	vdriver->notif_data = client_notif_data;
-
-	// Finally, call init on the vdriver.
-	// TODO Maybe these should return errors idk.
-
-	if (vdriver->init != NULL) {
-		LOG_VERBOSE("Calling init function on VDRIVER.");
-		vdriver->init();
-	}
-
-	LOG_VERBOSE("VDRIVER loaded and linked from '%s'.", path);
-
-	return 0;
 }
 
 void kos_sub_to_notif(kos_notif_cb_t cb, void* data) {
 	assert(has_init);
 
+	LOG_V(init_cls, "Subscribing to KOS notifications (cb=%p, data=%p)).", cb, data);
+
 	client_notif_cb = cb;
 	client_notif_data = data;
-}
-
-static void strfree(char** str) {
-	if (str != NULL) {
-		free(*str);
-	}
 }
 
 void kos_req_vdev(char const* spec) {
 	assert(has_init);
 
-	LOG_VERBOSE("Trying to find local VDEV for spec \"%s\".", spec);
+	// TODO Not sure I like how init_cls is used here.
 
-	char* __attribute__((cleanup(strfree))) vdriver_path_tmp = NULL;
-	char* vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
+	LOG_V(init_cls, "Trying to find local VDEV for spec \"%s\".", spec);
+	vdriver_loader_req_local_vdev(spec, notif_cb, client_notif_data);
 
-	if (vdriver_path == NULL) {
-		char* prefix = getenv(
-#if defined(__APPLE__)
-			"DY" // dyld(1) doesn't recognize `LD_LIBRARY_PATH`.
-#endif
-			"LD_LIBRARY_PATH"
-		);
-
-		if (prefix == NULL) {
-			vdriver_path = DEFAULT_PREFIX "/" DEFAULT_VDRIVER_PATH;
-		}
-
-		else {
-			asprintf(&vdriver_path_tmp, "%s/%s:%s/%s", prefix, DEFAULT_VDRIVER_PATH, DEFAULT_PREFIX, DEFAULT_VDRIVER_PATH);
-			assert(vdriver_path_tmp != NULL);
-			vdriver_path = vdriver_path_tmp;
-		}
-	}
-
-	LOG_VERBOSE("VDRIVER path is '%s'.", vdriver_path);
-
-	char* const path_copy_orig = strdup(vdriver_path);
-	char* path_copy = path_copy_orig;
-	char* tok;
-
-	while ((tok = strsep(&path_copy, ":")) != NULL) {
-		char* __attribute__((cleanup(strfree))) candidate = NULL;
-		asprintf(&candidate, "%s/%s.vdriver", tok, spec);
-		assert(candidate != NULL);
-
-		if (access(candidate, F_OK) != 0) {
-			continue;
-		}
-
-		// Driver file exists, we should be able to load it.
-
-		kos_vdriver_t vdriver;
-
-		if (load_vdriver_from_path(&vdriver, candidate) < 0) {
-			LOG_ERROR("Failed to load VDRIVER from '%s'.", candidate);
-			continue;
-		}
-
-		vdrivers = realloc(vdrivers, (vdriver_count + 1) * sizeof *vdrivers);
-		assert(vdrivers != NULL);
-		vdrivers[vdriver_count++] = vdriver;
-
-		// Probe for VDEVs on that driver.
-
-		if (vdriver.vdriver->probe == NULL) {
-			LOG_ERROR("VDRIVER '%s' doesn't implement a probe function.", spec);
-			continue;
-		}
-
-		LOG_VERBOSE("Probing VDRIVER for '%s' VDEVs.", spec);
-		vdriver.vdriver->probe();
-	}
-
-	free(path_copy_orig);
-
-	LOG_VERBOSE("Trying to find VDEV on the GrapeVine for spec '%s'.", spec);
+	LOG_V(init_cls, "Trying to find VDEV on the GrapeVine for spec '%s'.", spec);
 
 	kos_vdev_descr_t* gv_vdevs;
 	ssize_t const gv_vdev_count = query_gv_vdevs(&gv_vdevs);
@@ -230,46 +131,42 @@ void kos_req_vdev(char const* spec) {
 			continue;
 		}
 
-		LOG_VERBOSE("Found GrapeVine VDEV for '%s' spec ('%s').", spec, gv_vdev->human);
+		LOG_V(init_cls, "Found GrapeVine VDEV for '%s' spec ('%s').", spec, gv_vdev->human);
 
 		kos_notif_t notif = {
 			.kind = KOS_NOTIF_ATTACH,
 			.attach.vdev = *gv_vdev,
 		};
 
-		client_notif_cb(&notif, client_notif_data);
+		notif_cb(&notif, client_notif_data);
 	}
 
 	free(gv_vdevs);
 
-	LOG_VERBOSE("Done looking for VDEVs.");
+	LOG_V(init_cls, "Done looking for VDEVs.");
 }
 
 static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	(void) sync; // This is always done synchronously.
 
-	// Look for the vdriver this 'vdev_id' is associated with.
+	LOG_V(conn_cls, "Try to connect to VDEV locally (cookie=0x%" PRIx64 ").", cookie);
 
-	for (size_t i = 0; i < vdriver_count; i++) {
-		kos_vdriver_t* const kos_vdriver = &vdrivers[i];
-		vdriver_t* const vdriver = kos_vdriver->vdriver;
+	vdriver_t* const vdriver = vdriver_loader_find_loaded_by_vid(action->conn.vdev_id);
 
-		if (action->conn.vdev_id >= vdriver->vdev_id_lo && action->conn.vdev_id <= vdriver->vdev_id_hi) {
-			vdriver->conn(cookie, action->conn.vdev_id, conn_new(vdriver));
-			return;
-		}
+	if (vdriver == NULL) {
+		LOG_E(conn_cls, "Could not find a VDRIVER associated with VDEV ID %" PRIu64, action->conn.vdev_id);
+
+		kos_notif_t notif = {
+			.kind = KOS_NOTIF_CONN_FAIL,
+			.cookie = cookie,
+		};
+
+		client_notif_cb(&notif, client_notif_data);
+		return;
 	}
 
-	// If we couldn't find anything, emit a connection failure.
-
-	LOG_ERROR("Could not find a VDRIVER associated with VDEV ID %" PRIu64, action->conn.vdev_id);
-
-	kos_notif_t notif = {
-		.kind = KOS_NOTIF_CONN_FAIL,
-		.cookie = cookie,
-	};
-
-	client_notif_cb(&notif, client_notif_data);
+	LOG_V(conn_cls, "Found VDRIVER, connecting.");
+	vdriver->conn(cookie, action->conn.vdev_id, conn_new(vdriver));
 }
 
 static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
@@ -286,7 +183,7 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	// If not, we should return straight away but I do need a way to tell libgv to call the callback when the connection is established (or when it receives other events for a VDEV).
 	// Since this is done in a VDEV connection thread, we're going to need some mutex for the callback, which can probably be created here in the KOS and passe on to libgv for each VDEV connection we make.
 
-	LOG_ERROR("Connecting to GrapeVine VDEVs is not yet implemented.");
+	LOG_E(conn_cls, "Connecting to GrapeVine VDEVs is not yet implemented (cookie=0x%" PRIx64 ").", cookie);
 
 	return;
 
@@ -314,10 +211,12 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 		},
 	};
 
+	LOG_V(conn_cls, "Adding to action queue to request connection to %" PRIx64 ":%" PRIu64 " (cookie=0x%" PRIx64 ").", host_id, vdev_id, cookie);
+
 	PUSH_QUEUE(action);
 
 	if (action_queue_tail - action_queue_head > ACTION_QUEUE_SIZE) {
-		LOG_ERROR("Too many actions in the KOS' action queue, dropping the most recent one.");
+		LOG_E(conn_cls, "Too many actions in the KOS' action queue, dropping the most recent one.");
 		action_queue_tail--;
 	}
 
@@ -327,6 +226,8 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 static void call(kos_cookie_t cookie, action_t* action, bool sync) {
 	(void) sync; // This is always done synchronously.
 
+	LOG_V(call_cls, "Passing call on to VDRIVER (cookie=0x%" PRIx64 ").", cookie);
+
 	vdriver_t const* const vdriver = action->call.vdriver;
 	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
 }
@@ -334,6 +235,8 @@ static void call(kos_cookie_t cookie, action_t* action, bool sync) {
 static void call_fail(kos_cookie_t cookie, action_t* action, bool sync) {
 	(void) sync; // This is always done synchronously.
 	(void) action;
+
+	LOG_E(call_cls, "Call failed for cookie 0x%" PRIx64 ".", cookie);
 
 	kos_notif_t const notif = {
 		.kind = KOS_NOTIF_CALL_FAIL,
@@ -353,17 +256,19 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 		.cb = call_fail,
 	};
 
+	LOG_V(call_cls, "Adding to action queue to call function %u on connection %" PRIu64 " (cookie=0x%" PRIx64 ").", fn_id, conn_id, cookie);
+
 	// Find connection.
 
 	if (conn_id >= conn_count) {
-		LOG_ERROR("Connection ID %" PRIu64 " invalid.", conn_id);
+		LOG_E(call_cls, "Connection ID %" PRIu64 " invalid.", conn_id);
 		goto fail;
 	}
 
 	conn_t* const conn = &conns[conn_id];
 
 	if (!conn->alive) {
-		LOG_ERROR("Connection ID %" PRIu64 " is not alive.", conn_id);
+		LOG_E(call_cls, "Connection ID %" PRIu64 " is not alive.", conn_id);
 		goto fail;
 	}
 
@@ -373,7 +278,7 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 	assert(vdriver != NULL);
 
 	if (fn_id >= conn->fn_count) {
-		LOG_ERROR("Function ID %u is invalid.", fn_id);
+		LOG_E(call_cls, "Function ID %u is invalid.", fn_id);
 		goto fail;
 	}
 
@@ -388,12 +293,12 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 
 fail:;
 
-	// Add action to queue.
+	// Actually add action to queue.
 
 	PUSH_QUEUE(action);
 
 	if (action_queue_tail - action_queue_head > ACTION_QUEUE_SIZE) {
-		LOG_ERROR("Too many actions in the KOS' action queue, dropping the most recent one.");
+		LOG_E(call_cls, "Too many actions in the KOS' action queue, dropping the most recent one.");
 		action_queue_tail--;
 	}
 
@@ -401,7 +306,7 @@ fail:;
 }
 
 void kos_flush(bool sync) {
-	// Clear out the queue.
+	LOG_V(action_cls, "Flushing KOS action queue (sync=%d).", sync);
 
 	while (action_queue_head != action_queue_tail) {
 		action_t action;
@@ -411,8 +316,10 @@ void kos_flush(bool sync) {
 }
 
 void kos_vdev_disconn(uint64_t conn_id) {
+	LOG_V(conn_cls, "Disconnecting from VDEV with connection ID %" PRIu64 ".", conn_id);
+
 	if (conn_id >= conn_count) {
-		LOG_ERROR("Connection ID %" PRIu64 " invalid.", conn_id);
+		LOG_E(conn_cls, "Connection ID %" PRIu64 " invalid.", conn_id);
 		return;
 	}
 
