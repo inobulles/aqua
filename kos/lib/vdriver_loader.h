@@ -62,4 +62,14 @@ void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, vo
  * @param notif_data The data to pass to the notification callback.
  * @return 0 on success, or a negative error code on failure.
  */
-int vdriver_loader_vdev_inventory(kos_notif_cb_t notif_cb, void* notif_data);
+int vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_data);
+
+/**
+ * Find an already loaded VDRIVER by a VDEV ID.
+ *
+ * Concretely, this just looks for the VDRIVER which has the given VDEV ID in its allocated VID slice.
+ *
+ * @param vid The VDEV ID to look for.
+ * @return The VDRIVER associated with the given VDEV ID, or NULL if not found.
+ */
+vdriver_t* vdriver_loader_find_loaded_by_vid(vid_t vid);
