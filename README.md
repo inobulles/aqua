@@ -62,6 +62,7 @@ Here is a list of the components and their respective subdirectories held within
 |`kos`|KOS sources, i.e. platform-specific "glue" to run AQUA apps and interact with VDEVs and GrapeVine.|
 |`lib`|C library AQUA apps can use to facilitate communication with the KOS and VDEVs.|
 |`lib/bindings`|Language specific bindings to the C library.|
+|`tests`|E2E tests for AQUA.|
 |`vdev`|VDEV driver sources. VDEVs are the virtual drivers that allow AQUA apps to interact with hardware or other some software.|
 
 More detailed information may be found in the READMEs of each subdirectory respectively.
