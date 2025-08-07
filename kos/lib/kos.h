@@ -1,9 +1,13 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2024-2025 Aymeric Wibo
+
+/**
+ * This file is the public interface to the KOS.
+ *
+ * It includes all types and function prototypes needed to interact with the KOS.
+ */
 
 #pragma once
-
-// Basic types.
 
 #include <stdbool.h>
 #include <stdint.h>
