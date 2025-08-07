@@ -138,6 +138,10 @@ typedef enum : uint8_t {
 	 * A pointer is always passed by reference but may be vitrified.
 	 */
 	KOS_TYPE_PTR,
+	/**
+	 * The number of KOS types.
+	 */
+	KOS_TYPE_COUNT,
 } kos_type_t;
 
 /**
@@ -145,7 +149,7 @@ typedef enum : uint8_t {
  *
  * These are used as a helper for logging and debugging purposes.
  */
-static char const* const kos_type_str[] = {
+static char const* const kos_type_str[KOS_TYPE_COUNT] = {
 	"void",
 	"bool",
 	"u8",
@@ -158,7 +162,6 @@ static char const* const kos_type_str[] = {
 	"i64",
 	"f32",
 	"f64",
-	"str",
 	"buf",
 	"opaque_ptr",
 	"ptr",
@@ -379,14 +382,64 @@ typedef struct __attribute__((packed)) {
  * The kind of a notification.
  */
 typedef enum {
+	/**
+	 * A VDEV was attached, i.e. is discovered by the KOS.
+	 *
+	 * This can be induced with a call to {@link kos_req_vdev}.
+	 */
 	KOS_NOTIF_ATTACH, // TODO Rename to `KOS_NOTIF_ATTACH_VDEV`?
+	/**
+	 * A VDEV was detached, i.e. is not anymore accessible by the KOS.
+	 */
 	KOS_NOTIF_DETACH,
+	/**
+	 * A connection to a VDEV failed.
+	 *
+	 * A connection can be made to a VDEV with a call to {@link kos_vdev_conn}.
+	 */
 	KOS_NOTIF_CONN_FAIL,
+	/**
+	 * A connection to a VDEV succeeded.
+	 *
+	 * A connection can be made to a VDEV with a call to {@link kos_vdev_conn}.
+	 */
 	KOS_NOTIF_CONN,
+	/**
+	 * A call to a VDEV failed.
+	 *
+	 * A call can be made to a VDEV with a call to {@link kos_vdev_call}.
+	 */
 	KOS_NOTIF_CALL_FAIL,
+	/**
+	 * A call to a VDEV succeeded.
+	 *
+	 * A call can be made to a VDEV with a call to {@link kos_vdev_call}.
+	 */
 	KOS_NOTIF_CALL_RET,
+	/**
+	 * An interrupt was generated.
+	 */
 	KOS_NOTIF_INTERRUPT,
+	/**
+	 * The number of notification kinds.
+	 */
+	KOS_NOTIF_KIND_COUNT,
 } kos_notif_kind_t;
+
+/**
+ * Mappings from the `kos_notif_kind_t` enum to strings.
+ *
+ * These are used as a helper for logging and debugging purposes.
+ */
+static char const* const kos_notif_kind_str[KOS_NOTIF_KIND_COUNT] = {
+	"KOS_NOTIF_ATTACH",
+	"KOS_NOTIF_DETACH",
+	"KOS_NOTIF_CONN_FAIL",
+	"KOS_NOTIF_CONN",
+	"KOS_NOTIF_CALL_FAIL",
+	"KOS_NOTIF_CALL_RET",
+	"KOS_NOTIF_INTERRUPT",
+};
 
 typedef struct {
 	/**
@@ -405,6 +458,8 @@ typedef struct {
 	 * If not applicable (i.e. on VDEV attach, VDEV detach, connection fail, and connection success notifications), this will be 0.
 	 */
 	uint64_t conn_id;
+
+	// TODO Pull out all union members into own typedef'd structs.
 
 	union {
 		/**
