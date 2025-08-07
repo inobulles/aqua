@@ -20,11 +20,12 @@ static size_t vdriver_count = 0;
 static vdriver_t** vdrivers = NULL;
 
 void vdriver_loader_init(void) {
+	assert(cls == NULL);
 	cls = umber_class_new("aqua.kos.vdriver_loader", UMBER_LVL_INFO, "VDRIVER loader.");
 
-	vdriver_count = 0;
-	vdrivers = NULL;
-	cur_vid_slice = 0;
+	assert(vdrivers == NULL);
+	assert(vdriver_count == 0);
+	assert(cur_vid_slice == 0);
 }
 
 static int load_from_path(char const* path, kos_notif_cb_t notif_cb, void* notif_data) {
