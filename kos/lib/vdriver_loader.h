@@ -2,7 +2,7 @@
 // v. 1.0. Copyright (c) 2025 Aymeric Wibo
 
 /**
- * Interface for the VDRIVER loader.
+ * Interface for the (local) VDRIVER loader.
  *
  * This is used by the KOS to request VDEV specs and load relevant VDRIVERs.
  * It is also used by the GrapeVine daemon to take inventory of all VDEVs available on the system.
@@ -11,6 +11,7 @@
 #pragma once
 
 #include "kos.h"
+#include "vdev.h"
 
 /**
  * The VDRIVER_PATH environment variable name.
@@ -23,10 +24,9 @@
  * The default VDRIVER path.
  *
  * This is the path where the VDEV drivers are stored, relative to the library prefix.
- * TODO This isn't always set, right? I gotta figure this sheiße out.
  * It is used if the VDRIVER_PATH environment variable is not set.
  */
-#define DEFAULT_VDRIVER_PATH "/vdriver"
+#define DEFAULT_VDRIVER_PATH "vdriver"
 
 /**
  * The file extension of VDRIVER files.
@@ -50,9 +50,8 @@ void vdriver_loader_init(void);
  * @param spec The specification of the VDEV to request.
  * @param notif_cb The callback to call for {@link KOS_NOTIF_ATTACH} notifications.
  * @param notif_data The data to pass to the notification callback.
- * @return 0 on success, or a negative error code on failure.
  */
-int vdriver_loader_req_vdev(char const* spec, kos_notif_cb_t notif_cb, void* notif_data);
+void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, void* notif_data);
 
 /**
  * Take inventory of all VDEVs available on the system.
