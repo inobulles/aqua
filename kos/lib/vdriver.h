@@ -144,7 +144,7 @@ void* vdriver_unwrap_local_ptr(kos_ptr_t ptr);
  * @param ptr The local pointer to wrap.
  * @return The KOS opaque pointer wrapping the local pointer.
  */
-kos_opaque_ptr_t vdriver_make_opaque_ptr(void* ptr);
+kos_opaque_ptr_t vdriver_make_opaque_ptr(void const* ptr);
 
 /**
  * Make a KOS pointer from a local pointer.
@@ -152,4 +152,4 @@ kos_opaque_ptr_t vdriver_make_opaque_ptr(void* ptr);
  * @param ptr The local pointer to wrap.
  * @return The KOS pointer wrapping the local pointer.
  */
-kos_ptr_t vdriver_make_ptr(void* ptr);
+kos_ptr_t vdriver_make_ptr(void const* ptr);
