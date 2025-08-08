@@ -22,9 +22,7 @@ fn main() {
 
 	// Build VDRIVER helper library.
 
-	cc::Build::new()
-		.file(vdriver_src)
-		.compile("vdriver");
+	cc::Build::new().file(vdriver_src).compile("vdriver");
 
 	// Generate bindings.
 
