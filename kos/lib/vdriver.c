@@ -19,7 +19,7 @@ void* vdriver_unwrap_local_ptr(kos_ptr_t ptr) {
 	return (void*) (uintptr_t) ptr.ptr;
 }
 
-kos_opaque_ptr_t vdriver_make_opaque_ptr(void* ptr) {
+kos_opaque_ptr_t vdriver_make_opaque_ptr(void const* ptr) {
 	kos_opaque_ptr_t opaque_ptr = {
 		.host_id = VDRIVER.host_id,
 		.ptr = (uintptr_t) ptr,
@@ -28,7 +28,7 @@ kos_opaque_ptr_t vdriver_make_opaque_ptr(void* ptr) {
 	return opaque_ptr;
 }
 
-kos_ptr_t vdriver_make_ptr(void* ptr) {
+kos_ptr_t vdriver_make_ptr(void const* ptr) {
 	kos_ptr_t kos_ptr = {
 		.host_id = VDRIVER.host_id,
 		.ptr = (uintptr_t) ptr,
