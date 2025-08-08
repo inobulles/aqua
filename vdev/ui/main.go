@@ -4,7 +4,7 @@
 package main
 
 /*
-#cgo LDFLAGS: -laqua
+#cgo LDFLAGS: -laqua -lvdriver -lumber
 
 #include "../../kos/lib/vdriver.h"
 */
