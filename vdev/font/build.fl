@@ -2,23 +2,27 @@
 # Copyright (c) 2025 Aymeric Wibo
 
 import bob
+import bob.pkg_config
 
 deps = [
 	Dep.git("https://github.com/inobulles/umber", "v0.3.1"),
 	Dep.local("../../kos"),
 ]
 
+let pango_cflags = PkgConfig.cflags("pango")
+let pango_libs = PkgConfig.libs("pango")
+
 let src = ["main.c"]
 
 let obj = Cc([
 	"-std=c11",
 	"-Wall", "-Wextra", "-Werror",
-]).compile(src)
+] + pango_cflags).compile(src)
 
 let vdriver = Linker([
 	"-shared",
-	"-lumber", "-lvdriver", "-lpango",
-]).link(obj)
+	"-lumber", "-lvdriver",
+] + pango_libs).link(obj)
 
 install = {
 	vdriver: "lib/vdriver/aquabsd.black.font.vdriver",
