@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 #include "wgpu.h"
 
@@ -7,6 +7,7 @@
 #include "component.h"
 #include "win_internal.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -253,14 +254,15 @@ static bool probe(kos_vdev_descr_t const* vdev) {
 
 WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t win) {
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) instance},
-		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
+		{.opaque_ptr = {ctx->hid, (uintptr_t) instance}},
+		{.opaque_ptr = win->opaque_ptr},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.surface_from_win, args);
 	kos_flush(true);
 
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 aqua_component_t wgpu_init(aqua_ctx_t ctx) {
@@ -2997,7 +2999,8 @@ WGPUInstance aqua_wgpuCreateInstance(wgpu_ctx_t ctx, WGPU_NULLABLE WGPUInstanceD
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCreateInstance, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUStatus aqua_wgpuGetInstanceCapabilities(wgpu_ctx_t ctx, WGPUInstanceCapabilities * capabilities) {
@@ -3025,13 +3028,14 @@ WGPUProc aqua_wgpuGetProcAddress(wgpu_ctx_t ctx, WGPUStringView procName) {
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuGetProcAddress, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuAdapterGetFeatures(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUSupportedFeatures * features) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		},
 		{
 			.buf.size = sizeof *features,
@@ -3047,7 +3051,7 @@ void aqua_wgpuAdapterGetFeatures(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUSuppor
 WGPUStatus aqua_wgpuAdapterGetInfo(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUAdapterInfo * info) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		},
 		{
 			.buf.size = sizeof *info,
@@ -3064,7 +3068,7 @@ WGPUStatus aqua_wgpuAdapterGetInfo(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUAdap
 WGPUStatus aqua_wgpuAdapterGetLimits(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPULimits * limits) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		},
 		{
 			.buf.size = sizeof *limits,
@@ -3081,7 +3085,7 @@ WGPUStatus aqua_wgpuAdapterGetLimits(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPULi
 WGPUBool aqua_wgpuAdapterHasFeature(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUFeatureName feature) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		},
 		{
 			.u32 = feature,
@@ -3097,7 +3101,7 @@ WGPUBool aqua_wgpuAdapterHasFeature(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPUFea
 WGPUFuture aqua_wgpuAdapterRequestDevice(wgpu_ctx_t ctx, WGPUAdapter adapter, WGPU_NULLABLE WGPUDeviceDescriptor const * descriptor, WGPURequestDeviceCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -3118,7 +3122,7 @@ WGPUFuture aqua_wgpuAdapterRequestDevice(wgpu_ctx_t ctx, WGPUAdapter adapter, WG
 void aqua_wgpuAdapterAddRef(wgpu_ctx_t ctx, WGPUAdapter adapter) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		}
 	};
 
@@ -3130,7 +3134,7 @@ void aqua_wgpuAdapterAddRef(wgpu_ctx_t ctx, WGPUAdapter adapter) {
 void aqua_wgpuAdapterRelease(wgpu_ctx_t ctx, WGPUAdapter adapter) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		}
 	};
 
@@ -3155,7 +3159,7 @@ void aqua_wgpuAdapterInfoFreeMembers(wgpu_ctx_t ctx, WGPUAdapterInfo adapterInfo
 void aqua_wgpuBindGroupSetLabel(wgpu_ctx_t ctx, WGPUBindGroup bindGroup, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) bindGroup,
+			.opaque_ptr = {ctx->hid, (uintptr_t) bindGroup},
 		},
 		{
 			.buf.size = label.length,
@@ -3171,7 +3175,7 @@ void aqua_wgpuBindGroupSetLabel(wgpu_ctx_t ctx, WGPUBindGroup bindGroup, WGPUStr
 void aqua_wgpuBindGroupAddRef(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) bindGroup,
+			.opaque_ptr = {ctx->hid, (uintptr_t) bindGroup},
 		}
 	};
 
@@ -3183,7 +3187,7 @@ void aqua_wgpuBindGroupAddRef(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
 void aqua_wgpuBindGroupRelease(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) bindGroup,
+			.opaque_ptr = {ctx->hid, (uintptr_t) bindGroup},
 		}
 	};
 
@@ -3195,7 +3199,7 @@ void aqua_wgpuBindGroupRelease(wgpu_ctx_t ctx, WGPUBindGroup bindGroup) {
 void aqua_wgpuBindGroupLayoutSetLabel(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) bindGroupLayout,
+			.opaque_ptr = {ctx->hid, (uintptr_t) bindGroupLayout},
 		},
 		{
 			.buf.size = label.length,
@@ -3211,7 +3215,7 @@ void aqua_wgpuBindGroupLayoutSetLabel(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGr
 void aqua_wgpuBindGroupLayoutAddRef(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) bindGroupLayout,
+			.opaque_ptr = {ctx->hid, (uintptr_t) bindGroupLayout},
 		}
 	};
 
@@ -3223,7 +3227,7 @@ void aqua_wgpuBindGroupLayoutAddRef(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGrou
 void aqua_wgpuBindGroupLayoutRelease(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGroupLayout) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) bindGroupLayout,
+			.opaque_ptr = {ctx->hid, (uintptr_t) bindGroupLayout},
 		}
 	};
 
@@ -3235,7 +3239,7 @@ void aqua_wgpuBindGroupLayoutRelease(wgpu_ctx_t ctx, WGPUBindGroupLayout bindGro
 void aqua_wgpuBufferDestroy(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3247,7 +3251,7 @@ void aqua_wgpuBufferDestroy(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 void const * aqua_wgpuBufferGetConstMappedRange(wgpu_ctx_t ctx, WGPUBuffer buffer, size_t offset, size_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u32 = offset,
@@ -3260,13 +3264,14 @@ void const * aqua_wgpuBufferGetConstMappedRange(wgpu_ctx_t ctx, WGPUBuffer buffe
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBufferGetConstMappedRange, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUBufferMapState aqua_wgpuBufferGetMapState(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3279,7 +3284,7 @@ WGPUBufferMapState aqua_wgpuBufferGetMapState(wgpu_ctx_t ctx, WGPUBuffer buffer)
 void * aqua_wgpuBufferGetMappedRange(wgpu_ctx_t ctx, WGPUBuffer buffer, size_t offset, size_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u32 = offset,
@@ -3292,13 +3297,14 @@ void * aqua_wgpuBufferGetMappedRange(wgpu_ctx_t ctx, WGPUBuffer buffer, size_t o
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuBufferGetMappedRange, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 uint64_t aqua_wgpuBufferGetSize(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3311,7 +3317,7 @@ uint64_t aqua_wgpuBufferGetSize(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 WGPUBufferUsage aqua_wgpuBufferGetUsage(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3324,7 +3330,7 @@ WGPUBufferUsage aqua_wgpuBufferGetUsage(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 WGPUFuture aqua_wgpuBufferMapAsync(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUMapMode mode, size_t offset, size_t size, WGPUBufferMapCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = mode,
@@ -3350,7 +3356,7 @@ WGPUFuture aqua_wgpuBufferMapAsync(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUMapMod
 void aqua_wgpuBufferSetLabel(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.buf.size = label.length,
@@ -3366,7 +3372,7 @@ void aqua_wgpuBufferSetLabel(wgpu_ctx_t ctx, WGPUBuffer buffer, WGPUStringView l
 void aqua_wgpuBufferUnmap(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3378,7 +3384,7 @@ void aqua_wgpuBufferUnmap(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 void aqua_wgpuBufferAddRef(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3390,7 +3396,7 @@ void aqua_wgpuBufferAddRef(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 void aqua_wgpuBufferRelease(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		}
 	};
 
@@ -3402,7 +3408,7 @@ void aqua_wgpuBufferRelease(wgpu_ctx_t ctx, WGPUBuffer buffer) {
 void aqua_wgpuCommandBufferSetLabel(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandBuffer},
 		},
 		{
 			.buf.size = label.length,
@@ -3418,7 +3424,7 @@ void aqua_wgpuCommandBufferSetLabel(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuf
 void aqua_wgpuCommandBufferAddRef(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandBuffer},
 		}
 	};
 
@@ -3430,7 +3436,7 @@ void aqua_wgpuCommandBufferAddRef(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffe
 void aqua_wgpuCommandBufferRelease(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuffer) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandBuffer},
 		}
 	};
 
@@ -3442,7 +3448,7 @@ void aqua_wgpuCommandBufferRelease(wgpu_ctx_t ctx, WGPUCommandBuffer commandBuff
 WGPUComputePassEncoder aqua_wgpuCommandEncoderBeginComputePass(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPU_NULLABLE WGPUComputePassDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -3453,13 +3459,14 @@ WGPUComputePassEncoder aqua_wgpuCommandEncoderBeginComputePass(wgpu_ctx_t ctx, W
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandEncoderBeginComputePass, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPURenderPassEncoder aqua_wgpuCommandEncoderBeginRenderPass(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPURenderPassDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -3470,16 +3477,17 @@ WGPURenderPassEncoder aqua_wgpuCommandEncoderBeginRenderPass(wgpu_ctx_t ctx, WGP
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandEncoderBeginRenderPass, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuCommandEncoderClearBuffer(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUBuffer buffer, uint64_t offset, uint64_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
@@ -3497,16 +3505,16 @@ void aqua_wgpuCommandEncoderClearBuffer(wgpu_ctx_t ctx, WGPUCommandEncoder comma
 void aqua_wgpuCommandEncoderCopyBufferToBuffer(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUBuffer source, uint64_t sourceOffset, WGPUBuffer destination, uint64_t destinationOffset, uint64_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) source,
+			.opaque_ptr = {ctx->hid, (uintptr_t) source},
 		},
 		{
 			.u64 = sourceOffset,
 		},
 		{
-			.opaque_ptr = (uintptr_t) destination,
+			.opaque_ptr = {ctx->hid, (uintptr_t) destination},
 		},
 		{
 			.u64 = destinationOffset,
@@ -3524,7 +3532,7 @@ void aqua_wgpuCommandEncoderCopyBufferToBuffer(wgpu_ctx_t ctx, WGPUCommandEncode
 void aqua_wgpuCommandEncoderCopyBufferToTexture(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUTexelCopyBufferInfo const * source, WGPUTexelCopyTextureInfo const * destination, WGPUExtent3D const * copySize) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = sizeof *source,
@@ -3548,7 +3556,7 @@ void aqua_wgpuCommandEncoderCopyBufferToTexture(wgpu_ctx_t ctx, WGPUCommandEncod
 void aqua_wgpuCommandEncoderCopyTextureToBuffer(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUTexelCopyTextureInfo const * source, WGPUTexelCopyBufferInfo const * destination, WGPUExtent3D const * copySize) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = sizeof *source,
@@ -3572,7 +3580,7 @@ void aqua_wgpuCommandEncoderCopyTextureToBuffer(wgpu_ctx_t ctx, WGPUCommandEncod
 void aqua_wgpuCommandEncoderCopyTextureToTexture(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUTexelCopyTextureInfo const * source, WGPUTexelCopyTextureInfo const * destination, WGPUExtent3D const * copySize) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = sizeof *source,
@@ -3596,7 +3604,7 @@ void aqua_wgpuCommandEncoderCopyTextureToTexture(wgpu_ctx_t ctx, WGPUCommandEnco
 WGPUCommandBuffer aqua_wgpuCommandEncoderFinish(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPU_NULLABLE WGPUCommandBufferDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -3607,13 +3615,14 @@ WGPUCommandBuffer aqua_wgpuCommandEncoderFinish(wgpu_ctx_t ctx, WGPUCommandEncod
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandEncoderFinish, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuCommandEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = markerLabel.length,
@@ -3629,7 +3638,7 @@ void aqua_wgpuCommandEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUCommandEncoder
 void aqua_wgpuCommandEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		}
 	};
 
@@ -3641,7 +3650,7 @@ void aqua_wgpuCommandEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder com
 void aqua_wgpuCommandEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = groupLabel.length,
@@ -3657,10 +3666,10 @@ void aqua_wgpuCommandEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUCommandEncoder co
 void aqua_wgpuCommandEncoderResolveQuerySet(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUQuerySet querySet, uint32_t firstQuery, uint32_t queryCount, WGPUBuffer destination, uint64_t destinationOffset) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.u32 = firstQuery,
@@ -3669,7 +3678,7 @@ void aqua_wgpuCommandEncoderResolveQuerySet(wgpu_ctx_t ctx, WGPUCommandEncoder c
 			.u32 = queryCount,
 		},
 		{
-			.opaque_ptr = (uintptr_t) destination,
+			.opaque_ptr = {ctx->hid, (uintptr_t) destination},
 		},
 		{
 			.u64 = destinationOffset,
@@ -3684,7 +3693,7 @@ void aqua_wgpuCommandEncoderResolveQuerySet(wgpu_ctx_t ctx, WGPUCommandEncoder c
 void aqua_wgpuCommandEncoderSetLabel(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
 			.buf.size = label.length,
@@ -3700,10 +3709,10 @@ void aqua_wgpuCommandEncoderSetLabel(wgpu_ctx_t ctx, WGPUCommandEncoder commandE
 void aqua_wgpuCommandEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder, WGPUQuerySet querySet, uint32_t queryIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.u32 = queryIndex,
@@ -3718,7 +3727,7 @@ void aqua_wgpuCommandEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPUCommandEncoder co
 void aqua_wgpuCommandEncoderAddRef(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		}
 	};
 
@@ -3730,7 +3739,7 @@ void aqua_wgpuCommandEncoderAddRef(wgpu_ctx_t ctx, WGPUCommandEncoder commandEnc
 void aqua_wgpuCommandEncoderRelease(wgpu_ctx_t ctx, WGPUCommandEncoder commandEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) commandEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) commandEncoder},
 		}
 	};
 
@@ -3742,7 +3751,7 @@ void aqua_wgpuCommandEncoderRelease(wgpu_ctx_t ctx, WGPUCommandEncoder commandEn
 void aqua_wgpuComputePassEncoderDispatchWorkgroups(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, uint32_t workgroupCountX, uint32_t workgroupCountY, uint32_t workgroupCountZ) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
 			.u32 = workgroupCountX,
@@ -3763,10 +3772,10 @@ void aqua_wgpuComputePassEncoderDispatchWorkgroups(wgpu_ctx_t ctx, WGPUComputePa
 void aqua_wgpuComputePassEncoderDispatchWorkgroupsIndirect(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUBuffer indirectBuffer, uint64_t indirectOffset) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) indirectBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) indirectBuffer},
 		},
 		{
 			.u64 = indirectOffset,
@@ -3781,7 +3790,7 @@ void aqua_wgpuComputePassEncoderDispatchWorkgroupsIndirect(wgpu_ctx_t ctx, WGPUC
 void aqua_wgpuComputePassEncoderEnd(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		}
 	};
 
@@ -3793,7 +3802,7 @@ void aqua_wgpuComputePassEncoderEnd(wgpu_ctx_t ctx, WGPUComputePassEncoder compu
 void aqua_wgpuComputePassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
 			.buf.size = markerLabel.length,
@@ -3809,7 +3818,7 @@ void aqua_wgpuComputePassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPUComputePas
 void aqua_wgpuComputePassEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		}
 	};
 
@@ -3821,7 +3830,7 @@ void aqua_wgpuComputePassEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEnc
 void aqua_wgpuComputePassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
 			.buf.size = groupLabel.length,
@@ -3837,13 +3846,13 @@ void aqua_wgpuComputePassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPUComputePassEn
 void aqua_wgpuComputePassEncoderSetBindGroup(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
 			.u32 = groupIndex,
 		},
 		{
-			.opaque_ptr = (uintptr_t) group,
+			.opaque_ptr = {ctx->hid, (uintptr_t) group},
 		},
 		{
 			.u32 = dynamicOffsetCount,
@@ -3862,7 +3871,7 @@ void aqua_wgpuComputePassEncoderSetBindGroup(wgpu_ctx_t ctx, WGPUComputePassEnco
 void aqua_wgpuComputePassEncoderSetLabel(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
 			.buf.size = label.length,
@@ -3878,10 +3887,10 @@ void aqua_wgpuComputePassEncoderSetLabel(wgpu_ctx_t ctx, WGPUComputePassEncoder 
 void aqua_wgpuComputePassEncoderSetPipeline(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUComputePipeline pipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) pipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) pipeline},
 		}
 	};
 
@@ -3893,7 +3902,7 @@ void aqua_wgpuComputePassEncoderSetPipeline(wgpu_ctx_t ctx, WGPUComputePassEncod
 void aqua_wgpuComputePassEncoderAddRef(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		}
 	};
 
@@ -3905,7 +3914,7 @@ void aqua_wgpuComputePassEncoderAddRef(wgpu_ctx_t ctx, WGPUComputePassEncoder co
 void aqua_wgpuComputePassEncoderRelease(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		}
 	};
 
@@ -3917,7 +3926,7 @@ void aqua_wgpuComputePassEncoderRelease(wgpu_ctx_t ctx, WGPUComputePassEncoder c
 WGPUBindGroupLayout aqua_wgpuComputePipelineGetBindGroupLayout(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline, uint32_t groupIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePipeline},
 		},
 		{
 			.u32 = groupIndex,
@@ -3927,13 +3936,14 @@ WGPUBindGroupLayout aqua_wgpuComputePipelineGetBindGroupLayout(wgpu_ctx_t ctx, W
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuComputePipelineGetBindGroupLayout, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuComputePipelineSetLabel(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePipeline},
 		},
 		{
 			.buf.size = label.length,
@@ -3949,7 +3959,7 @@ void aqua_wgpuComputePipelineSetLabel(wgpu_ctx_t ctx, WGPUComputePipeline comput
 void aqua_wgpuComputePipelineAddRef(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePipeline},
 		}
 	};
 
@@ -3961,7 +3971,7 @@ void aqua_wgpuComputePipelineAddRef(wgpu_ctx_t ctx, WGPUComputePipeline computeP
 void aqua_wgpuComputePipelineRelease(wgpu_ctx_t ctx, WGPUComputePipeline computePipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePipeline},
 		}
 	};
 
@@ -3973,7 +3983,7 @@ void aqua_wgpuComputePipelineRelease(wgpu_ctx_t ctx, WGPUComputePipeline compute
 WGPUBindGroup aqua_wgpuDeviceCreateBindGroup(wgpu_ctx_t ctx, WGPUDevice device, WGPUBindGroupDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -3984,13 +3994,14 @@ WGPUBindGroup aqua_wgpuDeviceCreateBindGroup(wgpu_ctx_t ctx, WGPUDevice device, 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateBindGroup, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUBindGroupLayout aqua_wgpuDeviceCreateBindGroupLayout(wgpu_ctx_t ctx, WGPUDevice device, WGPUBindGroupLayoutDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4001,13 +4012,14 @@ WGPUBindGroupLayout aqua_wgpuDeviceCreateBindGroupLayout(wgpu_ctx_t ctx, WGPUDev
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateBindGroupLayout, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUBuffer aqua_wgpuDeviceCreateBuffer(wgpu_ctx_t ctx, WGPUDevice device, WGPUBufferDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4018,13 +4030,14 @@ WGPUBuffer aqua_wgpuDeviceCreateBuffer(wgpu_ctx_t ctx, WGPUDevice device, WGPUBu
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateBuffer, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUCommandEncoder aqua_wgpuDeviceCreateCommandEncoder(wgpu_ctx_t ctx, WGPUDevice device, WGPU_NULLABLE WGPUCommandEncoderDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4035,13 +4048,14 @@ WGPUCommandEncoder aqua_wgpuDeviceCreateCommandEncoder(wgpu_ctx_t ctx, WGPUDevic
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateCommandEncoder, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUComputePipeline aqua_wgpuDeviceCreateComputePipeline(wgpu_ctx_t ctx, WGPUDevice device, WGPUComputePipelineDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4052,13 +4066,14 @@ WGPUComputePipeline aqua_wgpuDeviceCreateComputePipeline(wgpu_ctx_t ctx, WGPUDev
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateComputePipeline, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUFuture aqua_wgpuDeviceCreateComputePipelineAsync(wgpu_ctx_t ctx, WGPUDevice device, WGPUComputePipelineDescriptor const * descriptor, WGPUCreateComputePipelineAsyncCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4079,7 +4094,7 @@ WGPUFuture aqua_wgpuDeviceCreateComputePipelineAsync(wgpu_ctx_t ctx, WGPUDevice 
 WGPUPipelineLayout aqua_wgpuDeviceCreatePipelineLayout(wgpu_ctx_t ctx, WGPUDevice device, WGPUPipelineLayoutDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4090,13 +4105,14 @@ WGPUPipelineLayout aqua_wgpuDeviceCreatePipelineLayout(wgpu_ctx_t ctx, WGPUDevic
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreatePipelineLayout, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUQuerySet aqua_wgpuDeviceCreateQuerySet(wgpu_ctx_t ctx, WGPUDevice device, WGPUQuerySetDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4107,13 +4123,14 @@ WGPUQuerySet aqua_wgpuDeviceCreateQuerySet(wgpu_ctx_t ctx, WGPUDevice device, WG
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateQuerySet, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPURenderBundleEncoder aqua_wgpuDeviceCreateRenderBundleEncoder(wgpu_ctx_t ctx, WGPUDevice device, WGPURenderBundleEncoderDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4124,13 +4141,14 @@ WGPURenderBundleEncoder aqua_wgpuDeviceCreateRenderBundleEncoder(wgpu_ctx_t ctx,
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateRenderBundleEncoder, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPURenderPipeline aqua_wgpuDeviceCreateRenderPipeline(wgpu_ctx_t ctx, WGPUDevice device, WGPURenderPipelineDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4141,13 +4159,14 @@ WGPURenderPipeline aqua_wgpuDeviceCreateRenderPipeline(wgpu_ctx_t ctx, WGPUDevic
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateRenderPipeline, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUFuture aqua_wgpuDeviceCreateRenderPipelineAsync(wgpu_ctx_t ctx, WGPUDevice device, WGPURenderPipelineDescriptor const * descriptor, WGPUCreateRenderPipelineAsyncCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4168,7 +4187,7 @@ WGPUFuture aqua_wgpuDeviceCreateRenderPipelineAsync(wgpu_ctx_t ctx, WGPUDevice d
 WGPUSampler aqua_wgpuDeviceCreateSampler(wgpu_ctx_t ctx, WGPUDevice device, WGPU_NULLABLE WGPUSamplerDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4179,13 +4198,14 @@ WGPUSampler aqua_wgpuDeviceCreateSampler(wgpu_ctx_t ctx, WGPUDevice device, WGPU
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateSampler, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUShaderModule aqua_wgpuDeviceCreateShaderModule(wgpu_ctx_t ctx, WGPUDevice device, WGPUShaderModuleDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4196,13 +4216,14 @@ WGPUShaderModule aqua_wgpuDeviceCreateShaderModule(wgpu_ctx_t ctx, WGPUDevice de
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateShaderModule, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUTexture aqua_wgpuDeviceCreateTexture(wgpu_ctx_t ctx, WGPUDevice device, WGPUTextureDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4213,13 +4234,14 @@ WGPUTexture aqua_wgpuDeviceCreateTexture(wgpu_ctx_t ctx, WGPUDevice device, WGPU
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateTexture, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuDeviceDestroy(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		}
 	};
 
@@ -4231,7 +4253,7 @@ void aqua_wgpuDeviceDestroy(wgpu_ctx_t ctx, WGPUDevice device) {
 WGPUAdapterInfo aqua_wgpuDeviceGetAdapterInfo(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		}
 	};
 
@@ -4244,7 +4266,7 @@ WGPUAdapterInfo aqua_wgpuDeviceGetAdapterInfo(wgpu_ctx_t ctx, WGPUDevice device)
 void aqua_wgpuDeviceGetFeatures(wgpu_ctx_t ctx, WGPUDevice device, WGPUSupportedFeatures * features) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *features,
@@ -4260,7 +4282,7 @@ void aqua_wgpuDeviceGetFeatures(wgpu_ctx_t ctx, WGPUDevice device, WGPUSupported
 WGPUStatus aqua_wgpuDeviceGetLimits(wgpu_ctx_t ctx, WGPUDevice device, WGPULimits * limits) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *limits,
@@ -4277,7 +4299,7 @@ WGPUStatus aqua_wgpuDeviceGetLimits(wgpu_ctx_t ctx, WGPUDevice device, WGPULimit
 WGPUFuture aqua_wgpuDeviceGetLostFuture(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		}
 	};
 
@@ -4290,20 +4312,21 @@ WGPUFuture aqua_wgpuDeviceGetLostFuture(wgpu_ctx_t ctx, WGPUDevice device) {
 WGPUQueue aqua_wgpuDeviceGetQueue(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		}
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceGetQueue, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUBool aqua_wgpuDeviceHasFeature(wgpu_ctx_t ctx, WGPUDevice device, WGPUFeatureName feature) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.u32 = feature,
@@ -4319,7 +4342,7 @@ WGPUBool aqua_wgpuDeviceHasFeature(wgpu_ctx_t ctx, WGPUDevice device, WGPUFeatur
 WGPUFuture aqua_wgpuDevicePopErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUPopErrorScopeCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof callbackInfo,
@@ -4336,7 +4359,7 @@ WGPUFuture aqua_wgpuDevicePopErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUP
 void aqua_wgpuDevicePushErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUErrorFilter filter) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.u32 = filter,
@@ -4351,7 +4374,7 @@ void aqua_wgpuDevicePushErrorScope(wgpu_ctx_t ctx, WGPUDevice device, WGPUErrorF
 void aqua_wgpuDeviceSetLabel(wgpu_ctx_t ctx, WGPUDevice device, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = label.length,
@@ -4367,7 +4390,7 @@ void aqua_wgpuDeviceSetLabel(wgpu_ctx_t ctx, WGPUDevice device, WGPUStringView l
 void aqua_wgpuDeviceAddRef(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		}
 	};
 
@@ -4379,7 +4402,7 @@ void aqua_wgpuDeviceAddRef(wgpu_ctx_t ctx, WGPUDevice device) {
 void aqua_wgpuDeviceRelease(wgpu_ctx_t ctx, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		}
 	};
 
@@ -4391,7 +4414,7 @@ void aqua_wgpuDeviceRelease(wgpu_ctx_t ctx, WGPUDevice device) {
 WGPUSurface aqua_wgpuInstanceCreateSurface(wgpu_ctx_t ctx, WGPUInstance instance, WGPUSurfaceDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4402,13 +4425,14 @@ WGPUSurface aqua_wgpuInstanceCreateSurface(wgpu_ctx_t ctx, WGPUInstance instance
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuInstanceCreateSurface, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 WGPUStatus aqua_wgpuInstanceGetWGSLLanguageFeatures(wgpu_ctx_t ctx, WGPUInstance instance, WGPUSupportedWGSLLanguageFeatures * features) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		},
 		{
 			.buf.size = sizeof *features,
@@ -4425,7 +4449,7 @@ WGPUStatus aqua_wgpuInstanceGetWGSLLanguageFeatures(wgpu_ctx_t ctx, WGPUInstance
 void aqua_wgpuInstanceProcessEvents(wgpu_ctx_t ctx, WGPUInstance instance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		}
 	};
 
@@ -4437,7 +4461,7 @@ void aqua_wgpuInstanceProcessEvents(wgpu_ctx_t ctx, WGPUInstance instance) {
 WGPUFuture aqua_wgpuInstanceRequestAdapter(wgpu_ctx_t ctx, WGPUInstance instance, WGPU_NULLABLE WGPURequestAdapterOptions const * options, WGPURequestAdapterCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		},
 		{
 			.buf.size = sizeof *options,
@@ -4458,7 +4482,7 @@ WGPUFuture aqua_wgpuInstanceRequestAdapter(wgpu_ctx_t ctx, WGPUInstance instance
 WGPUWaitStatus aqua_wgpuInstanceWaitAny(wgpu_ctx_t ctx, WGPUInstance instance, size_t futureCount, WGPU_NULLABLE WGPUFutureWaitInfo * futures, uint64_t timeoutNS) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		},
 		{
 			.u32 = futureCount,
@@ -4481,7 +4505,7 @@ WGPUWaitStatus aqua_wgpuInstanceWaitAny(wgpu_ctx_t ctx, WGPUInstance instance, s
 void aqua_wgpuInstanceAddRef(wgpu_ctx_t ctx, WGPUInstance instance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		}
 	};
 
@@ -4493,7 +4517,7 @@ void aqua_wgpuInstanceAddRef(wgpu_ctx_t ctx, WGPUInstance instance) {
 void aqua_wgpuInstanceRelease(wgpu_ctx_t ctx, WGPUInstance instance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		}
 	};
 
@@ -4505,7 +4529,7 @@ void aqua_wgpuInstanceRelease(wgpu_ctx_t ctx, WGPUInstance instance) {
 void aqua_wgpuPipelineLayoutSetLabel(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) pipelineLayout,
+			.opaque_ptr = {ctx->hid, (uintptr_t) pipelineLayout},
 		},
 		{
 			.buf.size = label.length,
@@ -4521,7 +4545,7 @@ void aqua_wgpuPipelineLayoutSetLabel(wgpu_ctx_t ctx, WGPUPipelineLayout pipeline
 void aqua_wgpuPipelineLayoutAddRef(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) pipelineLayout,
+			.opaque_ptr = {ctx->hid, (uintptr_t) pipelineLayout},
 		}
 	};
 
@@ -4533,7 +4557,7 @@ void aqua_wgpuPipelineLayoutAddRef(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLa
 void aqua_wgpuPipelineLayoutRelease(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineLayout) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) pipelineLayout,
+			.opaque_ptr = {ctx->hid, (uintptr_t) pipelineLayout},
 		}
 	};
 
@@ -4545,7 +4569,7 @@ void aqua_wgpuPipelineLayoutRelease(wgpu_ctx_t ctx, WGPUPipelineLayout pipelineL
 void aqua_wgpuQuerySetDestroy(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		}
 	};
 
@@ -4557,7 +4581,7 @@ void aqua_wgpuQuerySetDestroy(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 uint32_t aqua_wgpuQuerySetGetCount(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		}
 	};
 
@@ -4570,7 +4594,7 @@ uint32_t aqua_wgpuQuerySetGetCount(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 WGPUQueryType aqua_wgpuQuerySetGetType(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		}
 	};
 
@@ -4583,7 +4607,7 @@ WGPUQueryType aqua_wgpuQuerySetGetType(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 void aqua_wgpuQuerySetSetLabel(wgpu_ctx_t ctx, WGPUQuerySet querySet, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.buf.size = label.length,
@@ -4599,7 +4623,7 @@ void aqua_wgpuQuerySetSetLabel(wgpu_ctx_t ctx, WGPUQuerySet querySet, WGPUString
 void aqua_wgpuQuerySetAddRef(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		}
 	};
 
@@ -4611,7 +4635,7 @@ void aqua_wgpuQuerySetAddRef(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 void aqua_wgpuQuerySetRelease(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		}
 	};
 
@@ -4623,7 +4647,7 @@ void aqua_wgpuQuerySetRelease(wgpu_ctx_t ctx, WGPUQuerySet querySet) {
 WGPUFuture aqua_wgpuQueueOnSubmittedWorkDone(wgpu_ctx_t ctx, WGPUQueue queue, WGPUQueueWorkDoneCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		},
 		{
 			.buf.size = sizeof callbackInfo,
@@ -4640,7 +4664,7 @@ WGPUFuture aqua_wgpuQueueOnSubmittedWorkDone(wgpu_ctx_t ctx, WGPUQueue queue, WG
 void aqua_wgpuQueueSetLabel(wgpu_ctx_t ctx, WGPUQueue queue, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		},
 		{
 			.buf.size = label.length,
@@ -4656,7 +4680,7 @@ void aqua_wgpuQueueSetLabel(wgpu_ctx_t ctx, WGPUQueue queue, WGPUStringView labe
 void aqua_wgpuQueueSubmit(wgpu_ctx_t ctx, WGPUQueue queue, size_t commandCount, WGPUCommandBuffer const * commands) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		},
 		{
 			.u32 = commandCount,
@@ -4675,16 +4699,16 @@ void aqua_wgpuQueueSubmit(wgpu_ctx_t ctx, WGPUQueue queue, size_t commandCount, 
 void aqua_wgpuQueueWriteBuffer(wgpu_ctx_t ctx, WGPUQueue queue, WGPUBuffer buffer, uint64_t bufferOffset, void const * data, size_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = bufferOffset,
 		},
 		{
-			.opaque_ptr = (uintptr_t) data,
+			.opaque_ptr = {ctx->hid, (uintptr_t) data},
 		},
 		{
 			.u32 = size,
@@ -4699,14 +4723,14 @@ void aqua_wgpuQueueWriteBuffer(wgpu_ctx_t ctx, WGPUQueue queue, WGPUBuffer buffe
 void aqua_wgpuQueueWriteTexture(wgpu_ctx_t ctx, WGPUQueue queue, WGPUTexelCopyTextureInfo const * destination, void const * data, size_t dataSize, WGPUTexelCopyBufferLayout const * dataLayout, WGPUExtent3D const * writeSize) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		},
 		{
 			.buf.size = sizeof *destination,
 			.buf.ptr = (void*) destination,
 		},
 		{
-			.opaque_ptr = (uintptr_t) data,
+			.opaque_ptr = {ctx->hid, (uintptr_t) data},
 		},
 		{
 			.u32 = dataSize,
@@ -4729,7 +4753,7 @@ void aqua_wgpuQueueWriteTexture(wgpu_ctx_t ctx, WGPUQueue queue, WGPUTexelCopyTe
 void aqua_wgpuQueueAddRef(wgpu_ctx_t ctx, WGPUQueue queue) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		}
 	};
 
@@ -4741,7 +4765,7 @@ void aqua_wgpuQueueAddRef(wgpu_ctx_t ctx, WGPUQueue queue) {
 void aqua_wgpuQueueRelease(wgpu_ctx_t ctx, WGPUQueue queue) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		}
 	};
 
@@ -4753,7 +4777,7 @@ void aqua_wgpuQueueRelease(wgpu_ctx_t ctx, WGPUQueue queue) {
 void aqua_wgpuRenderBundleSetLabel(wgpu_ctx_t ctx, WGPURenderBundle renderBundle, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundle,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundle},
 		},
 		{
 			.buf.size = label.length,
@@ -4769,7 +4793,7 @@ void aqua_wgpuRenderBundleSetLabel(wgpu_ctx_t ctx, WGPURenderBundle renderBundle
 void aqua_wgpuRenderBundleAddRef(wgpu_ctx_t ctx, WGPURenderBundle renderBundle) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundle,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundle},
 		}
 	};
 
@@ -4781,7 +4805,7 @@ void aqua_wgpuRenderBundleAddRef(wgpu_ctx_t ctx, WGPURenderBundle renderBundle) 
 void aqua_wgpuRenderBundleRelease(wgpu_ctx_t ctx, WGPURenderBundle renderBundle) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundle,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundle},
 		}
 	};
 
@@ -4793,7 +4817,7 @@ void aqua_wgpuRenderBundleRelease(wgpu_ctx_t ctx, WGPURenderBundle renderBundle)
 void aqua_wgpuRenderBundleEncoderDraw(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.u32 = vertexCount,
@@ -4817,7 +4841,7 @@ void aqua_wgpuRenderBundleEncoderDraw(wgpu_ctx_t ctx, WGPURenderBundleEncoder re
 void aqua_wgpuRenderBundleEncoderDrawIndexed(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.u32 = indexCount,
@@ -4844,10 +4868,10 @@ void aqua_wgpuRenderBundleEncoderDrawIndexed(wgpu_ctx_t ctx, WGPURenderBundleEnc
 void aqua_wgpuRenderBundleEncoderDrawIndexedIndirect(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUBuffer indirectBuffer, uint64_t indirectOffset) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) indirectBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) indirectBuffer},
 		},
 		{
 			.u64 = indirectOffset,
@@ -4862,10 +4886,10 @@ void aqua_wgpuRenderBundleEncoderDrawIndexedIndirect(wgpu_ctx_t ctx, WGPURenderB
 void aqua_wgpuRenderBundleEncoderDrawIndirect(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUBuffer indirectBuffer, uint64_t indirectOffset) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) indirectBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) indirectBuffer},
 		},
 		{
 			.u64 = indirectOffset,
@@ -4880,7 +4904,7 @@ void aqua_wgpuRenderBundleEncoderDrawIndirect(wgpu_ctx_t ctx, WGPURenderBundleEn
 WGPURenderBundle aqua_wgpuRenderBundleEncoderFinish(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPU_NULLABLE WGPURenderBundleDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -4891,13 +4915,14 @@ WGPURenderBundle aqua_wgpuRenderBundleEncoderFinish(wgpu_ctx_t ctx, WGPURenderBu
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderBundleEncoderFinish, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuRenderBundleEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.buf.size = markerLabel.length,
@@ -4913,7 +4938,7 @@ void aqua_wgpuRenderBundleEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderBun
 void aqua_wgpuRenderBundleEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		}
 	};
 
@@ -4925,7 +4950,7 @@ void aqua_wgpuRenderBundleEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPURenderBundleE
 void aqua_wgpuRenderBundleEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.buf.size = groupLabel.length,
@@ -4941,13 +4966,13 @@ void aqua_wgpuRenderBundleEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderBundle
 void aqua_wgpuRenderBundleEncoderSetBindGroup(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.u32 = groupIndex,
 		},
 		{
-			.opaque_ptr = (uintptr_t) group,
+			.opaque_ptr = {ctx->hid, (uintptr_t) group},
 		},
 		{
 			.u32 = dynamicOffsetCount,
@@ -4966,10 +4991,10 @@ void aqua_wgpuRenderBundleEncoderSetBindGroup(wgpu_ctx_t ctx, WGPURenderBundleEn
 void aqua_wgpuRenderBundleEncoderSetIndexBuffer(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u32 = format,
@@ -4990,7 +5015,7 @@ void aqua_wgpuRenderBundleEncoderSetIndexBuffer(wgpu_ctx_t ctx, WGPURenderBundle
 void aqua_wgpuRenderBundleEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.buf.size = label.length,
@@ -5006,10 +5031,10 @@ void aqua_wgpuRenderBundleEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderBundleEncode
 void aqua_wgpuRenderBundleEncoderSetPipeline(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, WGPURenderPipeline pipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) pipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) pipeline},
 		}
 	};
 
@@ -5021,13 +5046,13 @@ void aqua_wgpuRenderBundleEncoderSetPipeline(wgpu_ctx_t ctx, WGPURenderBundleEnc
 void aqua_wgpuRenderBundleEncoderSetVertexBuffer(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder, uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		},
 		{
 			.u32 = slot,
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
@@ -5045,7 +5070,7 @@ void aqua_wgpuRenderBundleEncoderSetVertexBuffer(wgpu_ctx_t ctx, WGPURenderBundl
 void aqua_wgpuRenderBundleEncoderAddRef(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		}
 	};
 
@@ -5057,7 +5082,7 @@ void aqua_wgpuRenderBundleEncoderAddRef(wgpu_ctx_t ctx, WGPURenderBundleEncoder 
 void aqua_wgpuRenderBundleEncoderRelease(wgpu_ctx_t ctx, WGPURenderBundleEncoder renderBundleEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderBundleEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderBundleEncoder},
 		}
 	};
 
@@ -5069,7 +5094,7 @@ void aqua_wgpuRenderBundleEncoderRelease(wgpu_ctx_t ctx, WGPURenderBundleEncoder
 void aqua_wgpuRenderPassEncoderBeginOcclusionQuery(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t queryIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = queryIndex,
@@ -5084,7 +5109,7 @@ void aqua_wgpuRenderPassEncoderBeginOcclusionQuery(wgpu_ctx_t ctx, WGPURenderPas
 void aqua_wgpuRenderPassEncoderDraw(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = vertexCount,
@@ -5108,7 +5133,7 @@ void aqua_wgpuRenderPassEncoderDraw(wgpu_ctx_t ctx, WGPURenderPassEncoder render
 void aqua_wgpuRenderPassEncoderDrawIndexed(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = indexCount,
@@ -5135,10 +5160,10 @@ void aqua_wgpuRenderPassEncoderDrawIndexed(wgpu_ctx_t ctx, WGPURenderPassEncoder
 void aqua_wgpuRenderPassEncoderDrawIndexedIndirect(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUBuffer indirectBuffer, uint64_t indirectOffset) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) indirectBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) indirectBuffer},
 		},
 		{
 			.u64 = indirectOffset,
@@ -5153,10 +5178,10 @@ void aqua_wgpuRenderPassEncoderDrawIndexedIndirect(wgpu_ctx_t ctx, WGPURenderPas
 void aqua_wgpuRenderPassEncoderDrawIndirect(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUBuffer indirectBuffer, uint64_t indirectOffset) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) indirectBuffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) indirectBuffer},
 		},
 		{
 			.u64 = indirectOffset,
@@ -5171,7 +5196,7 @@ void aqua_wgpuRenderPassEncoderDrawIndirect(wgpu_ctx_t ctx, WGPURenderPassEncode
 void aqua_wgpuRenderPassEncoderEnd(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		}
 	};
 
@@ -5183,7 +5208,7 @@ void aqua_wgpuRenderPassEncoderEnd(wgpu_ctx_t ctx, WGPURenderPassEncoder renderP
 void aqua_wgpuRenderPassEncoderEndOcclusionQuery(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		}
 	};
 
@@ -5195,7 +5220,7 @@ void aqua_wgpuRenderPassEncoderEndOcclusionQuery(wgpu_ctx_t ctx, WGPURenderPassE
 void aqua_wgpuRenderPassEncoderExecuteBundles(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, size_t bundleCount, WGPURenderBundle const * bundles) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = bundleCount,
@@ -5214,7 +5239,7 @@ void aqua_wgpuRenderPassEncoderExecuteBundles(wgpu_ctx_t ctx, WGPURenderPassEnco
 void aqua_wgpuRenderPassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUStringView markerLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.buf.size = markerLabel.length,
@@ -5230,7 +5255,7 @@ void aqua_wgpuRenderPassEncoderInsertDebugMarker(wgpu_ctx_t ctx, WGPURenderPassE
 void aqua_wgpuRenderPassEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		}
 	};
 
@@ -5242,7 +5267,7 @@ void aqua_wgpuRenderPassEncoderPopDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEncod
 void aqua_wgpuRenderPassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUStringView groupLabel) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.buf.size = groupLabel.length,
@@ -5258,13 +5283,13 @@ void aqua_wgpuRenderPassEncoderPushDebugGroup(wgpu_ctx_t ctx, WGPURenderPassEnco
 void aqua_wgpuRenderPassEncoderSetBindGroup(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex, WGPU_NULLABLE WGPUBindGroup group, size_t dynamicOffsetCount, uint32_t const * dynamicOffsets) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = groupIndex,
 		},
 		{
-			.opaque_ptr = (uintptr_t) group,
+			.opaque_ptr = {ctx->hid, (uintptr_t) group},
 		},
 		{
 			.u32 = dynamicOffsetCount,
@@ -5283,7 +5308,7 @@ void aqua_wgpuRenderPassEncoderSetBindGroup(wgpu_ctx_t ctx, WGPURenderPassEncode
 void aqua_wgpuRenderPassEncoderSetBlendConstant(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUColor const * color) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.buf.size = sizeof *color,
@@ -5299,10 +5324,10 @@ void aqua_wgpuRenderPassEncoderSetBlendConstant(wgpu_ctx_t ctx, WGPURenderPassEn
 void aqua_wgpuRenderPassEncoderSetIndexBuffer(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUBuffer buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u32 = format,
@@ -5323,7 +5348,7 @@ void aqua_wgpuRenderPassEncoderSetIndexBuffer(wgpu_ctx_t ctx, WGPURenderPassEnco
 void aqua_wgpuRenderPassEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.buf.size = label.length,
@@ -5339,10 +5364,10 @@ void aqua_wgpuRenderPassEncoderSetLabel(wgpu_ctx_t ctx, WGPURenderPassEncoder re
 void aqua_wgpuRenderPassEncoderSetPipeline(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPURenderPipeline pipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) pipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) pipeline},
 		}
 	};
 
@@ -5354,7 +5379,7 @@ void aqua_wgpuRenderPassEncoderSetPipeline(wgpu_ctx_t ctx, WGPURenderPassEncoder
 void aqua_wgpuRenderPassEncoderSetScissorRect(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = x,
@@ -5378,7 +5403,7 @@ void aqua_wgpuRenderPassEncoderSetScissorRect(wgpu_ctx_t ctx, WGPURenderPassEnco
 void aqua_wgpuRenderPassEncoderSetStencilReference(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t reference) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = reference,
@@ -5393,13 +5418,13 @@ void aqua_wgpuRenderPassEncoderSetStencilReference(wgpu_ctx_t ctx, WGPURenderPas
 void aqua_wgpuRenderPassEncoderSetVertexBuffer(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, uint32_t slot, WGPU_NULLABLE WGPUBuffer buffer, uint64_t offset, uint64_t size) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.u32 = slot,
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
@@ -5417,7 +5442,7 @@ void aqua_wgpuRenderPassEncoderSetVertexBuffer(wgpu_ctx_t ctx, WGPURenderPassEnc
 void aqua_wgpuRenderPassEncoderSetViewport(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, float x, float y, float width, float height, float minDepth, float maxDepth) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
 			.f32 = x,
@@ -5447,7 +5472,7 @@ void aqua_wgpuRenderPassEncoderSetViewport(wgpu_ctx_t ctx, WGPURenderPassEncoder
 void aqua_wgpuRenderPassEncoderAddRef(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		}
 	};
 
@@ -5459,7 +5484,7 @@ void aqua_wgpuRenderPassEncoderAddRef(wgpu_ctx_t ctx, WGPURenderPassEncoder rend
 void aqua_wgpuRenderPassEncoderRelease(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		}
 	};
 
@@ -5471,7 +5496,7 @@ void aqua_wgpuRenderPassEncoderRelease(wgpu_ctx_t ctx, WGPURenderPassEncoder ren
 WGPUBindGroupLayout aqua_wgpuRenderPipelineGetBindGroupLayout(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline, uint32_t groupIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPipeline},
 		},
 		{
 			.u32 = groupIndex,
@@ -5481,13 +5506,14 @@ WGPUBindGroupLayout aqua_wgpuRenderPipelineGetBindGroupLayout(wgpu_ctx_t ctx, WG
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderPipelineGetBindGroupLayout, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuRenderPipelineSetLabel(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPipeline},
 		},
 		{
 			.buf.size = label.length,
@@ -5503,7 +5529,7 @@ void aqua_wgpuRenderPipelineSetLabel(wgpu_ctx_t ctx, WGPURenderPipeline renderPi
 void aqua_wgpuRenderPipelineAddRef(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPipeline},
 		}
 	};
 
@@ -5515,7 +5541,7 @@ void aqua_wgpuRenderPipelineAddRef(wgpu_ctx_t ctx, WGPURenderPipeline renderPipe
 void aqua_wgpuRenderPipelineRelease(wgpu_ctx_t ctx, WGPURenderPipeline renderPipeline) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPipeline,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPipeline},
 		}
 	};
 
@@ -5527,7 +5553,7 @@ void aqua_wgpuRenderPipelineRelease(wgpu_ctx_t ctx, WGPURenderPipeline renderPip
 void aqua_wgpuSamplerSetLabel(wgpu_ctx_t ctx, WGPUSampler sampler, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) sampler,
+			.opaque_ptr = {ctx->hid, (uintptr_t) sampler},
 		},
 		{
 			.buf.size = label.length,
@@ -5543,7 +5569,7 @@ void aqua_wgpuSamplerSetLabel(wgpu_ctx_t ctx, WGPUSampler sampler, WGPUStringVie
 void aqua_wgpuSamplerAddRef(wgpu_ctx_t ctx, WGPUSampler sampler) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) sampler,
+			.opaque_ptr = {ctx->hid, (uintptr_t) sampler},
 		}
 	};
 
@@ -5555,7 +5581,7 @@ void aqua_wgpuSamplerAddRef(wgpu_ctx_t ctx, WGPUSampler sampler) {
 void aqua_wgpuSamplerRelease(wgpu_ctx_t ctx, WGPUSampler sampler) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) sampler,
+			.opaque_ptr = {ctx->hid, (uintptr_t) sampler},
 		}
 	};
 
@@ -5567,7 +5593,7 @@ void aqua_wgpuSamplerRelease(wgpu_ctx_t ctx, WGPUSampler sampler) {
 WGPUFuture aqua_wgpuShaderModuleGetCompilationInfo(wgpu_ctx_t ctx, WGPUShaderModule shaderModule, WGPUCompilationInfoCallbackInfo callbackInfo) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) shaderModule,
+			.opaque_ptr = {ctx->hid, (uintptr_t) shaderModule},
 		},
 		{
 			.buf.size = sizeof callbackInfo,
@@ -5584,7 +5610,7 @@ WGPUFuture aqua_wgpuShaderModuleGetCompilationInfo(wgpu_ctx_t ctx, WGPUShaderMod
 void aqua_wgpuShaderModuleSetLabel(wgpu_ctx_t ctx, WGPUShaderModule shaderModule, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) shaderModule,
+			.opaque_ptr = {ctx->hid, (uintptr_t) shaderModule},
 		},
 		{
 			.buf.size = label.length,
@@ -5600,7 +5626,7 @@ void aqua_wgpuShaderModuleSetLabel(wgpu_ctx_t ctx, WGPUShaderModule shaderModule
 void aqua_wgpuShaderModuleAddRef(wgpu_ctx_t ctx, WGPUShaderModule shaderModule) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) shaderModule,
+			.opaque_ptr = {ctx->hid, (uintptr_t) shaderModule},
 		}
 	};
 
@@ -5612,7 +5638,7 @@ void aqua_wgpuShaderModuleAddRef(wgpu_ctx_t ctx, WGPUShaderModule shaderModule) 
 void aqua_wgpuShaderModuleRelease(wgpu_ctx_t ctx, WGPUShaderModule shaderModule) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) shaderModule,
+			.opaque_ptr = {ctx->hid, (uintptr_t) shaderModule},
 		}
 	};
 
@@ -5650,7 +5676,7 @@ void aqua_wgpuSupportedWGSLLanguageFeaturesFreeMembers(wgpu_ctx_t ctx, WGPUSuppo
 void aqua_wgpuSurfaceConfigure(wgpu_ctx_t ctx, WGPUSurface surface, WGPUSurfaceConfiguration const * config) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		},
 		{
 			.buf.size = sizeof *config,
@@ -5666,10 +5692,10 @@ void aqua_wgpuSurfaceConfigure(wgpu_ctx_t ctx, WGPUSurface surface, WGPUSurfaceC
 WGPUStatus aqua_wgpuSurfaceGetCapabilities(wgpu_ctx_t ctx, WGPUSurface surface, WGPUAdapter adapter, WGPUSurfaceCapabilities * capabilities) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		},
 		{
-			.opaque_ptr = (uintptr_t) adapter,
+			.opaque_ptr = {ctx->hid, (uintptr_t) adapter},
 		},
 		{
 			.buf.size = sizeof *capabilities,
@@ -5686,7 +5712,7 @@ WGPUStatus aqua_wgpuSurfaceGetCapabilities(wgpu_ctx_t ctx, WGPUSurface surface, 
 void aqua_wgpuSurfaceGetCurrentTexture(wgpu_ctx_t ctx, WGPUSurface surface, WGPUSurfaceTexture * surfaceTexture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		},
 		{
 			.buf.size = sizeof *surfaceTexture,
@@ -5702,7 +5728,7 @@ void aqua_wgpuSurfaceGetCurrentTexture(wgpu_ctx_t ctx, WGPUSurface surface, WGPU
 WGPUStatus aqua_wgpuSurfacePresent(wgpu_ctx_t ctx, WGPUSurface surface) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		}
 	};
 
@@ -5715,7 +5741,7 @@ WGPUStatus aqua_wgpuSurfacePresent(wgpu_ctx_t ctx, WGPUSurface surface) {
 void aqua_wgpuSurfaceUnconfigure(wgpu_ctx_t ctx, WGPUSurface surface) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		}
 	};
 
@@ -5727,7 +5753,7 @@ void aqua_wgpuSurfaceUnconfigure(wgpu_ctx_t ctx, WGPUSurface surface) {
 void aqua_wgpuSurfaceAddRef(wgpu_ctx_t ctx, WGPUSurface surface) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		}
 	};
 
@@ -5739,7 +5765,7 @@ void aqua_wgpuSurfaceAddRef(wgpu_ctx_t ctx, WGPUSurface surface) {
 void aqua_wgpuSurfaceRelease(wgpu_ctx_t ctx, WGPUSurface surface) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) surface,
+			.opaque_ptr = {ctx->hid, (uintptr_t) surface},
 		}
 	};
 
@@ -5764,7 +5790,7 @@ void aqua_wgpuSurfaceCapabilitiesFreeMembers(wgpu_ctx_t ctx, WGPUSurfaceCapabili
 WGPUTextureView aqua_wgpuTextureCreateView(wgpu_ctx_t ctx, WGPUTexture texture, WGPU_NULLABLE WGPUTextureViewDescriptor const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -5775,13 +5801,14 @@ WGPUTextureView aqua_wgpuTextureCreateView(wgpu_ctx_t ctx, WGPUTexture texture, 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureCreateView, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuTextureDestroy(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5793,7 +5820,7 @@ void aqua_wgpuTextureDestroy(wgpu_ctx_t ctx, WGPUTexture texture) {
 uint32_t aqua_wgpuTextureGetDepthOrArrayLayers(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5806,7 +5833,7 @@ uint32_t aqua_wgpuTextureGetDepthOrArrayLayers(wgpu_ctx_t ctx, WGPUTexture textu
 WGPUTextureDimension aqua_wgpuTextureGetDimension(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5819,7 +5846,7 @@ WGPUTextureDimension aqua_wgpuTextureGetDimension(wgpu_ctx_t ctx, WGPUTexture te
 WGPUTextureFormat aqua_wgpuTextureGetFormat(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5832,7 +5859,7 @@ WGPUTextureFormat aqua_wgpuTextureGetFormat(wgpu_ctx_t ctx, WGPUTexture texture)
 uint32_t aqua_wgpuTextureGetHeight(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5845,7 +5872,7 @@ uint32_t aqua_wgpuTextureGetHeight(wgpu_ctx_t ctx, WGPUTexture texture) {
 uint32_t aqua_wgpuTextureGetMipLevelCount(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5858,7 +5885,7 @@ uint32_t aqua_wgpuTextureGetMipLevelCount(wgpu_ctx_t ctx, WGPUTexture texture) {
 uint32_t aqua_wgpuTextureGetSampleCount(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5871,7 +5898,7 @@ uint32_t aqua_wgpuTextureGetSampleCount(wgpu_ctx_t ctx, WGPUTexture texture) {
 WGPUTextureUsage aqua_wgpuTextureGetUsage(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5884,7 +5911,7 @@ WGPUTextureUsage aqua_wgpuTextureGetUsage(wgpu_ctx_t ctx, WGPUTexture texture) {
 uint32_t aqua_wgpuTextureGetWidth(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5897,7 +5924,7 @@ uint32_t aqua_wgpuTextureGetWidth(wgpu_ctx_t ctx, WGPUTexture texture) {
 void aqua_wgpuTextureSetLabel(wgpu_ctx_t ctx, WGPUTexture texture, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		},
 		{
 			.buf.size = label.length,
@@ -5913,7 +5940,7 @@ void aqua_wgpuTextureSetLabel(wgpu_ctx_t ctx, WGPUTexture texture, WGPUStringVie
 void aqua_wgpuTextureAddRef(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5925,7 +5952,7 @@ void aqua_wgpuTextureAddRef(wgpu_ctx_t ctx, WGPUTexture texture) {
 void aqua_wgpuTextureRelease(wgpu_ctx_t ctx, WGPUTexture texture) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) texture,
+			.opaque_ptr = {ctx->hid, (uintptr_t) texture},
 		}
 	};
 
@@ -5937,7 +5964,7 @@ void aqua_wgpuTextureRelease(wgpu_ctx_t ctx, WGPUTexture texture) {
 void aqua_wgpuTextureViewSetLabel(wgpu_ctx_t ctx, WGPUTextureView textureView, WGPUStringView label) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) textureView,
+			.opaque_ptr = {ctx->hid, (uintptr_t) textureView},
 		},
 		{
 			.buf.size = label.length,
@@ -5953,7 +5980,7 @@ void aqua_wgpuTextureViewSetLabel(wgpu_ctx_t ctx, WGPUTextureView textureView, W
 void aqua_wgpuTextureViewAddRef(wgpu_ctx_t ctx, WGPUTextureView textureView) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) textureView,
+			.opaque_ptr = {ctx->hid, (uintptr_t) textureView},
 		}
 	};
 
@@ -5965,7 +5992,7 @@ void aqua_wgpuTextureViewAddRef(wgpu_ctx_t ctx, WGPUTextureView textureView) {
 void aqua_wgpuTextureViewRelease(wgpu_ctx_t ctx, WGPUTextureView textureView) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) textureView,
+			.opaque_ptr = {ctx->hid, (uintptr_t) textureView},
 		}
 	};
 
@@ -5977,7 +6004,7 @@ void aqua_wgpuTextureViewRelease(wgpu_ctx_t ctx, WGPUTextureView textureView) {
 void aqua_wgpuGenerateReport(wgpu_ctx_t ctx, WGPUInstance instance, WGPUGlobalReport * report) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		},
 		{
 			.buf.size = sizeof *report,
@@ -5993,7 +6020,7 @@ void aqua_wgpuGenerateReport(wgpu_ctx_t ctx, WGPUInstance instance, WGPUGlobalRe
 size_t aqua_wgpuInstanceEnumerateAdapters(wgpu_ctx_t ctx, WGPUInstance instance, WGPU_NULLABLE WGPUInstanceEnumerateAdapterOptions const * options, WGPUAdapter * adapters) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) instance,
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
 		},
 		{
 			.buf.size = sizeof *options,
@@ -6014,7 +6041,7 @@ size_t aqua_wgpuInstanceEnumerateAdapters(wgpu_ctx_t ctx, WGPUInstance instance,
 WGPUSubmissionIndex aqua_wgpuQueueSubmitForIndex(wgpu_ctx_t ctx, WGPUQueue queue, size_t commandCount, WGPUCommandBuffer const * commands) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) queue,
+			.opaque_ptr = {ctx->hid, (uintptr_t) queue},
 		},
 		{
 			.u32 = commandCount,
@@ -6034,7 +6061,7 @@ WGPUSubmissionIndex aqua_wgpuQueueSubmitForIndex(wgpu_ctx_t ctx, WGPUQueue queue
 WGPUBool aqua_wgpuDevicePoll(wgpu_ctx_t ctx, WGPUDevice device, WGPUBool wait, WGPU_NULLABLE WGPUSubmissionIndex const * submissionIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.b = wait,
@@ -6054,7 +6081,7 @@ WGPUBool aqua_wgpuDevicePoll(wgpu_ctx_t ctx, WGPUDevice device, WGPUBool wait, W
 WGPUShaderModule aqua_wgpuDeviceCreateShaderModuleSpirV(wgpu_ctx_t ctx, WGPUDevice device, WGPUShaderModuleDescriptorSpirV const * descriptor) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) device,
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
 		},
 		{
 			.buf.size = sizeof *descriptor,
@@ -6065,16 +6092,17 @@ WGPUShaderModule aqua_wgpuDeviceCreateShaderModuleSpirV(wgpu_ctx_t ctx, WGPUDevi
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceCreateShaderModuleSpirV, args);
 	kos_flush(true);
 	
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 void aqua_wgpuSetLogCallback(wgpu_ctx_t ctx, WGPULogCallback callback, void * userdata) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) callback,
+			.opaque_ptr = {ctx->hid, (uintptr_t) callback},
 		},
 		{
-			.opaque_ptr = (uintptr_t) userdata,
+			.opaque_ptr = {ctx->hid, (uintptr_t) userdata},
 		}
 	};
 
@@ -6109,7 +6137,7 @@ uint32_t aqua_wgpuGetVersion(wgpu_ctx_t ctx) {
 void aqua_wgpuRenderPassEncoderSetPushConstants(wgpu_ctx_t ctx, WGPURenderPassEncoder encoder, WGPUShaderStage stages, uint32_t offset, uint32_t sizeBytes, void const * data) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
 			.u64 = stages,
@@ -6121,7 +6149,7 @@ void aqua_wgpuRenderPassEncoderSetPushConstants(wgpu_ctx_t ctx, WGPURenderPassEn
 			.u32 = sizeBytes,
 		},
 		{
-			.opaque_ptr = (uintptr_t) data,
+			.opaque_ptr = {ctx->hid, (uintptr_t) data},
 		}
 	};
 
@@ -6133,7 +6161,7 @@ void aqua_wgpuRenderPassEncoderSetPushConstants(wgpu_ctx_t ctx, WGPURenderPassEn
 void aqua_wgpuComputePassEncoderSetPushConstants(wgpu_ctx_t ctx, WGPUComputePassEncoder encoder, uint32_t offset, uint32_t sizeBytes, void const * data) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
 			.u32 = offset,
@@ -6142,7 +6170,7 @@ void aqua_wgpuComputePassEncoderSetPushConstants(wgpu_ctx_t ctx, WGPUComputePass
 			.u32 = sizeBytes,
 		},
 		{
-			.opaque_ptr = (uintptr_t) data,
+			.opaque_ptr = {ctx->hid, (uintptr_t) data},
 		}
 	};
 
@@ -6154,7 +6182,7 @@ void aqua_wgpuComputePassEncoderSetPushConstants(wgpu_ctx_t ctx, WGPUComputePass
 void aqua_wgpuRenderBundleEncoderSetPushConstants(wgpu_ctx_t ctx, WGPURenderBundleEncoder encoder, WGPUShaderStage stages, uint32_t offset, uint32_t sizeBytes, void const * data) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
 			.u64 = stages,
@@ -6166,7 +6194,7 @@ void aqua_wgpuRenderBundleEncoderSetPushConstants(wgpu_ctx_t ctx, WGPURenderBund
 			.u32 = sizeBytes,
 		},
 		{
-			.opaque_ptr = (uintptr_t) data,
+			.opaque_ptr = {ctx->hid, (uintptr_t) data},
 		}
 	};
 
@@ -6178,10 +6206,10 @@ void aqua_wgpuRenderBundleEncoderSetPushConstants(wgpu_ctx_t ctx, WGPURenderBund
 void aqua_wgpuRenderPassEncoderMultiDrawIndirect(wgpu_ctx_t ctx, WGPURenderPassEncoder encoder, WGPUBuffer buffer, uint64_t offset, uint32_t count) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
@@ -6199,10 +6227,10 @@ void aqua_wgpuRenderPassEncoderMultiDrawIndirect(wgpu_ctx_t ctx, WGPURenderPassE
 void aqua_wgpuRenderPassEncoderMultiDrawIndexedIndirect(wgpu_ctx_t ctx, WGPURenderPassEncoder encoder, WGPUBuffer buffer, uint64_t offset, uint32_t count) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
@@ -6220,16 +6248,16 @@ void aqua_wgpuRenderPassEncoderMultiDrawIndexedIndirect(wgpu_ctx_t ctx, WGPURend
 void aqua_wgpuRenderPassEncoderMultiDrawIndirectCount(wgpu_ctx_t ctx, WGPURenderPassEncoder encoder, WGPUBuffer buffer, uint64_t offset, WGPUBuffer count_buffer, uint64_t count_buffer_offset, uint32_t max_count) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
 		},
 		{
-			.opaque_ptr = (uintptr_t) count_buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) count_buffer},
 		},
 		{
 			.u64 = count_buffer_offset,
@@ -6247,16 +6275,16 @@ void aqua_wgpuRenderPassEncoderMultiDrawIndirectCount(wgpu_ctx_t ctx, WGPURender
 void aqua_wgpuRenderPassEncoderMultiDrawIndexedIndirectCount(wgpu_ctx_t ctx, WGPURenderPassEncoder encoder, WGPUBuffer buffer, uint64_t offset, WGPUBuffer count_buffer, uint64_t count_buffer_offset, uint32_t max_count) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) encoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) encoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) buffer},
 		},
 		{
 			.u64 = offset,
 		},
 		{
-			.opaque_ptr = (uintptr_t) count_buffer,
+			.opaque_ptr = {ctx->hid, (uintptr_t) count_buffer},
 		},
 		{
 			.u64 = count_buffer_offset,
@@ -6274,10 +6302,10 @@ void aqua_wgpuRenderPassEncoderMultiDrawIndexedIndirectCount(wgpu_ctx_t ctx, WGP
 void aqua_wgpuComputePassEncoderBeginPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUQuerySet querySet, uint32_t queryIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.u32 = queryIndex,
@@ -6292,7 +6320,7 @@ void aqua_wgpuComputePassEncoderBeginPipelineStatisticsQuery(wgpu_ctx_t ctx, WGP
 void aqua_wgpuComputePassEncoderEndPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		}
 	};
 
@@ -6304,10 +6332,10 @@ void aqua_wgpuComputePassEncoderEndPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPUC
 void aqua_wgpuRenderPassEncoderBeginPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUQuerySet querySet, uint32_t queryIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.u32 = queryIndex,
@@ -6322,7 +6350,7 @@ void aqua_wgpuRenderPassEncoderBeginPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPU
 void aqua_wgpuRenderPassEncoderEndPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		}
 	};
 
@@ -6334,10 +6362,10 @@ void aqua_wgpuRenderPassEncoderEndPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPURe
 void aqua_wgpuComputePassEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUQuerySet querySet, uint32_t queryIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) computePassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) computePassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.u32 = queryIndex,
@@ -6352,10 +6380,10 @@ void aqua_wgpuComputePassEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPUComputePassEn
 void aqua_wgpuRenderPassEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUQuerySet querySet, uint32_t queryIndex) {
 	kos_val_t const args[] = {
 		{
-			.opaque_ptr = (uintptr_t) renderPassEncoder,
+			.opaque_ptr = {ctx->hid, (uintptr_t) renderPassEncoder},
 		},
 		{
-			.opaque_ptr = (uintptr_t) querySet,
+			.opaque_ptr = {ctx->hid, (uintptr_t) querySet},
 		},
 		{
 			.u32 = queryIndex,

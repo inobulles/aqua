@@ -259,7 +259,7 @@ for line in lines:
 			args.append(f".buf.size = sizeof *{p},\n\t\t\t.buf.ptr = (void*) {p},")
 
 		elif kos_t == "KOS_TYPE_OPAQUE_PTR":
-			args.append(f".opaque_ptr = (uintptr_t) {p},")
+			args.append(f".opaque_ptr = {{ctx->hid, (uintptr_t) {p}}},")
 
 		else:
 			union = kos_type_to_union(kos_t)
@@ -277,7 +277,9 @@ for line in lines:
 		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;"
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
-		ret = f"\n\treturn (void*) (uintptr_t) ctx->last_ret.opaque_ptr;"
+		ret = f"""
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;"""
 
 	else:
 		union = kos_type_to_union(kos_ret_type)
