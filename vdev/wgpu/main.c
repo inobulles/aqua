@@ -37,7 +37,7 @@ static void probe(void) {
 			.vdriver_human = VDRIVER_HUMAN,
 
 			.pref = 0,
-			.host_id = 0,
+			.host_id = VDRIVER.host_id,
 			.vdev_id = only_vid,
 		},
 	};
