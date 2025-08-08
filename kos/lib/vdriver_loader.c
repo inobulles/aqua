@@ -65,7 +65,12 @@ void vdriver_loader_init(void) {
 	LOG_V(cls, "VDRIVER path is '%s'.", vdriver_path);
 }
 
-static vdriver_t* load_from_path(char const* path, kos_notif_cb_t notif_cb, void* notif_data) {
+static vdriver_t* load_from_path(
+	char const* path,
+	uint64_t host_id,
+	kos_notif_cb_t notif_cb,
+	void* notif_data
+) {
 	LOG_V(cls, "Trying to load VDRIVER from path: %s", path);
 	void* const lib = dlopen(path, RTLD_LAZY);
 
@@ -94,8 +99,9 @@ static vdriver_t* load_from_path(char const* path, kos_notif_cb_t notif_cb, void
 
 	cur_vid_slice++;
 
-	// Set other miscellaneous values on VDRIVER.
+	// Set other values on VDRIVER.
 
+	vdriver->host_id = host_id;
 	vdriver->notif_cb = notif_cb;
 	vdriver->notif_data = notif_data;
 
@@ -116,7 +122,12 @@ static vdriver_t* load_from_path(char const* path, kos_notif_cb_t notif_cb, void
 	return vdriver;
 }
 
-void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, void* notif_data) {
+void vdriver_loader_req_local_vdev(
+	char const* spec,
+	uint64_t host_id,
+	kos_notif_cb_t notif_cb,
+	void* notif_data
+) {
 	LOG_V(cls, "Trying to find local VDRIVER providing spec \"%s\".", spec);
 
 	char* __attribute__((cleanup(strfree))) path_copy_orig = strdup(vdriver_path);
@@ -136,7 +147,7 @@ void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, vo
 
 		// Driver file exists, we should be able to load it.
 
-		vdriver_t* const vdriver = load_from_path(candidate, notif_cb, notif_data);
+		vdriver_t* const vdriver = load_from_path(candidate, host_id, notif_cb, notif_data);
 
 		if (vdriver == NULL) {
 			continue;
@@ -154,7 +165,11 @@ void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, vo
 	}
 }
 
-void vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_data) {
+void vdriver_loader_vdev_local_inventory(
+	uint64_t host_id,
+	kos_notif_cb_t notif_cb,
+	void* notif_data
+) {
 	LOG_V(cls, "Taking inventory of all VDEVs available on the system.");
 
 	char* __attribute__((cleanup(strfree))) path_copy_orig = strdup(vdriver_path);
@@ -188,7 +203,7 @@ void vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_da
 			asprintf(&candidate, "%s/%s", tok, ent->d_name);
 			assert(candidate != NULL);
 
-			vdriver_t* const vdriver = load_from_path(candidate, notif_cb, notif_data);
+			vdriver_t* const vdriver = load_from_path(candidate, host_id, notif_cb, notif_data);
 
 			if (vdriver == NULL) {
 				continue;

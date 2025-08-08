@@ -43,6 +43,11 @@ typedef struct {
 	uint32_t vers;
 
 	/**
+	 * The host ID this VDRIVER is running on.
+	 */
+	uint64_t host_id;
+
+	/**
 	 * The bottom of the VDEV ID slice this VDRIVER is allowed to use.
 	 *
 	 * This is set by the KOS when loading the VDRIVER; it should not be written to by the VDRIVER, only read from.

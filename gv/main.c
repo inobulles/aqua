@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
 	state.vdevs = NULL;
 
 	vdriver_loader_init();
-	vdriver_loader_vdev_local_inventory(vdev_inventory_notif_cb, &state);
+	vdriver_loader_vdev_local_inventory(state.host_id, vdev_inventory_notif_cb, &state);
 
 	LOG_I(state.init_cls, "Found and inventoried %zu VDEVs.", state.vdev_count);
 	LOG_V(state.init_cls, "Find the interface's IPv4 address.");
