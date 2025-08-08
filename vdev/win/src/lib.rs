@@ -228,7 +228,7 @@ static FNS: [Fn; 4] = [
 			});
 
 			Some(kos_val_t {
-				opaque_ptr: Box::into_raw(win) as *mut c_void as u64,
+				opaque_ptr: unsafe { kos_make_opaque_ptr(Box::into_raw(win) as *mut c_void) },
 			})
 		},
 	},
@@ -240,7 +240,13 @@ static FNS: [Fn; 4] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let _ = unsafe { Box::from_raw((*args).opaque_ptr as *mut Win) };
+			let win_ptr = unsafe { kos_get_local_opaque_ptr((*args).opaque_ptr) };
+			assert!(
+				!win_ptr.is_null(),
+				"Non-local opaque pointer passed to destroy for window."
+			); // TODO Make proper error.
+
+			let _ = unsafe { Box::from_raw(win_ptr) };
 
 			// We don't need to explicitly drop the box; from_raw automatically reclaims ownership and its Drop implementation will be called as we go out of scope.
 			None
@@ -260,7 +266,13 @@ static FNS: [Fn; 4] = [
 			},
 		],
 		cb: |args| {
-			let mut win = unsafe { Box::from_raw((*args).opaque_ptr as *mut Win) };
+			let win_ptr = unsafe { kos_get_local_opaque_ptr((*args).opaque_ptr) };
+			assert!(
+				!win_ptr.is_null(),
+				"Non-local opaque pointer passed to destroy for window."
+			); // TODO Make proper error.
+
+			let mut win = unsafe { Box::from_raw(win_ptr as *mut Win) };
 			let ino = unsafe { (*args.add(1)).u32_ };
 
 			win.ino = Some(ino);
@@ -277,7 +289,13 @@ static FNS: [Fn; 4] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let mut win = unsafe { Box::from_raw((*args).opaque_ptr as *mut Win) };
+			let win_ptr = unsafe { kos_get_local_opaque_ptr((*args).opaque_ptr) };
+			assert!(
+				!win_ptr.is_null(),
+				"Non-local opaque pointer passed to destroy for window."
+			); // TODO Make proper error.
+
+			let mut win = unsafe { Box::from_raw(win_ptr as *mut Win) };
 
 			let event_loop = EventLoop::new().expect("failed to create event loop");
 			event_loop.set_control_flow(ControlFlow::Poll);
@@ -448,6 +466,7 @@ pub static mut VDRIVER: vdriver_t = vdriver_t {
 	call: Some(call),
 
 	// We have to set these explicitly because.
+	host_id: 0,
 	vdev_id_lo: 0,
 	vdev_id_hi: 0,
 	notif_cb: None,
