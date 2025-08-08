@@ -6,6 +6,7 @@ import bob.go
 
 deps = [
 	Dep.local("../../lib/bindings/go"),
+	Dep.local("../../kos"),
 ]
 
 let bin = Go.build([])
