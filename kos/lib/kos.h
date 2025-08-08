@@ -379,18 +379,62 @@ typedef enum : uint8_t {
 
 /**
  * A VDEV descriptor.
- *
- * TODO Write this up.
  */
 typedef struct __attribute__((packed)) {
-	uint64_t host_id; // A unique identifier for the host, could be MAC address of one of its interfaces e.g. All `VDEV_KIND_LOCAL` and `VDEV_KIND_UDS` VDEV's should have the same host ID a priori.
-	uint64_t vdev_id; // A unique identifier for the device within the host's namespace. Thus, a VDEV should be uniquely identifiable by just HID:VID.
-	uint8_t spec[64]; // Something like "aquabsd.black.wgpu".
-	uint32_t vers;    // I don't know? Maybe an app could use this as grounds for a rejection before even discovering what commands the VDEV supports.
+	/**
+	 * The host ID the VDEV is located on.
+	 *
+	 * Note to VDRIVER implementers: the host ID is set by the KOS in your `VDRIVER` symbol in the `host_id` member.
+	 * You should pass this on when reporting VDEVs through {@link KOS_NOTIF_ATTACH}.
+	 */
+	uint64_t host_id;
+	/**
+	 * A unique identifier for the device within the host's VDEV ID slice.
+	 *
+	 * A VDEV should be uniquely identifiable by just `host_id:vdev_id` (HID:VID).
+	 *
+	 * Note to VDRIVER implementers: you choose this ID on your VDEVs when reporting them through {@link KOS_NOTIF_ATTACH}, but it must be in the `[VDRIVER.vdev_id_lo; VDRIVER.vdev_id_hi]` range (which are set by the KOS).
+	 * For example, if you had only one VDEV to report, you could simply set its ID to `VDRIVER.vdev_id_lo`.
+	 */
+	uint64_t vdev_id;
+
+	/**
+	 * The specification this VDEV follows.
+	 *
+	 * E.g. "aquabsd.black.wgpu" for the WGPU VDEV on aquaBSD Black Forest.
+	 */
+	uint8_t spec[64];
+	/**
+	 * Don't think we'll need this, since new versions of a spec should probably just use a different spec name.
+	 */
+	uint32_t vers;
+
+	/**
+	 * A human-readable name for the VDEV.
+	 *
+	 * This doesn't need to contain any info about the VDRIVER, just a way to distinguish this VDEV from others exported by this VDRIVER.
+	 */
 	uint8_t human[256];
-	uint8_t vdriver_human[256]; // Something like "Default .wgpu device for aquaBSD Black".
-	kos_vdev_kind_t kind;       // If the WGPU VDEV was on another machine, `VDEV_KIND_GV`.
-	uint32_t pref;              // The KOS' preference level for this device. Could just be 0, or something higher to indicate the KOS would rather the app use this one than another.
+	/**
+	 * A human-readable name for the VDRIVER that provides this VDEV.
+	 *
+	 * Something like "Default .wgpu device for aquaBSD Black Forest".
+	 */
+	uint8_t vdriver_human[256];
+
+	/**
+	 * The VDEV kind, i.e. where it is.
+	 *
+	 * Note to VDRIVER implementers: you should always set this to {@link KOS_VDEV_KIND_LOCAL} when reporting VDEVs through {@link KOS_NOTIF_ATTACH}.
+	 */
+	kos_vdev_kind_t kind;
+	/**
+	 * The KOS' or VDRIVER's preference level for this VDEV.
+	 *
+	 * Could just be 0, or something higher to indicate the KOS or VDRIVER would rather the app use this one than another.
+	 * E.g., the back-facing camera on a phone could have a higher preference value than the front-facing one.
+	 */
+	uint32_t pref;
 } kos_vdev_descr_t;
 
 /**
