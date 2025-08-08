@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 #include "win.h"
 #include <aqua/kos.h>
@@ -234,11 +234,11 @@ win_t win_create(win_ctx_t ctx) {
 	kos_flush(true);
 
 	win->ctx = ctx;
-	win->opaque_ptr = (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	win->opaque_ptr = ctx->last_ret.opaque_ptr;
 	win->ino = kos_gen_ino();
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
+		{.opaque_ptr = win->opaque_ptr},
 		{.u32 = 0},
 	};
 
@@ -266,7 +266,7 @@ void win_destroy(win_t win) {
 	}
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
+		{.opaque_ptr = win->opaque_ptr},
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
@@ -293,7 +293,7 @@ void win_loop(win_t win) {
 	}
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) win->opaque_ptr},
+		{.opaque_ptr = win->opaque_ptr},
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);

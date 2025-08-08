@@ -99,7 +99,7 @@ ui_t ui_create(ui_ctx_t ctx) {
 	kos_flush(true);
 
 	ui->ctx = ctx;
-	ui->opaque_ptr = (void*) (uintptr_t) ctx->last_ret.opaque_ptr;
+	ui->opaque_ptr = ctx->last_ret.opaque_ptr;
 
 	return ui;
 }
@@ -108,7 +108,7 @@ void ui_destroy(ui_t ui) {
 	ui_ctx_t const ctx = ui->ctx;
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) ui->opaque_ptr},
+		{.opaque_ptr = ui->opaque_ptr},
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);

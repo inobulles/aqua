@@ -27,10 +27,10 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device) {
 	}
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) ui->opaque_ptr},
+		{.opaque_ptr = ui->opaque_ptr},
 		{.u64 = hid},
 		{.u64 = vid},
-		{.opaque_ptr = (uintptr_t) device},
+		{.opaque_ptr = {ctx->hid, (uintptr_t) device}},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->backend_wgpu_fns.init, args);
@@ -52,9 +52,9 @@ int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_en
 	ui_ctx_t const ctx = ui->ctx;
 
 	kos_val_t const args[] = {
-		{.opaque_ptr = (uintptr_t) ui->opaque_ptr},
-		{.opaque_ptr = (uintptr_t) frame},
-		{.opaque_ptr = (uintptr_t) command_encoder},
+		{.opaque_ptr = ui->opaque_ptr},
+		{.opaque_ptr = {ctx->hid, (uintptr_t) frame}},
+		{.opaque_ptr = {ctx->hid, (uintptr_t) command_encoder}},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->backend_wgpu_fns.render, args);

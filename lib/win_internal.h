@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 #pragma once
 
@@ -11,7 +11,7 @@
 
 struct win_t {
 	win_ctx_t ctx;
-	void* opaque_ptr;
+	kos_opaque_ptr_t opaque_ptr;
 	kos_ino_t ino;
 
 	void* redraw_data;
