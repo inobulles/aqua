@@ -228,7 +228,7 @@ static FNS: [Fn; 4] = [
 			});
 
 			Some(kos_val_t {
-				opaque_ptr: unsafe { kos_make_opaque_ptr(Box::into_raw(win) as *mut c_void) },
+				opaque_ptr: unsafe { vdriver_make_opaque_ptr(Box::into_raw(win) as *mut c_void) },
 			})
 		},
 	},
@@ -240,7 +240,7 @@ static FNS: [Fn; 4] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let win_ptr = unsafe { kos_get_local_opaque_ptr((*args).opaque_ptr) };
+			let win_ptr = unsafe { vdriver_unwrap_local_opaque_ptr((*args).opaque_ptr) };
 			assert!(
 				!win_ptr.is_null(),
 				"Non-local opaque pointer passed to destroy for window."
@@ -266,7 +266,7 @@ static FNS: [Fn; 4] = [
 			},
 		],
 		cb: |args| {
-			let win_ptr = unsafe { kos_get_local_opaque_ptr((*args).opaque_ptr) };
+			let win_ptr = unsafe { vdriver_unwrap_local_opaque_ptr((*args).opaque_ptr) };
 			assert!(
 				!win_ptr.is_null(),
 				"Non-local opaque pointer passed to destroy for window."
@@ -289,7 +289,7 @@ static FNS: [Fn; 4] = [
 			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		}],
 		cb: |args| {
-			let win_ptr = unsafe { kos_get_local_opaque_ptr((*args).opaque_ptr) };
+			let win_ptr = unsafe { vdriver_unwrap_local_opaque_ptr((*args).opaque_ptr) };
 			assert!(
 				!win_ptr.is_null(),
 				"Non-local opaque pointer passed to destroy for window."
