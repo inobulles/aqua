@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2024-2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2024-2025 Aymeric Wibo
 
 #pragma once
 
@@ -41,6 +41,8 @@ typedef struct state_t state_t;
 struct state_t {
 	struct ifaddrs* found_ether;
 	struct ifaddrs* found_ipv4;
+
+	uint64_t host_id;
 
 	int sock;
 	int elp_sock;
@@ -88,9 +90,9 @@ typedef enum : uint8_t {
 #define UDP_BUDGET 300 // Maximum size of our UDP packets.
 
 typedef struct __attribute__((packed)) {
-	uint8_t vers    : 8;
-	uint64_t unique : 56;
-	uint64_t host   : 64;
+	uint8_t vers     : 8;
+	uint64_t unique  : 56;
+	uint64_t host_id : 64;
 	uint8_t name[64];
 } elp_t;
 

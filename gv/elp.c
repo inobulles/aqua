@@ -45,16 +45,13 @@ static void* elp_sender(void* arg) {
 
 	LOG_V(state->elp_cls, "Building ELP packet and address info.");
 
-	uint64_t const mac = sockaddr_to_mac(state->found_ether->ifa_addr) | 0x11AD; // Approximation of Link-Local ADdress.
 	srand(time(NULL));
-
-	LOG_I(state->elp_cls, "Using host ID 0x%" PRIx64 " for ELP packets.", mac);
 
 	packet_t const packet = {
 		.header.type = ELP,
 		.elp.unique = rand(),
 		.elp.vers = ELP_VERS,
-		.elp.host = mac,
+		.elp.host_id = state->host_id,
 	};
 
 	size_t const packet_size = sizeof packet.header + sizeof packet.elp;
@@ -145,7 +142,13 @@ static void* elp_listener(void* arg) {
 		// If we already have a node with this host ID, just refresh its TTL.
 		// If it's unique has changed since last time we saw it, discard the previous one and start over.
 
-		LOG_V(state->elp_cls, "Received ELP packet from %s:0x%x (host_id=0x%" PRIx64 ").", inet_ntoa(recv_addr.sin_addr), ntohs(recv_addr.sin_port), buf.elp.host);
+		LOG_V(
+			state->elp_cls,
+			"Received ELP packet from %s:0x%x (host_id=0x%" PRIx64 ").",
+			inet_ntoa(recv_addr.sin_addr),
+			ntohs(recv_addr.sin_port),
+			buf.elp.host_id
+		);
 
 		pthread_mutex_lock(&state->nodes_mutex);
 		node_t* found = NULL;
@@ -159,7 +162,7 @@ static void* elp_listener(void* arg) {
 				continue;
 			}
 
-			if (node->host == buf.elp.host) {
+			if (node->host == buf.elp.host_id) {
 				node->ttl = NODE_TTL;
 
 				if (node->unique == buf.elp.unique) {
@@ -200,11 +203,19 @@ static void* elp_listener(void* arg) {
 		// Fill in the node information.
 
 		char const* const verb = unique_changed ? "Updated" : "Found new";
-		LOG_I(state->elp_cls, "%s node with host ID 0x%" PRIx64 " (at %s) with %zu VDEVs.", verb, buf.elp.host, inet_ntoa(recv_addr.sin_addr), vdev_count);
+
+		LOG_I(
+			state->elp_cls,
+			"%s node with host ID 0x%" PRIx64 " (at %s) with %zu VDEVs.",
+			verb,
+			buf.elp.host_id,
+			inet_ntoa(recv_addr.sin_addr),
+			vdev_count
+		);
 
 		found->slot_used = true;
 		found->unique = buf.elp.unique;
-		found->host = buf.elp.host;
+		found->host = buf.elp.host_id;
 		found->addr = recv_addr;
 		found->ttl = NODE_TTL;
 
