@@ -1,7 +1,8 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2025 Aymeric Wibo
 
-#include "../../kos/lib/vdriver.h"
+#include <aqua/vdriver.h>
+#include <umber.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -11,7 +12,14 @@
 #define VDRIVER_HUMAN "UI driver"
 
 vdriver_t VDRIVER;
+
+static umber_class_t const* cls = NULL;
 static vid_t only_vid;
+
+static void init(void) {
+	cls = umber_class_new(SPEC, UMBER_LVL_WARN, "aqua.black.ui UI VDRIVER.");
+	assert(cls != NULL);
+}
 
 static void probe(void) {
 	assert(VDRIVER.notif_cb != NULL);
@@ -184,28 +192,60 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		.cookie = cookie,
 	};
 
+	void* ui = NULL;
+
+	// TODO All these breaks should be returning CALL_FAIL.
+
 	switch (fn_id) {
-	case 0:
-		notif.call_ret.ret.opaque_ptr = (uintptr_t) GoUiCreate();
+	case 0:;
+		ui = (void*) GoUiCreate();
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(ui);
 		break;
-	case 1:
-		GoUiDestroy((uintptr_t) args[0].opaque_ptr);
+	case 1:;
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'destroy' called with non-local or NULL UI.");
+			break;
+		}
+
+		GoUiDestroy((uintptr_t) ui);
 		break;
 	// WebGPU backend specific stuff.
 	case 4:
-		GoUiBackendWgpuInit(
-			(uintptr_t) args[0].opaque_ptr,
-			args[1].u64,
-			args[2].u64,
-			(void*) (uintptr_t) args[3].opaque_ptr
-		);
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'destroy' called with non-local or NULL UI.");
+			break;
+		}
+
+		void* const device = vdriver_unwrap_local_opaque_ptr(args[3].opaque_ptr);
+
+		if (device == NULL) {
+			LOG_E(cls, "'backend_wgpu_init' called with non-local or NULL WebGPU device. Rendering to remote WebGPU devices will come in the future.");
+			break;
+		}
+
+		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device);
 		break;
 	case 5:
-		GoUiBackendWgpuRender(
-			(uintptr_t) args[0].opaque_ptr,
-			(void*) (uintptr_t) args[1].opaque_ptr,
-			(void*) (uintptr_t) args[2].opaque_ptr
-		);
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'backend_wgpu_render' called with non-local or NULL UI.");
+			break;
+		}
+
+		void* const frame_encoder = vdriver_unwrap_local_opaque_ptr(args[1].opaque_ptr);
+		void* const command_encoder = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
+
+		if (frame_encoder == NULL || command_encoder == NULL) {
+			LOG_E(cls, "'backend_wgpu_render' called with non-local or NULL frame or command encoder. This will be supported in the future.");
+			break;
+		}
+
+		GoUiBackendWgpuRender((uintptr_t) ui, frame_encoder, command_encoder);
 		break;
 	default:
 		assert(false); // TODO This should probably return CALL_FAIL or something.
@@ -218,6 +258,7 @@ vdriver_t VDRIVER = {
 	.spec = SPEC,
 	.human = VDRIVER_HUMAN,
 	.vers = VERS,
+	.init = init,
 	.probe = probe,
 	.conn = conn,
 	.call = call,
