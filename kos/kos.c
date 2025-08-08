@@ -59,11 +59,14 @@ kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t*
 		return KOS_API_VERS_NONE;
 	}
 
+	if (get_gv_host_id(&local_host_id) < 0) {
+		LOG_E(init_cls, "Failed to get local GrapeVine host ID.");
+		return KOS_API_VERS_NONE;
+	}
+
 	descr->api_vers = KOS_API_V4;
 	descr->best_api_vers = KOS_API_V4;
 	strcpy((char*) descr->name, "Generic Unix-like system's KOS");
-
-	local_host_id = 0; // TODO This should be the actual ID that we're gonna advertise on the GV.
 
 	LOG_I(init_cls, "KOS hello successful: API version %" PRIu64 ", best API version %" PRIu64 ", name \"%s\".", descr->api_vers, descr->best_api_vers, descr->name);
 
