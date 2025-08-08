@@ -118,7 +118,7 @@ void kos_req_vdev(char const* spec) {
 	// TODO Not sure I like how init_cls is used here.
 
 	LOG_V(init_cls, "Trying to find local VDEV for spec \"%s\".", spec);
-	vdriver_loader_req_local_vdev(spec, notif_cb, client_notif_data);
+	vdriver_loader_req_local_vdev(spec, local_host_id, notif_cb, client_notif_data);
 
 	LOG_V(init_cls, "Trying to find VDEV on the GrapeVine for spec '%s'.", spec);
 

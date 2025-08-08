@@ -48,20 +48,31 @@ void vdriver_loader_init(void);
  * This will look for and load the VDRIVER implementing this spec if it exists, 
  *
  * @param spec The specification of the VDEV to request.
+ * @param host_id The host ID to pass to the VDRIVER when loading it.
  * @param notif_cb The callback to call for {@link KOS_NOTIF_ATTACH} notifications.
  * @param notif_data The data to pass to the notification callback.
  */
-void vdriver_loader_req_local_vdev(char const* spec, kos_notif_cb_t notif_cb, void* notif_data);
+void vdriver_loader_req_local_vdev(
+	char const* spec,
+	uint64_t host_id,
+	kos_notif_cb_t notif_cb,
+	void* notif_data
+);
 
 /**
  * Take inventory of all VDEVs available on the system.
  *
  * This will load all VDRIVERs found and probe for all their VDEVs.
  *
+ * @param host_id The host ID to pass to the VDRIVERs when loading them.
  * @param notif_cb The callback to call for {@link KOS_NOTIF_ATTACH} notifications.
  * @param notif_data The data to pass to the notification callback.
  */
-void vdriver_loader_vdev_local_inventory(kos_notif_cb_t notif_cb, void* notif_data);
+void vdriver_loader_vdev_local_inventory(
+	uint64_t host_id,
+	kos_notif_cb_t notif_cb,
+	void* notif_data
+);
 
 /**
  * Find an already loaded VDRIVER by a VDEV ID.
