@@ -4,7 +4,10 @@
 import bob
 
 deps = [
-	Dep.local("../.."),
+	Dep.local("../../kos"),
+	Dep.local("../../lib"),
+	Dep.local("../../vdev/win"),
+	Dep.local("../../vdev/wgpu"),
 ]
 
 let src = ["main.c"]
