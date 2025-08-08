@@ -1,6 +1,7 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2024-2025 Aymeric Wibo
 
+#include "aqua/kos.h"
 #include "conn.h"
 #include "elp.h"
 #include "gv.h"
@@ -28,12 +29,15 @@ static void vdev_inventory_notif_cb(kos_notif_t const* notif, void* data) {
 	state_t* const state = data;
 
 	switch (notif->kind) {
-	case KOS_NOTIF_ATTACH:
+	case KOS_NOTIF_ATTACH:;
+		kos_vdev_descr_t vdev = notif->attach.vdev;
+		vdev.kind = KOS_VDEV_KIND_GV;
+
 		state->vdevs = realloc(state->vdevs, ++state->vdev_count * sizeof *state->vdevs);
 		assert(state->vdevs != NULL);
-		state->vdevs[state->vdev_count - 1] = notif->attach.vdev;
+		state->vdevs[state->vdev_count - 1] = vdev;
 
-		LOG_I(state->init_cls, "Attached VDEV: %s", notif->attach.vdev.human);
+		LOG_I(state->init_cls, "Attached VDEV: %s", vdev.human);
 
 		break;
 	default:
