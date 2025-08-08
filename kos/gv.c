@@ -160,15 +160,34 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 		assert(vdevs != NULL);
 		memcpy(vdevs + vdev_count, ent + sizeof header, vdevs_bytes);
 
-		// Check and set the host ID of each reported VDEV to the host ID of the node.
+		// Check the VDEVs reported.
 
 		for (size_t i = 0; i < header.vdev_count; i++) {
-			if (vdevs[vdev_count + i].host_id == header.host_id) {
-				continue;
+			kos_vdev_descr_t* const vdev = &vdevs[vdev_count + i];
+
+			if (vdev->host_id != header.host_id) {
+				LOG_W(
+					cls,
+					"VDEV (%s, vid=0x%" PRIx64 ") of node with host ID 0x%" PRIx64 " has a different host ID (0x%" PRIx64 ") than the node itself - fixing.",
+					vdev->human,
+					vdev->vdev_id,
+					header.host_id,
+					vdev->host_id
+				);
+				vdev->host_id = header.host_id;
 			}
 
-			LOG_W(cls, "VDEV %zu of node with host ID 0x%" PRIx64 " (%s) has a different host ID (0x%" PRIx64 ") than the node itself - fixing.", i, header.host_id, vdevs[vdev_count].human, vdevs[vdev_count + i].host_id);
-			vdevs[vdev_count + i].host_id = header.host_id;
+			if (vdev->kind != KOS_VDEV_KIND_GV) {
+				LOG_W(
+					cls,
+					"VDEV (%s, vid=0x%" PRIx64 ") of node with host ID 0x%" PRIx64 " has an unexpected kind (%d) - fixing.",
+					vdev->human,
+					vdev->vdev_id,
+					header.host_id,
+					vdev->kind
+				);
+				vdev->kind = KOS_VDEV_KIND_GV;
+			}
 		}
 
 		vdev_count += header.vdev_count;
