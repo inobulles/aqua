@@ -1,7 +1,7 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2025 Aymeric Wibo
 
-#include "../../kos/lib/vdriver.h"
+#include <aqua/kos.h>
 
 static kos_fn_t const FNS[] = {
 	{

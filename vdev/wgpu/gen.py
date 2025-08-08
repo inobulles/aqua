@@ -153,7 +153,7 @@ for line in lines:
 		kos_t = wgpu_type_to_kos(t)
 
 		if t in ("WGPUSurfaceCapabilities", "WGPUAdapterInfo"):
-			parser += f"\t\t{t} const {p} = *({t}*) args[{i}].opaque_ptr;\n"
+			parser += f"\t\t{t} const {p} = *({t}*) vdriver_unwrap_local_opaque_ptr(args[{i}].opaque_ptr);\n"
 
 		elif t == "WGPUStringView":
 			parser += f"\t\t{t} const {p} = {{\n"
@@ -173,7 +173,7 @@ for line in lines:
 			parser += f"\t\tassert(args[{i}].buf.size == sizeof *{p});\n"
 
 		elif kos_t == "KOS_TYPE_OPAQUE_PTR":
-			parser += f"\t\t{t} const {p} = (void*) (uintptr_t) args[{i}].opaque_ptr;\n"
+			parser += f"\t\t{t} const {p} = vdriver_unwrap_local_opaque_ptr(args[{i}].opaque_ptr);\n"
 
 		else:
 			union = kos_type_to_union(kos_t)
@@ -199,7 +199,7 @@ for line in lines:
 		ret = call
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
-		ret = f"notif.call_ret.ret.opaque_ptr = (uintptr_t) {call}"
+		ret = f"notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr({call})"
 
 	else:
 		union = kos_type_to_union(kos_ret_type)
