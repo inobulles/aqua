@@ -60,12 +60,43 @@ static bool is_gvd_running(void) {
 	return true;
 }
 
+int get_gv_host_id(uint64_t* host_id_out) {
+	LOG_V(cls, "Getting host ID from GrapeVine daemon.");
+
+	if (!is_gvd_running()) {
+		LOG_W(cls, "GrapeVine daemon is not running - cannot get host ID.");
+		return -1;
+	}
+
+	FILE* const f = fopen(GV_HOST_ID_PATH, "r");
+
+	if (f == NULL) {
+		LOG_W(cls, "Couldn't load GrapeVine host ID file %s: %s", GV_HOST_ID_PATH, strerror(errno));
+		return -1;
+	}
+
+	uint64_t host_id;
+
+	if (fread(&host_id, sizeof host_id, 1, f) != 1) {
+		LOG_E(cls, "Failed to read host ID from GrapeVine host ID file.");
+		fclose(f);
+		return -1;
+	}
+
+	LOG_I(cls, "Our host ID is 0x%" PRIx64 ".", host_id);
+	*host_id_out = host_id;
+
+	fclose(f);
+	return 0;
+}
+
 ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 	LOG_V(cls, "Querying all VDEVs on GrapeVine network.");
 
 	*vdevs_out = NULL;
 
 	if (!is_gvd_running()) {
+		LOG_W(cls, "GrapeVine daemon is not running - cannot query VDEVs.");
 		return 0;
 	}
 

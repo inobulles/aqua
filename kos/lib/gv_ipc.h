@@ -14,6 +14,11 @@
 #include <netinet/in.h>
 
 /**
+ * Where the host ID of the current machine is stored.
+ */
+#define GV_HOST_ID_PATH "/tmp/gv.host_id"
+
+/**
  * Where the discovered GrapeVine nodes and their VDEVs are stored.
  */
 #define GV_NODES_PATH "/tmp/gv.nodes"
