@@ -206,42 +206,6 @@ typedef struct {
 } kos_ptr_t;
 
 /**
- * Unwrap local pointer from an opaque pointer.
- *
- * Only VDRIVERs are allowed to read the contents of opaque pointers.
- *
- * @param opaque_ptr The opaque pointer to unwrap.
- * @return The local pointer if the opaque pointer is local, or `NULL` if it is not.
- */
-void* kos_get_local_opaque_ptr(kos_opaque_ptr_t opaque_ptr);
-
-/**
- * Unwrap local pointer from a KOS pointer.
- *
- * @param ptr The KOS pointer to unwrap.
- * @return The local pointer if the KOS pointer is local, or `NULL` if it is not.
- */
-void* kos_get_local_ptr(kos_ptr_t ptr);
-
-/**
- * Make a KOS opaque pointer from a local pointer.
- *
- * This is used by VDRIVERs to create opaque pointers that can be passed to the KOS.
- *
- * @param ptr The local pointer to wrap.
- * @return The KOS opaque pointer wrapping the local pointer.
- */
-kos_opaque_ptr_t kos_make_opaque_ptr(void* ptr);
-
-/**
- * Make a KOS pointer from a local pointer.
- *
- * @param ptr The local pointer to wrap.
- * @return The KOS pointer wrapping the local pointer.
- */
-kos_ptr_t kos_make_ptr(void* ptr);
-
-/**
  * A KOS value.
  *
  * This is not a serialized value.
