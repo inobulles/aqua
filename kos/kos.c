@@ -60,8 +60,8 @@ kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t*
 	}
 
 	if (get_gv_host_id(&local_host_id) < 0) {
-		LOG_E(init_cls, "Failed to get local GrapeVine host ID.");
-		return KOS_API_VERS_NONE;
+		LOG_I(init_cls, "KOS running locally.");
+		local_host_id = 0;
 	}
 
 	descr->api_vers = KOS_API_V4;
