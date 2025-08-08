@@ -15,10 +15,13 @@ let cc = Cc([
 
 let kos_obj = cc.compile(["kos.c", "gv.c"])
 let vdriver_loader_obj = cc.compile(["lib/vdriver_loader.c"])
+let vdriver_obj = cc.compile(["lib/vdriver.c"])
 
 let vdriver_loader_lib = Linker([
 	"-L/usr/local/lib", "-shared", "-lumber"
 ]).link(vdriver_loader_obj)
+
+let vdriver_lib = Linker([]).archive(vdriver_obj)
 
 let kos_lib = Linker([
 	"-L/usr/local/lib", "-shared", "-lumber", "-lvdriver_loader"
@@ -27,6 +30,7 @@ let kos_lib = Linker([
 install = {
 	kos_lib: "lib/libaqua.so",
 	vdriver_loader_lib: "lib/libvdriver_loader.so",
+	vdriver_lib: "lib/libvdriver.a",
 	"lib/kos.h": "include/aqua/kos.h",
 	"lib/vdriver.h": "include/aqua/vdriver.h",
 	"lib/gv_ipc.h": "include/aqua/gv_ipc.h",

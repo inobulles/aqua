@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "kos.h"
@@ -109,3 +110,46 @@ typedef struct {
 	 */
 	void (*call)(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args);
 } vdriver_t;
+
+/**
+ * The `VDRIVER` symbol.
+ *
+ * The VDRIVER should populate this.
+ */
+extern vdriver_t VDRIVER;
+
+/**
+ * Unwrap local pointer from an opaque pointer.
+ *
+ * Only VDRIVERs are allowed to read the contents of opaque pointers.
+ *
+ * @param opaque_ptr The opaque pointer to unwrap.
+ * @return The local pointer if the opaque pointer is local, or `NULL` if it is not.
+ */
+void* vdriver_unwrap_local_opaque_ptr(kos_opaque_ptr_t opaque_ptr);
+
+/**
+ * Unwrap local pointer from a KOS pointer.
+ *
+ * @param ptr The KOS pointer to unwrap.
+ * @return The local pointer if the KOS pointer is local, or `NULL` if it is not.
+ */
+void* vdriver_unwrap_local_ptr(kos_ptr_t ptr);
+
+/**
+ * Make a KOS opaque pointer from a local pointer.
+ *
+ * This is used by VDRIVERs to create opaque pointers that can be passed to the KOS.
+ *
+ * @param ptr The local pointer to wrap.
+ * @return The KOS opaque pointer wrapping the local pointer.
+ */
+kos_opaque_ptr_t vdriver_make_opaque_ptr(void* ptr);
+
+/**
+ * Make a KOS pointer from a local pointer.
+ *
+ * @param ptr The local pointer to wrap.
+ * @return The KOS pointer wrapping the local pointer.
+ */
+kos_ptr_t vdriver_make_ptr(void* ptr);
