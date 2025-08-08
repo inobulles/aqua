@@ -166,6 +166,26 @@ int main(int argc, char* argv[]) {
 		inet_ntoa(((struct sockaddr_in*) state.found_ipv4->ifa_addr)->sin_addr)
 	);
 
+	LOG_V(state.init_cls, "Creating our host ID from the interface's MAC address.");
+	state.host_id = (sockaddr_to_mac((struct sockaddr*) state.found_ether->ifa_addr) << 16) | 0x11AD; // Approximation of Link-Local ADdress.
+	LOG_I(state.init_cls, "Our host ID is 0x%" PRIx64 ".", state.host_id);
+
+	LOG_V(state.init_cls, "Writing our host ID to %s.", GV_HOST_ID_PATH);
+	FILE* const host_id_file = fopen(GV_HOST_ID_PATH, "w");
+
+	if (host_id_file == NULL) {
+		LOG_F(state.init_cls, "fopen: %s", strerror(errno));
+		goto err_write_host_id;
+	}
+
+	if (fwrite(&state.host_id, sizeof state.host_id, 1, host_id_file) != 1) {
+		LOG_F(state.init_cls, "fwrite: %s", strerror(errno));
+		fclose(host_id_file);
+		goto err_write_host_id;
+	}
+
+	fclose(host_id_file);
+
 	LOG_V(state.init_cls, "Creating socket for TCP connections (binding to port 0x%x).", GV_PORT);
 
 	state.sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -276,15 +296,16 @@ err_accept:
 	}
 
 err_listen:
+err_elp:
+
+	elp_free(&state);
+
 err_bind:
 
 	close(state.sock);
 
 err_socket:
-err_elp:
-
-	elp_free(&state);
-
+err_write_host_id:
 err_no_iface:
 
 	freeifaddrs(ifap);
