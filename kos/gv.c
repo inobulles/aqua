@@ -18,6 +18,7 @@
 
 static umber_class_t const* cls = NULL;
 
+static bool gvd_running = false;
 static size_t node_count = 0;
 static gv_node_ent_t nodes[256];
 
@@ -61,10 +62,15 @@ static bool is_gvd_running(void) {
 }
 
 int get_gv_host_id(uint64_t* host_id_out) {
-	LOG_V(cls, "Getting host ID from GrapeVine daemon.");
+	// XXX We only update gvd_running here, because this is called in kos_hello when setting the local host ID, and if gvd is not running this defaults to 0.
+	// We aren't allowed to query VDEVs if the local host ID was set to 0, even if gvd was started in the meantime.
 
-	if (!is_gvd_running()) {
+	LOG_V(cls, "Getting host ID from GrapeVine daemon.");
+	gvd_running = is_gvd_running();
+
+	if (!gvd_running) {
 		// This is just a verbose log because this could be a normal situation, e.g. when the KOS is run locally.
+
 		LOG_V(cls, "GrapeVine daemon is not running - cannot get host ID.");
 		return -1;
 	}
@@ -96,8 +102,10 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 
 	*vdevs_out = NULL;
 
-	if (!is_gvd_running()) {
-		LOG_W(cls, "GrapeVine daemon is not running - cannot query VDEVs.");
+	if (!gvd_running) {
+		// This is just a verbose log because this could be a normal situation, e.g. when the KOS is run locally.
+
+		LOG_V(cls, "GrapeVine daemon is not running - cannot query VDEVs.");
 		return 0;
 	}
 
