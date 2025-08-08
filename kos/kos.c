@@ -334,3 +334,37 @@ void kos_vdev_disconn(uint64_t conn_id) {
 kos_ino_t kos_gen_ino(void) {
 	return inos++;
 }
+
+void* kos_get_local_opaque_ptr(kos_opaque_ptr_t opaque_ptr) {
+	if (opaque_ptr.host_id != local_host_id) {
+		return NULL;
+	}
+
+	return (void*) (uintptr_t) opaque_ptr.ptr;
+}
+
+void* kos_get_local_ptr(kos_ptr_t ptr) {
+	if (ptr.host_id != local_host_id) {
+		return NULL;
+	}
+
+	return (void*) (uintptr_t) ptr.ptr;
+}
+
+kos_opaque_ptr_t kos_make_local_opaque_ptr(void* ptr) {
+	kos_opaque_ptr_t opaque_ptr = {
+		.host_id = local_host_id,
+		.ptr = (uintptr_t) ptr,
+	};
+
+	return opaque_ptr;
+}
+
+kos_ptr_t kos_make_local_ptr(void* ptr) {
+	kos_ptr_t kos_ptr = {
+		.host_id = local_host_id,
+		.ptr = (uintptr_t) ptr,
+	};
+
+	return kos_ptr;
+}
