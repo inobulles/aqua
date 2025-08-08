@@ -64,7 +64,8 @@ int get_gv_host_id(uint64_t* host_id_out) {
 	LOG_V(cls, "Getting host ID from GrapeVine daemon.");
 
 	if (!is_gvd_running()) {
-		LOG_W(cls, "GrapeVine daemon is not running - cannot get host ID.");
+		// This is just a verbose log because this could be a normal situation, e.g. when the KOS is run locally.
+		LOG_V(cls, "GrapeVine daemon is not running - cannot get host ID.");
 		return -1;
 	}
 
