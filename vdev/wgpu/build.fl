@@ -6,12 +6,14 @@ import bob
 deps = [
 	# TODO Use branch with our extensions here.
 	Dep.git("https://github.com/gfx-rs/wgpu-native", "v24.0.3.1"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.1"),
 	Dep.local("../../external/webgpu-headers"),
 	Dep.local("../win"),
+	Dep.local("../../kos"),
 ]
 
 let src = ["main.c"]
-let linker_flags = ["-shared", "-lwgpu_native"]
+let linker_flags = ["-shared", "-lwgpu_native", "-lvdriver", "-lumber"]
 
 if Platform.os() == "Darwin" {
 	src = src + ["apple.m"]
