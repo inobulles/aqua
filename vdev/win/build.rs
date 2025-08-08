@@ -7,21 +7,31 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-	let vdev_header = "../../kos/lib/vdriver.h";
+	let vdriver_header = "../../kos/lib/vdriver.h";
+	let vdriver_src = "../../kos/lib/vdriver.c";
 	let kos_header = "../../kos/lib/kos.h";
 	let win_header = "win.h";
 
 	// Tell cargo to invalidate the built crate whenever one of the headers change.
 
-	println!("cargo:rerun-if-changed={}", vdev_header);
+	println!("cargo:rerun-if-changed={}", vdriver_header);
 	println!("cargo:rerun-if-changed={}", kos_header);
 	println!("cargo:rerun-if-changed={}", win_header);
 
 	let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
+	// Build VDRIVER helper library.
+
+	cc::Build::new()
+		.file(vdriver_src)
+		.compile("vdriver");
+
+	// Generate bindings.
+
 	let bindings = bindgen::Builder::default()
-		.header(vdev_header)
+		.header(vdriver_header)
 		.header(win_header)
+		.blocklist_item("VDRIVER")
 		.generate_comments(true)
 		.generate()
 		.expect("Unable to generate bindings");
