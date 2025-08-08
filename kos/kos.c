@@ -6,7 +6,7 @@
 #include "gv.h"
 
 #include "lib/kos.h"
-#include "lib/vdev.h"
+#include "lib/vdriver.h"
 #include "lib/vdriver_loader.h"
 
 #include <umber.h>

@@ -28,7 +28,7 @@ install = {
 	kos_lib: "lib/libaqua.so",
 	vdriver_loader_lib: "lib/libvdriver_loader.so",
 	"lib/kos.h": "include/aqua/kos.h",
-	"lib/vdev.h": "include/aqua/vdev.h",
+	"lib/vdriver.h": "include/aqua/vdriver.h",
 	"lib/gv_ipc.h": "include/aqua/gv_ipc.h",
 	"lib/vdriver_loader.h": "include/aqua/vdriver_loader.h",
 }

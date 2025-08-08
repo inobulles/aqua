@@ -11,7 +11,7 @@
 #pragma once
 
 #include "kos.h"
-#include "vdev.h"
+#include "vdriver.h"
 
 /**
  * The VDRIVER_PATH environment variable name.

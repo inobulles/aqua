@@ -1,5 +1,5 @@
-// This Source Form is subject to the terms of the AQUA Software License,
-// v. 1.0. Copyright (c) 2025 Aymeric Wibo
+// This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+// Copyright (c) 2025 Aymeric Wibo
 
 extern crate bindgen;
 
@@ -7,7 +7,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-	let vdev_header = "../../kos/lib/vdev.h";
+	let vdev_header = "../../kos/lib/vdriver.h";
 	let kos_header = "../../kos/lib/kos.h";
 	let win_header = "win.h";
 

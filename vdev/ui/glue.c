@@ -1,7 +1,7 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2025 Aymeric Wibo
 
-#include "../../kos/lib/vdev.h"
+#include "../../kos/lib/vdriver.h"
 
 #include <assert.h>
 #include <unistd.h>
