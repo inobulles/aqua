@@ -94,7 +94,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 0: {
 		WGPUInstance const inst = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
-		if (inst != NULL) {
+		if (inst == NULL) {
 			LOG_E(cls, "'surface_from_win' called with non-local or NULL instance.");
 			return; // TODO Return KOS_NOTIF_CALL_FAIL.
 		}
