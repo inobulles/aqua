@@ -8,6 +8,10 @@
 #include <assert.h>
 #include <stddef.h>
 
+// TODO This VDRIVER is pretty easily testable - write tests!
+//      But be careful to actually test stuff relevant to the VDRIVER, i.e. not accidentally just end up testing Pango.
+// TODO Also, I need comprehensive documentation for each function here.
+
 #define SPEC "aquabsd.black.font"
 #define VERS 0
 #define VDRIVER_HUMAN "Font driver"
@@ -55,6 +59,154 @@ static kos_fn_t const FNS[] = {
 			},
 		},
 	},
+	{
+		.name = "descr_destroy",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "descr",
+			},
+		},
+	},
+	{
+		.name = "layout_create",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "descr",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "text",
+			},
+		},
+	},
+	{
+		.name = "layout_destroy",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+		},
+	},
+	{
+		.name = "layout_set_text",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+			{
+				.type = KOS_TYPE_BUF,
+				.name = "text",
+			},
+		},
+	},
+	{
+		.name = "layout_set_limits",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "x_res_limit",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "y_res_limit",
+			},
+		},
+	},
+	{
+		.name = "layout_pos_to_index",
+		.ret_type = KOS_TYPE_I32,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "x",
+			},
+			{
+				.type = KOS_TYPE_U32,
+				.name = "y",
+			},
+		},
+	},
+	{
+		.name = "layout_index_to_pos",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+			{
+				.type = KOS_TYPE_I32,
+				.name = "index",
+			},
+			{
+				.type = KOS_TYPE_PTR,
+				.name = "x",
+			},
+			{
+				.type = KOS_TYPE_PTR,
+				.name = "y",
+			},
+		},
+	},
+	{
+		.name = "layout_get_res",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+			{
+				.type = KOS_TYPE_PTR,
+				.name = "x_res",
+			},
+			{
+				.type = KOS_TYPE_PTR,
+				.name = "y_res",
+			},
+		},
+	},
+	{
+		.name = "layout_render",
+		.ret_type = KOS_TYPE_VOID, // TODO Is it best to have the VDRIVER write into a buffer supplied by the caller or for us to allocate a buffer and return it? If we allocate the buffer it makes things harder because we have to provide a way for the client to let us know when we can free it I guess.
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{
+				.type = KOS_TYPE_OPAQUE_PTR,
+				.name = "layout",
+			},
+			{
+				.type = KOS_TYPE_PTR,
+				.name = "buffer",
+			},
+		},
+	},
+	// TODO Functions for setting colour, markup on/off, alignment (constants!), word/char wrapping.
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
