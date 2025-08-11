@@ -60,10 +60,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "str",
-			},
+			{KOS_TYPE_BUF, "str"},
 		},
 	},
 	{
@@ -71,10 +68,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "font",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "font"},
 		},
 	},
 	{
@@ -82,14 +76,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "font",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "text",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "font"},
+			{KOS_TYPE_BUF, "text"},
 		},
 	},
 	{
@@ -97,10 +85,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
 		},
 	},
 	{
@@ -108,14 +93,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "text",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
+			{KOS_TYPE_BUF, "text"},
 		},
 	},
 	{
@@ -123,18 +102,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "x_res_limit",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "y_res_limit",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
+			{KOS_TYPE_U32, "x_res_limit"},
+			{KOS_TYPE_U32, "y_res_limit"},
 		},
 	},
 	{
@@ -142,18 +112,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_I32,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "x",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "y",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
+			{KOS_TYPE_U32, "x"},
+			{KOS_TYPE_U32, "y"},
 		},
 	},
 	{
@@ -161,22 +122,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
-			{
-				.type = KOS_TYPE_I32,
-				.name = "index",
-			},
-			{
-				.type = KOS_TYPE_PTR,
-				.name = "x",
-			},
-			{
-				.type = KOS_TYPE_PTR,
-				.name = "y",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
+			{KOS_TYPE_I32, "index"},
+			{KOS_TYPE_PTR, "x"},
+			{KOS_TYPE_PTR, "y"},
 		},
 	},
 	{
@@ -184,18 +133,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
-			{
-				.type = KOS_TYPE_PTR,
-				.name = "x_res",
-			},
-			{
-				.type = KOS_TYPE_PTR,
-				.name = "y_res",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
+			{KOS_TYPE_PTR, "x_res"},
+			{KOS_TYPE_PTR, "y_res"},
 		},
 	},
 	{
@@ -203,14 +143,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID, // TODO Is it best to have the VDRIVER write into a buffer supplied by the caller or for us to allocate a buffer and return it? If we allocate the buffer it makes things harder because we have to provide a way for the client to let us know when we can free it I guess.
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "layout",
-			},
-			{
-				.type = KOS_TYPE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "layout"},
+			{KOS_TYPE_PTR, "buffer"},
 		},
 	},
 	// TODO Functions for setting colour, markup on/off, alignment (constants!), word/char wrapping.
