@@ -5,16 +5,23 @@
 
 #include <umber.h>
 
+#include <pango/pango.h>
+
 #include <assert.h>
 #include <stddef.h>
 
 // TODO This VDRIVER is pretty easily testable - write tests!
 //      But be careful to actually test stuff relevant to the VDRIVER, i.e. not accidentally just end up testing Pango.
-// TODO Also, I need comprehensive documentation for each function here.
+// TODO Also, I need comprehensive documentation for each function here (or just leave that to library and have a general overview in the README here?).
 
 #define SPEC "aquabsd.black.font"
 #define VERS 0
 #define VDRIVER_HUMAN "Font driver"
+
+typedef struct {
+	PangoLayout* layout;
+	PangoContext* context;
+} layout_t;
 
 static umber_class_t const* cls = NULL;
 static vid_t only_vid;
@@ -49,7 +56,7 @@ static void probe(void) {
 
 static kos_fn_t const FNS[] = {
 	{
-		.name = "descr_from_str",
+		.name = "font_from_str",
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
@@ -60,13 +67,13 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "descr_destroy",
+		.name = "font_destroy",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "descr",
+				.name = "font",
 			},
 		},
 	},
@@ -77,7 +84,7 @@ static kos_fn_t const FNS[] = {
 		.params = (kos_param_t[]) {
 			{
 				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "descr",
+				.name = "font",
 			},
 			{
 				.type = KOS_TYPE_BUF,
@@ -235,6 +242,105 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
+static PangoFontDescription* font_from_str(char const* str) {
+	assert(cls != NULL);
+
+	LOG_V(cls, "Creating Pango font description from string: \"%s\".", str);
+
+	PangoFontDescription* descr = pango_font_description_from_string(str);
+
+	if (descr == NULL) {
+		LOG_E(cls, "Failed to create Pango font description from string: \"%s\".", str);
+		return NULL;
+	}
+
+	return descr;
+}
+
+static void font_destroy(PangoFontDescription* font) {
+	pango_font_description_free(font);
+}
+
+static layout_t* layout_create(PangoFontDescription* font, char* text, size_t length) {
+	LOG_V(cls, "Creating layout objects.");
+
+	layout_t* const layout = malloc(sizeof *layout);
+	assert(layout != NULL);
+
+	layout->context = pango_context_new();
+	assert(layout->context != NULL);
+
+	layout->layout = pango_layout_new(layout->context);
+	assert(layout->layout != NULL);
+
+	size_t const truncated = MAX(length, 30);
+
+	LOG_V(
+		cls,
+		"Setting layout font to '%s' and text to '%.*s%s'.",
+		pango_font_description_get_family(font),
+		truncated,
+		text,
+		truncated < length ? "..." : ""
+	);
+
+	pango_layout_set_font_description(layout->layout, font);
+	pango_layout_set_text(layout->layout, text, length);
+
+	return layout;
+}
+
+static void layout_destroy(layout_t* layout) {
+	g_object_unref(layout->layout);
+	g_object_unref(layout->context);
+
+	free(layout);
+}
+
+static void layout_set_text(layout_t* layout, char* text, size_t length) {
+	size_t const truncated = MAX(length, 30);
+
+	LOG_V(
+		cls,
+		"Setting layout text to '%.*s%s'.",
+		truncated,
+		text,
+		truncated < length ? "..." : ""
+	);
+
+	pango_layout_set_text(layout->layout, text, length);
+}
+
+static void layout_set_limits(layout_t* layout, uint32_t x_res_limit, uint32_t y_res_limit) {
+	LOG_V(cls, "Setting limits to (x=%u, y=%u).\n", x_res_limit, y_res_limit);
+
+	if (x_res_limit == 0) {
+		pango_layout_set_width(layout->layout, -1);
+	}
+
+	else {
+		pango_layout_set_width(layout->layout, x_res_limit * PANGO_SCALE);
+	}
+
+	if (y_res_limit == 0) {
+		pango_layout_set_height(layout->layout, -1);
+	}
+
+	else {
+		pango_layout_set_height(layout->layout, y_res_limit * PANGO_SCALE);
+	}
+}
+
+static void layout_get_res(layout_t* layout, uint32_t* x_res_ref, uint32_t* y_res_ref) {
+	LOG_V(cls, "Getting resolution of layout.\n");
+
+	int32_t w, h;
+	pango_layout_get_pixel_size(layout->layout, &w, &h);
+
+	*x_res_ref = w;
+	*y_res_ref = h;
+}
+
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	assert(VDRIVER.notif_cb != NULL);
 
@@ -245,10 +351,126 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	};
 
 	switch (fn_id) {
-	case 0:
-		(void) args; // TODO
+	case 0: { // font_from_str
+		char* const str = strndup(args[0].buf.ptr, args[0].buf.size);
+		assert(str != NULL);
+
+		PangoFontDescription* const font = font_from_str((char const*) args[0].buf.ptr);
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(font);
+
+		free(str);
+		break;
+	}
+	case 1: { // font_destroy
+		PangoFontDescription* const font = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (font == NULL) {
+			LOG_E(cls, "Tried to destroy non-local or NULL font.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		font_destroy(font);
+		break;
+	}
+	case 2: { // layout_create
+		PangoFontDescription* const font = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (font == NULL) {
+			LOG_E(cls, "Tried to create layout with a non-local or NULL font.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		layout_t* const layout = layout_create(font, args[1].buf.ptr, args[1].buf.size);
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(layout);
+
+		break;
+	}
+	case 3: { // layout_destroy
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to destroy non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		layout_destroy(layout);
+		break;
+	}
+	case 4: { // layout_set_text
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to set text of non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		layout_set_text(layout, args[1].buf.ptr, args[1].buf.size);
+		break;
+	}
+	case 5: { // layout_set_limits
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to set limits of non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		layout_set_limits(layout, args[1].u32, args[2].u32);
+		break;
+	}
+	case 6: { // layout_pos_to_index
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to convert position to text index of non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		LOG_F(cls, "TODO layout_pos_to_index");
 		notif.kind = KOS_NOTIF_CALL_FAIL;
 		break;
+	}
+	case 7: { // layout_index_to_pos
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to convert text index to position of non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		LOG_F(cls, "TODO layout_index_to_pos");
+		notif.kind = KOS_NOTIF_CALL_FAIL;
+		break;
+	}
+	case 8: { // layout_get_res
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to get resolution of non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		// TODO Here, we're gonna have to figure out vitrification.
+
+		uint32_t* const x_res_ref = (void*) (uintptr_t) args[1].ptr.ptr;
+		uint32_t* const y_res_ref = (void*) (uintptr_t) args[2].ptr.ptr;
+
+		layout_get_res(layout, x_res_ref, y_res_ref);
+		break;
+	}
+	case 9: { // layout_render
+		LOG_F(cls, "TODO layout_render");
+		notif.kind = KOS_NOTIF_CALL_FAIL;
+		break;
+	}
 	default:
 		notif.kind = KOS_NOTIF_CALL_FAIL;
 		break;
