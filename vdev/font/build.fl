@@ -12,12 +12,10 @@ deps = [
 let pango_cflags = PkgConfig.cflags("pango")
 let pango_libs = PkgConfig.libs("pango")
 
-let src = ["main.c"]
-
 let obj = Cc([
 	"-std=c11",
 	"-Wall", "-Wextra", "-Werror",
-] + pango_cflags).compile(src)
+] + pango_cflags).compile(["main.c"])
 
 let vdriver = Linker([
 	"-shared",
