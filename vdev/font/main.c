@@ -6,6 +6,7 @@
 #include <umber.h>
 
 #include <pango/pango.h>
+#include <pango/pangocairo.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -268,11 +269,76 @@ static void layout_set_limits(layout_t* layout, uint32_t x_res_limit, uint32_t y
 static void layout_get_res(layout_t* layout, uint32_t* x_res_ref, uint32_t* y_res_ref) {
 	LOG_V(cls, "Getting resolution of layout.\n");
 
-	int32_t w, h;
+	int32_t w = 0, h = 0;
 	pango_layout_get_pixel_size(layout->layout, &w, &h);
+
+	if (w <= 0 || h <= 0) {
+		LOG_W(cls, "Layout has unexpected resolution (%dx%d).", w, h);
+	}
 
 	*x_res_ref = w;
 	*y_res_ref = h;
+}
+
+static int layout_render(layout_t* layout, kos_ptr_t buf) {
+	// XXX I have not profiled this (and either way I think this would depend a lot on the type of application), but I don't suspect the Cairo operations are costly enough to bother caching them between invocations of layout_render.
+
+	int rv = -1;
+
+	LOG_V(cls, "Preparing to render layout.\n");
+
+	int32_t w = 0, h = 0;
+	pango_layout_get_pixel_size(layout->layout, &w, &h);
+
+	if (w <= 0 || h <= 0) {
+		LOG_W(cls, "Layout has no size (%dx%d), cannot render.", w, h);
+		return 0;
+	}
+
+	cairo_surface_t* const surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+
+	if (cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS) {
+		LOG_E(cls, "Failed to create Cairo surface for rendering layout: %s.", cairo_status_to_string(cairo_surface_status(surface)));
+		goto err_surface_create;
+	}
+
+	cairo_t* const cr = cairo_create(surface);
+
+	if (cairo_status(cr) != CAIRO_STATUS_SUCCESS) {
+		LOG_E(cls, "Failed to create Cairo context for rendering layout: %s.", cairo_status_to_string(cairo_status(cr)));
+		goto err_cairo_create;
+	}
+
+	LOG_V(cls, "Rendering layout.\n");
+
+	pango_cairo_update_layout(cr, layout->layout);
+	cairo_set_source_rgba(cr, 1., 1., 1., 1.);
+
+	pango_cairo_show_layout(cr, layout->layout);
+	cairo_surface_flush(surface);
+
+	LOG_V(cls, "Writing data to client bitmap.\n");
+
+	size_t const bytes = cairo_image_surface_get_stride(surface) * h;
+
+	if (VDRIVER.write_ptr(buf, cairo_image_surface_get_data(surface), bytes) < 0) {
+		LOG_E(cls, "Failed to write rendered layout data to client bitmap.");
+		goto err_write;
+	}
+
+	rv = 0;
+
+err_write:
+
+	cairo_destroy(cr);
+
+err_cairo_create:
+
+	cairo_surface_destroy(surface);
+
+err_surface_create:
+
+	return rv;
 }
 
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
@@ -407,8 +473,18 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		break;
 	}
 	case 9: { // layout_render
-		LOG_F(cls, "TODO layout_render");
-		notif.kind = KOS_NOTIF_CALL_FAIL;
+		layout_t* const layout = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (layout == NULL) {
+			LOG_E(cls, "Tried to render non-local or NULL layout.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		if (layout_render(layout, args[1].ptr) < 0) {
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+		}
+
 		break;
 	}
 	default:
