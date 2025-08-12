@@ -9,8 +9,25 @@ deps = [
 	Dep.local("../../kos"),
 ]
 
-let pango_cflags = PkgConfig.cflags("pango")
-let pango_libs = PkgConfig.libs("pango")
+fn sum(items: vec) {
+	# TODO Make this a Flamingo builtin - could use this function in tests.
+
+	let acc
+
+	for item in items {
+		if acc == none {
+			acc = item
+		} else {
+			acc = acc + item
+		}
+	}
+
+	return acc
+}
+
+let pango_modules = ["pango", "cairo", "pangocairo"]
+let pango_cflags = sum(pango_modules.map(PkgConfig.cflags))
+let pango_libs = sum(pango_modules.map(PkgConfig.libs))
 
 let obj = Cc([
 	"-std=c11",
