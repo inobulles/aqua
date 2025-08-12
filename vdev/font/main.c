@@ -392,12 +392,18 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 			break;
 		}
 
-		// TODO Here, we're gonna have to figure out vitrification.
+		uint32_t x_res, y_res;
+		layout_get_res(layout, &x_res, &y_res);
 
-		uint32_t* const x_res_ref = (void*) (uintptr_t) args[1].ptr.ptr;
-		uint32_t* const y_res_ref = (void*) (uintptr_t) args[2].ptr.ptr;
+		if (
+			VDRIVER.write_ptr(args[1].ptr, &x_res, sizeof x_res) < 0 ||
+			VDRIVER.write_ptr(args[2].ptr, &y_res, sizeof y_res) < 0
+		) {
+			LOG_E(cls, "Failed to write resolution to pointers.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
 
-		layout_get_res(layout, x_res_ref, y_res_ref);
 		break;
 	}
 	case 9: { // layout_render
