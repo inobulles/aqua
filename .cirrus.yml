@@ -10,6 +10,6 @@ task:
     sh bootstrap.sh
     .bootstrap/bob install
   install_script: |
-    sudo pkg install -y meson rust
+    sudo pkg install -y meson rust go124
   build_script: |
     bob build
