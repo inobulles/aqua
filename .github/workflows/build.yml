@@ -12,16 +12,11 @@ jobs:
       ASAN_OPTIONS: detect_leaks=0
     steps:
       - uses: actions/checkout@v5
+      - uses: inobulles/bob-action@v1
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-      - name: Bootstrap Bob the Builder
-        run: |
-          git clone https://github.com/inobulles/bob --depth 1 --branch v0.2.18
-          cd bob
-          sh bootstrap.sh
-          sudo .bootstrap/bob install
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
