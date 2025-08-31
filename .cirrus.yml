@@ -1,0 +1,15 @@
+freebsd_instance:
+  image_family: freebsd-14-3
+
+task:
+  name: Test AQUA build on FreeBSD
+  timeout_in: 30m
+  bob_bootstrap_script: |
+    git clone https://github.com/inobulles/bob --depth 1 --branch v0.2.18
+    cd bob
+    sh bootstrap.sh
+    .bootstrap/bob install
+  install_script: |
+    sudo pkg install -y meson rust
+  build_script: |
+    bob build
