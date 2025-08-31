@@ -33,7 +33,7 @@ let libs = {
 # This will be parallelized by Bob, as the buildsteps can be merged here.
 
 let cc = Cc([
-	"-std=c11", "-g",
+	"-std=c11", "-g", "-fPIC",
 	"-Wall", "-Wextra", "-Werror",
 ])
 
