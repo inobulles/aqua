@@ -1,6 +1,10 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2024-2025 Aymeric Wibo
 
+#if defined(__linux__)
+# define _POSIX_C_SOURCE 200809L // For fileno().
+#endif
+
 #include "lib/gv_ipc.h"
 #include "lib/kos.h"
 
