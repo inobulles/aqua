@@ -31,7 +31,7 @@
 #define GV_LOCK_PATH "/tmp/gv.lock"
 
 _Static_assert(sizeof(in_addr_t) == sizeof(uint32_t), "in_addr_t is not 32 bits long.");
-_Static_assert(sizeof(in6_addr_t) == sizeof(uint8_t) * 16, "in6_addr_t is not 128 bits long.");
+_Static_assert(sizeof(struct in6_addr) == sizeof(uint8_t) * 16, "in6_addr_t is not 128 bits long.");
 
 /**
  * Node entry in the GrapeVine nodes file.
@@ -58,7 +58,7 @@ typedef struct __attribute__((packed)) {
 		/**
 		 * IPv6 address.
 		 */
-		in6_addr_t v6;
+		struct in6_addr v6;
 	} ip;
 
 	/**
