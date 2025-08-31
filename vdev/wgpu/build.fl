@@ -13,7 +13,7 @@ deps = [
 ]
 
 let src = ["main.c"]
-let linker_flags = ["-shared", "-lwgpu_native", "-lvdriver", "-lumber"]
+let linker_flags = ["-shared", "-lm", "-lpthread", "-lwgpu_native", "-lvdriver", "-lumber"]
 
 if Platform.os() == "Darwin" {
 	src = src + ["apple.m"]
@@ -27,7 +27,7 @@ if Platform.os() == "Darwin" {
 }
 
 let obj = Cc([
-	"-std=c11",
+	"-std=c11", "-g", "-fPIC",
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
