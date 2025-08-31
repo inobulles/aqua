@@ -4,7 +4,7 @@
 import bob
 
 deps = [
-	Dep.git("https://github.com/inobulles/umber", "v0.3.1"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.2"),
 	Dep.local("../kos"),
 	Dep.local("../external/webgpu-headers"),
 ]
