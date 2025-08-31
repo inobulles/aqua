@@ -69,7 +69,38 @@ typedef struct {
 	WGPURenderPipeline render_pipeline;
 	WGPUSurfaceConfiguration config;
 	bool configured;
+	uint32_t x_res, y_res;
 } state_t;
+
+static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
+	state_t* const state = data;
+	(void) win;
+
+	x_res = x_res == 0 ? 800 : x_res;
+	y_res = y_res == 0 ? 600 : y_res;
+
+	state->x_res = x_res;
+	state->y_res = y_res;
+
+	if (state->surface == NULL) {
+		return;
+	}
+
+	printf("Resizing to %ux%u\n", x_res, y_res);
+
+	// Reconfigure surface.
+
+	state->config.device = state->device;
+	state->config.usage = WGPUTextureUsage_RenderAttachment;
+	state->config.format = state->caps.formats[0];
+	state->config.presentMode = WGPUPresentMode_Fifo;
+	state->config.alphaMode = state->alpha_mode;
+	state->config.width = x_res;
+	state->config.height = y_res;
+
+	aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
+	state->configured = true;
+}
 
 static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView msg, void* data, void* data2) {
 	state_t* const state = data;
@@ -115,7 +146,12 @@ static int setup_surface(state_t* state, win_t win) {
 
 	WGPURequestAdapterOptions const request_adapter_options = {
 		.compatibleSurface = state->surface,
+#if defined(__FreeBSD__)
+		// XXX Vulkan causes GPU hangs on Wayland for some reason.
+		.backendType = WGPUBackendType_OpenGL,
+#else
 		.backendType = WGPUBackendType_Undefined, // Will use anything.
+#endif
 	};
 
 	WGPURequestAdapterCallbackInfo const request_adapter_cb_info = {
@@ -283,6 +319,11 @@ static int setup_surface(state_t* state, win_t win) {
 		goto err_render_pipeline;
 	}
 
+	// Make sure the surface is configured.
+	// Some platforms may call the resize callback when the window is created, but some might not, so we must do this ourselves.
+
+	resize(win, state, state->x_res, state->y_res);
+
 	return 0;
 
 	aqua_wgpuRenderPipelineRelease(state->wgpu_ctx, state->render_pipeline);
@@ -423,26 +464,6 @@ static void redraw(win_t win, void* data) {
 	aqua_wgpuCommandEncoderRelease(state->wgpu_ctx, encoder);
 	aqua_wgpuTextureViewRelease(state->wgpu_ctx, frame);
 	aqua_wgpuTextureRelease(state->wgpu_ctx, surface_texture.texture);
-}
-
-static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
-	state_t* const state = data;
-	(void) win;
-
-	printf("Resizing to %ux%u\n", x_res, y_res);
-
-	// Reconfigure surface.
-
-	state->config.device = state->device;
-	state->config.usage = WGPUTextureUsage_RenderAttachment;
-	state->config.format = state->caps.formats[0];
-	state->config.presentMode = WGPUPresentMode_Fifo;
-	state->config.alphaMode = state->alpha_mode;
-	state->config.width = x_res;
-	state->config.height = y_res;
-
-	aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
-	state->configured = true;
 }
 
 int main(void) {
