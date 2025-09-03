@@ -17,7 +17,7 @@ static __attribute__((constructor)) void init(void) {
 	cls = umber_class_new("aqua.lib.ui.wgpu", UMBER_LVL_INFO, "AQUA standard library: UI: WebGPU backend.");
 }
 
-int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device) {
+int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device) {
 	assert(ui != NULL);
 	ui_ctx_t const ctx = ui->ctx;
 
@@ -29,7 +29,7 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device) {
 	kos_val_t const args[] = {
 		{.opaque_ptr = ui->opaque_ptr},
 		{.u64 = hid},
-		{.u64 = vid},
+		{.u64 = cid},
 		{.opaque_ptr = {ctx->hid, (uintptr_t) device}},
 	};
 
@@ -219,12 +219,12 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	// Create WebGPU backend on UI object.
 
-	uint64_t const hid = (uint64_t) state->wgpu_ctx; // TODO wgpu_get_hid(state->wgpu_ctx);
-	uint64_t const vid = wgpu_get_vid(state->wgpu_ctx);
+	uint64_t const hid = wgpu_get_hid(state->wgpu_ctx);
+	uint64_t const cid = wgpu_get_cid(state->wgpu_ctx);
 
-	LOG_V(cls, "Creating WebGPU UI backend with WebGPU device %lu:%lu.", hid, vid);
+	LOG_V(cls, "Creating WebGPU UI backend with WebGPU device %lu:%lu (HID:CID).", hid, cid);
 
-	if (ui_wgpu_init(state->ui, hid, vid, state->device) < 0) {
+	if (ui_wgpu_init(state->ui, hid, cid, state->device) < 0) {
 		LOG_E(cls, "Failed to create WebGPU UI backend.");
 		goto err_backend_init;
 	}

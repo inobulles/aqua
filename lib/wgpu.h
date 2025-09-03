@@ -52,12 +52,12 @@ void wgpu_disconn(wgpu_ctx_t ctx);
 uint64_t wgpu_get_hid(wgpu_ctx_t ctx);
 
 /**
- * Get the WebGPU connection's VDEV ID.
+ * Get the WebGPU connection's connection ID.
  *
  * @param ctx The WebGPU library component context.
- * @return The VDEV ID.
+ * @return The connection ID.
  */
-uint64_t wgpu_get_vid(wgpu_ctx_t ctx);
+uint64_t wgpu_get_cid(wgpu_ctx_t ctx);
 
 WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t win);
 

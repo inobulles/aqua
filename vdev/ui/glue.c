@@ -68,10 +68,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "ui",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "ui"},
 		},
 	},
 	{
@@ -79,10 +76,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "ui",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "ui"},
 		},
 	},
 	{
@@ -90,18 +84,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "ui",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "kind",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "semantics",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "ui"},
+			{KOS_TYPE_U32, "kind"},
+			{KOS_TYPE_BUF, "semantics"},
 		},
 	},
 	// WebGPU backend specific stuff.
@@ -110,22 +95,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "ui",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "hid",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "vid",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "ui"},
+			{KOS_TYPE_U64, "hid"},
+			{KOS_TYPE_U64, "cid"},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -133,18 +106,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "ui",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "frame",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "command_encoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "ui"},
+			{KOS_TYPE_OPAQUE_PTR, "frame"},
+			{KOS_TYPE_OPAQUE_PTR, "command_encoder"},
 		},
 	},
 };
@@ -180,7 +144,7 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 extern uintptr_t GoUiCreate(void);
 extern void GoUiDestroy(uintptr_t ui);
 
-extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t vid, void* device);
+extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device);
 extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
 
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {

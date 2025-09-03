@@ -320,8 +320,8 @@ uint64_t wgpu_get_hid(wgpu_ctx_t ctx) {
 	return ctx->hid;
 }
 
-uint64_t wgpu_get_vid(wgpu_ctx_t ctx) {
-	return ctx->vid;
+uint64_t wgpu_get_cid(wgpu_ctx_t ctx) {
+	return ctx->conn_id;
 }
 
 static void notif_conn(kos_notif_t const* notif, void* data) {

@@ -23,7 +23,7 @@ type WgpuBackend struct {
 func GoUiBackendWgpuInit(
 	ui_raw C.uintptr_t,
 	hid C.uint64_t,
-	vid C.uint64_t,
+	cid C.uint64_t,
 	dev_raw unsafe.Pointer,
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)

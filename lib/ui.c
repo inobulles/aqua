@@ -242,7 +242,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->params[1].type == KOS_TYPE_U64 &&
 			strcmp((char*) fn->params[1].name, "hid") == 0 &&
 			fn->params[2].type == KOS_TYPE_U64 &&
-			strcmp((char*) fn->params[2].name, "vid") == 0 &&
+			strcmp((char*) fn->params[2].name, "cid") == 0 &&
 			fn->params[3].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[3].name, "device") == 0
 		) {
