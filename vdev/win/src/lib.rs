@@ -143,21 +143,21 @@ impl ApplicationHandler for Win {
 
 		match win_ref.window_handle().unwrap().as_raw() {
 			RawWindowHandle::Wayland(window) => {
-				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_WAYLAND);
+				assert_eq!(self.win.kind, aqua_win_kind_t_AQUA_WIN_KIND_WAYLAND);
 				self.win.detail.wayland.surface = window.surface.as_ptr();
 			}
 			RawWindowHandle::Xcb(window) => {
-				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_XCB);
+				assert_eq!(self.win.kind, aqua_win_kind_t_AQUA_WIN_KIND_XCB);
 				self.win.detail.xcb.window = window.window.into();
 				self.win.detail.xcb.visual_id = window.visual_id.unwrap().into();
 			}
 			RawWindowHandle::Xlib(window) => {
-				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_XLIB);
+				assert_eq!(self.win.kind, aqua_win_kind_t_AQUA_WIN_KIND_XLIB);
 				self.win.detail.xlib.window = window.window;
 				self.win.detail.xlib.visual_id = window.visual_id;
 			}
 			RawWindowHandle::AppKit(window) => {
-				assert!(self.win.kind == aqua_win_kind_t_AQUA_WIN_KIND_APPKIT);
+				assert_eq!(self.win.kind, aqua_win_kind_t_AQUA_WIN_KIND_APPKIT);
 				self.win.detail.appkit.ns_view = window.ns_view.as_ptr();
 			}
 			_ => {
