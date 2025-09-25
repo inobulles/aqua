@@ -345,12 +345,14 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		printf("WebGPU const: %s\n", name);
 	}
 
+#if 0 // XXX Disable this for now because GCC doesn't like that we have a 0 < 0 comparison.
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
 		if (((uint32_t*) &ctx->consts)[i] == -1u) {
 			ctx->is_conn = false;
 			break;
 		}
 	}
+#endif
 
 	// Read functions.
 

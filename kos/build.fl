@@ -8,7 +8,7 @@ deps = [
 ]
 
 let cc = Cc([
-	"-std=c11", "-g",
+	"-std=c11", "-D_GNU_SOURCE", "-D_XOPEN_SOURCE", "-g",
 	"-Wall", "-Wextra", "-Werror",
 	"-fPIC",
 ])
