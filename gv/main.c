@@ -144,7 +144,11 @@ int main(int argc, char* argv[]) {
 		iface_found = true;
 
 		switch (ifa->ifa_addr->sa_family) {
+#if defined(__linux__)
+		case AF_PACKET:
+#else
 		case AF_LINK:
+#endif
 			state.found_ether = ifa;
 			break;
 		case AF_INET:
