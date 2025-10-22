@@ -67,7 +67,9 @@ void win_disconn(win_ctx_t ctx);
 /**
  * Create a window.
  *
- * Create a window object. This also registers an interrupt for window events. The caller must call `win_interrupt` on each `KOS_NOTIF_INTERRUPT` notification it receives for these window event interrupts to be processed.
+ * Create a window object.
+ * This also registers an interrupt for window events.
+ * The caller must call `win_interrupt` on each `KOS_NOTIF_INTERRUPT` notification it receives for these window event interrupts to be processed.
  *
  * @param ctx The window library component context.
  * @return A window object.
