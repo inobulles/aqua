@@ -270,8 +270,6 @@ void win_destroy(win_t win) {
 	};
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
-	kos_flush(true);
-
 	free(win);
 }
 
