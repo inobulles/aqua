@@ -5,7 +5,7 @@ import bob
 import bob.pkg_config
 
 deps = [
-	Dep.git("https://github.com/inobulles/umber", "v0.3.1"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.2"),
 	Dep.local("../../kos"),
 ]
 
@@ -30,7 +30,7 @@ let pango_cflags = sum(pango_modules.map(PkgConfig.cflags))
 let pango_libs = sum(pango_modules.map(PkgConfig.libs))
 
 let obj = Cc([
-	"-std=c11",
+	"-std=c11", "-g", "-fPIC",
 	"-Wall", "-Wextra", "-Werror",
 ] + pango_cflags).compile(["main.c"])
 
