@@ -10,6 +10,10 @@ deps = [
 ]
 
 let libs = {
+	"font": {
+		"src": ["font.c"],
+		"include": ["font.h"],
+	},
 	"root": {
 		"src": ["root.c"],
 		"include": ["root.h"],
