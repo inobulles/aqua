@@ -229,6 +229,11 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 		goto err_backend_init;
 	}
 
+	// Sometimes we'll have gotten a resize to configure before we had a chance to actually set the surface up.
+	// So do the surface configuration anyways.
+
+	ui_wgpu_ez_resize(state, state->config.width, state->config.height);
+
 	LOG_V(cls, "Created WebGPU UI backend.");
 
 	// Done!
@@ -373,13 +378,6 @@ err_create_view:
 }
 
 void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res) {
-	if (state->surface == NULL) {
-		LOG_V(cls, "Surface not yet created, skipping resize.");
-		return;
-	}
-
-	LOG_V(cls, "Resizing to %ux%u and (re)configuring surface.", x_res, y_res);
-
 	state->config.device = state->device;
 	state->config.usage = WGPUTextureUsage_RenderAttachment;
 	state->config.format = state->caps.formats[0];
@@ -387,6 +385,13 @@ void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res
 	state->config.alphaMode = state->caps.alphaModes[0];
 	state->config.width = x_res;
 	state->config.height = y_res;
+
+	if (state->surface == NULL) {
+		LOG_V(cls, "Surface not yet created, skipping resize.");
+		return;
+	}
+
+	LOG_V(cls, "Resizing to %ux%u and (re)configuring surface.", x_res, y_res);
 
 	aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
 	state->configured = true;
