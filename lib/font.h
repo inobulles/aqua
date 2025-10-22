@@ -13,6 +13,11 @@
 typedef struct font_ctx_t* font_ctx_t;
 
 /**
+ * Font object.
+ */
+typedef struct font_t* font_t;
+
+/**
  * Initialize the font library component.
  *
  * @param ctx The AQUA library context.
@@ -38,3 +43,22 @@ font_ctx_t font_conn(kos_vdev_descr_t const* vdev);
  * @param ctx The font library component context.
  */
 void font_disconn(font_ctx_t ctx);
+
+/**
+ * Create a font object from a string representation.
+ *
+ * This string representation is implementation-defined at the moment, but it will most likely follow the Pango string representation for a given VDRIVER:
+ * https://docs.gtk.org/Pango/type_func.FontDescription.from_string.html
+ *
+ * @param ctx The font library component context.
+ * @param str The string representation.
+ * @return The font object handle.
+ */
+font_t font_from_str(font_ctx_t ctx, char const* str);
+
+/**
+ * Destroy a font object.
+ *
+ * @param font The font object to destroy.
+ */
+void font_destroy(font_t font);
