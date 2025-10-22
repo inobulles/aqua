@@ -31,3 +31,12 @@ pacman -S cairo harfbuzz pango
 ```console
 brew install pango
 ```
+
+## Running tests
+
+Currently the testing framework is pretty ad hoc.
+You can run it with the following command from the root directory:
+
+```sh
+bob -C vdev/font/tests run
+```
