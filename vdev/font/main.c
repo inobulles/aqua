@@ -11,10 +11,6 @@
 #include <assert.h>
 #include <stddef.h>
 
-// TODO This VDRIVER is pretty easily testable - write tests!
-//      But be careful to actually test stuff relevant to the VDRIVER, i.e. not accidentally just end up testing Pango.
-// TODO Also, I need comprehensive documentation for each function here (or just leave that to library and have a general overview in the README here?).
-
 #define SPEC "aquabsd.black.font"
 #define VERS 0
 #define VDRIVER_HUMAN "Font driver"
