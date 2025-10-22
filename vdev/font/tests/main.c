@@ -24,7 +24,7 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
-	LOG_I(cls, "Using font VDEV \"%s\".", (char*) font_vdev->human);
+	LOG_V(cls, "Using font VDEV \"%s\".", (char*) font_vdev->human);
 	font_ctx_t font_ctx = font_conn(font_vdev);
 
 	if (font_ctx == NULL) {
@@ -32,7 +32,18 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
-	// TODO Actual tests.
+	// XXX Note that there is no situation where font_from_str would actually return NULL in practice, even with a bogus string representation of a font.
+
+	LOG_I(cls, "font_from_str: Testing font creation...");
+
+	font_t font = font_from_str(font_ctx, "Montserrat");
+
+	if (font == NULL) {
+		LOG_F(cls, "Expected a font object.");
+		return EXIT_FAILURE;
+	}
+
+	font_destroy(font);
 
 	LOG_I(cls, "All tests passed!");
 
