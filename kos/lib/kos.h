@@ -273,7 +273,7 @@ typedef union {
 		 *
 		 * TODO Talk about the memory management requirements of this pointer once we've figured that out.
 		 */
-		void* ptr;
+		void const* ptr;
 	} buf;
 
 	/**

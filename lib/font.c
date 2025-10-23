@@ -308,7 +308,7 @@ font_t font_from_str(font_ctx_t ctx, char const* str) {
 	}
 
 	kos_val_t const args[] = {
-		{.buf = {strlen(str), (void*) str}},
+		{.buf = {strlen(str), str}},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.font_from_str, args);

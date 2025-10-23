@@ -192,7 +192,7 @@ static void font_destroy(PangoFontDescription* font) {
 	pango_font_description_free(font);
 }
 
-static layout_t* layout_create(PangoFontDescription* font, char* text, size_t length) {
+static layout_t* layout_create(PangoFontDescription* font, char const* text, size_t length) {
 	LOG_V(cls, "Creating layout objects.");
 
 	layout_t* const layout = malloc(sizeof *layout);
@@ -228,7 +228,7 @@ static void layout_destroy(layout_t* layout) {
 	free(layout);
 }
 
-static void layout_set_text(layout_t* layout, char* text, size_t length) {
+static void layout_set_text(layout_t* layout, char const* text, size_t length) {
 	size_t const truncated = MAX(length, 30);
 
 	LOG_V(
