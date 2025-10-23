@@ -26,6 +26,14 @@ struct font_ctx_t {
 	struct {
 		uint32_t font_from_str;
 		uint32_t font_destroy;
+		uint32_t layout_create;
+		uint32_t layout_destroy;
+		uint32_t layout_set_text;
+		uint32_t layout_set_limits;
+		uint32_t layout_pos_to_index;
+		uint32_t layout_index_to_pos;
+		uint32_t layout_get_res;
+		uint32_t layout_render;
 	} fns;
 
 	bool last_success;
@@ -138,6 +146,110 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[0].name, "font") == 0
 		) {
 			ctx->fns.font_destroy = i;
+		}
+
+		if (
+			strcmp(name, "layout_create") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "font") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "text") == 0
+		) {
+			ctx->fns.layout_create = i;
+		}
+
+		if (
+			strcmp(name, "layout_destroy") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0
+		) {
+			ctx->fns.layout_destroy = i;
+		}
+
+		if (
+			strcmp(name, "layout_set_text") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "text") == 0
+		) {
+			ctx->fns.layout_set_text = i;
+		}
+
+		if (
+			strcmp(name, "layout_set_limits") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 3 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "x_res_limit") == 0 &&
+			fn->params[2].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[2].name, "y_res_limit") == 0
+		) {
+			ctx->fns.layout_set_limits = i;
+		}
+
+		if (
+			strcmp(name, "layout_pos_to_index") == 0 &&
+			fn->ret_type == KOS_TYPE_I32 &&
+			fn->param_count == 3 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "x") == 0 &&
+			fn->params[2].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[2].name, "y") == 0
+		) {
+			ctx->fns.layout_pos_to_index = i;
+		}
+
+		if (
+			strcmp(name, "layout_index_to_pos") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 4 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0 &&
+			fn->params[1].type == KOS_TYPE_I32 &&
+			strcmp((char*) fn->params[1].name, "index") == 0 &&
+			fn->params[2].type == KOS_TYPE_PTR &&
+			strcmp((char*) fn->params[2].name, "x") == 0 &&
+			fn->params[3].type == KOS_TYPE_PTR &&
+			strcmp((char*) fn->params[3].name, "y") == 0
+		) {
+			ctx->fns.layout_index_to_pos = i;
+		}
+
+		if (
+			strcmp(name, "layout_get_res") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 3 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0 &&
+			fn->params[1].type == KOS_TYPE_PTR &&
+			strcmp((char*) fn->params[1].name, "x_res") == 0 &&
+			fn->params[2].type == KOS_TYPE_PTR &&
+			strcmp((char*) fn->params[2].name, "y_res") == 0
+		) {
+			ctx->fns.layout_get_res = i;
+		}
+
+		if (
+			strcmp(name, "layout_render") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "layout") == 0 &&
+			fn->params[1].type == KOS_TYPE_PTR &&
+			strcmp((char*) fn->params[1].name, "buffer") == 0
+		) {
+			ctx->fns.layout_render = i;
 		}
 	}
 
