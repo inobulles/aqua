@@ -6,10 +6,13 @@
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"
 
-#include <stdio.h>
+#include <umber.h>
+
 #include <string.h>
 
 #define SPEC "aquabsd.black.font"
+
+static umber_class_t const* cls = NULL;
 
 struct font_ctx_t {
 	uint64_t hid;
@@ -36,6 +39,10 @@ struct font_t {
 
 static component_t comp;
 
+static __attribute__((constructor)) void init(void) {
+	cls = umber_class_new("aqua.lib.font", UMBER_LVL_INFO, "AQUA standard library: font library.");
+}
+
 aqua_component_t font_init(aqua_ctx_t ctx) {
 	aqua_register_component(ctx, &comp);
 	kos_req_vdev("aquabsd.black.font");
@@ -51,6 +58,7 @@ font_ctx_t font_conn(kos_vdev_descr_t const* vdev) {
 	font_ctx_t const ctx = calloc(1, sizeof *ctx);
 
 	if (ctx == NULL) {
+		LOG_E(cls, "Failed to allocate context.\n");
 		return NULL;
 	}
 
@@ -79,10 +87,12 @@ font_ctx_t font_conn(kos_vdev_descr_t const* vdev) {
 
 void font_disconn(font_ctx_t ctx) {
 	if (ctx == NULL) {
+		LOG_E(cls, "Context is NULL.");
 		return;
 	}
 
 	if (!ctx->is_conn) {
+		LOG_W(cls, "No connection made; just freeing context memory.");
 		free(ctx);
 		return;
 	}
@@ -95,6 +105,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 	font_ctx_t const ctx = data;
 
 	if (ctx == NULL || notif->cookie != ctx->last_cookie) {
+		LOG_E(cls, "No context or bad cookie.");
 		return;
 	}
 
@@ -131,10 +142,13 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
-		if (((uint32_t*) &ctx->fns)[i] == -1u) {
-			ctx->is_conn = false;
-			break;
+		if (((uint32_t*) &ctx->fns)[i] != -1u) {
+			continue;
 		}
+
+		LOG_E(cls, "Missing function %d; disabling connection.", i);
+		ctx->is_conn = false;
+		break;
 	}
 }
 
@@ -142,13 +156,14 @@ static void notif_conn_fail(kos_notif_t const* notif, void* data) {
 	(void) notif;
 	(void) data;
 
-	fprintf(stderr, "TODO Connection failed, but how do we handle this?\n");
+	LOG_E(cls, "TODO Connection failed, but how do we handle this?");
 }
 
 static void notif_call_ret(kos_notif_t const* notif, void* data) {
 	font_ctx_t const ctx = data;
 
 	if (ctx == NULL || !ctx->is_conn || notif->cookie != ctx->last_cookie) {
+		LOG_E(cls, "No context, not connected, or bad cookie.");
 		return;
 	}
 
@@ -162,19 +177,21 @@ static void notif_call_fail(kos_notif_t const* notif, void* data) {
 
 	(void) notif;
 
-	fprintf(stderr, "TODO Call failed, but how do we handle this?\n");
+	LOG_E(cls, "TODO Call failed, but how do we handle this?");
 }
 
 // Actual function implementations.
 
 font_t font_from_str(font_ctx_t ctx, char const* str) {
 	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
 		return NULL;
 	}
 
 	font_t const font = calloc(1, sizeof *font);
 
 	if (font == NULL) {
+		LOG_E(cls, "Failed to allocate font.");
 		return NULL;
 	}
 
@@ -195,6 +212,7 @@ void font_destroy(font_t font) {
 	font_ctx_t const ctx = font->ctx;
 
 	if (!ctx->is_conn) {
+		LOG_W(cls, "No connection made; just freeing font memory.");
 		free(font);
 		return;
 	}
