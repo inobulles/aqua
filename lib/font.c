@@ -45,6 +45,11 @@ struct font_t {
 	kos_opaque_ptr_t opaque_ptr;
 };
 
+struct font_layout_t {
+	font_ctx_t ctx;
+	kos_opaque_ptr_t opaque_ptr;
+};
+
 static component_t comp;
 
 static __attribute__((constructor)) void init(void) {
@@ -335,6 +340,39 @@ void font_destroy(font_t font) {
 
 	kos_vdev_call(ctx->conn_id, ctx->fns.font_destroy, args);
 	free(font);
+}
+
+font_layout_t font_layout_create(font_t font, char const* text) {
+	font_ctx_t const ctx = font->ctx;
+	font_layout_t const layout = calloc(1, sizeof *layout);
+
+	if (layout == NULL) {
+		LOG_E(cls, "Failed to allocate layout.");
+		return NULL;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = font->opaque_ptr},
+		{.buf = {strlen(text), text}},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_create, args);
+	kos_flush(true);
+
+	layout->ctx = ctx;
+	layout->opaque_ptr = ctx->last_ret.opaque_ptr;
+
+	return layout;
+}
+
+void font_layout_destroy(font_layout_t layout) {
+	font_ctx_t const ctx = layout->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = layout->opaque_ptr},
+	};
+
+	kos_vdev_call(ctx->conn_id, ctx->fns.layout_destroy, args);
 }
 
 static component_t comp = {
