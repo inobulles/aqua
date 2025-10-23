@@ -18,6 +18,11 @@ typedef struct font_ctx_t* font_ctx_t;
 typedef struct font_t* font_t;
 
 /**
+ * Text layout object.
+ */
+typedef struct font_layout_t* font_layout_t;
+
+/**
  * Initialize the font library component.
  *
  * @param ctx The AQUA library context.
@@ -62,3 +67,21 @@ font_t font_from_str(font_ctx_t ctx, char const* str);
  * @param font The font object to destroy.
  */
 void font_destroy(font_t font);
+
+/**
+ * Create a layout object from a font.
+ *
+ * This is what actually contains the information about the text, and which can eventually be rendered out to a buffer.
+ *
+ * @param font The font to use.
+ * @param text The initial text the layout should contain.
+ * @return The layout object handle.
+ */
+font_layout_t font_layout_create(font_t font, char const* text);
+
+/**
+ * Destroy a layout object.
+ *
+ * @param layout The layout object to destroy.
+ */
+void font_layout_destroy(font_layout_t layout);
