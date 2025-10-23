@@ -117,7 +117,7 @@ static kos_fn_t const FNS[] = {
 	{
 		.name = "layout_index_to_pos",
 		.ret_type = KOS_TYPE_VOID,
-		.param_count = 3,
+		.param_count = 4,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "layout"},
 			{KOS_TYPE_I32, "index"},
