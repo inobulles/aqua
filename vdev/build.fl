@@ -3,5 +3,5 @@
 
 import bob
 
-deps = ["win", "wgpu", "ui"].map(Dep.local)
+deps = ["font", "win", "wgpu", "ui"].map(Dep.local)
 run = none
