@@ -10,13 +10,14 @@ deps = [
 ]
 
 let libs = {
-	"font": {
-		"src": ["font.c"],
-		"include": ["font.h"],
-	},
+	# XXX "root" must be the first library built, as the others depend on it!
 	"root": {
 		"src": ["root.c"],
 		"include": ["root.h"],
+	},
+	"font": {
+		"src": ["font.c"],
+		"include": ["font.h"],
 	},
 	"win": {
 		"src": ["win.c"],
