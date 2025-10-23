@@ -43,6 +43,16 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+	LOG_I(cls, "font_layout_create: Testing layout creation...");
+
+	font_layout_t layout = font_layout_create(font, "Hello world!");
+
+	if (layout == NULL) {
+		LOG_F(cls, "Expected a layout object.");
+		return EXIT_FAILURE;
+	}
+
+	font_layout_destroy(layout);
 	font_destroy(font);
 
 	LOG_I(cls, "All tests passed!");
