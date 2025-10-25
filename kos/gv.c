@@ -36,9 +36,9 @@ static void unlock(FILE* f) {
 }
 
 static bool is_gvd_running(void) {
-	LOG_V(cls, "Checking if GrapeVine daemon is running by checking lock file %s.", GV_LOCK_PATH);
+	LOG_V(cls, "Checking if GrapeVine daemon is running by checking lock file %s.", gv_get_lock_path());
 
-	FILE* const lock_file = fopen(GV_LOCK_PATH, "r");
+	FILE* const lock_file = fopen(gv_get_lock_path(), "r");
 
 	if (lock_file == NULL) {
 		LOG_V(cls, "Lock file doesn't exist - not running.");
@@ -79,10 +79,10 @@ int get_gv_host_id(uint64_t* host_id_out) {
 		return -1;
 	}
 
-	FILE* const f = fopen(GV_HOST_ID_PATH, "r");
+	FILE* const f = fopen(gv_get_host_id_path(), "r");
 
 	if (f == NULL) {
-		LOG_W(cls, "Couldn't load GrapeVine host ID file %s: %s", GV_HOST_ID_PATH, strerror(errno));
+		LOG_W(cls, "Couldn't load GrapeVine host ID file %s: %s", gv_get_host_id_path(), strerror(errno));
 		return -1;
 	}
 
@@ -115,10 +115,10 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 
 	// Actually read.
 
-	FILE* const f = fopen(GV_NODES_PATH, "r");
+	FILE* const f = fopen(gv_get_nodes_path(), "r");
 
 	if (f == NULL) {
-		LOG_W(cls, "Couldn't load GrapeVine nodes file %s: %s", GV_NODES_PATH, strerror(errno));
+		LOG_W(cls, "Couldn't load GrapeVine nodes file %s: %s", gv_get_nodes_path(), strerror(errno));
 		return 0;
 	}
 
@@ -199,7 +199,7 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 	}
 
 	if (node_count == 0) {
-		LOG_I(cls, "No GrapeVine nodes found on network.", GV_NODES_PATH);
+		LOG_I(cls, "No GrapeVine nodes found on network.", gv_get_nodes_path());
 	}
 
 done:

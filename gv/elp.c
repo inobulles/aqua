@@ -18,8 +18,8 @@
 #include <arpa/inet.h>
 
 static void write_nodes(state_t* state) {
-	LOG_V(state->elp_cls, "Writing nodes to %s.", GV_NODES_PATH);
-	FILE* const f = fopen(GV_NODES_PATH, "w");
+	LOG_V(state->elp_cls, "Writing nodes to %s.", gv_get_nodes_path());
+	FILE* const f = fopen(gv_get_nodes_path(), "w");
 
 	if (f == NULL) {
 		LOG_E(state->elp_cls, "fopen: %s", strerror(errno));
@@ -37,7 +37,7 @@ static void write_nodes(state_t* state) {
 	}
 
 	fclose(f);
-	LOG_V(state->elp_cls, "Wrote %zu nodes to %s.", state->node_count, GV_NODES_PATH);
+	LOG_V(state->elp_cls, "Wrote %zu nodes to %s.", state->node_count, gv_get_nodes_path());
 }
 
 static void* elp_sender(void* arg) {

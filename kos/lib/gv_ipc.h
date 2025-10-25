@@ -12,23 +12,7 @@
 #include "kos.h"
 
 #include <netinet/in.h>
-
-/**
- * Where the host ID of the current machine is stored.
- */
-#define GV_HOST_ID_PATH "/tmp/gv.host_id"
-
-/**
- * Where the discovered GrapeVine nodes and their VDEVs are stored.
- */
-#define GV_NODES_PATH "/tmp/gv.nodes"
-
-/**
- * The path to the lock file used to determine if the GrapeVine daemon is running.
- *
- * If this file exists and is locked, then the GrapeVine daemon is running.
- */
-#define GV_LOCK_PATH "/tmp/gv.lock"
+#include <stdlib.h>
 
 _Static_assert(sizeof(in_addr_t) == sizeof(uint32_t), "in_addr_t is not 32 bits long.");
 _Static_assert(sizeof(struct in6_addr) == sizeof(uint8_t) * 16, "in6_addr_t is not 128 bits long.");
@@ -70,3 +54,57 @@ typedef struct __attribute__((packed)) {
 	 */
 	kos_vdev_descr_t vdevs[];
 } gv_node_ent_t;
+
+/**
+ * Get the host ID of the current machine.
+ *
+ * This value can be set with the GV_HOST_ID_PATH environment variable.
+ *
+ * @return Host ID. This is either allocated in the environment or is a constant, so don't free this.
+ */
+static inline char const* gv_get_host_id_path(void) {
+	char const* const env = getenv("GV_HOST_ID_PATH");
+
+	if (env == NULL) {
+		return "/tmp/gv.host_id";
+	}
+
+	return env;
+}
+
+/**
+ * Get the path to the discovered GrapeVine nodes file.
+ *
+ * This is the file where the discovered nodes and their VDEVs are stored.
+ * This value can be set with the GV_NODES_PATH environment variable.
+ *
+ * @return Nodes file path. This is either allocated in the environment or is a constant, so don't free this.
+ */
+static inline char const* gv_get_nodes_path(void) {
+	char const* const env = getenv("GV_NODES_PATH");
+
+	if (env == NULL) {
+		return "/tmp/gv.nodes";
+	}
+
+	return env;
+}
+
+/**
+ * Get the path to the GrapeVine lock file.
+ *
+ * The lock file is used to determine if the GrapeVine daemon is running.
+ * If this file exists and is locked, then the GrapeVine daemon is running.
+ * This value can be set with the GV_LOCK_PATH environment variable.
+ *
+ * @return Lock file path. This is either allocated in the environment or is a constant, so don't free this.
+ */
+static inline char const* gv_get_lock_path(void) {
+	char const* const env = getenv("GV_LOCK_PATH");
+
+	if (env == NULL) {
+		return "/tmp/gv.lock";
+	}
+
+	return env;
+}

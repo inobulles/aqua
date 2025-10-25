@@ -84,11 +84,11 @@ int main(int argc, char* argv[]) {
 		goto err_getopt;
 	}
 
-	LOG_V(state.init_cls, "Acquiring lock file %s.", GV_LOCK_PATH);
+	LOG_V(state.init_cls, "Acquiring lock file %s.", gv_get_lock_path());
 
 	// See https://0pointer.de/blog/projects/locking.html
 
-	FILE* const lock_file = fopen(GV_LOCK_PATH, "w");
+	FILE* const lock_file = fopen(gv_get_lock_path(), "w");
 
 	if (lock_file == NULL) {
 		LOG_F(state.init_cls, "fopen: %s", strerror(errno));
@@ -178,8 +178,8 @@ int main(int argc, char* argv[]) {
 	state.host_id = (sockaddr_to_mac((struct sockaddr*) state.found_ether->ifa_addr) << 16) | 0x11AD; // Approximation of Link-Local ADdress.
 	LOG_I(state.init_cls, "Our host ID is 0x%" PRIx64 ".", state.host_id);
 
-	LOG_V(state.init_cls, "Writing our host ID to %s.", GV_HOST_ID_PATH);
-	FILE* const host_id_file = fopen(GV_HOST_ID_PATH, "w");
+	LOG_V(state.init_cls, "Writing our host ID to %s.", gv_get_host_id_path());
+	FILE* const host_id_file = fopen(gv_get_host_id_path(), "w");
 
 	if (host_id_file == NULL) {
 		LOG_F(state.init_cls, "fopen: %s", strerror(errno));
@@ -324,7 +324,7 @@ err_getifaddrs:
 		free(state.vdevs);
 	}
 
-	LOG_V(state.init_cls, "Releasing lock file %s.", GV_LOCK_PATH);
+	LOG_V(state.init_cls, "Releasing lock file %s.", gv_get_lock_path());
 
 	flock(fileno(lock_file), LOCK_UN); // XXX Shouldn't be necessary, but just in case.
 	fclose(lock_file);
