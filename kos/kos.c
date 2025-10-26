@@ -112,13 +112,24 @@ void kos_sub_to_notif(kos_notif_cb_t cb, void* data) {
 	client_notif_data = data;
 }
 
+static int write_ptr(kos_ptr_t ptr, void const* data, uint32_t size) {
+	// XXX For now, only support writing pointers to local host.
+
+	if (ptr.host_id != local_host_id) {
+		return -1;
+	}
+
+	memcpy((void*) (uintptr_t) ptr.ptr, data, size);
+	return 0;
+}
+
 void kos_req_vdev(char const* spec) {
 	assert(has_init);
 
 	// TODO Not sure I like how init_cls is used here.
 
 	LOG_V(init_cls, "Trying to find local VDEV for spec \"%s\".", spec);
-	vdriver_loader_req_local_vdev(spec, local_host_id, notif_cb, client_notif_data);
+	vdriver_loader_req_local_vdev(spec, local_host_id, notif_cb, client_notif_data, write_ptr);
 
 	LOG_V(init_cls, "Trying to find VDEV on the GrapeVine for spec '%s'.", spec);
 

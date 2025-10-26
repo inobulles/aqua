@@ -20,6 +20,11 @@
 typedef uint64_t vid_t;
 
 /**
+ * See {@link vdriver_t.write_ptr}.
+ */
+typedef int (*vdriver_write_ptr_t)(kos_ptr_t ptr, void const* data, uint32_t size);
+
+/**
  * The descriptor for a VDRIVER.
  *
  * The `VDRIVER` global variable should be of this type.
@@ -73,6 +78,18 @@ typedef struct {
 	 * This is set by the KOS when loading the VDRIVER; it should not be written to by the VDRIVER, only read from.
 	 */
 	void* notif_data;
+
+	/**
+	 * Write to memory potentially on another host.
+	 *
+	 * This is set by the KOS when loading the VDRIVER; it should not be written to by the VDRIVER, only read from.
+	 *
+	 * @param ptr The KOS pointer to write to.
+	 * @param data The data to write.
+	 * @param size The size of the data to write.
+	 * @return 0 on success, or -1 on failure.
+	 */
+	vdriver_write_ptr_t write_ptr;
 
 	/**
 	 * The initialization function of the VDRIVER.

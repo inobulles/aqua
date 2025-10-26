@@ -69,7 +69,8 @@ static vdriver_t* load_from_path(
 	char const* path,
 	uint64_t host_id,
 	kos_notif_cb_t notif_cb,
-	void* notif_data
+	void* notif_data,
+	vdriver_write_ptr_t write_ptr
 ) {
 	LOG_V(cls, "Trying to load VDRIVER from path: %s", path);
 	void* const lib = dlopen(path, RTLD_LAZY);
@@ -104,6 +105,7 @@ static vdriver_t* load_from_path(
 	vdriver->host_id = host_id;
 	vdriver->notif_cb = notif_cb;
 	vdriver->notif_data = notif_data;
+	vdriver->write_ptr = write_ptr;
 
 	LOG_V(cls, "Call init function on VDRIVER, if it exists.", path);
 
@@ -126,7 +128,8 @@ void vdriver_loader_req_local_vdev(
 	char const* spec,
 	uint64_t host_id,
 	kos_notif_cb_t notif_cb,
-	void* notif_data
+	void* notif_data,
+	vdriver_write_ptr_t write_ptr
 ) {
 	LOG_V(cls, "Trying to find local VDRIVER providing spec \"%s\".", spec);
 
@@ -147,7 +150,7 @@ void vdriver_loader_req_local_vdev(
 
 		// Driver file exists, we should be able to load it.
 
-		vdriver_t* const vdriver = load_from_path(candidate, host_id, notif_cb, notif_data);
+		vdriver_t* const vdriver = load_from_path(candidate, host_id, notif_cb, notif_data, write_ptr);
 
 		if (vdriver == NULL) {
 			continue;
@@ -203,7 +206,7 @@ void vdriver_loader_vdev_local_inventory(
 			asprintf(&candidate, "%s/%s", tok, ent->d_name);
 			assert(candidate != NULL);
 
-			vdriver_t* const vdriver = load_from_path(candidate, host_id, notif_cb, notif_data);
+			vdriver_t* const vdriver = load_from_path(candidate, host_id, notif_cb, notif_data, NULL);
 
 			if (vdriver == NULL) {
 				continue;
