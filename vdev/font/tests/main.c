@@ -70,6 +70,17 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+	LOG_I(cls, "font_layout_set_text: Testing setting text...");
+
+	font_layout_set_text(layout, "Hello world! and some other stuff");
+	uint32_t new_x_res, new_y_res;
+	font_layout_get_res(layout, &new_x_res, &new_y_res);
+
+	if (new_y_res != y_res || new_x_res <= x_res) {
+		LOG_F(cls, "Layout resolution changed unexpectedly (%ux%u -> %ux%u, Y resolution should stay the same and X resolution should increase).", x_res, y_res, new_x_res, new_y_res);
+		return EXIT_FAILURE;
+	}
+
 	font_layout_destroy(layout);
 	font_destroy(font);
 
