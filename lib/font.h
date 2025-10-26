@@ -144,3 +144,14 @@ void font_layout_index_to_pos(font_layout_t layout, int32_t index, uint32_t* x, 
  * @param y_res Pointer to where the Y resolution should be copied to.
  */
 void font_layout_get_res(font_layout_t layout, uint32_t* x_res, uint32_t* y_res);
+
+/**
+ * Render the layout into a buffer.
+ *
+ * This rasterizes the layout into a caller-provided buffer.
+ * The buffer must be large enough to hold the rendered output, determined via {@link font_layout_get_res}.
+ *
+ * @param layout The layout to render.
+ * @param buffer Pointer to the buffer where the rendered output will be written.
+ */
+void font_layout_render(font_layout_t layout, void* buffer);

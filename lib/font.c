@@ -458,6 +458,23 @@ void font_layout_get_res(font_layout_t layout, uint32_t* x_res, uint32_t* y_res)
 	kos_flush(true);
 }
 
+void font_layout_render(font_layout_t layout, void* buffer) {
+	font_ctx_t const ctx = layout->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = layout->opaque_ptr},
+		{.ptr = {0, (uint64_t) (uintptr_t) buffer}},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_render, args);
+	kos_flush(true);
+}
+
 static component_t comp = {
 	.probe = probe,
 	.notif_conn = notif_conn,

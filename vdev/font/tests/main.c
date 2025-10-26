@@ -133,6 +133,34 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+	LOG_I(cls, "font_layout_render: Testing rendering layout into buffer...");
+
+	size_t const buf_size = x_res * y_res * 4;
+	uint8_t* const buf = calloc(1, buf_size);
+
+	if (buf == NULL) {
+		LOG_F(cls, "Failed to allocate %zu bytes for render buffer.", buf_size);
+		return EXIT_FAILURE;
+	}
+
+	font_layout_render(layout, buf);
+
+	bool non_zero = false;
+
+	for (size_t i = 0; i < buf_size; ++i) {
+		if (buf[i] != 0) {
+			non_zero = true;
+			break;
+		}
+	}
+
+	free(buf);
+
+	if (!non_zero) {
+		LOG_F(cls, "Rendered buffer appears to be empty (all zeroes).");
+		return EXIT_FAILURE;
+	}
+
 	font_layout_destroy(layout);
 	font_destroy(font);
 
