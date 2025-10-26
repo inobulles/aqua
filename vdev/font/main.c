@@ -137,7 +137,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "layout_render",
-		.ret_type = KOS_TYPE_VOID, // TODO Is it best to have the VDRIVER write into a buffer supplied by the caller or for us to allocate a buffer and return it? If we allocate the buffer it makes things harder because we have to provide a way for the client to let us know when we can free it I guess. Although we could just use KOS_TYPE_BUF instead.
+		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "layout"},
@@ -264,6 +264,8 @@ static void layout_set_limits(layout_t* layout, uint32_t x_res_limit, uint32_t y
 }
 
 static int layout_pos_to_index(layout_t* layout, uint32_t x, uint32_t y) {
+	LOG_V(cls, "Mapping %ux%u to index.", x, y);
+
 	int index = -1;
 	int trailing = 0;
 
@@ -276,6 +278,8 @@ static int layout_pos_to_index(layout_t* layout, uint32_t x, uint32_t y) {
 }
 
 static void layout_index_to_pos(layout_t* layout, int32_t index, uint32_t* x_ref, uint32_t* y_ref) {
+	LOG_V(cls, "Mapping %d to position.", index);
+
 	PangoRectangle rect;
 	pango_layout_index_to_pos(layout->layout, index, &rect);
 
@@ -302,7 +306,7 @@ static int layout_render(layout_t* layout, kos_ptr_t buf) {
 
 	int rv = -1;
 
-	LOG_V(cls, "Preparing to render layout.\n");
+	LOG_V(cls, "Preparing to render layout.");
 
 	int32_t w = 0, h = 0;
 	pango_layout_get_pixel_size(layout->layout, &w, &h);
