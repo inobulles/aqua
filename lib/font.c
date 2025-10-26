@@ -338,7 +338,7 @@ void font_destroy(font_t font) {
 		{.opaque_ptr = font->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.font_destroy, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.font_destroy, args);
 	free(font);
 }
 
@@ -372,7 +372,7 @@ void font_layout_destroy(font_layout_t layout) {
 		{.opaque_ptr = layout->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.layout_destroy, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_destroy, args);
 }
 
 static component_t comp = {
