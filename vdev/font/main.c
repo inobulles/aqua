@@ -275,6 +275,14 @@ static int layout_pos_to_index(layout_t* layout, uint32_t x, uint32_t y) {
 	return index;
 }
 
+static void layout_index_to_pos(layout_t* layout, int32_t index, uint32_t* x_ref, uint32_t* y_ref) {
+	PangoRectangle rect;
+	pango_layout_index_to_pos(layout->layout, index, &rect);
+
+	*x_ref = rect.x / PANGO_SCALE;
+	*y_ref = rect.y / PANGO_SCALE;
+}
+
 static void layout_get_res(layout_t* layout, uint32_t* x_res_ref, uint32_t* y_res_ref) {
 	LOG_V(cls, "Getting resolution of layout.\n");
 
@@ -453,8 +461,18 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 			break;
 		}
 
-		LOG_F(cls, "TODO layout_index_to_pos");
-		notif.kind = KOS_NOTIF_CALL_FAIL;
+		uint32_t x = 0, y = 0;
+		layout_index_to_pos(layout, args[1].i32, &x, &y);
+
+		if (
+			VDRIVER.write_ptr(args[2].ptr, &x, sizeof x) < 0 ||
+			VDRIVER.write_ptr(args[3].ptr, &y, sizeof y) < 0
+		) {
+			LOG_E(cls, "Failed to write layout index position to pointers.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
 		break;
 	}
 	case 8: { // layout_get_res
