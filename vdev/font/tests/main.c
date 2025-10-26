@@ -61,8 +61,8 @@ int main(void) {
 	font_layout_get_res(layout, &x_res, &y_res);
 
 	if (
-		x_res <= y_res || // A priori our text should be wider than it is high.
-		x_res < 50 || y_res < 10 || // This would be quite small.
+		x_res <= y_res ||             // A priori our text should be wider than it is high.
+		x_res < 50 || y_res < 10 ||   // This would be quite small.
 		x_res > 500 || y_res > 100 || // This would be quite big.
 		0
 	) {
@@ -78,6 +78,16 @@ int main(void) {
 
 	if (new_y_res != y_res || new_x_res <= x_res) {
 		LOG_F(cls, "Layout resolution changed unexpectedly (%ux%u -> %ux%u, Y resolution should stay the same and X resolution should increase).", x_res, y_res, new_x_res, new_y_res);
+		return EXIT_FAILURE;
+	}
+
+	LOG_I(cls, "font_layout_set_limits: Testing setting limits to font size...");
+
+	font_layout_set_limits(layout, new_x_res - 10, new_y_res);
+	font_layout_get_res(layout, &x_res, &y_res);
+
+	if (x_res > new_x_res - 10 || y_res < new_y_res) {
+		LOG_F(cls, "Layout resolution changed unexpectedly (%ux%u -> %ux%u, Y resolution should stay the same or incrase and X resolution should decrease by at least 10 pixels).", x_res, y_res, new_x_res, new_y_res);
 		return EXIT_FAILURE;
 	}
 
