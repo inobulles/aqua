@@ -85,3 +85,13 @@ font_layout_t font_layout_create(font_t font, char const* text);
  * @param layout The layout object to destroy.
  */
 void font_layout_destroy(font_layout_t layout);
+
+/**
+ * Set the text of a layout object.
+ *
+ * This replaced the previous text contained within the layout.
+ *
+ * @param layout The layout to set the text of.
+ * @param text The text to set.
+ */
+void font_layout_set_text(font_layout_t layout, char const* text);

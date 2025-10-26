@@ -375,6 +375,18 @@ void font_layout_destroy(font_layout_t layout) {
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_destroy, args);
 }
 
+void font_layout_set_text(font_layout_t layout, char const* text) {
+	font_ctx_t const ctx = layout->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = layout->opaque_ptr},
+		{.buf = {strlen(text), text}},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_set_text, args);
+	kos_flush(true);
+}
+
 static component_t comp = {
 	.probe = probe,
 	.notif_conn = notif_conn,
