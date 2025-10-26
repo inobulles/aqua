@@ -387,6 +387,20 @@ void font_layout_set_text(font_layout_t layout, char const* text) {
 	kos_flush(true);
 }
 
+void font_layout_get_res(font_layout_t layout, uint32_t* x_res, uint32_t* y_res) {
+	font_ctx_t const ctx = layout->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = layout->opaque_ptr},
+		// TODO wtf is this.
+		{.ptr = {0, (uint64_t) (uintptr_t) x_res}},
+		{.ptr = {0, (uint64_t) (uintptr_t) y_res}},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_get_res, args);
+	kos_flush(true);
+}
+
 static component_t comp = {
 	.probe = probe,
 	.notif_conn = notif_conn,
