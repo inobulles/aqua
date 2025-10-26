@@ -97,6 +97,19 @@ void font_layout_destroy(font_layout_t layout);
 void font_layout_set_text(font_layout_t layout, char const* text);
 
 /**
+ * Set the rendering limits of a layout.
+ *
+ * This defines the maximum horizontal and vertical resolution the layout
+ * may occupy when being rendered or laid out. The implementation may
+ * perform line wrapping or clipping depending on these limits.
+ *
+ * @param layout The layout to modify.
+ * @param x_res_limit The maximum horizontal resolution.
+ * @param y_res_limit The maximum vertical resolution.
+ */
+void font_layout_set_limits(font_layout_t layout, uint32_t x_res_limit, uint32_t y_res_limit);
+
+/**
  * Get the resolution of the layout if it were to be rendered.
  *
  * @param layout The layout to get the resolution of.
