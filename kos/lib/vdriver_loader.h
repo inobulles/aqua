@@ -51,12 +51,14 @@ void vdriver_loader_init(void);
  * @param host_id The host ID to pass to the VDRIVER when loading it.
  * @param notif_cb The callback to call for {@link KOS_NOTIF_ATTACH} notifications.
  * @param notif_data The data to pass to the notification callback.
+ * @param write_ptr The function the VDRIVER will use to write to pointers.
  */
 void vdriver_loader_req_local_vdev(
 	char const* spec,
 	uint64_t host_id,
 	kos_notif_cb_t notif_cb,
-	void* notif_data
+	void* notif_data,
+	vdriver_write_ptr_t write_ptr
 );
 
 /**
