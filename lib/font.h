@@ -95,3 +95,12 @@ void font_layout_destroy(font_layout_t layout);
  * @param text The text to set.
  */
 void font_layout_set_text(font_layout_t layout, char const* text);
+
+/**
+ * Get the resolution of the layout if it were to be rendered.
+ *
+ * @param layout The layout to get the resolution of.
+ * @param x_res Pointer to where the X resolution should be copied to.
+ * @param y_res Pointer to where the Y resolution should be copied to.
+ */
+void font_layout_get_res(font_layout_t layout, uint32_t* x_res, uint32_t* y_res);

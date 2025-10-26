@@ -5,6 +5,9 @@
 
 #include <umber.h>
 
+// XXX Note that this is only meant to test the font library and VDRIVER!
+// We're *not* trying to test Pango too or anything else implementation specific, so the exact numbers for e.g. font resolutions can be a little squishy so small changes to Pango don't make these tests flaky or anything.
+
 int main(void) {
 	umber_class_t const* const cls = umber_class_new("aquabsd.black.font.tests", UMBER_LVL_VERBOSE, "aquabsd.black.font Font VDRIVER tests.");
 
@@ -49,6 +52,21 @@ int main(void) {
 
 	if (layout == NULL) {
 		LOG_F(cls, "Expected a layout object.");
+		return EXIT_FAILURE;
+	}
+
+	LOG_I(cls, "font_layout_get_res: Testing getting font resolution...");
+
+	uint32_t x_res, y_res;
+	font_layout_get_res(layout, &x_res, &y_res);
+
+	if (
+		x_res <= y_res || // A priori our text should be wider than it is high.
+		x_res < 50 || y_res < 10 || // This would be quite small.
+		x_res > 500 || y_res > 100 || // This would be quite big.
+		0
+	) {
+		LOG_F(cls, "Got weird layout resolution (%ux%u).", x_res, y_res);
 		return EXIT_FAILURE;
 	}
 
