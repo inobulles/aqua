@@ -116,6 +116,23 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+	LOG_I(cls, "font_layout_index_to_pos: Testing turning index to position (beginning and end)...");
+
+	uint32_t x_start, y_start, x_end, y_end;
+	font_layout_index_to_pos(layout, 0, &x_start, &y_start);
+	font_layout_get_res(layout, &x_res, &y_res);
+	font_layout_index_to_pos(layout, strlen(new_text) - 1, &x_end, &y_end);
+
+	if (x_end <= x_start) {
+		LOG_F(cls, "Expected end index X (%u) to be greater than start index X (%u).", x_end, x_start);
+		return EXIT_FAILURE;
+	}
+
+	if (y_start > y_res || y_end > y_res) {
+		LOG_F(cls, "Index positions (%u, %u) or (%u, %u) are outside layout bounds (%ux%u).", x_start, y_start, x_end, y_end, x_res, y_res);
+		return EXIT_FAILURE;
+	}
+
 	font_layout_destroy(layout);
 	font_destroy(font);
 

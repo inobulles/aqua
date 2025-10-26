@@ -125,6 +125,20 @@ void font_layout_set_limits(font_layout_t layout, uint32_t x_res_limit, uint32_t
 int32_t font_layout_pos_to_index(font_layout_t layout, uint32_t x, uint32_t y);
 
 /**
+ * Get the position of a given character index in the layout.
+ *
+ * This performs an index-to-position lookup: given a character index within
+ * the text, it returns the corresponding X and Y pixel position in the layout.
+ * This can be used for drawing cursors or highlighting selections.
+ *
+ * @param layout The layout to query.
+ * @param index The character index to locate.
+ * @param x Pointer to where the X coordinate should be written.
+ * @param y Pointer to where the Y coordinate should be written.
+ */
+void font_layout_index_to_pos(font_layout_t layout, int32_t index, uint32_t* x, uint32_t* y);
+
+/**
  * Get the resolution of the layout if it were to be rendered.
  *
  * @param layout The layout to get the resolution of.
