@@ -263,6 +263,18 @@ static void layout_set_limits(layout_t* layout, uint32_t x_res_limit, uint32_t y
 	}
 }
 
+static int layout_pos_to_index(layout_t* layout, uint32_t x, uint32_t y) {
+	int index = -1;
+	int trailing = 0;
+
+	if (!pango_layout_xy_to_index(layout->layout, x * PANGO_SCALE, y * PANGO_SCALE, &index, &trailing)) {
+		LOG_W(cls, "Position (%u, %u) did not map to a valid index.", x, y);
+		return -1;
+	}
+
+	return index;
+}
+
 static void layout_get_res(layout_t* layout, uint32_t* x_res_ref, uint32_t* y_res_ref) {
 	LOG_V(cls, "Getting resolution of layout.\n");
 
@@ -429,8 +441,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 			break;
 		}
 
-		LOG_F(cls, "TODO layout_pos_to_index");
-		notif.kind = KOS_NOTIF_CALL_FAIL;
+		notif.call_ret.ret.i32 = layout_pos_to_index(layout, args[1].u32, args[2].u32);
 		break;
 	}
 	case 7: { // layout_index_to_pos
