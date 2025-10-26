@@ -5,6 +5,8 @@
 
 #include <umber.h>
 
+#include <string.h>
+
 // XXX Note that this is only meant to test the font library and VDRIVER!
 // We're *not* trying to test Pango too or anything else implementation specific, so the exact numbers for e.g. font resolutions can be a little squishy so small changes to Pango don't make these tests flaky or anything.
 
@@ -72,7 +74,8 @@ int main(void) {
 
 	LOG_I(cls, "font_layout_set_text: Testing setting text...");
 
-	font_layout_set_text(layout, "Hello world! and some other stuff");
+	char const* const new_text = "Hello world! and some other stuff";
+	font_layout_set_text(layout, new_text);
 	uint32_t new_x_res, new_y_res;
 	font_layout_get_res(layout, &new_x_res, &new_y_res);
 
@@ -88,6 +91,28 @@ int main(void) {
 
 	if (x_res > new_x_res - 10 || y_res < new_y_res) {
 		LOG_F(cls, "Layout resolution changed unexpectedly (%ux%u -> %ux%u, Y resolution should stay the same or incrase and X resolution should decrease by at least 10 pixels).", x_res, y_res, new_x_res, new_y_res);
+		return EXIT_FAILURE;
+	}
+
+	LOG_I(cls, "font_layout_pos_to_index: Testing turning position to index (beginning)...");
+
+	int32_t index = font_layout_pos_to_index(layout, 0, 0);
+
+	if (index != 0) {
+		LOG_F(cls, "Expected index for (0, 0) to be at 0th character (was at %dth).", index);
+		return EXIT_FAILURE;
+	}
+
+	LOG_I(cls, "font_layout_pos_to_index: Testing turning position to index (end)...");
+
+	font_layout_set_limits(layout, -1, -1);
+	font_layout_get_res(layout, &x_res, &y_res);
+
+	index = font_layout_pos_to_index(layout, x_res - 1, y_res - 1);
+	int32_t expected_index = strlen(new_text) - 1;
+
+	if (index != expected_index) {
+		LOG_F(cls, "Expected index for (%u, %u) to be at %dth character (was at %dth).", x_res - 1, y_res - 1, expected_index, index);
 		return EXIT_FAILURE;
 	}
 

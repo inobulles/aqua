@@ -110,6 +110,21 @@ void font_layout_set_text(font_layout_t layout, char const* text);
 void font_layout_set_limits(font_layout_t layout, uint32_t x_res_limit, uint32_t y_res_limit);
 
 /**
+ * Get the character index at a given position in the layout.
+ *
+ * This performs a position-to-index lookup: given a pixel position within
+ * the layout (usually mouse coordinates), it returns the closest character
+ * index within the text. This is typically used for text hit-testing or
+ * cursor placement.
+ *
+ * @param layout The layout to query.
+ * @param x The X coordinate, in pixels.
+ * @param y The Y coordinate, in pixels.
+ * @return The character index corresponding to that position, or -1 if unavailable.
+ */
+int32_t font_layout_pos_to_index(font_layout_t layout, uint32_t x, uint32_t y);
+
+/**
  * Get the resolution of the layout if it were to be rendered.
  *
  * @param layout The layout to get the resolution of.
