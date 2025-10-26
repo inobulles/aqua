@@ -99,9 +99,8 @@ void font_layout_set_text(font_layout_t layout, char const* text);
 /**
  * Set the rendering limits of a layout.
  *
- * This defines the maximum horizontal and vertical resolution the layout
- * may occupy when being rendered or laid out. The implementation may
- * perform line wrapping or clipping depending on these limits.
+ * This defines the maximum horizontal and vertical resolution the layout may occupy when being rendered or laid out.
+ * The implementation may perform line wrapping or clipping depending on these limits.
  *
  * @param layout The layout to modify.
  * @param x_res_limit The maximum horizontal resolution.
@@ -112,10 +111,9 @@ void font_layout_set_limits(font_layout_t layout, uint32_t x_res_limit, uint32_t
 /**
  * Get the character index at a given position in the layout.
  *
- * This performs a position-to-index lookup: given a pixel position within
- * the layout (usually mouse coordinates), it returns the closest character
- * index within the text. This is typically used for text hit-testing or
- * cursor placement.
+ * This performs a position-to-index lookup
+ * Given a pixel position within the layout, it returns the closest character index within the text.
+ * This is typically used for text hit-testing or cursor placement.
  *
  * @param layout The layout to query.
  * @param x The X coordinate, in pixels.
@@ -127,8 +125,8 @@ int32_t font_layout_pos_to_index(font_layout_t layout, uint32_t x, uint32_t y);
 /**
  * Get the position of a given character index in the layout.
  *
- * This performs an index-to-position lookup: given a character index within
- * the text, it returns the corresponding X and Y pixel position in the layout.
+ * This performs an index-to-position lookup.
+ * Given a character index within the text, it returns the corresponding X and Y pixel position in the layout.
  * This can be used for drawing cursors or highlighting selections.
  *
  * @param layout The layout to query.
