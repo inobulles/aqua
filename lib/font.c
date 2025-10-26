@@ -405,6 +405,26 @@ void font_layout_set_limits(font_layout_t layout, uint32_t x_res_limit, uint32_t
 	kos_flush(true);
 }
 
+int32_t font_layout_pos_to_index(font_layout_t layout, uint32_t x, uint32_t y) {
+	font_ctx_t const ctx = layout->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return -1;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = layout->opaque_ptr},
+		{.u32 = x},
+		{.u32 = y},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.layout_pos_to_index, args);
+	kos_flush(true);
+
+	return ctx->last_ret.i32;
+}
+
 void font_layout_get_res(font_layout_t layout, uint32_t* x_res, uint32_t* y_res) {
 	font_ctx_t const ctx = layout->ctx;
 
