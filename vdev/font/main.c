@@ -137,7 +137,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "layout_render",
-		.ret_type = KOS_TYPE_VOID, // TODO Is it best to have the VDRIVER write into a buffer supplied by the caller or for us to allocate a buffer and return it? If we allocate the buffer it makes things harder because we have to provide a way for the client to let us know when we can free it I guess.
+		.ret_type = KOS_TYPE_VOID, // TODO Is it best to have the VDRIVER write into a buffer supplied by the caller or for us to allocate a buffer and return it? If we allocate the buffer it makes things harder because we have to provide a way for the client to let us know when we can free it I guess. Although we could just use KOS_TYPE_BUF instead.
 		.param_count = 2,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "layout"},
@@ -200,6 +200,7 @@ static layout_t* layout_create(PangoFontDescription* font, char const* text, siz
 
 	layout->context = pango_context_new();
 	assert(layout->context != NULL);
+	pango_context_set_font_map(layout->context, pango_cairo_font_map_get_default());
 
 	layout->layout = pango_layout_new(layout->context);
 	assert(layout->layout != NULL);
