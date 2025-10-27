@@ -169,7 +169,7 @@ for line in lines:
 			parser += f"\t\tassert(args[{i}].buf.size == sizeof {p});\n"
 
 		elif kos_t == "KOS_TYPE_BUF" and t[-1] == "*":
-			parser += f"\t\t{t} const {p} = args[{i}].buf.ptr;\n"
+			parser += f"\t\t{t} const {p} = (void*) args[{i}].buf.ptr;\n"
 			parser += f"\t\tassert(args[{i}].buf.size == sizeof *{p});\n"
 
 		elif kos_t == "KOS_TYPE_OPAQUE_PTR":

@@ -185,13 +185,13 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		// clang-format off
 // CALL_HANDLERS:BEGIN
 	case 1: {
-		WGPUInstanceDescriptor const * const descriptor = args[0].buf.ptr;
+		WGPUInstanceDescriptor const * const descriptor = (void*) args[0].buf.ptr;
 		assert(args[0].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuCreateInstance(descriptor));
 		break;
 	}
 	case 2: {
-		WGPUInstanceCapabilities * const capabilities = args[0].buf.ptr;
+		WGPUInstanceCapabilities * const capabilities = (void*) args[0].buf.ptr;
 		assert(args[0].buf.size == sizeof *capabilities);
 		notif.call_ret.ret.u32 = wgpuGetInstanceCapabilities(capabilities);
 		break;
@@ -206,21 +206,21 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 4: {
 		WGPUAdapter const adapter = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSupportedFeatures * const features = args[1].buf.ptr;
+		WGPUSupportedFeatures * const features = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *features);
 		wgpuAdapterGetFeatures(adapter, features);
 		break;
 	}
 	case 5: {
 		WGPUAdapter const adapter = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUAdapterInfo * const info = args[1].buf.ptr;
+		WGPUAdapterInfo * const info = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *info);
 		notif.call_ret.ret.u32 = wgpuAdapterGetInfo(adapter, info);
 		break;
 	}
 	case 6: {
 		WGPUAdapter const adapter = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPULimits * const limits = args[1].buf.ptr;
+		WGPULimits * const limits = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *limits);
 		notif.call_ret.ret.u32 = wgpuAdapterGetLimits(adapter, limits);
 		break;
@@ -233,7 +233,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 8: {
 		WGPUAdapter const adapter = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUDeviceDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUDeviceDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		WGPURequestDeviceCallbackInfo const callbackInfo = *(WGPURequestDeviceCallbackInfo*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof callbackInfo);
@@ -382,14 +382,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 32: {
 		WGPUCommandEncoder const commandEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUComputePassDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUComputePassDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuCommandEncoderBeginComputePass(commandEncoder, descriptor));
 		break;
 	}
 	case 33: {
 		WGPUCommandEncoder const commandEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPURenderPassDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPURenderPassDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuCommandEncoderBeginRenderPass(commandEncoder, descriptor));
 		break;
@@ -414,40 +414,40 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 36: {
 		WGPUCommandEncoder const commandEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUTexelCopyBufferInfo const * const source = args[1].buf.ptr;
+		WGPUTexelCopyBufferInfo const * const source = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *source);
-		WGPUTexelCopyTextureInfo const * const destination = args[2].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const destination = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *destination);
-		WGPUExtent3D const * const copySize = args[3].buf.ptr;
+		WGPUExtent3D const * const copySize = (void*) args[3].buf.ptr;
 		assert(args[3].buf.size == sizeof *copySize);
 		wgpuCommandEncoderCopyBufferToTexture(commandEncoder, source, destination, copySize);
 		break;
 	}
 	case 37: {
 		WGPUCommandEncoder const commandEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUTexelCopyTextureInfo const * const source = args[1].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const source = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *source);
-		WGPUTexelCopyBufferInfo const * const destination = args[2].buf.ptr;
+		WGPUTexelCopyBufferInfo const * const destination = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *destination);
-		WGPUExtent3D const * const copySize = args[3].buf.ptr;
+		WGPUExtent3D const * const copySize = (void*) args[3].buf.ptr;
 		assert(args[3].buf.size == sizeof *copySize);
 		wgpuCommandEncoderCopyTextureToBuffer(commandEncoder, source, destination, copySize);
 		break;
 	}
 	case 38: {
 		WGPUCommandEncoder const commandEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUTexelCopyTextureInfo const * const source = args[1].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const source = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *source);
-		WGPUTexelCopyTextureInfo const * const destination = args[2].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const destination = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *destination);
-		WGPUExtent3D const * const copySize = args[3].buf.ptr;
+		WGPUExtent3D const * const copySize = (void*) args[3].buf.ptr;
 		assert(args[3].buf.size == sizeof *copySize);
 		wgpuCommandEncoderCopyTextureToTexture(commandEncoder, source, destination, copySize);
 		break;
 	}
 	case 39: {
 		WGPUCommandEncoder const commandEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUCommandBufferDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUCommandBufferDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuCommandEncoderFinish(commandEncoder, descriptor));
 		break;
@@ -559,7 +559,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		uint32_t const groupIndex = args[1].u32;
 		WGPUBindGroup const group = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 		size_t const dynamicOffsetCount = args[3].u32;
-		uint32_t const * const dynamicOffsets = args[4].buf.ptr;
+		uint32_t const * const dynamicOffsets = (void*) args[4].buf.ptr;
 		assert(args[4].buf.size == sizeof *dynamicOffsets);
 		wgpuComputePassEncoderSetBindGroup(computePassEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
 		break;
@@ -616,42 +616,42 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 63: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUBindGroupDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUBindGroupDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateBindGroup(device, descriptor));
 		break;
 	}
 	case 64: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUBindGroupLayoutDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUBindGroupLayoutDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateBindGroupLayout(device, descriptor));
 		break;
 	}
 	case 65: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUBufferDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUBufferDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateBuffer(device, descriptor));
 		break;
 	}
 	case 66: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUCommandEncoderDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUCommandEncoderDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateCommandEncoder(device, descriptor));
 		break;
 	}
 	case 67: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUComputePipelineDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUComputePipelineDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateComputePipeline(device, descriptor));
 		break;
 	}
 	case 68: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUComputePipelineDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUComputePipelineDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		WGPUCreateComputePipelineAsyncCallbackInfo const callbackInfo = *(WGPUCreateComputePipelineAsyncCallbackInfo*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof callbackInfo);
@@ -660,35 +660,35 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 69: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUPipelineLayoutDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUPipelineLayoutDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreatePipelineLayout(device, descriptor));
 		break;
 	}
 	case 70: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUQuerySetDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUQuerySetDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateQuerySet(device, descriptor));
 		break;
 	}
 	case 71: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPURenderBundleEncoderDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPURenderBundleEncoderDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateRenderBundleEncoder(device, descriptor));
 		break;
 	}
 	case 72: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPURenderPipelineDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPURenderPipelineDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateRenderPipeline(device, descriptor));
 		break;
 	}
 	case 73: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPURenderPipelineDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPURenderPipelineDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		WGPUCreateRenderPipelineAsyncCallbackInfo const callbackInfo = *(WGPUCreateRenderPipelineAsyncCallbackInfo*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof callbackInfo);
@@ -697,21 +697,21 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 74: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSamplerDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUSamplerDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateSampler(device, descriptor));
 		break;
 	}
 	case 75: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUShaderModuleDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUShaderModuleDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateShaderModule(device, descriptor));
 		break;
 	}
 	case 76: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUTextureDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUTextureDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateTexture(device, descriptor));
 		break;
@@ -732,14 +732,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 79: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSupportedFeatures * const features = args[1].buf.ptr;
+		WGPUSupportedFeatures * const features = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *features);
 		wgpuDeviceGetFeatures(device, features);
 		break;
 	}
 	case 80: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPULimits * const limits = args[1].buf.ptr;
+		WGPULimits * const limits = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *limits);
 		notif.call_ret.ret.u32 = wgpuDeviceGetLimits(device, limits);
 		break;
@@ -794,14 +794,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 89: {
 		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSurfaceDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUSurfaceDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuInstanceCreateSurface(instance, descriptor));
 		break;
 	}
 	case 90: {
 		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSupportedWGSLLanguageFeatures * const features = args[1].buf.ptr;
+		WGPUSupportedWGSLLanguageFeatures * const features = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *features);
 		notif.call_ret.ret.u32 = wgpuInstanceGetWGSLLanguageFeatures(instance, features);
 		break;
@@ -813,7 +813,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 92: {
 		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPURequestAdapterOptions const * const options = args[1].buf.ptr;
+		WGPURequestAdapterOptions const * const options = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *options);
 		WGPURequestAdapterCallbackInfo const callbackInfo = *(WGPURequestAdapterCallbackInfo*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof callbackInfo);
@@ -823,7 +823,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 93: {
 		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 		size_t const futureCount = args[1].u32;
-		WGPUFutureWaitInfo * const futures = args[2].buf.ptr;
+		WGPUFutureWaitInfo * const futures = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *futures);
 		uint64_t const timeoutNS = args[3].u64;
 		notif.call_ret.ret.u32 = wgpuInstanceWaitAny(instance, futureCount, futures, timeoutNS);
@@ -911,7 +911,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 107: {
 		WGPUQueue const queue = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 		size_t const commandCount = args[1].u32;
-		WGPUCommandBuffer const * const commands = args[2].buf.ptr;
+		WGPUCommandBuffer const * const commands = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *commands);
 		wgpuQueueSubmit(queue, commandCount, commands);
 		break;
@@ -927,13 +927,13 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 109: {
 		WGPUQueue const queue = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUTexelCopyTextureInfo const * const destination = args[1].buf.ptr;
+		WGPUTexelCopyTextureInfo const * const destination = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *destination);
 		void const * const data = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 		size_t const dataSize = args[3].u32;
-		WGPUTexelCopyBufferLayout const * const dataLayout = args[4].buf.ptr;
+		WGPUTexelCopyBufferLayout const * const dataLayout = (void*) args[4].buf.ptr;
 		assert(args[4].buf.size == sizeof *dataLayout);
-		WGPUExtent3D const * const writeSize = args[5].buf.ptr;
+		WGPUExtent3D const * const writeSize = (void*) args[5].buf.ptr;
 		assert(args[5].buf.size == sizeof *writeSize);
 		wgpuQueueWriteTexture(queue, destination, data, dataSize, dataLayout, writeSize);
 		break;
@@ -1002,7 +1002,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 119: {
 		WGPURenderBundleEncoder const renderBundleEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPURenderBundleDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPURenderBundleDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuRenderBundleEncoderFinish(renderBundleEncoder, descriptor));
 		break;
@@ -1035,7 +1035,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		uint32_t const groupIndex = args[1].u32;
 		WGPUBindGroup const group = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 		size_t const dynamicOffsetCount = args[3].u32;
-		uint32_t const * const dynamicOffsets = args[4].buf.ptr;
+		uint32_t const * const dynamicOffsets = (void*) args[4].buf.ptr;
 		assert(args[4].buf.size == sizeof *dynamicOffsets);
 		wgpuRenderBundleEncoderSetBindGroup(renderBundleEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
 		break;
@@ -1135,7 +1135,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 137: {
 		WGPURenderPassEncoder const renderPassEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 		size_t const bundleCount = args[1].u32;
-		WGPURenderBundle const * const bundles = args[2].buf.ptr;
+		WGPURenderBundle const * const bundles = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *bundles);
 		wgpuRenderPassEncoderExecuteBundles(renderPassEncoder, bundleCount, bundles);
 		break;
@@ -1168,14 +1168,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		uint32_t const groupIndex = args[1].u32;
 		WGPUBindGroup const group = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 		size_t const dynamicOffsetCount = args[3].u32;
-		uint32_t const * const dynamicOffsets = args[4].buf.ptr;
+		uint32_t const * const dynamicOffsets = (void*) args[4].buf.ptr;
 		assert(args[4].buf.size == sizeof *dynamicOffsets);
 		wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, group, dynamicOffsetCount, dynamicOffsets);
 		break;
 	}
 	case 142: {
 		WGPURenderPassEncoder const renderPassEncoder = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUColor const * const color = args[1].buf.ptr;
+		WGPUColor const * const color = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *color);
 		wgpuRenderPassEncoderSetBlendConstant(renderPassEncoder, color);
 		break;
@@ -1333,7 +1333,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 165: {
 		WGPUSurface const surface = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSurfaceConfiguration const * const config = args[1].buf.ptr;
+		WGPUSurfaceConfiguration const * const config = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *config);
 		wgpuSurfaceConfigure(surface, config);
 		break;
@@ -1341,14 +1341,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 166: {
 		WGPUSurface const surface = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 		WGPUAdapter const adapter = vdriver_unwrap_local_opaque_ptr(args[1].opaque_ptr);
-		WGPUSurfaceCapabilities * const capabilities = args[2].buf.ptr;
+		WGPUSurfaceCapabilities * const capabilities = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *capabilities);
 		notif.call_ret.ret.u32 = wgpuSurfaceGetCapabilities(surface, adapter, capabilities);
 		break;
 	}
 	case 167: {
 		WGPUSurface const surface = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUSurfaceTexture * const surfaceTexture = args[1].buf.ptr;
+		WGPUSurfaceTexture * const surfaceTexture = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *surfaceTexture);
 		wgpuSurfaceGetCurrentTexture(surface, surfaceTexture);
 		break;
@@ -1380,7 +1380,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 173: {
 		WGPUTexture const texture = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUTextureViewDescriptor const * const descriptor = args[1].buf.ptr;
+		WGPUTextureViewDescriptor const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuTextureCreateView(texture, descriptor));
 		break;
@@ -1470,16 +1470,16 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	}
 	case 189: {
 		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUGlobalReport * const report = args[1].buf.ptr;
+		WGPUGlobalReport * const report = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *report);
 		wgpuGenerateReport(instance, report);
 		break;
 	}
 	case 190: {
 		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUInstanceEnumerateAdapterOptions const * const options = args[1].buf.ptr;
+		WGPUInstanceEnumerateAdapterOptions const * const options = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *options);
-		WGPUAdapter * const adapters = args[2].buf.ptr;
+		WGPUAdapter * const adapters = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *adapters);
 		notif.call_ret.ret.u32 = wgpuInstanceEnumerateAdapters(instance, options, adapters);
 		break;
@@ -1487,7 +1487,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 191: {
 		WGPUQueue const queue = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 		size_t const commandCount = args[1].u32;
-		WGPUCommandBuffer const * const commands = args[2].buf.ptr;
+		WGPUCommandBuffer const * const commands = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *commands);
 		notif.call_ret.ret.u64 = wgpuQueueSubmitForIndex(queue, commandCount, commands);
 		break;
@@ -1495,14 +1495,14 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 	case 192: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 		WGPUBool const wait = args[1].b;
-		WGPUSubmissionIndex const * const submissionIndex = args[2].buf.ptr;
+		WGPUSubmissionIndex const * const submissionIndex = (void*) args[2].buf.ptr;
 		assert(args[2].buf.size == sizeof *submissionIndex);
 		notif.call_ret.ret.b = wgpuDevicePoll(device, wait, submissionIndex);
 		break;
 	}
 	case 193: {
 		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-		WGPUShaderModuleDescriptorSpirV const * const descriptor = args[1].buf.ptr;
+		WGPUShaderModuleDescriptorSpirV const * const descriptor = (void*) args[1].buf.ptr;
 		assert(args[1].buf.size == sizeof *descriptor);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceCreateShaderModuleSpirV(device, descriptor));
 		break;
