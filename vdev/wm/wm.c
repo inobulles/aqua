@@ -44,17 +44,18 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
-	output_t* const my_output = wl_container_of(listener, my_output, frame);
-	struct wlr_output* const wlr_output = my_output->output;
+	output_t* const output = wl_container_of(listener, output, frame);
 
-	struct wlr_output_state state;
-	wlr_output_state_init(&state);
+	wm_t* const wm = output->wm;
+	struct wlr_output* const wlr_output = output->output;
+	struct wlr_scene_output* scene_output = wlr_scene_get_scene_output(wm->scene, wlr_output);
 
-	struct wlr_render_pass* pass = wlr_output_begin_render_pass(wlr_output, &state, NULL);
+	LOG_V(cls, "Render scene and commit output.");
+	wlr_scene_output_commit(scene_output, NULL);
 
-	wlr_render_pass_submit(pass);
-	wlr_output_commit_state(wlr_output, &state);
-	wlr_output_state_finish(&state);
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	wlr_scene_output_send_frame_done(scene_output, &now);
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
