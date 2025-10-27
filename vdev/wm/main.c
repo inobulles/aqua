@@ -73,6 +73,19 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_OPAQUE_PTR, "wm"},
 		},
 	},
+	/*
+	{
+		.name = "get_win_fb",
+		.ret_type = KOS_TYPE_PTR,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+			{KOS_TYPE_PTR, "x_res"},
+			{KOS_TYPE_PTR, "y_res"},
+		},
+	},
+	*/
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
