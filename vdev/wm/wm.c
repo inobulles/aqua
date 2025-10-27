@@ -15,11 +15,27 @@
 #include <stdlib.h>
 
 typedef struct {
+	struct wl_list link;
+
 	wm_t* wm;
 	struct wlr_output* output;
+
 	struct wl_listener frame;
 	struct wl_listener destroy;
 } output_t;
+
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
+	struct wlr_xdg_toplevel* xdg_toplevel;
+	struct wlr_scene_tree* scene_tree;
+
+	struct wl_listener map;
+	struct wl_listener unmap;
+	struct wl_listener commit;
+	struct wl_listener destroy;
+} toplevel_t;
 
 static umber_class_t const* cls = NULL;
 static umber_class_t const* cls_wlr = NULL;
@@ -88,7 +104,7 @@ static void new_output(struct wl_listener* listener, void* data) {
 
 	LOG_V(cls, "Set up state for output.");
 
-	output_t* const output = calloc(1, sizeof *wlr_output);
+	output_t* const output = calloc(1, sizeof *output);
 	assert(output != NULL);
 
 	output->wm = wm;
@@ -111,11 +127,64 @@ static void new_output(struct wl_listener* listener, void* data) {
 	wlr_scene_output_layout_add_output(wm->scene_layout, output_layout, scene_output);
 }
 
-static void new_toplevel(struct wl_listener* listener, void* data) {
-	(void) listener;
+static void toplevel_map(struct wl_listener* listener, void* data) {
+	toplevel_t* const toplevel = wl_container_of(listener, toplevel, map);
+	wm_t* const wm = toplevel->wm;
+
 	(void) data;
 
-	LOG_F(cls, "TODO: %s", __func__);
+	LOG_V(cls, "Map %s.", toplevel->xdg_toplevel->app_id);
+
+	wl_list_insert(&wm->toplevels, &toplevel->link);
+	// TODO Focus here. See xdg_toplevel_map() in tinywl.
+}
+
+static void toplevel_commit(struct wl_listener* listener, void* data) {
+	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
+	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
+
+	(void) data;
+
+	LOG_V(cls, "Commit %s.", xdg_toplevel->app_id);
+
+	if (!toplevel->xdg_toplevel->base->initial_commit) {
+		return;
+	}
+
+	LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
+	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
+}
+
+static void new_xdg_toplevel(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, new_xdg_toplevel);
+	struct wlr_xdg_toplevel* const xdg_toplevel = data;
+
+	LOG_V(cls, "New XDG toplevel (app_id=%s).", xdg_toplevel->app_id);
+
+	toplevel_t* const toplevel = calloc(1, sizeof *toplevel);
+	assert(toplevel != NULL);
+
+	toplevel->wm = wm;
+	toplevel->xdg_toplevel = xdg_toplevel;
+
+	LOG_V(cls, "Add node for this XDG toplevel's surface to scene graph.");
+
+	toplevel->scene_tree = wlr_scene_xdg_surface_create(&wm->scene->tree, xdg_toplevel->base);
+	xdg_toplevel->base->data = toplevel->scene_tree;
+
+	LOG_V(cls, "Listen to XDG toplevel events.");
+
+	toplevel->map.notify = toplevel_map;
+	wl_signal_add(&xdg_toplevel->base->surface->events.map, &toplevel->map);
+
+	// toplevel->unmap.notify = toplevel_unmap;
+	// wl_signal_add(&xdg_toplevel->base->surface->events.unmap, &toplevel->unmap);
+
+	toplevel->commit.notify = toplevel_commit;
+	wl_signal_add(&xdg_toplevel->base->surface->events.commit, &toplevel->commit);
+
+	// toplevel->destroy.notify = toplevel_destroy;
+	// wl_signal_add(&xdg_toplevel->events.destroy, &toplevel->destroy);
 }
 
 static void new_popup(struct wl_listener* listener, void* data) {
@@ -247,6 +316,12 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to create renderer.");
 	}
 
+	LOG_V(cls, "Initialize buffer factory protocols.");
+
+	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
+		FAIL("Failed to initialize buffer factory protocols.");
+	}
+
 	LOG_V(cls, "Creating wlroots allocator.");
 	wm->allocator = wlr_allocator_autocreate(wm->backend, wm->wlr_renderer);
 
@@ -272,11 +347,6 @@ wm_t* wm_vdev_create(void) {
 	if (compositor == NULL) {
 		FAIL("Failed to create compositor.");
 	}
-
-	LOG_V(cls, "Add listener for when new surfaces are available.");
-
-	wm->new_surf.notify = new_toplevel;
-	wl_signal_add(&compositor->events.new_surface, &wm->new_surf);
 
 	LOG_V(cls, "Creating subcompositor.");
 
@@ -322,8 +392,8 @@ wm_t* wm_vdev_create(void) {
 
 	LOG_V(cls, "Add listener for when new XDG toplevels or popups are available");
 
-	wm->new_xdg_toplevel.notify = new_toplevel;
-	wl_signal_add(&wm->xdg_shell->events.new_surface, &wm->new_xdg_toplevel);
+	wm->new_xdg_toplevel.notify = new_xdg_toplevel;
+	wl_signal_add(&wm->xdg_shell->events.new_toplevel, &wm->new_xdg_toplevel);
 
 	wm->new_xdg_popup.notify = new_popup;
 	wl_signal_add(&wm->xdg_shell->events.new_popup, &wm->new_xdg_popup);
@@ -376,8 +446,10 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to start backend.");
 	}
 
-	LOG_V(cls, "Seting WAYLAND_DISPLAY environment variable to socket.");
+	LOG_V(cls, "Setting WAYLAND_DISPLAY environment variable to socket.");
 	setenv("WAYLAND_DISPLAY", sock, true);
+
+	wl_display_run(wm->display);
 
 	return wm;
 }
