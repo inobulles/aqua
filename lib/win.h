@@ -15,7 +15,7 @@ typedef struct win_ctx_t* win_ctx_t;
 /**
  * Window object.
  *
- * This is an individual window created with `win_create`.
+ * This is an individual window created with {@link win_create}.
  */
 typedef struct win_t* win_t;
 
@@ -108,7 +108,8 @@ void win_register_resize_cb(win_t win, win_resize_cb_t cb, void* data);
 /**
  * Enter the window event loop.
  *
- * This will block until the window is closed. Any registered callbacks will be called when the corresponding events they were registered for occur.
+ * This will block until the window is closed.
+ * Any registered callbacks will be called when the corresponding events they were registered for occur.
  *
  * @param win The window to start and enter the event loop of.
  */

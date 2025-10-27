@@ -71,7 +71,7 @@ font_ctx_t font_conn(kos_vdev_descr_t const* vdev) {
 	font_ctx_t const ctx = calloc(1, sizeof *ctx);
 
 	if (ctx == NULL) {
-		LOG_E(cls, "Failed to allocate context.\n");
+		LOG_E(cls, "Failed to allocate context.");
 		return NULL;
 	}
 

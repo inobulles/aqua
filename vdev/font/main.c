@@ -178,7 +178,7 @@ static PangoFontDescription* font_from_str(char const* str) {
 
 	LOG_V(cls, "Creating Pango font description from string: \"%s\".", str);
 
-	PangoFontDescription* descr = pango_font_description_from_string(str);
+	PangoFontDescription* const descr = pango_font_description_from_string(str);
 
 	if (descr == NULL) {
 		LOG_E(cls, "Failed to create Pango font description from string: \"%s\".", str);

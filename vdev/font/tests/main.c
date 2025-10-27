@@ -30,7 +30,7 @@ int main(void) {
 	}
 
 	LOG_V(cls, "Using font VDEV \"%s\".", (char*) font_vdev->human);
-	font_ctx_t font_ctx = font_conn(font_vdev);
+	font_ctx_t const font_ctx = font_conn(font_vdev);
 
 	if (font_ctx == NULL) {
 		LOG_F(cls, "Failed to connect to font VDEV.");
