@@ -1,0 +1,33 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+import bob.pkg_config
+
+deps = [
+	# Dep.git("https://gitlab.freedesktop.org/wlroots/wlroots", "0.19.2"),
+	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
+	Dep.local("../../kos"),
+]
+
+# TODO https://github.com/inobulles/bob/issues/108
+
+let wlroots_cflags = PkgConfig.cflags("wlroots-0.19")
+let wlroots_libs = PkgConfig.libs("wlroots-0.19")
+
+let obj = Cc([
+	"-std=c11", "-g", "-fPIC",
+	"-I/usr/local/include",
+	"-Wall", "-Wextra", "-Werror",
+] + wlroots_cflags).compile(["main.c", "wm.c"])
+
+let vdriver = Linker([
+	"-shared",
+	"-lumber", "-lvdriver",
+] + wlroots_libs).link(obj)
+
+install = {
+	vdriver: "lib/vdriver/aquabsd.black.wm.vdriver",
+}
+
+run = none

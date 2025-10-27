@@ -5,6 +5,37 @@ This implementation does this exclusively through [Wayland](https://wayland.free
 
 A lot of this code comes from the (never finished) [`aquabsd.black.wm`](https://github.com/inobulles/aqua-devices/tree/main/src/aquabsd.black/wm) device in the previous version of AQUA.
 
+## Building
+
+Currently this is a little hacky as Bob the Builder has some problems dealing with this situation.
+But basically, starting from a clean build (`bob clean`), you've got to disable the `PkgConfig.*` calls in `build.fl`:
+
+```fl
+let wlroots_cflags = [] # PkgConfig.cflags("wlroots-0.19")
+let wlroots_libs = [] # PkgConfig.libs("wlroots-0.19")
+```
+
+When you run `bob build`, this will fail but the dependencies will be fetched, built, and installed to the Bob prefix.
+Then you can uncomment the `PkgConfig.*` calls again and building should work.
+
+See [inobulles/bob#108](https://github.com/inobulles/bob/pull/108) for details.
+
+Alternatively, you could just remove wlroots from the `deps` vector in `build.fl` and just install wlroots globally.
+This is provided through the `x11-toolkits/wlroots019` port on FreeBSD.
+
+### Building XDG shell code
+
+Eventually this will be integrated into the buildsystem, but in the meantime you have to do this manually.
+With `wayland-scanner`:
+
+```sh
+wayland-scanner private-code < /usr/local/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml > xdg-shell-protocol.c
+wayland-scanner client-header < /usr/local/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml > xdg-shell-protocol.h
+mv xdg-shell-protocol.* .bob/prefix/include/wlroots-0.19/wlr/types
+```
+
+On your OS distribution, this `xdg-shell.xml` file may be found elsewhere (e.g. at `/usr/share` instead of `/usr/local/share`).
+
 ## Note on X11 support
 
 X11 is only supported on previous versions of AQUA (see [`aquabsd.alps.wm`](https://github.com/inobulles/aqua-devices/tree/main/src/aquabsd.alps/wm)).
