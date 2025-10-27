@@ -52,101 +52,118 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	struct wlr_render_pass* pass = wlr_output_begin_render_pass(wlr_output, &state, NULL);
 
-	LOG_F(cls, "TODO");
-
 	wlr_render_pass_submit(pass);
 	wlr_output_commit_state(wlr_output, &state);
 	wlr_output_state_finish(&state);
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
-	struct wlr_output* const output = data;
+	struct wlr_output* const wlr_output = data;
 	wm_t* const wm = wl_container_of(listener, wm, new_output);
 
-	LOG_F(cls, "TODO");
+	LOG_V(cls, "New output found, configure.");
+	wlr_output_init_render(wlr_output, wm->allocator, wm->wlr_renderer);
 
-	wlr_output_init_render(output, wm->allocator, wm->wlr_renderer);
-
-	output_t* const my_output = calloc(1, sizeof *output);
-
-	my_output->wm = wm;
-	my_output->output = output;
-
-	wl_signal_add(&output->events.frame, &my_output->frame);
-	my_output->frame.notify = output_frame_notify;
-
-	wl_signal_add(&output->events.destroy, &my_output->destroy);
-	my_output->destroy.notify = output_remove_notify;
+	LOG_V(cls, "Enabling output.");
 
 	struct wlr_output_state state;
-
 	wlr_output_state_init(&state);
 	wlr_output_state_set_enabled(&state, true);
 
-	struct wlr_output_mode* mode = wlr_output_preferred_mode(output);
+	LOG_V(cls, "Set mode of output to preferred mode.");
+
+	// TODO In fine, this mode should be selectable.
+
+	struct wlr_output_mode* const mode = wlr_output_preferred_mode(wlr_output);
 
 	if (mode != NULL) {
 		wlr_output_state_set_mode(&state, mode);
 	}
 
-	wlr_output_commit_state(output, &state);
+	LOG_V(cls, "Apply new output state atomically.");
+
+	wlr_output_commit_state(wlr_output, &state);
 	wlr_output_state_finish(&state);
+
+	LOG_V(cls, "Set up state for output.");
+
+	output_t* const output = calloc(1, sizeof *wlr_output);
+	assert(output != NULL);
+
+	output->wm = wm;
+	output->output = wlr_output;
+
+	LOG_V(cls, "Set up listeners (frame, destroy) for output.");
+
+	wl_signal_add(&wlr_output->events.frame, &output->frame);
+	output->frame.notify = output_frame_notify;
+
+	wl_signal_add(&wlr_output->events.destroy, &output->destroy);
+	output->destroy.notify = output_remove_notify;
+
+	LOG_V(cls, "Add output to output layout.");
+
+	// TODO In fine, the output layout should be configurable.
+
+	struct wlr_output_layout_output* output_layout = wlr_output_layout_add_auto(wm->output_layout, wlr_output);
+	struct wlr_scene_output* scene_output = wlr_scene_output_create(wm->scene, wlr_output);
+	wlr_scene_output_layout_add_output(wm->scene_layout, output_layout, scene_output);
 }
 
 static void new_toplevel(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void new_popup(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void cursor_motion(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void cursor_motion_absolute(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void cursor_button(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void cursor_axis(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void cursor_frame(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void new_input(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
 
-	LOG_F(cls, "TODO");
+	LOG_F(cls, "TODO: %s", __func__);
 }
 
 static void wlr_log_cb(enum wlr_log_importance importance, char const* fmt, va_list args) {
@@ -201,7 +218,7 @@ wm_t* wm_vdev_create(void) {
 #define FAIL(...)              \
 	do {                        \
 		LOG_E(cls, __VA_ARGS__); \
-		wm_vdev_destroy(wm);             \
+		wm_vdev_destroy(wm);     \
 		return NULL;             \
 	} while (0)
 
@@ -247,15 +264,6 @@ wm_t* wm_vdev_create(void) {
 	wl_list_init(&wm->inputs);
 	wm->new_input.notify = new_input;
 	wl_signal_add(&wm->backend->events.new_input, &wm->new_input);
-
-	LOG_V(cls, "Start backend.");
-
-	if (!wlr_backend_start(wm->backend)) {
-		FAIL("Failed to start backend.");
-	}
-
-	LOG_F(cls, "TODO the actual compositing part");
-	return wm;
 
 	LOG_V(cls, "Creating compositor (version 5).");
 	struct wlr_compositor* const compositor = wlr_compositor_create(wm->display, 5, wm->wlr_renderer);
@@ -352,27 +360,6 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to create seat");
 	}
 
-	LOG_F(cls, "STOP HERE FOR NOW");
-	return wm;
-
-	LOG_V(cls, "Start backend.");
-
-	if (!wlr_backend_start(wm->backend)) {
-		FAIL("Failed to start backend.");
-	}
-
-	/*
-	LOG_V(cls, "Create surface.");
-	wm->surface = wl_compositor_create_surface(wm->compositor);
-
-	if (wm->surface == NULL) {
-		FAIL("Failed to create surface.");
-	}
-
-	LOG_V(cls, "Create XDG surface.");
-	wm->xdg_surface = wlr_xdg_surface_create(wm->xdg_shell, wm->surface);
-	*/
-
 	LOG_V(cls, "Add UNIX socket to the Wayland display.");
 	char const* const sock = wl_display_add_socket_auto(wm->display);
 
@@ -381,7 +368,8 @@ wm_t* wm_vdev_create(void) {
 	}
 
 	LOG_I(cls, "Wayland display is listening on %s.", sock);
-	LOG_V(cls, "Start the backend.");
+
+	LOG_V(cls, "Start backend.");
 
 	if (!wlr_backend_start(wm->backend)) {
 		FAIL("Failed to start backend.");
