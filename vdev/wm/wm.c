@@ -139,6 +139,16 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 	// TODO Focus here. See xdg_toplevel_map() in tinywl.
 }
 
+static void toplevel_unmap(struct wl_listener* listener, void* data) {
+	toplevel_t* const toplevel = wl_container_of(listener, toplevel, unmap);
+
+	(void) data;
+
+	LOG_V(cls, "Unmap %s.", toplevel->xdg_toplevel->app_id);
+
+	wl_list_remove(&toplevel->link);
+}
+
 static void toplevel_commit(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
 	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
@@ -153,6 +163,21 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 
 	LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
 	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
+}
+
+static void toplevel_destroy(struct wl_listener* listener, void* data) {
+	toplevel_t* const toplevel = wl_container_of(listener, toplevel, destroy);
+
+	(void) data;
+
+	LOG_V(cls, "Destroying %s.", toplevel->xdg_toplevel->app_id);
+
+	wl_list_remove(&toplevel->map.link);
+	wl_list_remove(&toplevel->unmap.link);
+	wl_list_remove(&toplevel->commit.link);
+	wl_list_remove(&toplevel->destroy.link);
+
+	free(toplevel);
 }
 
 static void new_xdg_toplevel(struct wl_listener* listener, void* data) {
@@ -177,14 +202,14 @@ static void new_xdg_toplevel(struct wl_listener* listener, void* data) {
 	toplevel->map.notify = toplevel_map;
 	wl_signal_add(&xdg_toplevel->base->surface->events.map, &toplevel->map);
 
-	// toplevel->unmap.notify = toplevel_unmap;
-	// wl_signal_add(&xdg_toplevel->base->surface->events.unmap, &toplevel->unmap);
+	toplevel->unmap.notify = toplevel_unmap;
+	wl_signal_add(&xdg_toplevel->base->surface->events.unmap, &toplevel->unmap);
 
 	toplevel->commit.notify = toplevel_commit;
 	wl_signal_add(&xdg_toplevel->base->surface->events.commit, &toplevel->commit);
 
-	// toplevel->destroy.notify = toplevel_destroy;
-	// wl_signal_add(&xdg_toplevel->events.destroy, &toplevel->destroy);
+	toplevel->destroy.notify = toplevel_destroy;
+	wl_signal_add(&xdg_toplevel->events.destroy, &toplevel->destroy);
 }
 
 static void new_popup(struct wl_listener* listener, void* data) {
