@@ -464,6 +464,7 @@ pub static mut VDRIVER: vdriver_t = vdriver_t {
 	init: None,
 	conn: Some(conn),
 	call: Some(call),
+	write_ptr: None,
 
 	// We have to set these explicitly because.
 	host_id: 0,
