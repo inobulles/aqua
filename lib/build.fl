@@ -27,6 +27,10 @@ let libs = {
 		"src": ["wgpu.c"],
 		"include": ["wgpu.h"],
 	},
+	"wm": {
+		"src": ["wm.c"],
+		"include": ["wm.h"],
+	},
 	"ui": {
 		"src": ["ui.c", "ui/wgpu.c"],
 		"include": ["ui.h", "ui/wgpu.h"],
