@@ -411,5 +411,6 @@ void wm_vdev_destroy(wm_t* wm) {
 }
 
 void wm_vdev_loop(wm_t* wm) {
-	(void) wm;
+	LOG_V(cls, "Starting WM loop.");
+	wl_display_run(wm->display);
 }
