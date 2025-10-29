@@ -5,20 +5,24 @@
 #include "conn.h"
 #include "gv.h"
 
-#include "lib/kos.h"
 #include "lib/vdriver.h"
 #include "lib/vdriver_loader.h"
+
+#include <aqua/kos.h>
 
 #include <umber.h>
 
 #include <assert.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <ifaddrs.h>
 #include <inttypes.h>
+#include <netinet/in.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
-
-#include <dlfcn.h>
 
 static umber_class_t const* init_cls = NULL;
 static umber_class_t const* notif_cls = NULL;

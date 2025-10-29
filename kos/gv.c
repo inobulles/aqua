@@ -6,7 +6,8 @@
 #endif
 
 #include "lib/gv_ipc.h"
-#include "lib/kos.h"
+
+#include <aqua/kos.h>
 
 #include <umber.h>
 

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "lib/kos.h"
+#include <aqua/kos.h>
 
 #include <unistd.h>
 
