@@ -56,6 +56,7 @@ class Bridge:
 
 	def __enter__(self):
 		if self.__fake is not None:
+			subprocess.run(["ifconfig", self.__fake], capture_output=True, check=True)  # Make sure it exists.
 			self.name = self.__fake
 
 		else:
