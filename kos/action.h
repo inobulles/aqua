@@ -22,10 +22,9 @@ struct action {
 		} conn;
 
 		struct {
-			vdriver_t* vdriver;
 			uint64_t conn_id;
 			uint32_t fn_id;
-			void const* args;
+			kos_val_t const* args;
 		} call;
 	};
 };
