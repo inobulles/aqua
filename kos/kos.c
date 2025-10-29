@@ -187,7 +187,7 @@ static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	}
 
 	LOG_V(conn_cls, "Found VDRIVER, connecting.");
-	vdriver->conn(cookie, action->conn.vdev_id, conn_new(vdriver));
+	vdriver->conn(cookie, action->conn.vdev_id, conn_new_local(vdriver));
 }
 
 static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
@@ -287,7 +287,6 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	kos_notif_t notif = {
 		.kind = KOS_NOTIF_CONN,
 		.cookie = cookie,
-		.conn_id = conn_vdev_res->conn_id,
 		.conn = {
 			.const_count = conn_vdev_res->const_count,
 			.fn_count = conn_vdev_res->fn_count,
@@ -295,6 +294,8 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	};
 
 	// TODO Where the hell do we free all of this?
+
+	// Deserialize the rest of the CONN_VDEV_RES packet.
 
 	notif.conn.consts = malloc(conn_vdev_res->const_count * sizeof *notif.conn.consts);
 	assert(notif.conn.consts != NULL);
@@ -311,6 +312,19 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	for (size_t i = 0; i < conn_vdev_res->fn_count; i++) {
 		buf += gv_deserialize_fn(buf, (kos_fn_t*) &notif.conn.fns[i]);
 	}
+
+	// Create connection.
+
+	notif.conn_id = conn_new_gv(sock, conn_vdev_res->conn_id);
+	conn_t* const conn = &conns[notif.conn_id];
+
+	conn->alive = true;
+	conn->fn_count = notif.conn.fn_count;
+	conn->fns = notif.conn.fns;
+
+	LOG_V(conn_cls, "Created connection (cid=%" PRIu64 ", remote_cid=%" PRIu64 ").", notif.conn_id, conn_vdev_res->conn_id);
+
+	// Finally, send notification.
 
 	free(conn_vdev_res);
 	client_notif_cb(&notif, client_notif_data);
@@ -451,6 +465,10 @@ void kos_vdev_disconn(uint64_t conn_id) {
 	if (conn_id >= conn_count) {
 		LOG_E(conn_cls, "Connection ID %" PRIu64 " invalid.", conn_id);
 		return;
+	}
+
+	if (conns[conn_id].type == CONN_TYPE_GV) {
+		close(conns[conn_id].sock);
 	}
 
 	conns[conn_id].alive = false;
