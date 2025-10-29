@@ -8,6 +8,7 @@
 #include "lib/vdriver.h"
 #include "lib/vdriver_loader.h"
 
+#include <aqua/gv_proto.h>
 #include <aqua/kos.h>
 
 #include <umber.h>
@@ -190,31 +191,140 @@ static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
 }
 
 static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
-	(void) action; // TODO
-	(void) sync;   // TODO
+	LOG_V(
+		conn_cls,
+		"Trying to connect to VDEV (%" PRIu64 ":%" PRIu64 ") on the GrapeVine (cookie=0x%" PRIx64 ").",
+		action->conn.host_id,
+		action->conn.vdev_id,
+		cookie
+	);
 
-	// gv_vdev_conn_t conn;
+	in_addr_t ipv4;
 
-	// if (gv_vdev_conn(&conn, action->conn.host_id, action->conn.vdev_id) < 0) {
-	// 	goto fail;
-	// }
+	if (gv_get_ip_by_host_id(action->conn.host_id, &ipv4) < 0) {
+		LOG_E(conn_cls, "Failed to find IP address of host ID %" PRIu64 ".", action->conn.host_id);
+		goto fail;
+	}
 
-	// TODO Here we're going to wanna wait for the connection response if sync.
-	// If not, we should return straight away but I do need a way to tell libgv to call the callback when the connection is established (or when it receives other events for a VDEV).
-	// Since this is done in a VDEV connection thread, we're going to need some mutex for the callback, which can probably be created here in the KOS and passe on to libgv for each VDEV connection we make.
+	int const sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	LOG_E(conn_cls, "Connecting to GrapeVine VDEVs is not yet implemented (cookie=0x%" PRIx64 ").", cookie);
+	if (sock < 0) {
+		LOG_E(conn_cls, "Failed to create socket: %s", strerror(errno));
+		goto fail;
+	}
+
+	struct sockaddr_in addr = {
+		.sin_family = AF_INET,
+		.sin_port = htons(GV_PORT),
+		.sin_addr.s_addr = ipv4,
+	};
+
+	if (connect(sock, (struct sockaddr*) &addr, sizeof addr) < 0) {
+		LOG_E(conn_cls, "Failed to connect: %s", strerror(errno));
+		close(sock);
+		goto fail;
+	}
+
+	gv_packet_t const conn_packet = {
+		.header.type = GV_PACKET_TYPE_CONN_VDEV,
+		.conn_vdev.vdev_id = action->conn.vdev_id,
+	};
+
+	size_t const conn_size = sizeof conn_packet.header + sizeof conn_packet.conn_vdev;
+
+	if (send(sock, &conn_packet, conn_size, 0) != (ssize_t) conn_size) {
+		LOG_E(conn_cls, "Failed to send VDEV connection packet: %s", strerror(errno));
+		close(sock);
+		goto fail;
+	}
+
+	if (!sync) { // TODO
+		LOG_W(conn_cls, "Currently, all GrapeVine VDEV connection requests are considered to be sync.");
+	}
+
+	LOG_V(conn_cls, "Wait for VDEV connection response.");
+
+	gv_packet_t conn_res_packet;
+
+	if (recv(sock, &conn_res_packet, sizeof conn_res_packet.header, 0) != sizeof conn_res_packet.header) {
+		LOG_E(conn_cls, "Failed to get response header: %s", strerror(errno));
+		close(sock);
+		goto fail;
+	}
+
+	if (conn_res_packet.header.type == GV_PACKET_TYPE_CONN_VDEV_FAIL) {
+		LOG_E(conn_cls, "Got a VDEV connection failure response.");
+		close(sock);
+		goto fail;
+	}
+
+	if (conn_res_packet.header.type != GV_PACKET_TYPE_CONN_VDEV_RES) {
+		LOG_E(conn_cls, "Got a unexpected response to VDEV connection request: %s.", gv_packet_type_strs[conn_res_packet.header.type]);
+		close(sock);
+		goto fail;
+	}
+
+	if (recv(sock, &conn_res_packet.conn_vdev_res, sizeof conn_res_packet.conn_vdev_res, 0) != sizeof conn_res_packet.conn_vdev_res) {
+		LOG_E(conn_cls, "Failed to get response payload: %s", strerror(errno));
+		close(sock);
+		goto fail;
+	}
+
+	gv_conn_vdev_res_t* const conn_vdev_res = malloc(conn_res_packet.conn_vdev_res.size);
+	assert(conn_vdev_res != NULL);
+	memcpy(conn_vdev_res, &conn_res_packet.conn_vdev_res, sizeof conn_res_packet.conn_vdev_res);
+	size_t const remaining = (ssize_t) conn_vdev_res->size - sizeof *conn_vdev_res;
+
+	if (recv(sock, (void*) conn_vdev_res + sizeof conn_res_packet.conn_vdev_res, remaining, 0) != (ssize_t) remaining) {
+		LOG_E(conn_cls, "Failed to get response payload: %s", strerror(errno));
+		free(conn_vdev_res);
+		close(sock);
+		goto fail;
+	}
+
+	LOG_V(conn_cls, "Managed to connect to VDEV (const_count=%zu, fn_count=%zu)!", conn_vdev_res->const_count, conn_vdev_res->fn_count);
+
+	kos_notif_t notif = {
+		.kind = KOS_NOTIF_CONN,
+		.cookie = cookie,
+		.conn_id = conn_vdev_res->conn_id,
+		.conn = {
+			.const_count = conn_vdev_res->const_count,
+			.fn_count = conn_vdev_res->fn_count,
+		},
+	};
+
+	// TODO Where the hell do we free all of this?
+
+	notif.conn.consts = malloc(conn_vdev_res->const_count * sizeof *notif.conn.consts);
+	assert(notif.conn.consts != NULL);
+
+	notif.conn.fns = malloc(conn_vdev_res->fn_count * sizeof *notif.conn.fns);
+	assert(notif.conn.fns != NULL);
+
+	void* buf = (void*) conn_vdev_res + sizeof *conn_vdev_res;
+
+	for (size_t i = 0; i < conn_vdev_res->const_count; i++) {
+		buf += gv_deserialize_const(buf, (kos_const_t*) &notif.conn.consts[i]);
+	}
+
+	for (size_t i = 0; i < conn_vdev_res->fn_count; i++) {
+		buf += gv_deserialize_fn(buf, (kos_fn_t*) &notif.conn.fns[i]);
+	}
+
+	free(conn_vdev_res);
+	client_notif_cb(&notif, client_notif_data);
 
 	return;
 
-	// fail:;
+fail:;
 
-	kos_notif_t notif = {
+	kos_notif_t fail_notif = {
 		.kind = KOS_NOTIF_CONN_FAIL,
 		.cookie = cookie,
 	};
 
-	client_notif_cb(&notif, client_notif_data);
+	client_notif_cb(&fail_notif, client_notif_data);
 }
 
 kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {

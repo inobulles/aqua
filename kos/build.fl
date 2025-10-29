@@ -4,6 +4,7 @@
 import bob
 
 deps = [
+	Dep.local("../gv/proto"),
 	Dep.local("header"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
 ]
