@@ -152,6 +152,10 @@ static void* elp_listener(void* arg) {
 			buf.elp.host_id
 		);
 
+		if (buf.elp.host_id == state->host_id) {
+			LOG_W(state->elp_cls, "Host ID of node is the same as ours (0x%" PRIx64 ")!", state->host_id);
+		}
+
 		pthread_mutex_lock(&state->nodes_mutex);
 		node_t* found = NULL;
 		bool unique_changed = false;
