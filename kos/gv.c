@@ -128,14 +128,10 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 
 	node_count = 0;
 
-	while (!feof(f)) {
-		gv_node_ent_t header;
+	int fread_rv;
+	gv_node_ent_t header;
 
-		if (fread(&header, 1, sizeof header, f) != sizeof header) {
-			LOG_E(cls, "Failed to read GrapeVine node header.");
-			goto done;
-		}
-
+	while ((fread_rv = fread(&header, 1, sizeof header, f)) > 0) {
 		nodes[node_count++] = header;
 
 		if (node_count >= sizeof nodes / sizeof *nodes) {
@@ -143,7 +139,7 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 			goto done;
 		}
 
-		LOG_I(cls, "Reading VDEVs of node with host ID 0x%" PRIx64 " (%zu VDEVs).", header.host_id, header.vdev_count);
+		LOG_I(cls, "Reading VDEVs of node with host ID 0x%" PRIx64 " (%u VDEVs).", header.host_id, header.vdev_count);
 
 		size_t const vdevs_bytes = header.vdev_count * sizeof *vdevs;
 		size_t const ent_size = sizeof header + vdevs_bytes;
@@ -204,6 +200,10 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 	}
 
 done:
+
+	if (fread_rv < 0) {
+		LOG_W(cls, "Failed to read GrapeVine node header.");
+	}
 
 	fclose(f);
 	*vdevs_out = vdevs;
