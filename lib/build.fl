@@ -40,6 +40,10 @@ let libs = {
 		"include": ["ui.h", "ui/wgpu.h"],
 		"linker_flags": ["-laqua_wgpu"],
 	},
+	"vr": {
+		"src": ["vr.c"],
+		"include": ["vr.h"],
+	},
 }
 
 # Compile the source files into object files.
