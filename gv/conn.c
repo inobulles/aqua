@@ -73,12 +73,25 @@ done:
 void* conn_thread(void* arg) {
 	conn_t* const conn = arg;
 
-	packet_t buf;
+	gv_packet_t buf;
 	int len;
 
-	while ((len = recv(conn->sock, &buf, sizeof buf, 0)) > 0) {
+	// The recvs for packets we don't expect to receive are just a best attempt at clearing the buffer until the next packet.
+	// Doesn't really matter if they fail, this is a bad condition to be in anyway and we did our best to recover.
+
+	while ((len = recv(conn->sock, &buf.header, sizeof buf.header, 0)) > 0) {
+		LOG_V(
+			cls,
+			"Got %s packet from %s:0x%x.",
+			gv_packet_type_strs[buf.header.type],
+			inet_ntoa(conn->addr.sin_addr),
+			ntohs(conn->addr.sin_port)
+		);
+
 		switch (buf.header.type) {
-		case ELP:
+		case GV_PACKET_TYPE_ELP:
+			recv(conn->sock, &buf.elp, sizeof buf.elp, 0);
+
 			LOG_E(
 				cls,
 				"Received ELP from %s:0x%x (host %" PRIx64 ") on TCP. This should not happen!",
@@ -87,22 +100,23 @@ void* conn_thread(void* arg) {
 				buf.elp.host_id
 			);
 			break;
-		case QUERY:
+		case GV_PACKET_TYPE_QUERY:
 			if (query_res(conn) < 0) {
 				goto stop;
 			}
 
 			break;
-		case QUERY_RES:
+		case GV_PACKET_TYPE_QUERY_RES:
+			recv(conn->sock, &buf.query_res, sizeof buf.query_res, 0);
+
 			LOG_E(
 				cls,
-				"Received QUERY_RES from %s:0x%x (host %" PRIx64 "). This should not happen, as this connection isn't ever used to send out QUERY packets!",
+				"Received QUERY_RES from %s:0x%x. This should not happen, as this connection isn't ever used to send out QUERY packets!",
 				inet_ntoa(conn->addr.sin_addr),
-				ntohs(conn->addr.sin_port),
-				buf.elp.host_id
+				ntohs(conn->addr.sin_port)
 			);
 			break;
-		case CONN_VDEV:
+		case GV_PACKET_TYPE_CONN_VDEV:
 			if (recv(conn->sock, &buf.conn_vdev, sizeof buf.conn_vdev, 0) != sizeof buf.conn_vdev) {
 				LOG_E(cls, "recv: %s", strerror(errno));
 				goto stop;
@@ -110,15 +124,36 @@ void* conn_thread(void* arg) {
 
 			conn_vdev(conn, buf.conn_vdev.vdev_id);
 			break;
-		case CONN_VDEV_RES:
+		case GV_PACKET_TYPE_CONN_VDEV_RES:
+			recv(conn->sock, &buf.conn_vdev_res, sizeof buf.conn_vdev_res, 0);
+			__attribute__((fallthrough));
+		case GV_PACKET_TYPE_CONN_VDEV_FAIL:
 			LOG_E(
 				cls,
-				"Received CONN_VDEV_RES from %s:0x%x (host %" PRIx64 "). This should not happen, as this connection isn't ever used to send out CONN_VDEV packets!",
+				"Received %s from %s:0x%x (host %" PRIx64 "). This should not happen, as this connection isn't ever used to send out CONN_VDEV packets!",
+				gv_packet_type_strs[buf.header.type],
 				inet_ntoa(conn->addr.sin_addr),
 				ntohs(conn->addr.sin_port),
 				buf.elp.host_id
 			);
 			break;
+		case GV_PACKET_TYPE_KOS_CALL:
+			// TODO Read remaining bytes of packet.
+		case GV_PACKET_TYPE_KOS_CALL_FAIL:
+			// TODO Read remaining bytes of packet.
+		case GV_PACKET_TYPE_KOS_CALL_RET:
+			// TODO Read remaining bytes of packet.
+			LOG_E(
+				cls,
+				"Received %s from %s:0x%x (host %" PRIx64 "). This should not happen, as this connection should have already been passed on to a KOS agent!",
+				gv_packet_type_strs[buf.header.type],
+				inet_ntoa(conn->addr.sin_addr),
+				ntohs(conn->addr.sin_port),
+				buf.elp.host_id
+			);
+			break;
+		case GV_PACKET_TYPE_LEN:
+			assert(false);
 		}
 	}
 
