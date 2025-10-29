@@ -54,21 +54,19 @@ version = "14.2.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
-files = []
-develop = true
+files = [
+    {file = "rich-14.2.0-py3-none-any.whl", hash = "sha256:76bc51fe2e57d2b1be1f96c524b890b816e334ab4c1e45888799bfaab0021edd"},
+    {file = "rich-14.2.0.tar.gz", hash = "sha256:73ff50c7c0c1c77c8243079283f4edb376f0f6442433aecb8ce7e6d0b92d1fe4"},
+]
 
 [package.dependencies]
 markdown-it-py = ">=2.2.0"
-pygments = "^2.13.0"
+pygments = ">=2.13.0,<3.0.0"
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
-[package.source]
-type = "directory"
-url = "../../../random/rich"
-
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7b187e6176b4c2bc47ca2027b55a40d7a74c0cbb470da9b65364ca1d609113f6"
+content-hash = "01697ce866b1def94ea0b73ac4999b852c7b0b3972d7f31c73d538c2a5ed08da"
