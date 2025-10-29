@@ -1,0 +1,25 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
+	Dep.local("../../kos"),
+]
+
+let obj = Cc([
+	"-std=c11", "-g", "-fPIC",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(["main.c"])
+
+let vdriver = Linker([
+	"-shared",
+	"-lumber", "-lvdriver",
+]).link(obj)
+
+install = {
+	vdriver: "lib/vdriver/aquabsd.black.test.vdriver",
+}
+
+run = none
