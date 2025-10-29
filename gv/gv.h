@@ -63,6 +63,7 @@ struct state_t {
 	umber_class_t const* init_cls;
 	umber_class_t const* listener_cls;
 	umber_class_t const* elp_cls;
+	umber_class_t const* query_cls;
 };
 
 static inline in_addr_t sockaddr_to_in_addr(struct sockaddr* addr) {

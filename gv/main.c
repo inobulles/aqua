@@ -53,6 +53,7 @@ int main(int argc, char* argv[]) {
 	state.init_cls = umber_class_new("aqua.gvd.init", UMBER_LVL_VERBOSE, "GrapeVine daemon initialization.");
 	state.listener_cls = umber_class_new("aqua.gvd.listener", UMBER_LVL_VERBOSE, "GrapeVine daemon connection listener.");
 	state.elp_cls = umber_class_new("aqua.gvd.elp", UMBER_LVL_INFO, "GrapeVine daemon echolocation (ELP) subsystem.");
+	state.query_cls = umber_class_new("aqua.gvd.query", UMBER_LVL_INFO, "GrapeVine daemon query subsystem.");
 
 	LOG_V(state.init_cls, "Parsing options.");
 
