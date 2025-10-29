@@ -210,3 +210,18 @@ done:
 
 	return vdev_count;
 }
+
+int gv_get_ip_by_host_id(uint64_t host_id, in_addr_t* ipv4) {
+	for (size_t i = 0; i < node_count; i++) {
+		gv_node_ent_t* const node = &nodes[i];
+
+		if (node->host_id != host_id) {
+			continue;
+		}
+
+		memcpy(ipv4, &node->ip, sizeof *ipv4);
+		return 0;
+	}
+
+	return -1;
+}
