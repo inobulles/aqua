@@ -9,6 +9,7 @@
 
 #include <aqua/kos.h>
 
+#include <netinet/in.h>
 #include <unistd.h>
 
 /**
