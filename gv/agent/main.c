@@ -6,8 +6,11 @@
 
 #include <umber.h>
 
+#include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +23,10 @@ typedef struct {
 	uint64_t vid;
 	bool vdev_found;
 	kos_cookie_t conn_cookie;
+
+	uint32_t last_fn_id;
+	uint32_t fn_count;
+	kos_fn_t const* fns;
 } state_t;
 
 static umber_class_t const* cls;
@@ -59,6 +66,13 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		if (notif->cookie != s->conn_cookie) {
 			break;
 		}
+
+		// Keep track of functions for future calls.
+
+		s->fn_count = notif->conn.fn_count;
+		s->fns = notif->conn.fns;
+
+		// Prepare packet.
 
 		packet->header.type = GV_PACKET_TYPE_CONN_VDEV_RES;
 		gv_conn_vdev_res_t* conn_vdev_res = &packet->conn_vdev_res;
@@ -100,8 +114,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		assert(packet != NULL);
 
 		for (size_t i = 0; i < notif->conn.fn_count; i++) {
-			kos_fn_t const* const fn = &notif->conn.fns[i];
-			size += gv_serialize_fn((void*) packet + size, fn);
+			size += gv_serialize_fn((void*) packet + size, &notif->conn.fns[i]);
 		}
 
 		conn_vdev_res = &packet->conn_vdev_res;
@@ -109,7 +122,27 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 
 		break;
 	case KOS_NOTIF_CALL_FAIL:
+		// TODO
+		break;
 	case KOS_NOTIF_CALL_RET:
+		LOG_V(cls, "Got call return notification from KOS.");
+		packet->header.type = GV_PACKET_TYPE_KOS_CALL_RET;
+
+		kos_type_t const ret_type = s->fns[s->last_fn_id].ret_type;
+		kos_val_t const* const ret = &notif->call_ret.ret;
+
+		size_t const val_size = gv_serialize_val_size(ret_type, ret);
+		packet->kos_call_ret.size = val_size;
+
+		size_t const proto_header_size = sizeof packet->header + sizeof packet->kos_call_ret;
+		size = proto_header_size + val_size;
+
+		packet = realloc(packet, size);
+		assert(packet != NULL);
+
+		assert(gv_serialize_val((void*) packet + proto_header_size, ret_type, ret) == val_size);
+
+		break;
 	case KOS_NOTIF_INTERRUPT:
 		break;
 	}
@@ -119,6 +152,53 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 	}
 
 	free(packet);
+}
+
+static void call(state_t* s, gv_kos_call_t* call) {
+	LOG_V(cls, "Calling KOS function (fn_id=%u).", call->fn_id);
+
+	void* const arg_buf = malloc(call->size);
+	assert(arg_buf != NULL);
+
+	if (recv(s->sock, arg_buf, call->size, 0) != (ssize_t) call->size) {
+		LOG_E(cls, "recv: %s", strerror(errno));
+		free(arg_buf);
+		goto fail;
+	}
+
+	if (call->fn_id >= s->fn_count) { // Do this after so we do clear the buffer.
+		LOG_E(cls, "Function ID %zu doesn't exist (%zu functions total).", call->fn_id, s->fn_count);
+		free(arg_buf);
+		goto fail;
+	}
+
+	size_t const arg_count = s->fns[call->fn_id].param_count;
+	kos_val_t* const args = malloc(arg_count * sizeof *args);
+	assert(args != NULL);
+
+	size_t size = 0;
+
+	for (size_t i = 0; i < arg_count; i++) {
+		size += gv_deserialize_val(arg_buf + size, s->fns[call->fn_id].params[i].type, &args[i]);
+	}
+
+	free(arg_buf);
+
+	if (size != call->size) {
+		LOG_E(cls, "Deserialized size (%zu) is not the same as reported size (%zu).", size, call->size);
+		free(args);
+		goto fail;
+	}
+
+	s->last_fn_id = call->fn_id;
+	kos_vdev_call(call->conn_id, call->fn_id, args);
+	kos_flush(true);
+
+	return;
+
+fail:
+
+	LOG_F(cls, "TODO");
 }
 
 int main(int argc, char* argv[]) {
@@ -195,9 +275,36 @@ int main(int argc, char* argv[]) {
 	s.conn_cookie = kos_vdev_conn(s.hid, s.vid);
 	kos_flush(true);
 
-	for (;;) {
-		// TODO Wait on packets from socket.
-		// If we get e.g. a call request, then we deserialize it and call kos_call or whatever.
+	LOG_V(cls, "Listening for packets.");
+
+	gv_packet_t buf;
+	int len;
+
+	while ((len = recv(s.sock, &buf.header, sizeof buf.header, 0)) > 0) {
+		LOG_V(cls, "Got %s packet.", gv_packet_type_strs[buf.header.type]);
+
+		switch (buf.header.type) {
+		case GV_PACKET_TYPE_ELP:
+		case GV_PACKET_TYPE_QUERY:
+		case GV_PACKET_TYPE_QUERY_RES:
+		case GV_PACKET_TYPE_CONN_VDEV:
+		case GV_PACKET_TYPE_CONN_VDEV_FAIL:
+		case GV_PACKET_TYPE_CONN_VDEV_RES:
+		case GV_PACKET_TYPE_KOS_CALL_FAIL:
+		case GV_PACKET_TYPE_KOS_CALL_RET:
+		case GV_PACKET_TYPE_LEN:
+		default:
+			LOG_E(cls, "Unexpected packet. This should not happen!");
+			break;
+		case GV_PACKET_TYPE_KOS_CALL:
+			if (recv(s.sock, &buf.kos_call, sizeof buf.kos_call, 0) != sizeof buf.kos_call) {
+				LOG_E(cls, "recv: %s", strerror(errno));
+				break;
+			}
+
+			call(&s, &buf.kos_call);
+			break;
+		}
 	}
 
 	return EXIT_SUCCESS;
