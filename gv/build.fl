@@ -23,7 +23,9 @@ let agent_obj = Cc(c_flags).compile(agent_src)
 
 let link_flags = ["-lumber", "-lvdriver_loader"]
 
-if Platform.os() != "Linux" {
+# XXX Eeeh this is not ideal.
+
+if Platform.os() != "Linux" && Platform.getenv("BOB_TARGET") != "arm64-android" {
 	link_flags = link_flags + ["-lpthread"]
 }
 
