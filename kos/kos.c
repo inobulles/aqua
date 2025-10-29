@@ -367,13 +367,135 @@ kos_cookie_t kos_vdev_conn(uint64_t host_id, uint64_t vdev_id) {
 	return cookie;
 }
 
-static void call(kos_cookie_t cookie, action_t* action, bool sync) {
+static void call_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	(void) sync; // This is always done synchronously.
 
 	LOG_V(call_cls, "Passing call on to VDRIVER (cookie=0x%" PRIx64 ").", cookie);
 
-	vdriver_t const* const vdriver = action->call.vdriver;
+	conn_t* const conn = &conns[action->call.conn_id];
+
+	vdriver_t* const vdriver = conn->vdriver;
+	assert(vdriver != NULL);
+
 	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
+}
+
+static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
+	LOG_V(call_cls, "Passing call on to GrapeVine connection (cookie=0x%" PRIx64 ").", cookie);
+	conn_t* const conn = &conns[action->call.conn_id];
+
+	// Serialize call.
+
+	kos_fn_t const* const fn = &conn->fns[action->call.fn_id];
+
+	gv_packet_t proto_packet = {
+		.header.type = GV_PACKET_TYPE_KOS_CALL,
+		.kos_call = {
+			.conn_id = conn->remote_cid,
+			.fn_id = action->call.fn_id,
+		},
+	};
+
+	size_t size = sizeof proto_packet.header + sizeof proto_packet.kos_call;
+	size_t const proto_packet_size = size;
+
+	for (size_t i = 0; i < fn->param_count; i++) {
+		size += gv_serialize_val_size(fn->params[i].type, &action->call.args[i]);
+	}
+
+	void* const packet = malloc(size);
+	assert(packet != NULL);
+
+	// TODO Probably a cleaner way to do this lol.
+
+	proto_packet.kos_call.size = size - proto_packet_size;
+	memcpy(packet, &proto_packet, sizeof proto_packet);
+
+	void* buf = packet + proto_packet_size;
+
+	for (size_t i = 0; i < fn->param_count; i++) {
+		buf += gv_serialize_val(buf, fn->params[i].type, &action->call.args[i]);
+	}
+
+	// Send packet.
+
+	if (send(conn->sock, packet, size, 0) != (ssize_t) size) {
+		LOG_E(call_cls, "Failed to send KOS call packet: %s", strerror(errno));
+		free(packet);
+		goto fail;
+	}
+
+	free(packet);
+
+	if (!sync) { // TODO
+		LOG_W(call_cls, "Currently, all GrapeVine VDEV connection requests are considered to be sync.");
+	}
+
+	LOG_V(call_cls, "Wait for KOS call return.");
+	gv_packet_t res_packet;
+
+	if (recv(conn->sock, &res_packet, sizeof res_packet.header, 0) != sizeof res_packet.header) {
+		LOG_E(call_cls, "Failed to get response header: %s", strerror(errno));
+		goto fail;
+	}
+
+	if (res_packet.header.type == GV_PACKET_TYPE_KOS_CALL_FAIL) {
+		LOG_E(call_cls, "Got a KOS call failure response.");
+		goto fail;
+	}
+
+	if (res_packet.header.type != GV_PACKET_TYPE_KOS_CALL_RET) {
+		LOG_E(call_cls, "Got a unexpected response to KOS call: %s.", gv_packet_type_strs[res_packet.header.type]);
+		goto fail;
+	}
+
+	gv_kos_call_ret_t ret;
+
+	if (recv(conn->sock, &ret, sizeof ret, 0) != (ssize_t) sizeof ret) {
+		LOG_E(call_cls, "Failed to get response payload (part 1): %s", strerror(errno));
+		free(buf);
+		goto fail;
+	}
+
+	void* const ret_buf = malloc(ret.size);
+	assert(ret_buf != NULL);
+
+	if (recv(conn->sock, ret_buf, ret.size, 0) != (ssize_t) ret.size) {
+		LOG_E(call_cls, "Failed to get response payload (part 2): %s", strerror(errno));
+		free(buf);
+		goto fail;
+	}
+
+	kos_type_t const ret_type = fn->ret_type;
+	kos_val_t ret_val;
+
+	size_t const deserialized_size = gv_deserialize_val(ret_buf, ret_type, &ret_val);
+
+	if (deserialized_size != ret.size) {
+		LOG_E(call_cls, "Deserialized size (%zu) not expected size (%zu).", deserialized_size, ret.size);
+		free(buf);
+		goto fail;
+	}
+
+	free(buf);
+
+	printf("%d %lu\n", ret_type, ret_val.u64);
+
+	LOG_V(call_cls, "Got return response, notifying the client.");
+
+	kos_notif_t const notif = {
+		.kind = KOS_NOTIF_CALL_RET,
+		.cookie = cookie,
+		.conn_id = action->call.conn_id,
+		.call_ret.ret = ret_val,
+	};
+
+	client_notif_cb(&notif, client_notif_data);
+	return;
+
+fail:
+
+	; // TODO Send CALL_FAIL notification.
 }
 
 static void call_fail(kos_cookie_t cookie, action_t* action, bool sync) {
@@ -416,11 +538,6 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 		goto fail;
 	}
 
-	// Get VDRIVER and validate function ID.
-
-	vdriver_t* const vdriver = conn->vdriver;
-	assert(vdriver != NULL);
-
 	if (fn_id >= conn->fn_count) {
 		LOG_E(call_cls, "Function ID %u is invalid.", fn_id);
 		goto fail;
@@ -428,9 +545,8 @@ kos_cookie_t kos_vdev_call(uint64_t conn_id, uint32_t fn_id, void const* args) {
 
 	// Success!
 
-	action.cb = call;
+	action.cb = conn->type == CONN_TYPE_LOCAL ? call_local : call_gv;
 
-	action.call.vdriver = vdriver;
 	action.call.conn_id = conn_id;
 	action.call.fn_id = fn_id;
 	action.call.args = args;
