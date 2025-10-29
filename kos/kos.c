@@ -425,8 +425,6 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 		goto fail;
 	}
 
-	free(packet);
-
 	if (!sync) { // TODO
 		LOG_W(call_cls, "Currently, all GrapeVine VDEV connection requests are considered to be sync.");
 	}
@@ -453,7 +451,7 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	if (recv(conn->sock, &ret, sizeof ret, 0) != (ssize_t) sizeof ret) {
 		LOG_E(call_cls, "Failed to get response payload (part 1): %s", strerror(errno));
-		free(buf);
+		free(packet);
 		goto fail;
 	}
 
@@ -462,7 +460,7 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	if (recv(conn->sock, ret_buf, ret.size, 0) != (ssize_t) ret.size) {
 		LOG_E(call_cls, "Failed to get response payload (part 2): %s", strerror(errno));
-		free(buf);
+		free(packet);
 		goto fail;
 	}
 
@@ -473,13 +471,11 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	if (deserialized_size != ret.size) {
 		LOG_E(call_cls, "Deserialized size (%zu) not expected size (%zu).", deserialized_size, ret.size);
-		free(buf);
+		free(packet);
 		goto fail;
 	}
 
-	free(buf);
-
-	printf("%d %lu\n", ret_type, ret_val.u64);
+	free(packet);
 
 	LOG_V(call_cls, "Got return response, notifying the client.");
 
