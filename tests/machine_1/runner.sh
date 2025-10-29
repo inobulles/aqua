@@ -1,6 +1,29 @@
 #!/bin/sh
 set -e
 
+cat <<'EOF'
+    VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+     VVVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVVV
+      VVVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVVV
+       VVVAAA                     AAAVVV
+        VVVAAA                   AAAVVV
+         VVVAAA                 AAAVVV
+     /\      //^^^^\\    ||      ||     /\
+    //\\    ||      ||   ||      ||    //\\
+   //  \\   ||      ||   ||      ||   //  \\
+  //    \\  ||      ||   ||      ||  //    \\
+ //      \\  \\____//____ \\____//  //      \\
+               VVVAAA     AAAVVV
+                VVVAAA   AAAVVV
+                 VVVAAA AAAVVV
+                  VVVAAAAAVVV
+                   VVVAAAVVV
+                    VVVAVVV
+                     VVVVV
+                      VVV
+                       V
+EOF
+
 sleep .1
 iface=$(ifconfig | grep epair | head -n1 | cut -d: -f1)
 ifconfig
