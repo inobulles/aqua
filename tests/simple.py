@@ -8,10 +8,10 @@ import subprocess
 
 # TODO Rich is really cool but it has a couple problems which I'd like to fix:
 # - There doesn't seem to be a way to make Panel display the end of a renderable rather than the beginning. So I have to resort to a fixed height.
-# - Seems to be an issue where colour ANSI escape codes are treated as extra characters even though they take no width. Would have to make Rich panels aware of this (because I don't wanna disable colours in Umber logs, that would be lame).
 
 from rich.live import Live
 from rich.panel import Panel
+from rich.text import Text
 from rich.layout import Layout
 from rich.console import Console
 
@@ -169,13 +169,18 @@ class Network:
 	def __render(self):
 		layout = Layout()
 		panels = []
-		height = 40 # XXX, see comments on Rich.
+		height = 96  # XXX, see comments on Rich.
 
 		for k, buf in self.__bufs.items():
-			tail = buf[-height:]
-			panels.append(Panel("\n".join(tail), title=k, border_style="cyan"))
+			colour = "cyan"
 
-		layout.split_column(*map(Layout, panels))
+			if "Tests passed!" in "\n".join(buf):
+				colour = "green"
+
+			tail = buf[-height:]
+			panels.append(Panel(Text.from_ansi("\n".join(tail)), title=k, border_style=colour))
+
+		layout.split_row(*map(Layout, panels))
 		return layout
 
 	async def setup(self, aquarium_pool: AquariumPool, bridge: Bridge):
