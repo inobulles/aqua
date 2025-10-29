@@ -18,7 +18,7 @@ from rich.console import Console
 
 class AquariumPool:
 	POOL_PATH = "pool"
-	COUNT = 2
+	COUNT = 3
 
 	__avail: set[str]
 
@@ -206,14 +206,14 @@ class Network:
 if __name__ == "__main__":
 	fc_graph = Network(
 		hosts={
-			"A (the one running the program)": Host(name="Host A", machine_path="machine_1"),
-			"B (the one providing the VDEV)": Host(name="Host B", machine_path="machine_2"),
-			# "C": Host(name="Host C"),
+			"A (running the test program)": Host(name="Host A", machine_path="machine_1"),
+			"B (providing the VDEV)": Host(name="Host B", machine_path="machine_2"),
+			"C (running the test program)": Host(name="Host C", machine_path="machine_1"),
 		}
 	)
 
-	with AquariumPool() as aquarium_pool, Bridge(fake="bridge0") as bridge:
-	# with AquariumPool() as aquarium_pool, Bridge() as bridge:
+	# with AquariumPool() as aquarium_pool, Bridge(fake="bridge0") as bridge:
+	with AquariumPool() as aquarium_pool, Bridge() as bridge:
 		try:
 			asyncio.run(fc_graph.setup(aquarium_pool, bridge))
 
