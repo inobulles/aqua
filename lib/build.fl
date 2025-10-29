@@ -19,6 +19,10 @@ let libs = {
 		"src": ["font.c"],
 		"include": ["font.h"],
 	},
+	"test": {
+		"src": ["test.c"],
+		"include": ["test.h"],
+	},
 	"win": {
 		"src": ["win.c"],
 		"include": ["win.h"],
