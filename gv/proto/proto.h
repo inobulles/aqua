@@ -157,6 +157,38 @@ typedef struct __attribute__((packed)) {
 	uint32_t fn_count;
 } gv_conn_vdev_res_t;
 
+/**
+ * KOS call packet.
+ */
+typedef struct __attribute__((packed)) {
+	/**
+	 * Connection ID.
+	 */
+	uint64_t conn_id;
+
+	/**
+	 * Size of this struct.
+	 */
+	uint32_t size;
+
+	/**
+	 * ID of function to call.
+	 */
+	uint32_t fn_id;
+} gv_kos_call_t;
+
+/**
+ * KOS call return packet.
+ */
+typedef struct __attribute__((packed)) {
+	/**
+	 * Size of return value.
+	 *
+	 * Necessary because otherwise it would be annoying to read buffer values.
+	 */
+	uint32_t size;
+} gv_kos_call_ret_t;
+
 // TODO All the others: writing pointer back, vitrification, writing chunks of memory (for when vitrification is happening and all of the syncing for that), and interrupts.
 
 /**
@@ -172,6 +204,8 @@ typedef struct __attribute__((packed)) {
 		gv_query_res_t query_res;
 		gv_conn_vdev_t conn_vdev;
 		gv_conn_vdev_res_t conn_vdev_res;
+		gv_kos_call_t kos_call;
+		gv_kos_call_ret_t kos_call_ret;
 	};
 } gv_packet_t;
 
