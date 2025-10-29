@@ -1,5 +1,4 @@
 # E2E tests
-
 This is the E2E (end-to-end) testing framework for AQUA.
 
 The testing framework sets up a small network with 3 hosts with the following structure.
