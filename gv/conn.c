@@ -9,8 +9,10 @@
 
 #include <umber.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,35 +27,47 @@ static __attribute__((constructor)) void init(void) {
 }
 
 static void conn_vdev(conn_t* conn, uint64_t vdev_id) {
-	state_t* const state = conn->state;
-	(void) state;
+	// TODO If this fails, we are responsible for sending a CONN_FAIL (or whatever).
 
-	// TODO Here we're going to need to actually connect to the VDEV. On response, we send out a CONN_VDEV_RES packet.
-	// We're probably going to need a libvdev library, this is in common with conn_local in the KOS.
+	LOG_V(cls, "Looking for VDRIVER associated to VID %" PRIu64 ".", vdev_id);
 
-	// Actually, we need to find the vdriver with this first, as we need to call the connection on it.
+	vdriver_t* const vdriver = vdriver_loader_find_loaded_by_vid(vdev_id);
 
-	kos_vdev_descr_t* found = NULL;
-
-	for (size_t i = 0; i < conn->state->vdev_count; i++) {
-		kos_vdev_descr_t* const vdev = &conn->state->vdevs[i];
-
-		if (vdev->vdev_id == vdev_id) {
-			if (found != NULL) {
-				LOG_E(cls, "Found multiple VDEVs with ID %" PRIx64 "", vdev_id);
-			}
-
-			found = vdev;
-		}
+	if (vdriver == NULL) {
+		LOG_E(cls, "Could not find associated VDRIVER.");
+		goto done;
 	}
 
-	if (found == NULL) {
-		LOG_E(cls, "Could not find a VDEV with ID %" PRIx64 "", vdev_id);
+	// Spawn KOS agent process.
+	// TODO Note that if you're stuck on an issue here, it might be that gv-kos-agent failed to start; it will fail silently if so!
 
-		// TODO Send back failure in CONN_VDEV_RES packet.
+	LOG_V(cls, "Spawning KOS agent process (spec=%s).", vdriver->spec);
 
-		return;
+	char vid_str[16];
+	snprintf(vid_str, sizeof vid_str, "%" PRIu64, vdev_id);
+
+	char* const path = "gv-kos-agent";
+	char* const argv[] = {path, "-s", vdriver->spec, "-v", vid_str, NULL};
+
+	posix_spawn_file_actions_t actions;
+	posix_spawn_file_actions_init(&actions);
+
+	posix_spawn_file_actions_adddup2(&actions, conn->sock, 3); // Make socket available as fd 3 in child.
+
+	extern char** environ;
+	pid_t pid;
+
+	if (posix_spawnp(&pid, path, &actions, NULL, argv, environ) < 0) {
+		LOG_E(cls, "posix_spawnp(\"%s\"): %s", path, strerror(errno));
 	}
+
+	posix_spawn_file_actions_destroy(&actions);
+
+done:
+
+	close(conn->sock);
+
+	// TODO We should keep track of all our KOS agents so that we can ask them to terminate all connections when we go down.
 }
 
 void* conn_thread(void* arg) {
