@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "kos.h"
 #include "vdriver.h"
+
+#include <aqua/kos.h>
 
 /**
  * The VDRIVER_PATH environment variable name.
