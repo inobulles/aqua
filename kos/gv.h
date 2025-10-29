@@ -26,3 +26,14 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out);
  * @return 0 on success, or a negative value on error.
  */
 int get_gv_host_id(uint64_t* host_id_out);
+
+/**
+ * Get the IP address of a node by its host ID.
+ *
+ * TODO Don't really know how we should handle IPv6 here nor do I really care at the moment.
+ *
+ * @param host_id The host ID of the node we wanna get the IP of.
+ * @param ipv4 Reference to the IPv4 address the node IP should be written to.
+ * @return 0 on success, or a negative value if node couldn't be found.
+ */
+int gv_get_ip_by_host_id(uint64_t host_id, in_addr_t* ipv4);
