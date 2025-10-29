@@ -19,7 +19,7 @@ let obj = Cc([
 let cmd = Linker([
 	"-L/usr/local/lib",
 	"-lumber", "-lvdriver_loader",
-	"-laqua", "-laqua_root", "-laqua_wm",
+	"-laqua", "-laqua_root", "-laqua_wm", "-laqua_vr",
 ]).link(obj)
 
 install = {
