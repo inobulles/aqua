@@ -21,8 +21,14 @@ let c_flags = [
 let obj = Cc(c_flags).compile(src)
 let agent_obj = Cc(c_flags).compile(agent_src)
 
-let gvd = Linker(["-lpthread", "-lumber", "-lvdriver_loader"]).link(obj)
-let agent = Linker(["-laqua", "-lumber", "-lgv_proto"]).link(agent_obj)
+let link_flags = ["-lumber", "-lvdriver_loader"]
+
+if Platform.os() != "Linux" {
+	link_flags = link_flags + ["-lpthread"]
+}
+
+let gvd = Linker(link_flags).link(obj)
+let agent = Linker(["-laqua", "-lumber", "-lgv_proto", "-lvdriver_loader"]).link(agent_obj)
 
 install = {
 	gvd: "bin/gvd",
