@@ -51,7 +51,7 @@ class AquariumPool:
 class Bridge:
 	__fake: str | None
 
-	def __init__(self, fake: str | None=None):
+	def __init__(self, fake: str | None = None):
 		self.__fake = fake
 
 	def __enter__(self):
@@ -110,7 +110,7 @@ class Host:
 
 		shutil.copyfile(self.__machine_path + "/runner.sh", aquarium + "/runner.sh")
 		prefix = aquarium + "/usr/local"
-		assert "/usr/local/aquarium/roots/" in prefix # Just to be safe!
+		assert "/usr/local/aquarium/roots/" in prefix  # Just to be safe!
 
 		if os.path.exists(prefix):
 			shutil.rmtree(prefix)
@@ -139,9 +139,7 @@ class Host:
 		assert proc.stdin is not None
 		assert proc.stdout is not None
 
-		proc.stdin.write(
-			f"IP={ip} sh /runner.sh\n".encode()
-		)
+		proc.stdin.write(f"IP={ip} sh /runner.sh\n".encode())
 
 		while True:
 			line = await proc.stdout.readline()
@@ -219,7 +217,7 @@ if __name__ == "__main__":
 		try:
 			asyncio.run(fc_graph.setup(aquarium_pool, bridge))
 
-		finally: # XXX This doesn't work.
+		finally:  # XXX This doesn't work.
 			fc_graph.teardown()
 
 	subprocess.run(["aquarium", "sweep"], check=True)
