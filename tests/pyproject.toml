@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "AQUA tests"
+version = "0.1.0"
+description = "Tests for AQUA"
+authors = ["Aymeric Wibo"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+# rich = "^14.2.0"
+rich = { path = "/home/obiwac/random/rich", develop = true }
+
+[tool.pyright]
+exclude = [".venv"]
+venvPath = "."
+venv = ".venv"
