@@ -132,8 +132,12 @@ size_t gv_serialize_fn_size(kos_fn_t const* fn) {
 size_t gv_serialize_fn(void* buf, kos_fn_t const* fn) {
 	memcpy(buf, fn->name, sizeof fn->name);
 	size_t size = sizeof fn->name;
+
 	memcpy(buf + size, &fn->ret_type, sizeof fn->ret_type);
 	size += sizeof fn->ret_type;
+
+	memcpy(buf + size, &fn->param_count, sizeof fn->param_count);
+	size += sizeof fn->param_count;
 
 	for (size_t i = 0; i < fn->param_count; i++) {
 		size += gv_serialize_param(buf + size, &fn->params[i]);
