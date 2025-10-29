@@ -1,0 +1,30 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.local("../../gv"),
+	Dep.local("../../kos"),
+	Dep.local("../../lib"),
+	# XXX Don't do this, or it would defeat the purpose! Dep.local("../../vdev/test"),
+]
+
+let src = ["main.c"]
+
+let obj = Cc([
+	"-std=c11", "-g",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(src)
+
+let cmd = Linker([
+	"-L/usr/local/lib",
+	"-lumber", "-lvdriver_loader",
+	"-laqua", "-laqua_root", "-laqua_test",
+]).link(obj)
+
+install = {
+	cmd: "bin/machine-test",
+}
+
+run = ["test"]
