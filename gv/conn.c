@@ -14,8 +14,8 @@
 #include <inttypes.h>
 #include <spawn.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include <arpa/inet.h>
@@ -26,18 +26,63 @@ static __attribute__((constructor)) void init(void) {
 	cls = umber_class_new("aqua.gv.conn", UMBER_LVL_INFO, "GrapeVine daemon connection handling.");
 }
 
-static void conn_vdev(conn_t* conn, uint64_t vdev_id) {
-	// TODO If this fails, we are responsible for sending a CONN_FAIL (or whatever).
+static void send_sock_to_proc(vdriver_t* vdriver, conn_t* conn, uint64_t vdev_id) {
+	LOG_V(cls, "Passing connection to another process through a UDS (spec=%s).", vdriver->spec);
 
-	LOG_V(cls, "Looking for VDRIVER associated to VID %" PRIu64 ".", vdev_id);
+	// Create and connect to UDS.
 
-	vdriver_t* const vdriver = vdriver_loader_find_loaded_by_vid(vdev_id);
+	int const uds = socket(AF_UNIX, SOCK_STREAM, 0);
 
-	if (vdriver == NULL) {
-		LOG_E(cls, "Could not find associated VDRIVER.");
-		goto done;
+	if (uds < 0) {
+		LOG_E(cls, "socket(AF_UNIX): %s", strerror(errno));
+		return;
 	}
 
+	struct sockaddr_un addr = {0};
+	addr.sun_family = AF_UNIX;
+	addr.sun_path[0] = '\0'; // Abstract UDS.
+	strncpy(addr.sun_path + 1, vdriver->spec, sizeof addr.sun_path - 1);
+
+	if (connect(uds, (struct sockaddr*) &addr, sizeof addr) < 0) {
+		LOG_E(cls, "connect: %s", strerror(errno));
+		goto err_connect;
+	}
+
+	// Send over VDEV connection's socket.
+
+	char control[CMSG_SPACE(sizeof(int))] = {0};
+
+	struct iovec iov = {
+		.iov_base = &vdev_id,
+		.iov_len = sizeof vdev_id
+	};
+
+	struct msghdr msg = {
+		.msg_control = control,
+		.msg_controllen = sizeof control,
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+	};
+
+	struct cmsghdr* const cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+
+	memcpy(CMSG_DATA(cmsg), &conn->sock, sizeof conn->sock);
+
+	if (sendmsg(uds, &msg, 0) < 0) {
+		LOG_E(cls, "sendmsg: %s", strerror(errno));
+		goto err_sendmsg;
+	}
+
+err_sendmsg:
+err_connect:
+
+	close(uds);
+}
+
+static void spawn_kos_agent(vdriver_t* vdriver, conn_t* conn, uint64_t vdev_id) {
 	// Spawn KOS agent process.
 	// TODO Note that if you're stuck on an issue here, it might be that gv-kos-agent failed to start; it will fail silently if so!
 
@@ -63,11 +108,32 @@ static void conn_vdev(conn_t* conn, uint64_t vdev_id) {
 
 	posix_spawn_file_actions_destroy(&actions);
 
+	// TODO We should keep track of all our KOS agents so that we can ask them to terminate all connections when we go down.
+}
+
+static void conn_vdev(conn_t* conn, uint64_t vdev_id) {
+	// TODO If this fails, we are responsible for sending a CONN_FAIL (or whatever).
+
+	LOG_V(cls, "Looking for VDRIVER associated to VID %" PRIu64 ".", vdev_id);
+
+	vdriver_t* const vdriver = vdriver_loader_find_loaded_by_vid(vdev_id);
+
+	if (vdriver == NULL) {
+		LOG_E(cls, "Could not find associated VDRIVER.");
+		goto done;
+	}
+
+	if (strcmp(vdriver->spec, "aquabsd.black.vr") == 0) { // TODO Hardcoding this for the time being.
+		send_sock_to_proc(vdriver, conn, vdev_id);
+	}
+
+	else {
+		spawn_kos_agent(vdriver, conn, vdev_id);
+	}
+
 done:
 
 	close(conn->sock);
-
-	// TODO We should keep track of all our KOS agents so that we can ask them to terminate all connections when we go down.
 }
 
 void* conn_thread(void* arg) {
