@@ -7,6 +7,7 @@
 #include "gv.h"
 
 #include <aqua/gv_ipc.h>
+#include <aqua/gv_proto.h>
 #include <aqua/vdriver_loader.h>
 
 #include <assert.h>

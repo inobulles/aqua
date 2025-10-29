@@ -1,0 +1,22 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.local("../../kos/header"),
+]
+
+let obj = Cc([
+	"-std=c11", "-g", "-fPIC",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(["serialize.c", "deserialize.c"])
+
+let proto_lib = Linker([]).archive(obj)
+
+install = {
+	proto_lib: "lib/libgv_proto.a",
+	"proto.h": "include/aqua/gv_proto.h",
+}
+
+run = none

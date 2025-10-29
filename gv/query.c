@@ -3,6 +3,8 @@
 
 #include "gv.h"
 
+#include <aqua/gv_proto.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -41,8 +43,8 @@ int query(in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_t** vdevs_re
 
 	// Send QUERY packet.
 
-	packet_t packet = {
-		.header.type = QUERY,
+	gv_packet_t packet = {
+		.header.type = GV_PACKET_TYPE_QUERY,
 	};
 
 	if (sendto(sock, &packet, sizeof packet.header, 0, (struct sockaddr*) &addr, sizeof addr) < 0) {
@@ -59,7 +61,7 @@ int query(in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_t** vdevs_re
 		return -1;
 	}
 
-	if (packet.header.type != QUERY_RES) {
+	if (packet.header.type != GV_PACKET_TYPE_QUERY_RES) {
 		fprintf(stderr, "Unexpected packet type for QUERY response: %d\n", packet.header.type);
 		return -1;
 	}
@@ -86,7 +88,7 @@ int query(in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_t** vdevs_re
 
 int query_res(conn_t* conn) {
 	state_t* const state = conn->state;
-	packet_t* __attribute__((cleanup(free_packet))) packet = NULL;
+	gv_packet_t* __attribute__((cleanup(gv_packet_free))) packet = NULL;
 
 	size_t const vdevs_size = state->vdev_count * sizeof *packet->query_res.vdevs;
 	size_t const packet_size = sizeof packet->header + sizeof packet->query_res + vdevs_size;
@@ -94,7 +96,7 @@ int query_res(conn_t* conn) {
 	packet = malloc(packet_size);
 	assert(packet != NULL);
 
-	packet->header.type = QUERY_RES;
+	packet->header.type = GV_PACKET_TYPE_QUERY_RES;
 	packet->query_res.vdev_count = state->vdev_count;
 	memcpy(packet->query_res.vdevs, state->vdevs, vdevs_size);
 

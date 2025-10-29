@@ -2,8 +2,10 @@
 // Copyright (c) 2024-2025 Aymeric Wibo
 
 #include "conn.h"
-#include "gv.h"
 #include "query.h"
+
+#include <aqua/gv_proto.h>
+#include <aqua/vdriver_loader.h>
 
 #include <umber.h>
 
