@@ -133,6 +133,9 @@ void vdriver_loader_req_local_vdev(
 ) {
 	LOG_V(cls, "Trying to find local VDRIVER providing spec \"%s\".", spec);
 
+	char** done_paths = NULL;
+	size_t done_path_count = 0;
+
 	char* __attribute__((cleanup(strfree))) path_copy_orig = strdup(vdriver_path);
 	assert(path_copy_orig != NULL);
 
@@ -140,9 +143,24 @@ void vdriver_loader_req_local_vdev(
 	char* tok;
 
 	while ((tok = strsep(&path_copy, ":")) != NULL) {
-		char* __attribute__((cleanup(strfree))) candidate = NULL;
+		char* candidate = NULL;
 		asprintf(&candidate, "%s/%s.vdriver", tok, spec);
 		assert(candidate != NULL);
+
+		// Make sure we haven't looked here already.
+
+		for (size_t i = 0; i < done_path_count; i++) {
+			if (strcmp(candidate, done_paths[i]) == 0) {
+				free(candidate);
+				goto next;
+			}
+		}
+
+		done_paths = realloc(done_paths, ++done_path_count * sizeof *done_paths);
+		assert(done_paths != NULL);
+		done_paths[done_path_count - 1] = candidate;
+
+		// Check if driver file exists.
 
 		if (access(candidate, F_OK) != 0) {
 			continue;
@@ -165,7 +183,15 @@ void vdriver_loader_req_local_vdev(
 
 		LOG_V(cls, "Probing VDRIVER for '%s' VDEVs.", spec);
 		vdriver->probe();
+
+next:;
 	}
+
+	for (size_t i = 0; i < done_path_count; i++) {
+		free(done_paths[i]);
+	}
+
+	free(done_paths);
 }
 
 void vdriver_loader_vdev_local_inventory(
@@ -175,6 +201,9 @@ void vdriver_loader_vdev_local_inventory(
 ) {
 	LOG_V(cls, "Taking inventory of all VDEVs available on the system.");
 
+	char** done_paths = NULL;
+	size_t done_path_count = 0;
+
 	char* __attribute__((cleanup(strfree))) path_copy_orig = strdup(vdriver_path);
 	assert(path_copy_orig != NULL);
 
@@ -182,6 +211,19 @@ void vdriver_loader_vdev_local_inventory(
 	char* tok;
 
 	while ((tok = strsep(&path_copy, ":")) != NULL) {
+		// Make sure we haven't looked here already.
+
+		for (size_t i = 0; i < done_path_count; i++) {
+			if (strcmp(tok, done_paths[i]) == 0) {
+				free(tok);
+				goto next;
+			}
+		}
+
+		done_paths = realloc(done_paths, ++done_path_count * sizeof *done_paths);
+		assert(done_paths != NULL);
+		done_paths[done_path_count - 1] = tok;
+
 		LOG_V(cls, "Taking inventory in '%s'.", tok);
 
 		DIR* const dir = opendir(tok);
@@ -224,7 +266,11 @@ void vdriver_loader_vdev_local_inventory(
 		}
 
 		closedir(dir);
+
+next:;
 	}
+
+	free(done_paths);
 }
 
 vdriver_t* vdriver_loader_find_loaded_by_vid(vid_t vid) {
