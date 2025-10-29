@@ -20,13 +20,13 @@ let vdriver_loader_obj = cc.compile(["lib/vdriver_loader.c"])
 let vdriver_obj = cc.compile(["lib/vdriver.c"])
 
 let vdriver_loader_lib = Linker([
-	"-L/usr/local/lib", "-shared", "-lumber"
+	"-shared", "-lumber"
 ]).link(vdriver_loader_obj)
 
 let vdriver_lib = Linker([]).archive(vdriver_obj)
 
 let kos_lib = Linker([
-	"-L/usr/local/lib", "-shared", "-lumber", "-lvdriver_loader", "-lgv_proto",
+	"-shared", "-lumber", "-lvdriver_loader", "-lgv_proto",
 ]).link(kos_obj)
 
 install = {
