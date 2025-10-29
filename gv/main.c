@@ -110,15 +110,6 @@ int main(int argc, char* argv[]) {
 
 	fprintf(lock_file, "%d\n", getpid());
 
-	LOG_V(state.init_cls, "Making an inventory of local VDEVs we can make available.");
-
-	state.vdev_count = 0;
-	state.vdevs = NULL;
-
-	vdriver_loader_init();
-	vdriver_loader_vdev_local_inventory(state.host_id, vdev_inventory_notif_cb, &state);
-
-	LOG_I(state.init_cls, "Found and inventoried %zu VDEVs.", state.vdev_count);
 	LOG_V(state.init_cls, "Find the interface's IPv4 address.");
 
 	struct ifaddrs* ifap;
@@ -194,6 +185,18 @@ int main(int argc, char* argv[]) {
 	}
 
 	fclose(host_id_file);
+
+	// We must do this after getting the host ID!
+
+	LOG_V(state.init_cls, "Making an inventory of local VDEVs we can make available.");
+
+	state.vdev_count = 0;
+	state.vdevs = NULL;
+
+	vdriver_loader_init();
+	vdriver_loader_vdev_local_inventory(state.host_id, vdev_inventory_notif_cb, &state);
+
+	LOG_I(state.init_cls, "Found and inventoried %zu VDEVs.", state.vdev_count);
 
 	LOG_V(state.init_cls, "Creating socket for TCP connections (binding to port 0x%x).", GV_PORT);
 
