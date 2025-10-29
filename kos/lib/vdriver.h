@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "kos.h"
+#include <aqua/kos.h>
 
 /**
  * A VDEV ID is a unique identifier for a VDEV within a host.

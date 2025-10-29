@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "kos.h"
+#include <aqua/kos.h>
 
 #include <netinet/in.h>
 #include <stdlib.h>
