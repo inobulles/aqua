@@ -5,6 +5,7 @@ import bob
 
 deps = [
 	Dep.local("../kos"),
+	Dep.local("proto"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
 ]
 

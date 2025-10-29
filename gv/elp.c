@@ -6,6 +6,7 @@
 #include "query.h"
 
 #include <aqua/gv_ipc.h>
+#include <aqua/gv_proto.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -47,18 +48,19 @@ static void* elp_sender(void* arg) {
 
 	srand(time(NULL));
 
-	packet_t const packet = {
-		.header.type = ELP,
+	gv_packet_t const packet = {
+		.header.type = GV_PACKET_TYPE_ELP,
 		.elp.unique = rand(),
-		.elp.vers = ELP_VERS,
+		.elp.vers = GV_ELP_VERS,
 		.elp.host_id = state->host_id,
+		.elp.name = "TODO",
 	};
 
 	size_t const packet_size = sizeof packet.header + sizeof packet.elp;
 
 	struct sockaddr_in const addr = {
 		.sin_family = AF_INET,
-		.sin_port = htons(ELP_PORT),
+		.sin_port = htons(GV_ELP_PORT),
 		.sin_addr.s_addr = sockaddr_to_in_addr(state->found_ipv4->ifa_broadaddr),
 	};
 
@@ -111,7 +113,7 @@ static void* elp_listener(void* arg) {
 		struct sockaddr_in recv_addr;
 		socklen_t recv_addr_len = sizeof recv_addr;
 
-		packet_t buf;
+		gv_packet_t buf;
 		ssize_t const len = recvfrom(state->elp_sock, &buf, sizeof buf, 0, (struct sockaddr*) &recv_addr, &recv_addr_len);
 
 		if (len < 0) {
@@ -123,7 +125,7 @@ static void* elp_listener(void* arg) {
 			continue;
 		}
 
-		if (buf.header.type != ELP) {
+		if (buf.header.type != GV_PACKET_TYPE_ELP) {
 			LOG_W(state->elp_cls, "Received unknown packet type %d of length %zu. Ignoring.", buf.header.type, len);
 			continue;
 		}
@@ -133,7 +135,7 @@ static void* elp_listener(void* arg) {
 			continue;
 		}
 
-		if (buf.elp.vers != ELP_VERS) {
+		if (buf.elp.vers != GV_ELP_VERS) {
 			LOG_W(state->elp_cls, "Received ELP packet with unsupported version %d. Ignoring.", buf.elp.vers);
 			continue;
 		}
@@ -266,7 +268,7 @@ int elp(state_t* state) {
 
 	struct sockaddr_in addr = {
 		.sin_family = AF_INET,
-		.sin_port = htons(ELP_PORT),
+		.sin_port = htons(GV_ELP_PORT),
 		.sin_addr.s_addr = htonl(INADDR_ANY),
 	};
 
@@ -275,7 +277,7 @@ int elp(state_t* state) {
 		return -1;
 	}
 
-	LOG_I(state->elp_cls, "ELP socket bound to port 0x%x.", ELP_PORT);
+	LOG_I(state->elp_cls, "ELP socket bound to port 0x%x.", GV_ELP_PORT);
 	LOG_V(state->elp_cls, "Starting ELP sender and listener threads.");
 
 	pthread_mutex_init(&state->nodes_mutex, NULL);
