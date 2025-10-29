@@ -9,18 +9,24 @@ deps = [
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
 ]
 
-let src = Fs.list(".").where(|path| path.endswith(".c"))
+let src = ["main.c", "conn.c", "elp.c", "query.c"]
+let agent_src = ["agent/main.c"]
 
-let obj = Cc([
+let c_flags = [
 	"-std=c11", "-D_XOPEN_SOURCE", "-g",
 	"-Wall", "-Wextra", "-Werror",
 	"-fPIC",
-]).compile(src)
+]
+
+let obj = Cc(c_flags).compile(src)
+let agent_obj = Cc(c_flags).compile(agent_src)
 
 let gvd = Linker(["-lpthread", "-lumber", "-lvdriver_loader"]).link(obj)
+let agent = Linker(["-laqua", "-lumber", "-lgv_proto"]).link(agent_obj)
 
 install = {
 	gvd: "bin/gvd",
+	agent: "bin/gv-kos-agent",
 }
 
 run = ["gvd"]
