@@ -4,6 +4,7 @@
 import bob
 
 deps = [
+	Dep.local("header"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
 ]
 
@@ -24,14 +25,13 @@ let vdriver_loader_lib = Linker([
 let vdriver_lib = Linker([]).archive(vdriver_obj)
 
 let kos_lib = Linker([
-	"-L/usr/local/lib", "-shared", "-lumber", "-lvdriver_loader"
+	"-L/usr/local/lib", "-shared", "-lumber", "-lvdriver_loader", "-lgv_proto",
 ]).link(kos_obj)
 
 install = {
 	kos_lib: "lib/libaqua.so",
 	vdriver_loader_lib: "lib/libvdriver_loader.so",
 	vdriver_lib: "lib/libvdriver.a",
-	"lib/kos.h": "include/aqua/kos.h",
 	"lib/vdriver.h": "include/aqua/vdriver.h",
 	"lib/gv_ipc.h": "include/aqua/gv_ipc.h",
 	"lib/vdriver_loader.h": "include/aqua/vdriver_loader.h",
