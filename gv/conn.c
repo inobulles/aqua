@@ -80,6 +80,9 @@ void* conn_thread(void* arg) {
 	// Doesn't really matter if they fail, this is a bad condition to be in anyway and we did our best to recover.
 
 	while ((len = recv(conn->sock, &buf.header, sizeof buf.header, 0)) > 0) {
+		// TODO We should check that we can even do gv_packet_type_strs[buf.header.type]... Maybe even just have an inline function to do this for us with the table hidden inside so we don't access this directly.
+		// TODO Should we really be goto stop;'ing everywhere?
+
 		LOG_V(
 			cls,
 			"Got %s packet from %s:0x%x.",
