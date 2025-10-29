@@ -185,16 +185,21 @@ static void* elp_listener(void* arg) {
 
 		// We know we're going to have to fill in the node data by this point.
 		// Before we do anything, query a list of VDEV's from the node.
+		// We can release the lock here as decrementing TTLs and changing the node list don't have to be done atomically.
 
 		LOG_V(state->elp_cls, "Querying VDEVs from node.");
+
+		pthread_mutex_unlock(&state->nodes_mutex);
 
 		size_t vdev_count;
 		kos_vdev_descr_t* vdevs;
 
-		if (query(recv_addr.sin_addr.s_addr, &vdev_count, &vdevs) < 0) {
+		if (query(state, recv_addr.sin_addr.s_addr, &vdev_count, &vdevs) < 0) {
 			LOG_E(state->elp_cls, "Failed to query VDEVs.");
 			goto nodes_mutex_unlock;
 		}
+
+		pthread_mutex_lock(&state->nodes_mutex);
 
 		// If we didn't find an empty slot or a matching host ID, create a new node.
 
