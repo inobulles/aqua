@@ -7,8 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-# rich = "^14.2.0"
-rich = { path = "/home/obiwac/random/rich", develop = true }
+rich = "^14.2.0"
 
 [tool.pyright]
 exclude = [".venv"]
