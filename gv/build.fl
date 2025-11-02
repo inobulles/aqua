@@ -34,7 +34,7 @@ let agent = Linker(["-laqua", "-lumber", "-lgv_proto", "-lvdriver_loader"]).link
 
 install = {
 	gvd: "bin/gvd",
-	agent: "bin/gv-kos-agent",
+	agent: "bin/gv-agent",
 }
 
 run = ["gvd"]
