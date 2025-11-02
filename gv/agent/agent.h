@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <aqua/vdriver.h>
+
 #include <stdint.h>
 
 /**
@@ -29,6 +31,14 @@ typedef struct gv_agent_t gv_agent_t;
  * @return The GrapeVine KOS agent handle.
  */
 gv_agent_t* gv_agent_create(int sock, char const* spec, uint64_t vdev_id);
+
+/**
+ * Get loaded VDRIVER for the VDEV we created the agent for.
+ *
+ * @param agent The agent to look for the VDRIVER for.
+ * @return The VDRIVER object handle. Guaranteed to be non-NULL.
+ */
+vdriver_t* gv_agent_get_vdriver(gv_agent_t* agent);
 
 /**
  * Loop the agent and listen for packets over the connection.
