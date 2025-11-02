@@ -105,6 +105,7 @@ static vdriver_t* load_from_path(
 	vdriver->host_id = host_id;
 	vdriver->notif_cb = notif_cb;
 	vdriver->notif_data = notif_data;
+	vdriver->lib = lib;
 	vdriver->write_ptr = write_ptr;
 
 	LOG_V(cls, "Call init function on VDRIVER, if it exists.", path);
