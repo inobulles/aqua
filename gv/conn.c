@@ -84,14 +84,14 @@ err_connect:
 
 static void spawn_kos_agent(vdriver_t* vdriver, conn_t* conn, uint64_t vdev_id) {
 	// Spawn KOS agent process.
-	// TODO Note that if you're stuck on an issue here, it might be that gv-kos-agent failed to start; it will fail silently if so!
+	// TODO Note that if you're stuck on an issue here, it might be that gv-agent failed to start; it will fail silently if so!
 
 	LOG_V(cls, "Spawning KOS agent process (spec=%s).", vdriver->spec);
 
 	char vid_str[16];
 	snprintf(vid_str, sizeof vid_str, "%" PRIu64, vdev_id);
 
-	char* const path = "gv-kos-agent";
+	char* const path = "gv-agent";
 	char* const argv[] = {path, "-s", vdriver->spec, "-v", vid_str, NULL};
 
 	posix_spawn_file_actions_t actions;
