@@ -1,5 +1,11 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2024-2025 Aymeric Wibo
+// Copyright (c) 2025 Aymeric Wibo
+
+/**
+ * Definition of the GrapeVine protocol and helper functions.
+ *
+ * The helper functions concern serialization and deserialization of KOS types.
+ */
 
 #pragma once
 
