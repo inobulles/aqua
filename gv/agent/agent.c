@@ -5,6 +5,7 @@
 
 #include <aqua/gv_proto.h>
 #include <aqua/kos.h>
+#include <aqua/vdriver_loader.h>
 
 #include <umber.h>
 
@@ -21,6 +22,7 @@ struct gv_agent_t {
 	uint64_t hid;
 	uint64_t vid;
 	bool vdev_found;
+	vdriver_t* vdriver;
 
 	kos_cookie_t conn_cookie;
 	uint64_t conn_id;
@@ -50,6 +52,13 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		}
 
 		LOG_I(a->cls, "Found our VDEV: %s.", notif->attach.vdev.human);
+
+		a->vdriver = vdriver_loader_find_loaded_by_vid(a->vid);
+
+		if (a->vdriver == NULL) {
+			LOG_E(a->cls, "Could not find associated loaded VDRIVER.");
+			break;
+		}
 
 		a->hid = notif->attach.vdev.host_id;
 		a->vdev_found = true;
@@ -237,12 +246,19 @@ gv_agent_t* gv_agent_create(int sock, char const* spec, uint64_t vdev_id) {
 		return NULL;
 	}
 
+	assert(a->vdriver != NULL); // If a->vdev_found, then a->vdriver != NULL.
+
 	LOG_V(a->cls, "Establish connection to VDEV.");
 
 	a->conn_cookie = kos_vdev_conn(a->hid, a->vid);
 	kos_flush(true);
 
 	return a;
+}
+
+vdriver_t* gv_agent_get_vdriver(gv_agent_t* agent) {
+	assert(agent->vdriver != NULL);
+	return agent->vdriver;
 }
 
 void gv_agent_loop(gv_agent_t* a) {
