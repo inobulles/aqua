@@ -4,6 +4,8 @@
 #define _DEFAULT_SOURCE
 #define _GNU_SOURCE
 
+#include "mist.h"
+
 #include <aqua/vdriver.h>
 
 #include <umber.h>
@@ -30,6 +32,10 @@ typedef struct {
 
 static umber_class_t const* cls = NULL;
 static vid_t only_vid;
+
+mist_ops_t MIST_OPS = {
+	.set = false,
+};
 
 static void init(void) {
 	cls = umber_class_new(SPEC, UMBER_LVL_WARN, SPEC " VR VDRIVER.");
@@ -103,13 +109,6 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
-static void send_win(uint32_t id, uint32_t x_res, uint32_t y_res, void const* fb_data) {
-	(void) id;
-	(void) x_res;
-	(void) y_res;
-	(void) fb_data;
-}
-
 static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	assert(VDRIVER.notif_cb != NULL);
 
@@ -119,7 +118,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		.cookie = cookie,
 	};
 
-	switch (fn_id) {
+	switch (MIST_OPS.set ? fn_id : -1) {
 	case 0: { // send_win
 		uint32_t const id = args[0].u32;
 		uint32_t const x_res = args[1].u32;
@@ -130,7 +129,7 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 		assert(fb_size == x_res * y_res * 4);
 
-		send_win(id, x_res, y_res, fb_data);
+		MIST_OPS.send_win(id, x_res, y_res, fb_data);
 		break;
 	}
 	default:

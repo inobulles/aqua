@@ -20,6 +20,7 @@ let vdriver = Linker([
 
 install = {
 	vdriver: "lib/vdriver/aquabsd.black.vr.vdriver",
+	"mist.h": "include/aqua/mist.h", # XXX I hate this lol.
 }
 
 run = none
