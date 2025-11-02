@@ -80,6 +80,11 @@ typedef struct {
 	void* notif_data;
 
 	/**
+	 * The VDRIVER shared library handle.
+	 */
+	void* lib;
+
+	/**
 	 * Write to memory potentially on another host.
 	 *
 	 * This is set by the KOS when loading the VDRIVER; it should not be written to by the VDRIVER, only read from.
