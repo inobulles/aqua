@@ -10,6 +10,7 @@ deps = [
 ]
 
 let src = ["main.c", "conn.c", "elp.c", "query.c"]
+let agent_lib_src = ["agent/agent.c"]
 let agent_src = ["agent/main.c"]
 
 let c_flags = [
@@ -19,7 +20,10 @@ let c_flags = [
 ]
 
 let obj = Cc(c_flags).compile(src)
+let agent_lib_obj = Cc(c_flags).compile(agent_lib_src)
 let agent_obj = Cc(c_flags).compile(agent_src)
+
+# Link gvd.
 
 let link_flags = ["-lumber", "-lvdriver_loader"]
 
@@ -30,11 +34,19 @@ if Platform.os() != "Linux" && Platform.getenv("BOB_TARGET") != "arm64-android" 
 }
 
 let gvd = Linker(link_flags).link(obj)
-let agent = Linker(["-laqua", "-lumber", "-lgv_proto", "-lvdriver_loader"]).link(agent_obj)
+
+# Link agent.
+
+let agent_link_flags = ["-laqua", "-lumber", "-lvdriver_loader", "-lgv_proto"]
+
+let agent_lib = Linker(["-shared"] + agent_link_flags).link(agent_lib_obj)
+let agent = Linker(["-lgv_agent"] + agent_link_flags).link(agent_obj)
 
 install = {
 	gvd: "bin/gvd",
 	agent: "bin/gv-agent",
+	agent_lib: "lib/libgv_agent.so",
+	"agent/agent.h": "include/aqua/gv_agent.h",
 }
 
 run = ["gvd"]
