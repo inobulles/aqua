@@ -148,7 +148,7 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 		assert(ent != NULL);
 		memcpy(ent, &header, sizeof header);
 
-		if (fread(ent + sizeof header, 1, vdevs_bytes, f) != vdevs_bytes) {
+		if (fread((void*) ent + sizeof header, 1, vdevs_bytes, f) != vdevs_bytes) {
 			LOG_E(cls, "Failed to read VDEVs of node.");
 
 			free(ent);
@@ -159,9 +159,9 @@ ssize_t query_gv_vdevs(kos_vdev_descr_t** vdevs_out) {
 
 		vdevs = realloc(vdevs, (vdev_count + header.vdev_count) * sizeof *vdevs);
 		assert(vdevs != NULL);
-		memcpy(vdevs + vdev_count, ent + sizeof header, vdevs_bytes);
+		memcpy(vdevs + vdev_count, (void*) ent + sizeof header, vdevs_bytes);
 
-		// Check the VDEVs reported.
+		LOG_V(cls, "Check the VDEVs reported. %zu", (vdev_count + header.vdev_count) * sizeof *vdevs);
 
 		for (size_t i = 0; i < header.vdev_count; i++) {
 			kos_vdev_descr_t* const vdev = &vdevs[vdev_count + i];
