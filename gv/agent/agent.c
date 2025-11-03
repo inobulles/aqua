@@ -170,10 +170,28 @@ static void call(gv_agent_t* a, gv_kos_call_t* call) {
 	void* const arg_buf = malloc(call->size);
 	assert(arg_buf != NULL);
 
-	if (recv(a->sock, arg_buf, call->size, 0) != (ssize_t) call->size) {
-		LOG_E(a->cls, "recv: %s", strerror(errno));
-		free(arg_buf);
-		goto fail;
+	size_t total = 0;
+
+	while (total < call->size) {
+		ssize_t const r = recv(a->sock, (char*) arg_buf + total, call->size - total, 0);
+
+		if (r == 0) {
+			LOG_E(a->cls, "recv: Connection closed (received %zu/%zu bytes).", total, call->size);
+			free(arg_buf);
+			goto fail;
+		}
+
+		if (r < 0) {
+			if (errno == EINTR) {
+				continue; // Interrupted - try again.
+			}
+
+			LOG_E(a->cls, "recv: %s", strerror(errno));
+			free(arg_buf);
+			goto fail;
+		}
+
+		total += (size_t) r;
 	}
 
 	if (call->fn_id >= a->fn_count) { // Do this after so we do clear the buffer.
