@@ -234,7 +234,7 @@ static void* elp_listener(void* arg) {
 
 		size_t const vdevs_bytes = vdev_count * sizeof *vdevs;
 		found->ent_bytes = sizeof(gv_node_ent_t) + vdevs_bytes;
-		found->ent = malloc(found->ent_bytes);
+		found->ent = calloc(1, found->ent_bytes);
 		assert(found->ent != NULL);
 
 		found->ent->host_id = found->host;
