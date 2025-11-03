@@ -39,12 +39,25 @@ void vdriver_loader_init(void) {
 	assert(cur_vid_slice == 0);
 
 	LOG_V(cls, "VDRIVER loader init.");
+}
 
-	// Get the VDRIVER path.
+static void update_vdriver_path(void) {
+	// This function exists so we don't have to do this in vdriver_loader_init().
+	// This is because vdriver_loader_init() may be called by an __attribute__((constructor)) function.
+	// In this case, the VDRIVER_PATH environment variable will be read at construction, not allowing the program to configure this.
+
+	if (vdriver_path != NULL) {
+		return;
+	}
 
 	vdriver_path = getenv(VDRIVER_PATH_ENVVAR);
 
-	if (vdriver_path == NULL) {
+	if (vdriver_path != NULL) {
+		vdriver_path = strdup(vdriver_path);
+		assert(vdriver_path != NULL);
+	}
+
+	else {
 		char* const prefix = getenv(
 #if defined(__APPLE__)
 			"DY" // dyld(1) doesn't recognize `LD_LIBRARY_PATH`.
@@ -53,7 +66,8 @@ void vdriver_loader_init(void) {
 		);
 
 		if (prefix == NULL) {
-			vdriver_path = "/usr/local/lib/" DEFAULT_VDRIVER_PATH;
+			vdriver_path = strdup("/usr/local/lib/" DEFAULT_VDRIVER_PATH);
+			assert(vdriver_path != NULL);
 		}
 
 		else {
@@ -61,8 +75,6 @@ void vdriver_loader_init(void) {
 			assert(vdriver_path != NULL);
 		}
 	}
-
-	LOG_V(cls, "VDRIVER path is '%s'.", vdriver_path);
 }
 
 static vdriver_t* load_from_path(
@@ -132,7 +144,8 @@ void vdriver_loader_req_local_vdev(
 	void* notif_data,
 	vdriver_write_ptr_t write_ptr
 ) {
-	LOG_V(cls, "Trying to find local VDRIVER providing spec \"%s\".", spec);
+	update_vdriver_path();
+	LOG_V(cls, "Trying to find local VDRIVER providing spec \"%s\" (VDRIVER_PATH=%s).", spec, vdriver_path);
 
 	char** done_paths = NULL;
 	size_t done_path_count = 0;
@@ -200,7 +213,8 @@ void vdriver_loader_vdev_local_inventory(
 	kos_notif_cb_t notif_cb,
 	void* notif_data
 ) {
-	LOG_V(cls, "Taking inventory of all VDEVs available on the system.");
+	update_vdriver_path();
+	LOG_V(cls, "Taking inventory of all VDEVs available on the system (VDRIVER_PATH=%s).", vdriver_path);
 
 	char** done_paths = NULL;
 	size_t done_path_count = 0;
