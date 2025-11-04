@@ -73,6 +73,15 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_OPAQUE_PTR, "wm"},
 		},
 	},
+	{
+		.name = "register_interrupt",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
+			{KOS_TYPE_U32, "ino"},
+		},
+	},
 	/*
 	{
 		.name = "get_win_fb",
@@ -152,6 +161,18 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 		wm_vdev_loop(wm);
 		break;
+	}
+	case 3: { // register_interrupt
+		wm_t* const wm = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (wm == NULL) {
+			LOG_E(cls, "Tried to register interrupt for non-local or NULL WM.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm->has_ino = true;
+		wm->ino = args[1].u32;
 	}
 	default:
 		notif.kind = KOS_NOTIF_CALL_FAIL;
