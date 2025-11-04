@@ -193,6 +193,8 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 		wm->has_ino = true;
 		wm->ino = args[1].u32;
+
+		break;
 	}
 	default:
 		notif.kind = KOS_NOTIF_CALL_FAIL;
