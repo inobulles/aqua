@@ -82,6 +82,25 @@ typedef struct {
 	struct wl_list keyboards;
 } wm_t;
 
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
+	struct wlr_xdg_toplevel* xdg_toplevel;
+	struct wlr_scene_tree* scene_tree;
+
+	struct wl_listener map;
+	struct wl_listener unmap;
+	struct wl_listener commit;
+	struct wl_listener destroy;
+} toplevel_t;
+
+typedef enum : uint8_t {
+	INTR_REDRAW,
+	INTR_NEW_WIN,
+	INTR_REDRAW_WIN,
+} intr_t;
+
 void wm_vdev_init(umber_class_t const* cls, umber_class_t const* cls_wlr);
 wm_t* wm_vdev_create(void);
 void wm_vdev_destroy(wm_t* wm);

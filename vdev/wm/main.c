@@ -51,6 +51,24 @@ static void probe(void) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
+static kos_const_t const CONSTS[] = {
+	{
+		.name = "INTR_REDRAW",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_REDRAW},
+	},
+	{
+		.name = "INTR_NEW_WIN",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_NEW_WIN},
+	},
+	{
+		.name = "INTR_REDRAW_WIN",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_REDRAW_WIN},
+	},
+};
+
 static kos_fn_t const FNS[] = {
 	{
 		.name = "create",
@@ -117,6 +135,8 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 		.conn = {
 			.fn_count = sizeof FNS / sizeof *FNS,
 			.fns = FNS,
+			.const_count = sizeof CONSTS / sizeof *CONSTS,
+			.consts = CONSTS,
 		},
 	};
 
