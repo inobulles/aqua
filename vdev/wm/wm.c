@@ -254,12 +254,24 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 
 	LOG_V(cls, "Commit %s.", xdg_toplevel->app_id);
 
-	if (!toplevel->xdg_toplevel->base->initial_commit) {
+	if (toplevel->xdg_toplevel->base->initial_commit) {
+		LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
+		wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
 		return;
 	}
 
-	LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
-	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
+	// Send interrupt.
+
+	struct wlr_texture* const tex = xdg_toplevel->base->surface->buffer->texture;
+
+	redraw_win_intr_t const intr = {
+		.intr = INTR_REDRAW_WIN,
+		.win = (uint64_t) toplevel,
+		.x_res = tex->width,
+		.y_res = tex->height,
+	};
+
+	interrupt(toplevel->wm, sizeof intr, &intr);
 }
 
 static void toplevel_destroy(struct wl_listener* listener, void* data) {
