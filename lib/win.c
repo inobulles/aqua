@@ -268,7 +268,7 @@ void win_destroy(win_t win) {
 		{.opaque_ptr = win->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
 	free(win);
 }
 
@@ -293,7 +293,7 @@ void win_loop(win_t win) {
 		{.opaque_ptr = win->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
 	kos_flush(true);
 }
 
@@ -337,7 +337,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		intr_resize_t const* const resize = notif->interrupt.data;
 
 		if (notif->interrupt.data_size < sizeof *resize) {
-			return;
+			return; // TODO Error message.
 		}
 
 		if (win->resize != NULL) {
