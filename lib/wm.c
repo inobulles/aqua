@@ -26,8 +26,13 @@ struct wm_ctx_t {
 	uint64_t conn_id;
 
 	struct {
+		uint32_t INTR_REDRAW;
+	} consts;
+
+	struct {
 		uint32_t create;
 		uint32_t destroy;
+		uint32_t register_interrupt;
 		uint32_t loop;
 	} fns;
 
@@ -38,6 +43,10 @@ struct wm_ctx_t {
 struct wm_t {
 	wm_ctx_t ctx;
 	kos_opaque_ptr_t opaque_ptr;
+	kos_ino_t ino;
+
+	void* redraw_data;
+	wm_redraw_cb_t redraw;
 };
 
 static umber_class_t const* cls = NULL;
@@ -112,6 +121,26 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 	ctx->conn_id = notif->conn_id;
 	ctx->is_conn = true;
 
+	// Read constants.
+
+	memset(&ctx->consts, 0xFF, sizeof ctx->consts);
+
+	for (size_t i = 0; i < notif->conn.const_count; i++) {
+		kos_const_t const* const c = &notif->conn.consts[i];
+		char const* const name = (void*) c->name;
+
+		if (strcmp(name, "INTR_REDRAW") == 0) {
+			ctx->consts.INTR_REDRAW = c->val.u8;
+		}
+	}
+
+	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
+		if (((uint32_t*) &ctx->consts)[i] == -1u) {
+			ctx->is_conn = false;
+			break;
+		}
+	}
+
 	// Read functions.
 
 	memset(&ctx->fns, 0xFF, sizeof ctx->fns);
@@ -136,6 +165,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[0].name, "wm") == 0
 		) {
 			ctx->fns.destroy = i;
+		}
+
+		if (
+			strcmp(name, "register_interrupt") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "ino") == 0
+		) {
+			ctx->fns.register_interrupt = i;
 		}
 
 		if (
@@ -208,6 +249,24 @@ wm_t wm_create(wm_ctx_t ctx) {
 
 	wm->ctx = ctx;
 	wm->opaque_ptr = ctx->last_ret.opaque_ptr;
+	wm->ino = kos_gen_ino();
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = wm->opaque_ptr},
+		{.u32 = 0},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.register_interrupt, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	// If the interrupt registration was successful, add it to our interrupt vector.
+
+	if (!ctx->last_success) {
+		return wm;
+	}
+
+	aqua_add_interrupt(comp.ctx, wm->ino, &comp, wm);
 
 	return wm;
 }
@@ -229,6 +288,11 @@ void wm_destroy(wm_t wm) {
 	free(wm);
 }
 
+void wm_register_redraw_cb(wm_t wm, wm_redraw_cb_t cb, void* data) {
+	wm->redraw = cb;
+	wm->redraw_data = data;
+}
+
 void wm_loop(wm_t wm) {
 	wm_ctx_t const ctx = wm->ctx;
 
@@ -245,12 +309,44 @@ void wm_loop(wm_t wm) {
 	kos_flush(true);
 }
 
+typedef struct __attribute__((packed)) {
+	uint8_t type;
+} intr_generic_t;
+
+static void interrupt(kos_notif_t const* notif, void* data) {
+	assert(notif->kind == KOS_NOTIF_INTERRUPT);
+
+	wm_t const wm = data;
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (wm->ino != notif->interrupt.ino) {
+		return;
+	}
+
+	if (!ctx->is_conn) {
+		return;
+	}
+
+	intr_generic_t const* const intr = notif->interrupt.data;
+
+	if (notif->interrupt.data_size < sizeof *intr) {
+		return;
+	}
+
+	if (intr->type == ctx->consts.INTR_REDRAW) {
+		if (wm->redraw != NULL) {
+			wm->redraw(wm, wm->redraw_data);
+		}
+	}
+}
+
 static component_t comp = {
 	.probe = probe,
 	.notif_conn = notif_conn,
 	.notif_conn_fail = notif_conn_fail,
 	.notif_call_ret = notif_call_ret,
 	.notif_call_fail = notif_call_fail,
+	.interrupt = interrupt,
 	.vdev_count = 0,
 	.vdevs = NULL,
 };
