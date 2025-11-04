@@ -102,6 +102,9 @@ typedef enum : uint8_t {
 } intr_t;
 
 void wm_vdev_init(umber_class_t const* cls, umber_class_t const* cls_wlr);
+
 wm_t* wm_vdev_create(void);
 void wm_vdev_destroy(wm_t* wm);
+
 void wm_vdev_loop(wm_t* wm);
+void wm_vdev_get_fb(toplevel_t* toplevel, void* buf);
