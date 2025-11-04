@@ -39,7 +39,6 @@ struct win_ctx_t {
 
 	bool last_success;
 	kos_val_t last_ret;
-	kos_ino_t ino;
 };
 
 static component_t comp;

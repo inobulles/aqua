@@ -20,6 +20,14 @@ typedef struct wm_ctx_t* wm_ctx_t;
 typedef struct wm_t* wm_t;
 
 /**
+ * WM redraw event callback.
+ *
+ * @param wm The WM object.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_redraw_cb}.
+ */
+typedef void (*wm_redraw_cb_t)(wm_t wm, void* data);
+
+/**
  * Initialize the WM library component.
  *
  * @param ctx The AQUA library context.
@@ -60,6 +68,17 @@ wm_t wm_create(wm_ctx_t ctx);
  * @param wm The WM to destroy.
  */
 void wm_destroy(wm_t wm);
+
+/**
+ * Register a redraw callback.
+ *
+ * These will be called when the WM needs to be redrawn, only once the WM's loop has been entered (see {@link wm_loop}).
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_redraw_cb(wm_t wm, wm_redraw_cb_t cb, void* data);
 
 /**
  * Enter the WM event loop.
