@@ -36,6 +36,7 @@ struct wm_ctx_t {
 		uint32_t destroy;
 		uint32_t register_interrupt;
 		uint32_t loop;
+		uint32_t get_win_fb;
 	} fns;
 
 	bool last_success;
@@ -207,6 +208,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.loop = i;
 		}
+
+		if (
+			strcmp(name, "get_win_fb") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_PTR &&
+			strcmp((char*) fn->params[1].name, "buf") == 0
+		) {
+			ctx->fns.get_win_fb = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -335,6 +348,23 @@ void wm_loop(wm_t wm) {
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
+	kos_flush(true);
+}
+
+void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = {0, win}},
+		{.ptr = {0, (uint64_t) (uintptr_t) buf}},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_win_fb, args);
 	kos_flush(true);
 }
 
