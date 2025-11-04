@@ -533,8 +533,6 @@ wm_t* wm_vdev_create(void) {
 	LOG_V(cls, "Setting WAYLAND_DISPLAY environment variable to socket.");
 	setenv("WAYLAND_DISPLAY", sock, true);
 
-	wl_display_run(wm->display);
-
 	return wm;
 }
 
