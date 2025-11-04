@@ -37,13 +37,25 @@ typedef struct {
 	struct wl_listener destroy;
 } toplevel_t;
 
-typedef enum : uint8_t {
-	INTR_REDRAW,
-} intr_t;
-
-typedef struct {
+typedef struct __attribute__((packed)) {
 	intr_t intr;
 } redraw_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint64_t win;
+
+	// TODO This is bad.
+
+	char const* app_id;
+} new_win_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint64_t win;
+	uint32_t x_res;
+	uint32_t y_res;
+} redraw_win_intr_t;
 
 static umber_class_t const* cls = NULL;
 static umber_class_t const* cls_wlr = NULL;
@@ -53,7 +65,7 @@ void wm_vdev_init(umber_class_t const* _cls, umber_class_t const* _cls_wlr) {
 	cls_wlr = _cls_wlr;
 }
 
-static void interrupt(wm_t* wm, size_t data_size, void* data) {
+static void interrupt(wm_t* wm, size_t data_size, void const* data) {
 	if (!wm->has_ino) {
 		return;
 	}
@@ -175,8 +187,10 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 
 	// Send interrupt.
 
-	redraw_intr_t intr = {
+	new_win_intr_t const intr = {
 		.intr = INTR_NEW_WIN,
+		.win = (uint64_t) toplevel,
+		.app_id = toplevel->xdg_toplevel->app_id,
 	};
 
 	interrupt(wm, sizeof intr, &intr);
