@@ -557,3 +557,19 @@ void wm_vdev_loop(wm_t* wm) {
 	LOG_V(cls, "Starting WM loop.");
 	wl_display_run(wm->display);
 }
+
+void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
+	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
+	struct wlr_texture* const tex = xdg_toplevel->base->surface->buffer->texture;
+
+	struct wlr_texture_read_pixels_options const opts = {
+		.data = buf,
+		.dst_x = 0,
+		.dst_y = 0,
+		.stride = 4 * tex->width,
+		.format = wlr_texture_preferred_read_format(tex), // Insh'Allah this format matches the stride.
+		.src_box = {.width = -1},                         // XXX See wlr_box_empty, but this is sufficient.
+	};
+
+	wlr_texture_read_pixels(tex, &opts);
+}

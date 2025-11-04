@@ -100,19 +100,15 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_U32, "ino"},
 		},
 	},
-	/*
 	{
 		.name = "get_win_fb",
-		.ret_type = KOS_TYPE_PTR,
-		.param_count = 4,
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{KOS_TYPE_OPAQUE_PTR, "wm"},
 			{KOS_TYPE_OPAQUE_PTR, "win"},
-			{KOS_TYPE_PTR, "x_res"},
-			{KOS_TYPE_PTR, "y_res"},
+			{KOS_TYPE_PTR, "buf"},
 		},
 	},
-	*/
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -193,6 +189,20 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 
 		wm->has_ino = true;
 		wm->ino = args[1].u32;
+
+		break;
+	}
+	case 4: { // get_win_fb
+		toplevel_t* const toplevel = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (toplevel == NULL) {
+			LOG_E(cls, "Tried to loop non-local or NULL window.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		void* const buf = (void*) args[1].ptr.ptr; // TODO BAD! BAD!
+		wm_vdev_get_fb(toplevel, buf);
 
 		break;
 	}
