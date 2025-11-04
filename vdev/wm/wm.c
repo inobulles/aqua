@@ -37,12 +37,39 @@ typedef struct {
 	struct wl_listener destroy;
 } toplevel_t;
 
+typedef enum : uint8_t {
+	INTR_REDRAW,
+} intr_t;
+
+typedef struct {
+	intr_t intr;
+} redraw_intr_t;
+
 static umber_class_t const* cls = NULL;
 static umber_class_t const* cls_wlr = NULL;
 
 void wm_vdev_init(umber_class_t const* _cls, umber_class_t const* _cls_wlr) {
 	cls = _cls;
 	cls_wlr = _cls_wlr;
+}
+
+static void interrupt(wm_t* wm, size_t data_size, void* data) {
+	if (!wm->has_ino) {
+		return;
+	}
+
+	kos_notif_t const notif = {
+		.kind = KOS_NOTIF_INTERRUPT,
+		.conn_id = 0,
+		.cookie = 0,
+		.interrupt = {
+			.ino = wm->ino,
+			.data_size = data_size,
+			.data = data,
+		},
+	};
+
+	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
 static void output_remove_notify(struct wl_listener* listener, void* data) {
@@ -72,6 +99,14 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	wlr_scene_output_send_frame_done(scene_output, &now);
+
+	// Send interrupt.
+
+	redraw_intr_t intr = {
+		.intr = INTR_REDRAW,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
@@ -137,6 +172,14 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 
 	wl_list_insert(&wm->toplevels, &toplevel->link);
 	// TODO Focus here. See xdg_toplevel_map() in tinywl.
+
+	// Send interrupt.
+
+	redraw_intr_t intr = {
+		.intr = INTR_NEW_WIN,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
 }
 
 static void toplevel_unmap(struct wl_listener* listener, void* data) {
@@ -307,6 +350,8 @@ wm_t* wm_vdev_create(void) {
 
 	wm_t* const wm = malloc(sizeof *wm);
 	assert(wm != NULL);
+
+	wm->has_ino = false;
 
 	setup_logging();
 
