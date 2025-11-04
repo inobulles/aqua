@@ -172,6 +172,48 @@ static void new_output(struct wl_listener* listener, void* data) {
 	wlr_scene_output_layout_add_output(wm->scene_layout, output_layout, scene_output);
 }
 
+static void focus_toplevel(toplevel_t* toplevel) {
+	wm_t* const wm = toplevel->wm;
+
+	struct wlr_surface* const prev_surf = wm->seat->keyboard_state.focused_surface;
+	struct wlr_surface* const surf = toplevel->xdg_toplevel->base->surface;
+
+	// Don't refocus already focused surface.
+
+	if (prev_surf == surf) {
+		return;
+	}
+
+	// Deactivate the previously focused surface. This lets the client know it no longer has focus and the client will repaint accordingly, e.g. stop displaying a caret.
+
+	if (prev_surf != NULL) {
+		struct wlr_xdg_toplevel* const prev_toplevel = wlr_xdg_toplevel_try_from_wlr_surface(prev_surf);
+
+		if (prev_toplevel != NULL) {
+			wlr_xdg_toplevel_set_activated(prev_toplevel, false);
+		}
+	}
+
+	struct wlr_keyboard* const kbd = wlr_seat_get_keyboard(wm->seat);
+
+	// Move the toplevel to the front.
+
+	wlr_scene_node_raise_to_top(&toplevel->scene_tree->node);
+	wl_list_remove(&toplevel->link);
+	wl_list_insert(&wm->toplevels, &toplevel->link);
+
+	// Activate the new surface.
+
+	wlr_xdg_toplevel_set_activated(toplevel->xdg_toplevel, true);
+
+	// Tell the seat to have the keyboard enter this surface.
+	// wlroots will keep track of this and automatically send key events to the appropriate clients without additional work on the WM's part.
+
+	if (kbd != NULL) {
+		wlr_seat_keyboard_notify_enter(wm->seat, surf, kbd->keycodes, kbd->num_keycodes, &kbd->modifiers);
+	}
+}
+
 static void toplevel_map(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, map);
 	wm_t* const wm = toplevel->wm;
@@ -181,7 +223,7 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 	LOG_V(cls, "Map %s.", toplevel->xdg_toplevel->app_id);
 
 	wl_list_insert(&wm->toplevels, &toplevel->link);
-	// TODO Focus here. See xdg_toplevel_map() in tinywl.
+	focus_toplevel(toplevel);
 
 	// Send interrupt.
 
