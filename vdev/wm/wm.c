@@ -28,14 +28,12 @@ typedef struct {
 	struct wl_list link;
 
 	wm_t* wm;
-	struct wlr_xdg_toplevel* xdg_toplevel;
-	struct wlr_scene_tree* scene_tree;
+	struct wlr_keyboard* keyboard;
 
-	struct wl_listener map;
-	struct wl_listener unmap;
-	struct wl_listener commit;
+	struct wl_listener mod;
+	struct wl_listener key;
 	struct wl_listener destroy;
-} toplevel_t;
+} keyborp_t;
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
@@ -311,11 +309,94 @@ static void cursor_frame(struct wl_listener* listener, void* data) {
 	LOG_F(cls, "TODO: %s", __func__);
 }
 
-static void new_input(struct wl_listener* listener, void* data) {
-	(void) listener;
+static void keyborp_mod(struct wl_listener* listener, void* data) {
+	keyborp_t* const keyborp = wl_container_of(listener, keyborp, mod);
+	struct wlr_keyboard* const wlr_keyboard = keyborp->keyboard;
+	wm_t* const wm = keyborp->wm;
+
 	(void) data;
 
-	LOG_F(cls, "TODO: %s", __func__);
+	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
+	wlr_seat_keyboard_notify_modifiers(wm->seat, &wlr_keyboard->modifiers);
+}
+
+static void keyborp_key(struct wl_listener* listener, void* data) {
+	keyborp_t* const keyborp = wl_container_of(listener, keyborp, key);
+	struct wlr_keyboard* const wlr_keyboard = keyborp->keyboard;
+	wm_t* const wm = keyborp->wm;
+	struct wlr_keyboard_key_event* const event = data;
+
+	// Pass on keyboard key notification.
+	// This is where we'd intercept anything we needed to intercept if we needed to intercept it.
+
+	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
+	wlr_seat_keyboard_notify_key(wm->seat, event->time_msec, event->keycode, event->state);
+}
+
+static void keyborp_destroy(struct wl_listener* listener, void* data) {
+	keyborp_t* const keyborp = wl_container_of(listener, keyborp, destroy);
+
+	(void) data;
+
+	wl_list_remove(&keyborp->mod.link);
+	wl_list_remove(&keyborp->key.link);
+	wl_list_remove(&keyborp->destroy.link);
+	wl_list_remove(&keyborp->link);
+
+	free(keyborp);
+}
+
+static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
+	struct wlr_keyboard* const wlr_keyboard = wlr_keyboard_from_input_device(dev);
+
+	keyborp_t* const keyborp = malloc(sizeof *keyborp);
+	assert(keyborp != NULL);
+
+	keyborp->wm = wm;
+	keyborp->keyboard = wlr_keyboard;
+
+	// Prepare XKB keymap and assign it to the keyboard.
+	// TODO Non-US layouts.
+
+	struct xkb_context* const context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+	struct xkb_keymap* const keymap = xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+	wlr_keyboard_set_keymap(wlr_keyboard, keymap);
+	xkb_keymap_unref(keymap);
+	xkb_context_unref(context);
+	wlr_keyboard_set_repeat_info(wlr_keyboard, 25, 600); // TODO
+
+	keyborp->mod.notify = keyborp_mod;
+	wl_signal_add(&wlr_keyboard->events.modifiers, &keyborp->mod);
+
+	keyborp->key.notify = keyborp_key;
+	wl_signal_add(&wlr_keyboard->events.key, &keyborp->key);
+
+	keyborp->destroy.notify = keyborp_destroy;
+	wl_signal_add(&dev->events.destroy, &keyborp->destroy);
+
+	printf("%p\n", wm);
+
+	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
+	wl_list_insert(&wm->keyboards, &keyborp->link);
+}
+
+static void new_input(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, new_input);
+	struct wlr_input_device* dev = data;
+
+	switch (dev->type) {
+	case WLR_INPUT_DEVICE_KEYBOARD:
+		new_keyboard(wm, dev);
+		break;
+	case WLR_INPUT_DEVICE_POINTER:
+	case WLR_INPUT_DEVICE_TOUCH:
+	case WLR_INPUT_DEVICE_TABLET:
+	case WLR_INPUT_DEVICE_TABLET_PAD:
+	case WLR_INPUT_DEVICE_SWITCH:
+		LOG_F(cls, "TODO %s: dev->type = %d", __func__, dev->type);
+		break;
+	}
 }
 
 static void wlr_log_cb(enum wlr_log_importance importance, char const* fmt, va_list args) {
@@ -421,7 +502,9 @@ wm_t* wm_vdev_create(void) {
 
 	LOG_V(cls, "Add listener for when new input methods are available.");
 
+	wl_list_init(&wm->keyboards);
 	wl_list_init(&wm->inputs);
+
 	wm->new_input.notify = new_input;
 	wl_signal_add(&wm->backend->events.new_input, &wm->new_input);
 
