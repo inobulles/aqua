@@ -111,7 +111,7 @@ void ui_destroy(ui_t ui) {
 		{.opaque_ptr = ui->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
 	kos_flush(true);
 
 	free(ui);
