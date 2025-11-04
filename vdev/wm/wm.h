@@ -23,6 +23,11 @@
 #include <wlr/util/log.h>
 
 typedef struct {
+	// AQUA stuff.
+
+	bool has_ino;
+	uint32_t ino;
+
 	// Wayland stuff.
 
 	struct wl_display* display;
