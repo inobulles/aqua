@@ -27,6 +27,8 @@ struct wm_ctx_t {
 
 	struct {
 		uint32_t INTR_REDRAW;
+		uint32_t INTR_NEW_WIN;
+		uint32_t INTR_REDRAW_WIN;
 	} consts;
 
 	struct {
@@ -47,6 +49,12 @@ struct wm_t {
 
 	void* redraw_data;
 	wm_redraw_cb_t redraw;
+
+	void* new_win_data;
+	wm_new_win_cb_t new_win;
+
+	void* redraw_win_data;
+	wm_redraw_win_cb_t redraw_win;
 };
 
 static umber_class_t const* cls = NULL;
@@ -132,13 +140,24 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		if (strcmp(name, "INTR_REDRAW") == 0) {
 			ctx->consts.INTR_REDRAW = c->val.u8;
 		}
+
+		if (strcmp(name, "INTR_NEW_WIN") == 0) {
+			ctx->consts.INTR_NEW_WIN = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_REDRAW_WIN") == 0) {
+			ctx->consts.INTR_REDRAW_WIN = c->val.u8;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
-		if (((uint32_t*) &ctx->consts)[i] == -1u) {
-			ctx->is_conn = false;
-			break;
+		if (((uint32_t*) &ctx->consts)[i] != -1u) {
+			continue;
 		}
+
+		LOG_E(cls, "Missing constant %d; disabling connection.", i);
+		ctx->is_conn = false;
+		break;
 	}
 
 	// Read functions.
@@ -172,7 +191,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->ret_type == KOS_TYPE_VOID &&
 			fn->param_count == 2 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			strcmp((char*) fn->params[0].name, "wm") == 0 &&
 			fn->params[1].type == KOS_TYPE_U32 &&
 			strcmp((char*) fn->params[1].name, "ino") == 0
 		) {
@@ -284,13 +303,23 @@ void wm_destroy(wm_t wm) {
 		{.opaque_ptr = wm->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.destroy, args);
 	free(wm);
 }
 
 void wm_register_redraw_cb(wm_t wm, wm_redraw_cb_t cb, void* data) {
 	wm->redraw = cb;
 	wm->redraw_data = data;
+}
+
+void wm_register_new_win_cb(wm_t wm, wm_new_win_cb_t cb, void* data) {
+	wm->new_win = cb;
+	wm->new_win_data = data;
+}
+
+void wm_register_redraw_win_cb(wm_t wm, wm_redraw_win_cb_t cb, void* data) {
+	wm->redraw_win = cb;
+	wm->redraw_win_data = data;
 }
 
 void wm_loop(wm_t wm) {
@@ -305,13 +334,26 @@ void wm_loop(wm_t wm) {
 		{.opaque_ptr = wm->opaque_ptr},
 	};
 
-	kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
 	kos_flush(true);
 }
 
 typedef struct __attribute__((packed)) {
 	uint8_t type;
 } intr_generic_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint64_t win;
+	char const* app_id;
+} intr_new_win_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint64_t win;
+	uint32_t x_res;
+	uint32_t y_res;
+} intr_redraw_win_t;
 
 static void interrupt(kos_notif_t const* notif, void* data) {
 	assert(notif->kind == KOS_NOTIF_INTERRUPT);
@@ -336,6 +378,30 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 	if (intr->type == ctx->consts.INTR_REDRAW) {
 		if (wm->redraw != NULL) {
 			wm->redraw(wm, wm->redraw_data);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_NEW_WIN) {
+		intr_new_win_t const* const new_win = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *new_win) {
+			return; // TODO Error message.
+		}
+
+		if (wm->new_win != NULL) {
+			wm->new_win(wm, new_win->win, new_win->app_id, wm->new_win_data);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_REDRAW_WIN) {
+		intr_redraw_win_t const* const redraw_win = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *redraw_win) {
+			return; // TODO Error message.
+		}
+
+		if (wm->redraw_win != NULL) {
+			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, wm->new_win_data);
 		}
 	}
 }
