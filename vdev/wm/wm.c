@@ -429,10 +429,12 @@ static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 	keyborp->destroy.notify = keyborp_destroy;
 	wl_signal_add(&dev->events.destroy, &keyborp->destroy);
 
-	printf("%p\n", wm);
-
 	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
 	wl_list_insert(&wm->keyboards, &keyborp->link);
+
+	// TODO We're going to have to track these cap flags once we have more than just keyborps.
+
+	wlr_seat_set_capabilities(wm->seat, WL_SEAT_CAPABILITY_KEYBOARD);
 }
 
 static void new_input(struct wl_listener* listener, void* data) {
@@ -557,7 +559,6 @@ wm_t* wm_vdev_create(void) {
 	LOG_V(cls, "Add listener for when new input methods are available.");
 
 	wl_list_init(&wm->keyboards);
-	wl_list_init(&wm->inputs);
 
 	wm->new_input.notify = new_input;
 	wl_signal_add(&wm->backend->events.new_input, &wm->new_input);
@@ -674,6 +675,8 @@ wm_t* wm_vdev_create(void) {
 }
 
 void wm_vdev_destroy(wm_t* wm) {
+	wl_display_destroy_clients(wm->display);
+
 	if (wm->display != NULL) {
 		wl_display_destroy(wm->display);
 	}

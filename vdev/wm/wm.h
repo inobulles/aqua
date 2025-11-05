@@ -52,8 +52,8 @@ typedef struct {
 
 	// Input methods.
 
-	struct wl_list inputs;
 	struct wl_listener new_input;
+	struct wl_list keyboards;
 
 	// Scene graph.
 
@@ -79,7 +79,6 @@ typedef struct {
 	// Seat stuff.
 
 	struct wlr_seat* seat;
-	struct wl_list keyboards;
 } wm_t;
 
 typedef struct {
