@@ -397,8 +397,39 @@ static void keyborp_key(struct wl_listener* listener, void* data) {
 	wm_t* const wm = keyborp->wm;
 	struct wlr_keyboard_key_event* const event = data;
 
+	// This is where we intercept anything we needed to intercept if we needed to intercept it.
+
+	uint32_t const mods = wlr_keyboard_get_modifiers(wlr_keyboard);
+	bool handled = false;
+
+	if ((mods & WLR_MODIFIER_LOGO) && event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+		uint32_t const keycode = event->keycode + 8;
+		xkb_keysym_t const* syms;
+		size_t const sym_count = xkb_state_key_get_syms(wlr_keyboard->xkb_state, keycode, &syms);
+
+		for (size_t i = 0; i < sym_count; i++) {
+			if (syms[i] != XKB_KEY_Tab) {
+				continue;
+			}
+
+			handled = true;
+
+			if (wm->toplevels.prev == NULL) {
+				continue;
+			}
+
+			toplevel_t* const to_focus = wl_container_of(wm->toplevels.prev, to_focus, link);
+			assert(to_focus != NULL);
+
+			focus_toplevel(to_focus);
+		}
+	}
+
 	// Pass on keyboard key notification.
-	// This is where we'd intercept anything we needed to intercept if we needed to intercept it.
+
+	if (handled) {
+		return;
+	}
 
 	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
 	wlr_seat_keyboard_notify_key(wm->seat, event->time_msec, event->keycode, event->state);
