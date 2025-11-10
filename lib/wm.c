@@ -28,6 +28,7 @@ struct wm_ctx_t {
 	struct {
 		uint32_t INTR_REDRAW;
 		uint32_t INTR_NEW_WIN;
+		uint32_t INTR_DESTROY_WIN;
 		uint32_t INTR_REDRAW_WIN;
 	} consts;
 
@@ -53,6 +54,9 @@ struct wm_t {
 
 	void* new_win_data;
 	wm_new_win_cb_t new_win;
+
+	void* destroy_win_data;
+	wm_destroy_win_cb_t destroy_win;
 
 	void* redraw_win_data;
 	wm_redraw_win_cb_t redraw_win;
@@ -144,6 +148,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (strcmp(name, "INTR_NEW_WIN") == 0) {
 			ctx->consts.INTR_NEW_WIN = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_DESTROY_WIN") == 0) {
+			ctx->consts.INTR_DESTROY_WIN = c->val.u8;
 		}
 
 		if (strcmp(name, "INTR_REDRAW_WIN") == 0) {
@@ -330,6 +338,11 @@ void wm_register_new_win_cb(wm_t wm, wm_new_win_cb_t cb, void* data) {
 	wm->new_win_data = data;
 }
 
+void wm_register_destroy_win_cb(wm_t wm, wm_destroy_win_cb_t cb, void* data) {
+	wm->destroy_win = cb;
+	wm->destroy_win_data = data;
+}
+
 void wm_register_redraw_win_cb(wm_t wm, wm_redraw_win_cb_t cb, void* data) {
 	wm->redraw_win = cb;
 	wm->redraw_win_data = data;
@@ -381,6 +394,11 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
 	uint64_t win;
+} intr_destroy_win_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
 } intr_redraw_win_t;
@@ -420,6 +438,18 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 
 		if (wm->new_win != NULL) {
 			wm->new_win(wm, new_win->win, new_win->app_id, wm->new_win_data);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_DESTROY_WIN) {
+		intr_destroy_win_t const* const destroy_win = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *destroy_win) {
+			return; // TODO Error message.
+		}
+
+		if (wm->destroy_win != NULL) {
+			wm->destroy_win(wm, destroy_win->win, wm->destroy_win_data);
 		}
 	}
 

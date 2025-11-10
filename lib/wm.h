@@ -43,6 +43,15 @@ typedef void (*wm_redraw_cb_t)(wm_t wm, void* data);
 typedef void (*wm_new_win_cb_t)(wm_t wm, wm_win_t win, char const* app_id, void* data);
 
 /**
+ * WM destroy window event callback.
+ *
+ * @param wm The WM object.
+ * @param win The WM window handle.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_destroy_win_cb}.
+ */
+typedef void (*wm_destroy_win_cb_t)(wm_t wm, wm_win_t win, void* data);
+
+/**
  * WM window redraw event callback.
  *
  * @param wm The WM object.
@@ -116,6 +125,17 @@ void wm_register_redraw_cb(wm_t wm, wm_redraw_cb_t cb, void* data);
  * @param data User-defined data passed to the callback.
  */
 void wm_register_new_win_cb(wm_t wm, wm_new_win_cb_t cb, void* data);
+
+/**
+ * Register a destroy window callback.
+ *
+ * These will be called when a window that's being destroyed has been unmapped on the WM.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_destroy_win_cb(wm_t wm, wm_destroy_win_cb_t cb, void* data);
 
 /**
  * Register a window redraw callback.
