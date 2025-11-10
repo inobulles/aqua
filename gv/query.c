@@ -55,8 +55,8 @@ int query(state_t* s, in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_
 
 	size_t const query_res_size = sizeof packet.header + sizeof packet.query_res;
 
-	if (recv(sock, &packet, query_res_size, 0) != (ssize_t) query_res_size) {
-		LOG_E(s->query_cls, "recv: %s", strerror(errno));
+	if (recv(sock, &packet, query_res_size, MSG_WAITALL) != (ssize_t) query_res_size) {
+		LOG_E(s->query_cls, "recv failed.");
 		return -1;
 	}
 
@@ -73,8 +73,8 @@ int query(state_t* s, in_addr_t in_addr, size_t* vdev_count_ref, kos_vdev_descr_
 	kos_vdev_descr_t* const vdevs = malloc(vdev_bytes);
 	assert(vdevs != NULL);
 
-	if (recv(sock, vdevs, vdev_bytes, 0) != (ssize_t) vdev_bytes) {
-		LOG_E(s->query_cls, "recv: %s", strerror(errno));
+	if (recv(sock, vdevs, vdev_bytes, MSG_WAITALL) != (ssize_t) vdev_bytes) {
+		LOG_E(s->query_cls, "recv failed.");
 		free(vdevs);
 		return -1;
 	}

@@ -248,8 +248,8 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	gv_packet_t conn_res_packet;
 
-	if (recv(sock, &conn_res_packet, sizeof conn_res_packet.header, 0) != sizeof conn_res_packet.header) {
-		LOG_E(conn_cls, "Failed to get response header: %s", strerror(errno));
+	if (recv(sock, &conn_res_packet, sizeof conn_res_packet.header, MSG_WAITALL) != sizeof conn_res_packet.header) {
+		LOG_E(conn_cls, "Failed to get response header.");
 		close(sock);
 		goto fail;
 	}
@@ -266,8 +266,8 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 		goto fail;
 	}
 
-	if (recv(sock, &conn_res_packet.conn_vdev_res, sizeof conn_res_packet.conn_vdev_res, 0) != sizeof conn_res_packet.conn_vdev_res) {
-		LOG_E(conn_cls, "Failed to get response payload: %s", strerror(errno));
+	if (recv(sock, &conn_res_packet.conn_vdev_res, sizeof conn_res_packet.conn_vdev_res, MSG_WAITALL) != sizeof conn_res_packet.conn_vdev_res) {
+		LOG_E(conn_cls, "Failed to get response payload.");
 		close(sock);
 		goto fail;
 	}
@@ -277,8 +277,8 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	memcpy(conn_vdev_res, &conn_res_packet.conn_vdev_res, sizeof conn_res_packet.conn_vdev_res);
 	size_t const remaining = (ssize_t) conn_vdev_res->size - sizeof *conn_vdev_res;
 
-	if (recv(sock, (void*) conn_vdev_res + sizeof conn_res_packet.conn_vdev_res, remaining, 0) != (ssize_t) remaining) {
-		LOG_E(conn_cls, "Failed to get response payload: %s", strerror(errno));
+	if (recv(sock, (void*) conn_vdev_res + sizeof conn_res_packet.conn_vdev_res, remaining, MSG_WAITALL) != (ssize_t) remaining) {
+		LOG_E(conn_cls, "Failed to get response payload.");
 		free(conn_vdev_res);
 		close(sock);
 		goto fail;
@@ -452,8 +452,8 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	LOG_V(call_cls, "Wait for KOS call return.");
 	gv_packet_t res_packet;
 
-	if (recv(conn->sock, &res_packet, sizeof res_packet.header, 0) != sizeof res_packet.header) {
-		LOG_E(call_cls, "Failed to get response header: %s", strerror(errno));
+	if (recv(conn->sock, &res_packet, sizeof res_packet.header, MSG_WAITALL) != sizeof res_packet.header) {
+		LOG_E(call_cls, "Failed to get response header.");
 		goto fail;
 	}
 
@@ -469,8 +469,8 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	gv_kos_call_ret_t ret;
 
-	if (recv(conn->sock, &ret, sizeof ret, 0) != (ssize_t) sizeof ret) {
-		LOG_E(call_cls, "Failed to get response payload (part 1): %s", strerror(errno));
+	if (recv(conn->sock, &ret, sizeof ret, MSG_WAITALL) != (ssize_t) sizeof ret) {
+		LOG_E(call_cls, "Failed to get response payload (part 1).");
 		free(packet);
 		goto fail;
 	}
@@ -478,8 +478,8 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 	void* const ret_buf = malloc(ret.size);
 	assert(ret_buf != NULL);
 
-	if (recv(conn->sock, ret_buf, ret.size, 0) != (ssize_t) ret.size) {
-		LOG_E(call_cls, "Failed to get response payload (part 2): %s", strerror(errno));
+	if (recv(conn->sock, ret_buf, ret.size, MSG_WAITALL) != (ssize_t) ret.size) {
+		LOG_E(call_cls, "Failed to get response payload (part 2).");
 		free(packet);
 		goto fail;
 	}

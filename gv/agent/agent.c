@@ -325,7 +325,7 @@ void gv_agent_loop(gv_agent_t* a) {
 	gv_packet_t buf;
 	int len;
 
-	while ((len = recv(a->sock, &buf.header, sizeof buf.header, 0)) > 0) {
+	while ((len = recv(a->sock, &buf.header, sizeof buf.header, MSG_WAITALL)) > 0) {
 		LOG_V(a->cls, "Got %s packet.", gv_packet_type_strs[buf.header.type]);
 
 		switch (buf.header.type) {
@@ -342,8 +342,8 @@ void gv_agent_loop(gv_agent_t* a) {
 			LOG_E(a->cls, "Unexpected packet. This should not happen!");
 			break;
 		case GV_PACKET_TYPE_KOS_CALL:
-			if (recv(a->sock, &buf.kos_call, sizeof buf.kos_call, 0) != sizeof buf.kos_call) {
-				LOG_E(a->cls, "recv: %s", strerror(errno));
+			if (recv(a->sock, &buf.kos_call, sizeof buf.kos_call, MSG_WAITALL) != sizeof buf.kos_call) {
+				LOG_E(a->cls, "recv failed.");
 				break;
 			}
 
