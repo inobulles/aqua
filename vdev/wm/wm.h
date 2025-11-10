@@ -66,7 +66,6 @@ typedef struct {
 	struct wl_listener new_xdg_toplevel;
 	struct wl_listener new_xdg_popup;
 	struct wl_list toplevels;
-	struct wl_listener xdg_decoration;
 
 	// Cursor stuff.
 
