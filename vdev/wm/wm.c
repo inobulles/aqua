@@ -460,8 +460,16 @@ static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 	// Prepare XKB keymap and assign it to the keyboard.
 	// TODO Non-US layouts.
 
+	struct xkb_rule_names const rule_names = {
+		.rules = NULL,
+		.model = NULL,
+		.layout = "gb",
+		.variant = "extd",
+		.options = "caps:swapescape",
+	};
+
 	struct xkb_context* const context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	struct xkb_keymap* const keymap = xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+	struct xkb_keymap* const keymap = xkb_keymap_new_from_names(context, &rule_names, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
 	wlr_keyboard_set_keymap(wlr_keyboard, keymap);
 	xkb_keymap_unref(keymap);
