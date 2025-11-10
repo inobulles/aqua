@@ -14,6 +14,8 @@
 #define TILES_Y 64
 #define TILE_COUNT (TILES_X * TILES_Y)
 
+// #define NO_VR
+
 typedef struct {
 	wm_win_t win;
 	char* app_id;
@@ -27,15 +29,8 @@ typedef struct {
 typedef struct {
 	size_t win_count;
 	thin_win_t* wins;
+	vr_ctx_t vr_ctx;
 } state_t;
-
-// Steps to get a workable demo:
-// - [x] WM interrupt for when a window is "committed" (== redrawn? I believe so).
-// - [x] At this point we will also have to readback the buffer to client-side memory.
-// - [x] Figure out tiles which have changed and update them.
-// - [ ] Compress them using ZSTD (you know, I wonder if at this point we should just implement this for GV packets anyways, so we can benefit from this everywhere... need a good ZSTD implementation to work with Bob).
-// - [ ] Send over the network as some new/old VR function.
-// - [ ] Bob is thine uncle.
 
 // Thinking about vitrification:
 // Initially, get_win_fb will just return a BUF (already make NALus?).
@@ -62,10 +57,22 @@ static void new_win(wm_t wm, wm_win_t win, char const* app_id, void* data) {
 	memset(thin_win, 0, sizeof *thin_win);
 
 	thin_win->win = win;
-	thin_win->app_id = strdup(app_id);
+	thin_win->app_id = strdup(app_id == NULL ? "" : app_id);
 	assert(thin_win->app_id != NULL);
 
 	printf("new win %s\n", app_id);
+}
+
+static void destroy_win(wm_t wm, wm_win_t win, void* data) {
+	state_t* const s = data;
+
+	(void) wm;
+	(void) win;
+	(void) s;
+
+	printf("%s: TODO\n", __func__);
+
+	vr_destroy_win(s->vr_ctx, win);
 }
 
 static void redraw_win(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* data) {
@@ -112,9 +119,10 @@ static void redraw_win(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, vo
 	uint64_t* const tile_bitmap = calloc(1, TILE_COUNT / 8);
 	assert(tile_bitmap != NULL);
 
-	size_t buf_sz = TILE_COUNT / 8;
-	void* buf = malloc(buf_sz);
-	assert(buf != NULL);
+	size_t excepted_update_count = 0;
+
+	size_t buf_sz = 0;
+	void* buf = NULL;
 
 	size_t const tile_x_res = x_res / TILES_X;
 	size_t const tile_y_res = y_res / TILES_Y;
@@ -123,12 +131,10 @@ static void redraw_win(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, vo
 		for (size_t j = 0; j < TILES_X; j++) {
 			uint64_t hash = 0;
 
-			// TODO This is a bullshit hashing algorithm, just need to get something working.
-
 			for (size_t y = tile_y_res * i; y < tile_y_res * (i + 1); y++) {
 				for (size_t x = tile_x_res * j; x < tile_x_res * (j + 1); x++) {
 					uint32_t const pixel = fb[y * x_res + x];
-					hash += pixel;
+					hash = hash * 33 + pixel;
 				}
 			}
 
@@ -138,7 +144,7 @@ static void redraw_win(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, vo
 				continue;
 			}
 
-			tile_bitmap[tile_index / 64] |= 1 << tile_index % 64;
+			tile_bitmap[tile_index / 64] |= 1ull << (tile_index % 64);
 			thin_win->tile_hashes[tile_index] = hash;
 
 			// Write updated tile to our buffer.
@@ -156,20 +162,27 @@ static void redraw_win(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, vo
 			}
 
 			assert(counter == buf_sz);
+			excepted_update_count++;
 		}
 	}
 
-	// Copy tile update bitmap to our buffer.
+	size_t tile_update_count = 0;
 
-	memcpy(buf, tile_bitmap, TILE_COUNT / 8);
-	free(tile_bitmap);
+	for (size_t i = 0; i < TILES_X * TILES_Y / sizeof *tile_bitmap / 8; i++) {
+		tile_update_count += __builtin_popcountll(tile_bitmap[i]);
+	}
 
-	// TODO ZSTD compress (because this is fucking slow).
+	assert(excepted_update_count == tile_update_count);
 
 	// Send over to VR device.
 
-	printf("%zu bytes to send over\n", buf_sz);
+#if !defined(NO_VR)
+	vr_send_win(s->vr_ctx, win, x_res, y_res, TILES_X, TILES_Y, tile_bitmap, buf_sz, buf);
+	kos_flush(true);
+#endif
+
 	free(buf);
+	free(tile_bitmap);
 }
 
 int main(void) {
@@ -186,7 +199,7 @@ int main(void) {
 
 	// Get the best VR VDEV.
 
-	/*
+#if !defined(NO_VR)
 	kos_vdev_descr_t* const vr_vdev = aqua_get_best_vdev(vr_init(ctx));
 
 	if (vr_vdev == NULL) {
@@ -195,13 +208,13 @@ int main(void) {
 	}
 
 	LOG_V(cls, "Using VR VDEV \"%s\".", (char*) vr_vdev->human);
-	vr_ctx_t const vr_ctx = vr_conn(vr_vdev);
+	state.vr_ctx = vr_conn(vr_vdev);
 
-	if (vr_ctx == NULL) {
+	if (state.vr_ctx == NULL) {
 		LOG_F(cls, "Failed to connect to VR VDEV.");
 		return EXIT_FAILURE;
 	}
-	*/
+#endif
 
 	// Get the best WM VDEV.
 
@@ -220,14 +233,6 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
-	// Send dummy window.
-
-	/*
-	LOG_I(cls, "Sending window.");
-	vr_send_win(vr_ctx, 0, 800, 480, fb);
-	kos_flush(true);
-	*/
-
 	// Create WM.
 
 	int rv = EXIT_FAILURE;
@@ -241,6 +246,7 @@ int main(void) {
 	// Loop.
 
 	wm_register_new_win_cb(wm, new_win, &state);
+	wm_register_destroy_win_cb(wm, destroy_win, &state);
 	wm_register_redraw_win_cb(wm, redraw_win, &state);
 
 	wm_loop(wm);
