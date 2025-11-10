@@ -198,10 +198,10 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		break;
 	}
 	case 4: { // get_win_fb
-		toplevel_t* const toplevel = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
 
 		if (toplevel == NULL) {
-			LOG_E(cls, "Tried to loop non-local or NULL window.");
+			LOG_E(cls, "Tried to get FB of bad window.");
 			notif.kind = KOS_NOTIF_CALL_FAIL;
 			break;
 		}
