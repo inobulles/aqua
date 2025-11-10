@@ -82,6 +82,14 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_BUF, "tile_data"},
 		},
 	},
+	{
+		.name = "destroy_win",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_U32, "id"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -145,6 +153,11 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		assert(args[6].buf.size == tile_x_res * tile_y_res * tile_update_count * 4);
 
 		MIST_OPS.send_win(id, x_res, y_res, tiles_x, tiles_y, tile_update_bitmap, tile_data);
+		break;
+	}
+	case 1: { // destroy_win
+		uint32_t const id = args[0].u32;
+		MIST_OPS.destroy_win(id);
 		break;
 	}
 	default:

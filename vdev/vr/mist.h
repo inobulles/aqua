@@ -18,4 +18,6 @@ typedef struct {
 		uint64_t const* tile_update_bitmap,
 		void const* tile_data
 	);
+
+	void (*destroy_win)(uint32_t id);
 } mist_ops_t;
