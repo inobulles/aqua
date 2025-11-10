@@ -99,6 +99,27 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 	free(output);
 }
 
+static struct wlr_surface* target_surf(struct wlr_xdg_toplevel* toplevel) {
+	if (toplevel->app_id == NULL || strcmp(toplevel->app_id, "firefox") != 0) {
+		return toplevel->base->surface;
+	}
+
+	// XXX For Firefox, get the non-container surface.
+	// This container does ugly CSD stuff like a shadow and I can't for the life of me get it to rely on SSD.
+
+	struct wlr_subsurface* subsurface;
+
+	wl_list_for_each(subsurface, &toplevel->base->surface->current.subsurfaces_above, current.link) {
+		if (!subsurface->surface->mapped) {
+			continue;
+		}
+
+		return subsurface->surface;
+	}
+
+	return toplevel->base->surface; // Fallback, always guaranteed to exist.
+}
+
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
@@ -122,6 +143,27 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	};
 
 	interrupt(wm, sizeof intr, &intr);
+
+	// If we have a Firefox window, redraw it too.
+
+	toplevel_t* toplevel;
+
+	wl_list_for_each(toplevel, &wm->toplevels, link) {
+		if (toplevel->xdg_toplevel->app_id == NULL || strcmp(toplevel->xdg_toplevel->app_id, "firefox") != 0) {
+			continue;
+		}
+
+		struct wlr_texture* const tex = target_surf(toplevel->xdg_toplevel)->buffer->texture;
+
+		redraw_win_intr_t const intr = {
+			.intr = INTR_REDRAW_WIN,
+			.win = (uint64_t) toplevel,
+			.x_res = tex->width,
+			.y_res = tex->height,
+		};
+
+		interrupt(toplevel->wm, sizeof intr, &intr);
+	}
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
@@ -279,7 +321,7 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 
 	// Send interrupt.
 
-	struct wlr_texture* const tex = xdg_toplevel->base->surface->buffer->texture;
+	struct wlr_texture* const tex = target_surf(xdg_toplevel)->buffer->texture;
 
 	redraw_win_intr_t const intr = {
 		.intr = INTR_REDRAW_WIN,
