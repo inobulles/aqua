@@ -230,11 +230,13 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 	wl_list_insert(&wm->toplevels, &toplevel->link);
 	focus_toplevel(toplevel);
 
+	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 1280, 768);
+
 	// Send interrupt.
 
 	new_win_intr_t const intr = {
 		.intr = INTR_NEW_WIN,
-		.win = (uint64_t) toplevel,
+		.win = (uint64_t) (uintptr_t) toplevel,
 		.app_id = toplevel->xdg_toplevel->app_id,
 	};
 
