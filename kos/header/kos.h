@@ -11,6 +11,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 _Static_assert(sizeof(void*) <= sizeof(uint64_t), "pointers on your platform are too big");
 _Static_assert(sizeof(char) == sizeof(uint8_t), "char is not 8 bits");
@@ -285,6 +286,18 @@ typedef union {
 	 */
 	kos_ptr_t ptr;
 } kos_val_t;
+
+/**
+ * Free a KOS value.
+ *
+ * @param type The type of the value to free.
+ * @param val The value to free.
+ */
+static inline void kos_val_free(kos_type_t type, kos_val_t* val) {
+	if (type == KOS_TYPE_BUF) {
+		free((void*) val->buf.ptr);
+	}
+}
 
 /**
  * A KOS parameter.
