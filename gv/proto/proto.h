@@ -11,8 +11,8 @@
 
 #include <aqua/kos.h>
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /**
  * The port used for GrapeVine connections (TCP).
