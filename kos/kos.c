@@ -378,7 +378,6 @@ static void call_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	assert(vdriver != NULL);
 
 	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
-	free((void*) action->call.args); // TODO Is this the best place to do this?
 }
 
 static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
