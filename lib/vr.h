@@ -36,4 +36,14 @@ void vr_disconn(vr_ctx_t ctx);
 /**
  * TODO
  */
-void vr_send_win(vr_ctx_t ctx, uint32_t id, uint32_t x_res, uint32_t y_res, void* fb);
+void vr_send_win(
+	vr_ctx_t ctx,
+	uint32_t id,
+	uint32_t x_res,
+	uint32_t y_res,
+	uint32_t tiles_x,
+	uint32_t tiles_y,
+	uint64_t* tile_update_bitmap,
+	size_t tile_data_size,
+	void* tile_data
+);
