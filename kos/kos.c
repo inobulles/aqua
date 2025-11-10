@@ -13,6 +13,8 @@
 
 #include <umber.h>
 
+#include <zstd.h>
+
 #include <assert.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -396,24 +398,44 @@ static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 		},
 	};
 
-	size_t size = sizeof proto_packet.header + sizeof proto_packet.kos_call;
-	size_t const proto_packet_size = size;
+	size_t const proto_packet_size = sizeof proto_packet.header + sizeof proto_packet.kos_call;
+	size_t arg_buf_size = 0;
 
 	for (size_t i = 0; i < fn->param_count; i++) {
-		size += gv_serialize_val_size(fn->params[i].type, &action->call.args[i]);
+		arg_buf_size += gv_serialize_val_size(fn->params[i].type, &action->call.args[i]);
 	}
 
-	void* const packet = malloc(size);
-	assert(packet != NULL);
+	void* const arg_buf = malloc(arg_buf_size);
+	assert(arg_buf != NULL);
 
-	proto_packet.kos_call.size = size - proto_packet_size;
-	memcpy(packet, &proto_packet, sizeof proto_packet);
-
-	void* buf = packet + proto_packet_size;
+	void* buf = arg_buf;
 
 	for (size_t i = 0; i < fn->param_count; i++) {
 		buf += gv_serialize_val(buf, fn->params[i].type, &action->call.args[i]);
 	}
+
+	// Compress and build packet.
+	// TODO We should be reusing the ZSTD compression context (see multiple_simple_compression.c).
+
+	size_t const max_compressed_arg_buf_size = ZSTD_compressBound(arg_buf_size);
+	void* const packet = malloc(proto_packet_size + max_compressed_arg_buf_size);
+	assert(packet != NULL);
+
+	size_t const compressed_size = ZSTD_compress(packet + proto_packet_size, max_compressed_arg_buf_size, arg_buf, arg_buf_size, ZSTD_btultra2);
+	free(arg_buf);
+
+	if (ZSTD_isError(compressed_size)) {
+		LOG_W(conn_cls, "Something went wrong during ZSTD compression!");
+		// TODO how do we fail??
+	}
+
+	LOG_V(conn_cls, "Compressed %zu bytes to %zu (%.2f:1).", arg_buf_size, compressed_size, (float) arg_buf_size / compressed_size);
+
+	proto_packet.kos_call.compression = GV_COMPRESSION_ZSTD;
+	proto_packet.kos_call.size = compressed_size;
+	memcpy(packet, &proto_packet, proto_packet_size);
+
+	size_t const size = proto_packet_size + compressed_size;
 
 	// Send packet.
 
