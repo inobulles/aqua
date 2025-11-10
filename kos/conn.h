@@ -37,13 +37,13 @@ typedef struct {
 		 * For local VDEVs, the VDRIVER pointer.
 		 */
 		vdriver_t* vdriver;
-		
+
 		struct {
 			/**
 			 * For GrapeVine VDEVs, the socket.
 			 */
 			int sock;
-			
+
 			/**
 			 * For GrapeVine VDEVs, the connection ID on the remote KOS agent the GrapeVine daemon spawned for us.
 			 */
