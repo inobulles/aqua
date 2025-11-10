@@ -51,6 +51,11 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t win;
+} destroy_win_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
 } redraw_win_intr_t;
@@ -238,12 +243,22 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 
 static void toplevel_unmap(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, unmap);
+	wm_t* const wm = toplevel->wm;
 
 	(void) data;
 
 	LOG_V(cls, "Unmap %s.", toplevel->xdg_toplevel->app_id);
 
 	wl_list_remove(&toplevel->link);
+
+	// Send interrupt.
+
+	destroy_win_intr_t const intr = {
+		.intr = INTR_DESTROY_WIN,
+		.win = (uint64_t) (uintptr_t) toplevel,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
 }
 
 static void toplevel_commit(struct wl_listener* listener, void* data) {

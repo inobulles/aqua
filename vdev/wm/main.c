@@ -63,6 +63,11 @@ static kos_const_t const CONSTS[] = {
 		.val = {.u8 = INTR_NEW_WIN},
 	},
 	{
+		.name = "INTR_DESTROY_WIN",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_DESTROY_WIN},
+	},
+	{
 		.name = "INTR_REDRAW_WIN",
 		.type = KOS_TYPE_U8,
 		.val = {.u8 = INTR_REDRAW_WIN},
