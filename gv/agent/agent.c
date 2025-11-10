@@ -7,7 +7,10 @@
 #include <aqua/kos.h>
 #include <aqua/vdriver_loader.h>
 
+#include <stdio.h>
 #include <umber.h>
+
+#include <zstd.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -34,8 +37,6 @@ struct gv_agent_t {
 
 static void notif_cb(kos_notif_t const* notif, void* data) {
 	gv_agent_t* const a = data;
-
-	// TODO In here, notifications should be serialized and sent over our socket.
 
 	void* packet_data = malloc(sizeof(gv_packet_t));
 	assert(packet_data != NULL);
@@ -167,17 +168,19 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 static void call(gv_agent_t* a, gv_kos_call_t* call) {
 	LOG_V(a->cls, "Calling KOS function (fn_id=%u).", call->fn_id);
 
-	void* const arg_buf = malloc(call->size);
-	assert(arg_buf != NULL);
+	// Receive compressed argument data.
+
+	void* const compressed_arg_buf = malloc(call->size);
+	assert(compressed_arg_buf != NULL);
 
 	size_t total = 0;
 
 	while (total < call->size) {
-		ssize_t const r = recv(a->sock, (char*) arg_buf + total, call->size - total, 0);
+		ssize_t const r = recv(a->sock, (char*) compressed_arg_buf + total, call->size - total, 0);
 
 		if (r == 0) {
 			LOG_E(a->cls, "recv: Connection closed (received %zu/%zu bytes).", total, call->size);
-			free(arg_buf);
+			free(compressed_arg_buf);
 			goto fail;
 		}
 
@@ -187,33 +190,64 @@ static void call(gv_agent_t* a, gv_kos_call_t* call) {
 			}
 
 			LOG_E(a->cls, "recv: %s", strerror(errno));
-			free(arg_buf);
+			free(compressed_arg_buf);
 			goto fail;
 		}
 
 		total += (size_t) r;
 	}
 
-	if (call->fn_id >= a->fn_count) { // Do this after so we do clear the buffer.
+	if (call->fn_id >= a->fn_count) { // Do this after so we do clear the recv buffer.
 		LOG_E(a->cls, "Function ID %zu doesn't exist (%zu functions total).", call->fn_id, a->fn_count);
-		free(arg_buf);
+		free(compressed_arg_buf);
 		goto fail;
 	}
+
+	// Decompress argument buffer.
+	// TODO Support uncompressed argument buffers too.
+
+	unsigned long long const uncompressed_size = ZSTD_getFrameContentSize(compressed_arg_buf, call->size);
+
+	if (uncompressed_size == ZSTD_CONTENTSIZE_ERROR) {
+		LOG_E(a->cls, "Argument buffer was not compressed by ZSTD.");
+		free(compressed_arg_buf);
+		goto fail;
+	}
+
+	if (uncompressed_size == ZSTD_CONTENTSIZE_UNKNOWN) {
+		LOG_E(a->cls, "Uncompressed size of argument buffer is unknown.");
+		free(compressed_arg_buf);
+		goto fail;
+	}
+
+	void* const arg_buf = malloc(uncompressed_size);
+	assert(arg_buf != NULL);
+
+	size_t const zstd_size = ZSTD_decompress(arg_buf, uncompressed_size, compressed_arg_buf, call->size);
+	free(compressed_arg_buf);
+
+	if (ZSTD_isError(zstd_size) || zstd_size != uncompressed_size) {
+		LOG_W(a->cls, "Something went wrong during ZSTD decompression!");
+		// TODO how do we fail??
+	}
+
+	// Deserialize argument buffer.
 
 	size_t const arg_count = a->fns[call->fn_id].param_count;
 	kos_val_t* const args = malloc(arg_count * sizeof *args);
 	assert(args != NULL);
+	kos_param_t const* const params = a->fns[call->fn_id].params;
 
 	size_t size = 0;
 
 	for (size_t i = 0; i < arg_count; i++) {
-		size += gv_deserialize_val(arg_buf + size, a->fns[call->fn_id].params[i].type, &args[i]);
+		size += gv_deserialize_val(arg_buf + size, params[i].type, &args[i]);
 	}
 
 	free(arg_buf);
 
-	if (size != call->size) {
-		LOG_E(a->cls, "Deserialized size (%zu) is not the same as reported size (%zu).", size, call->size);
+	if (size != uncompressed_size) {
+		LOG_E(a->cls, "Deserialized size (%zu) is not the same as reported uncompressed size (%zu).", size, uncompressed_size);
 		free(args);
 		goto fail;
 	}
