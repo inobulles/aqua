@@ -256,6 +256,12 @@ static void call(gv_agent_t* a, gv_kos_call_t* call) {
 	kos_vdev_call(call->conn_id, call->fn_id, args);
 	kos_flush(true);
 
+	for (size_t i = 0; i < arg_count; i++) {
+		kos_val_free(params[i].type, &args[i]);
+	}
+
+	free(args);
+
 	return;
 
 fail:
