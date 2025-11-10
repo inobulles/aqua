@@ -145,7 +145,7 @@ void* conn_thread(void* arg) {
 	// The recvs for packets we don't expect to receive are just a best attempt at clearing the buffer until the next packet.
 	// Doesn't really matter if they fail, this is a bad condition to be in anyway and we did our best to recover.
 
-	while ((len = recv(conn->sock, &buf.header, sizeof buf.header, 0)) > 0) {
+	while ((len = recv(conn->sock, &buf.header, sizeof buf.header, MSG_WAITALL)) > 0) {
 		// TODO We should check that we can even do gv_packet_type_strs[buf.header.type]... Maybe even just have an inline function to do this for us with the table hidden inside so we don't access this directly.
 		// TODO Should we really be goto stop;'ing everywhere?
 
@@ -159,7 +159,7 @@ void* conn_thread(void* arg) {
 
 		switch (buf.header.type) {
 		case GV_PACKET_TYPE_ELP:
-			recv(conn->sock, &buf.elp, sizeof buf.elp, 0);
+			recv(conn->sock, &buf.elp, sizeof buf.elp, MSG_WAITALL);
 
 			LOG_E(
 				cls,
@@ -176,7 +176,7 @@ void* conn_thread(void* arg) {
 
 			break;
 		case GV_PACKET_TYPE_QUERY_RES:
-			recv(conn->sock, &buf.query_res, sizeof buf.query_res, 0);
+			recv(conn->sock, &buf.query_res, sizeof buf.query_res, MSG_WAITALL);
 
 			LOG_E(
 				cls,
@@ -186,15 +186,15 @@ void* conn_thread(void* arg) {
 			);
 			break;
 		case GV_PACKET_TYPE_CONN_VDEV:
-			if (recv(conn->sock, &buf.conn_vdev, sizeof buf.conn_vdev, 0) != sizeof buf.conn_vdev) {
-				LOG_E(cls, "recv: %s", strerror(errno));
+			if (recv(conn->sock, &buf.conn_vdev, sizeof buf.conn_vdev, MSG_WAITALL) != sizeof buf.conn_vdev) {
+				LOG_E(cls, "recv failed.");
 				goto stop;
 			}
 
 			conn_vdev(conn, buf.conn_vdev.vdev_id);
 			break;
 		case GV_PACKET_TYPE_CONN_VDEV_RES:
-			recv(conn->sock, &buf.conn_vdev_res, sizeof buf.conn_vdev_res, 0);
+			recv(conn->sock, &buf.conn_vdev_res, sizeof buf.conn_vdev_res, MSG_WAITALL);
 			__attribute__((fallthrough));
 		case GV_PACKET_TYPE_CONN_VDEV_FAIL:
 			LOG_E(
