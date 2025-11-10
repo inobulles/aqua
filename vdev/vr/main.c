@@ -71,12 +71,15 @@ static kos_fn_t const FNS[] = {
 	{
 		.name = "send_win",
 		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.param_count = 7,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_U32, "id"},
 			{KOS_TYPE_U32, "x_res"},
 			{KOS_TYPE_U32, "y_res"},
-			{KOS_TYPE_BUF, "fb"},
+			{KOS_TYPE_U32, "tiles_x"},
+			{KOS_TYPE_U32, "tiles_y"},
+			{KOS_TYPE_BUF, "tile_update_bitmap"},
+			{KOS_TYPE_BUF, "tile_data"},
 		},
 	},
 };
@@ -123,13 +126,25 @@ static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_
 		uint32_t const id = args[0].u32;
 		uint32_t const x_res = args[1].u32;
 		uint32_t const y_res = args[2].u32;
+		uint32_t const tiles_x = args[3].u32;
+		uint32_t const tiles_y = args[4].u32;
 
-		size_t const fb_size = args[3].buf.size;
-		void const* const fb_data = args[3].buf.ptr;
+		uint32_t const tile_x_res = x_res / tiles_x;
+		uint32_t const tile_y_res = y_res / tiles_y;
 
-		assert(fb_size == x_res * y_res * 4);
+		uint64_t const* const tile_update_bitmap = args[5].buf.ptr;
+		assert(args[5].buf.size == tiles_x * tiles_y / 8);
 
-		MIST_OPS.send_win(id, x_res, y_res, fb_data);
+		size_t tile_update_count = 0;
+
+		for (size_t i = 0; i < tiles_x * tiles_y / sizeof *tile_update_bitmap / 8; i++) {
+			tile_update_count += __builtin_popcountll(tile_update_bitmap[i]);
+		}
+
+		void const* const tile_data = args[6].buf.ptr;
+		assert(args[6].buf.size == tile_x_res * tile_y_res * tile_update_count * 4);
+
+		MIST_OPS.send_win(id, x_res, y_res, tiles_x, tiles_y, tile_update_bitmap, tile_data);
 		break;
 	}
 	default:

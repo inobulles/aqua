@@ -3,10 +3,19 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
 	bool set;
-	void (*send_win)(uint32_t id, uint32_t x_res, uint32_t y_res, void const* fb_data);
+
+	void (*send_win)(
+		uint32_t id,
+		uint32_t x_res,
+		uint32_t y_res,
+		uint32_t tiles_x,
+		uint32_t tiles_y,
+		uint64_t const* tile_update_bitmap,
+		void const* tile_data
+	);
 } mist_ops_t;
