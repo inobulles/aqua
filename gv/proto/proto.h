@@ -12,6 +12,7 @@
 #include <aqua/kos.h>
 
 #include <stdlib.h>
+#include <stdint.h>
 
 /**
  * The port used for GrapeVine connections (TCP).
@@ -49,6 +50,14 @@ typedef enum : uint8_t {
 
 	GV_PACKET_TYPE_LEN,
 } gv_packet_type_t;
+
+/**
+ * The type of compression part of a packet's payload uses.
+ */
+typedef enum : uint8_t {
+	GV_COMPRESSION_NONE = 0,
+	GV_COMPRESSION_ZSTD = 1,
+} gv_compression_t;
 
 static char const* const gv_packet_type_strs[] = {
 	"ELP",
@@ -173,7 +182,14 @@ typedef struct __attribute__((packed)) {
 	uint64_t conn_id;
 
 	/**
-	 * Size of this struct.
+	 * Compression method used for argument.
+	 */
+	gv_compression_t compression;
+
+	/**
+	 * Size of this struct plus arguments.
+	 *
+	 * If compression is applicable, this means the compressed size of the arguments.
 	 */
 	uint32_t size;
 
