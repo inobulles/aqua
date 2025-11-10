@@ -47,3 +47,8 @@ void vr_send_win(
 	size_t tile_data_size,
 	void* tile_data
 );
+
+/**
+ * TODO
+ */
+void vr_destroy_win(vr_ctx_t ctx, uint32_t id);
