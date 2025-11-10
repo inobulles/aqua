@@ -11,6 +11,9 @@
 
 #include <umber.h>
 
+#include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
+
 #include <assert.h>
 #include <stdlib.h>
 
@@ -553,6 +556,13 @@ static void new_input(struct wl_listener* listener, void* data) {
 	}
 }
 
+static void handle_xdg_decoration(struct wl_listener* listener, void* data) {
+	(void) listener;
+
+	struct wlr_xdg_toplevel_decoration_v1* const deco = data;
+	wlr_xdg_toplevel_decoration_v1_set_mode(deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+}
+
 static void wlr_log_cb(enum wlr_log_importance importance, char const* fmt, va_list args) {
 	char* msg;
 	vasprintf(&msg, fmt, args);
@@ -717,6 +727,17 @@ wm_t* wm_vdev_create(void) {
 
 	wm->new_xdg_popup.notify = new_popup;
 	wl_signal_add(&wm->xdg_shell->events.new_popup, &wm->new_xdg_popup);
+
+	LOG_V(cls, "Create server decoration manager and set default mode to server.");
+	struct wlr_server_decoration_manager* deco = wlr_server_decoration_manager_create(wm->display);
+	wlr_server_decoration_manager_set_default_mode(deco, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+
+	// LOG_V(cls, "Create XDG decoration manager.");
+	// struct wlr_xdg_decoration_manager_v1* xdg_deco = wlr_xdg_decoration_manager_v1_create(wm->display);
+	// wl_signal_add(&xdg_deco->events.new_toplevel_decoration, &wm->xdg_decoration);
+	// wm->xdg_decoration.notify = handle_xdg_decoration;
+
+	(void) handle_xdg_decoration;
 
 	LOG_V(cls, "Create cursor.");
 	wm->cursor = wlr_cursor_create();
