@@ -7,6 +7,8 @@ deps = [
 	Dep.local("../gv/proto"),
 	Dep.local("header"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
+	# XXX Disabling this until we get CMake BSYS in Bob, because their gmake doesn't do incremental builds it seems.
+	# Dep.git("https://github.com/facebook/zstd", "v1.5.7"),
 ]
 
 let cc = Cc([
@@ -24,10 +26,15 @@ let vdriver_loader_lib = Linker([
 ]).link(vdriver_loader_obj)
 
 let vdriver_lib = Linker([]).archive(vdriver_obj)
+let link_flags = ["-shared", "-lumber", "-lvdriver_loader", "-lgv_proto"]
 
-let kos_lib = Linker([
-	"-shared", "-lumber", "-lvdriver_loader", "-lgv_proto",
-]).link(kos_obj)
+if Platform.getenv("BOB_TARGET") == "arm64-android" {
+	link_flags = link_flags + ["-l:libzstd.a"]
+} else {
+	link_flags = link_flags + ["-lzstd"]
+}
+
+let kos_lib = Linker(link_flags).link(kos_obj)
 
 install = {
 	kos_lib: "lib/libaqua.so",
