@@ -168,7 +168,8 @@ class Network:
 	def __render(self):
 		layout = Layout()
 		panels = []
-		height = 96  # XXX, see comments on Rich.
+		# height = 96  # XXX, see comments on Rich.
+		height = 70  # XXX, see comments on Rich.
 
 		for k, buf in self.__bufs.items():
 			colour = "cyan"
@@ -208,7 +209,7 @@ if __name__ == "__main__":
 		hosts={
 			"A (running the test program)": Host(name="Host A", machine_path="machine_1"),
 			"B (providing the VDEV)": Host(name="Host B", machine_path="machine_2"),
-			"C (running the test program)": Host(name="Host C", machine_path="machine_1"),
+			# "C (running the test program)": Host(name="Host C", machine_path="machine_1"),
 		}
 	)
 
