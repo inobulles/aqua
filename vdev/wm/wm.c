@@ -754,18 +754,70 @@ void wm_vdev_loop(wm_t* wm) {
 	wl_display_run(wm->display);
 }
 
-void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
-	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
-	struct wlr_texture* const tex = xdg_toplevel->base->surface->buffer->texture;
+static void read_surface_pixels(struct wlr_surface* surface, int sx, int sy, void* data) {
+	struct {
+		uint8_t* buf;
+		int stride;
+		int origin_x, origin_y;
+	}* ctx = data;
 
-	struct wlr_texture_read_pixels_options const opts = {
-		.data = buf,
+	struct wlr_texture* tex = wlr_surface_get_texture(surface);
+
+	if (!tex) {
+		return;
+	}
+
+	int width = surface->current.width;
+	int height = surface->current.height;
+	int dst_x = ctx->origin_x + sx;
+	int dst_y = ctx->origin_y + sy;
+
+	int stride = width * 4;
+	uint8_t* tmp = calloc(1, stride * height);
+
+	struct wlr_texture_read_pixels_options opts = {
+		.data = tmp,
 		.dst_x = 0,
 		.dst_y = 0,
-		.stride = 4 * tex->width,
-		.format = wlr_texture_preferred_read_format(tex), // Insh'Allah this format matches the stride.
-		.src_box = {.width = -1},                         // XXX See wlr_box_empty, but this is sufficient.
+		.stride = stride,
+		.format = wlr_texture_preferred_read_format(tex),
+		.src_box = {.width = -1},
 	};
 
-	wlr_texture_read_pixels(tex, &opts);
+	if (!wlr_texture_read_pixels(tex, &opts)) {
+		free(tmp);
+		return;
+	}
+
+	for (int y = 0; y < height; y++) {
+		uint32_t* src_row = (uint32_t*) (tmp + y * stride);
+		uint32_t* dst_row = (uint32_t*) (ctx->buf + (dst_y + y) * ctx->stride + dst_x * 4);
+
+		// XXX This is technically incorrect as we are overwriting pixels instead of compositing them.
+		// But, then again, nothing here is correct so like whatever.
+
+		memcpy(dst_row, src_row, stride);
+	}
+
+	free(tmp);
+}
+
+void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
+	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
+	struct wlr_surface* base = target_surf(xdg_toplevel);
+
+	memset(buf, 0, base->current.width * base->current.height * 4);
+
+	struct {
+		uint8_t* buf;
+		int stride;
+		int origin_x, origin_y;
+	} ctx = {
+		.buf = buf,
+		.stride = base->current.width * 4,
+		.origin_x = 0,
+		.origin_y = 0,
+	};
+
+	wlr_surface_for_each_surface(base, read_surface_pixels, &ctx);
 }
