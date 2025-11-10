@@ -105,16 +105,8 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "send_win") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 4 &&
-			strcmp((char*) fn->params[0].name, "id") == 0 &&
-			fn->params[0].type == KOS_TYPE_U32 &&
-			strcmp((char*) fn->params[1].name, "x_res") == 0 &&
-			fn->params[1].type == KOS_TYPE_U32 &&
-			strcmp((char*) fn->params[2].name, "y_res") == 0 &&
-			fn->params[2].type == KOS_TYPE_U32 &&
-			strcmp((char*) fn->params[3].name, "fb") == 0 &&
-			fn->params[3].type == KOS_TYPE_BUF
+			fn->ret_type == KOS_TYPE_VOID
+			// XXX Whatever for the arguments.
 		) {
 			ctx->fns.send_win = i;
 		}
@@ -155,7 +147,17 @@ static void notif_call_fail(kos_notif_t const* notif, void* data) {
 	fprintf(stderr, "TODO Call failed, but how do we handle this?\n");
 }
 
-void vr_send_win(vr_ctx_t ctx, uint32_t id, uint32_t x_res, uint32_t y_res, void* fb) {
+void vr_send_win(
+	vr_ctx_t ctx,
+	uint32_t id,
+	uint32_t x_res,
+	uint32_t y_res,
+	uint32_t tiles_x,
+	uint32_t tiles_y,
+	uint64_t* tile_update_bitmap,
+	size_t tile_data_size,
+	void* tile_data
+) {
 	if (!ctx->is_conn) {
 		return;
 	}
@@ -164,7 +166,10 @@ void vr_send_win(vr_ctx_t ctx, uint32_t id, uint32_t x_res, uint32_t y_res, void
 		{.u32 = id},
 		{.u32 = x_res},
 		{.u32 = y_res},
-		{.buf = {x_res * y_res * 4, fb}},
+		{.u32 = tiles_x},
+		{.u32 = tiles_y},
+		{.buf = {tiles_x * tiles_y / 8, tile_update_bitmap}},
+		{.buf = {tile_data_size, tile_data}},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.send_win, args);
