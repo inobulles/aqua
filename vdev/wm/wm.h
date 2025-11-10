@@ -97,6 +97,7 @@ typedef struct {
 typedef enum : uint8_t {
 	INTR_REDRAW,
 	INTR_NEW_WIN,
+	INTR_DESTROY_WIN,
 	INTR_REDRAW_WIN,
 } intr_t;
 
