@@ -7,6 +7,8 @@ deps = [
 	Dep.local("../kos"),
 	Dep.local("proto"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
+	# XXX Disabling this until we get CMake BSYS in Bob, because their gmake doesn't do incremental builds it seems.
+	# Dep.git("https://github.com/facebook/zstd", "v1.5.7"),
 ]
 
 let src = ["main.c", "conn.c", "elp.c", "query.c"]
@@ -38,6 +40,12 @@ let gvd = Linker(link_flags).link(obj)
 # Link agent.
 
 let agent_link_flags = ["-laqua", "-lumber", "-lvdriver_loader", "-lgv_proto"]
+
+if Platform.getenv("BOB_TARGET") == "arm64-android" {
+	agent_link_flags = agent_link_flags + ["-l:libzstd.a"]
+} else {
+	agent_link_flags = agent_link_flags + ["-lzstd"]
+}
 
 let agent_lib = Linker(["-shared"] + agent_link_flags).link(agent_lib_obj)
 let agent = Linker(["-lgv_agent"] + agent_link_flags).link(agent_obj)
