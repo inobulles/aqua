@@ -22,6 +22,7 @@ struct vr_ctx_t {
 
 	struct {
 		uint32_t send_win;
+		uint32_t destroy_win;
 	} fns;
 
 	bool last_success;
@@ -110,6 +111,14 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.send_win = i;
 		}
+
+		if (
+			strcmp(name, "destroy_win") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID
+			// XXX Whatever for the arguments.
+		) {
+			ctx->fns.destroy_win = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -173,6 +182,19 @@ void vr_send_win(
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.send_win, args);
+	kos_flush(true);
+}
+
+void vr_destroy_win(vr_ctx_t ctx, uint32_t id) {
+	if (!ctx->is_conn) {
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.u32 = id},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.destroy_win, args);
 	kos_flush(true);
 }
 
