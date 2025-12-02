@@ -7,8 +7,9 @@ deps = [
 	Dep.local("../kos"),
 	Dep.local("proto"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
-	# XXX Disabling this until we get CMake BSYS in Bob, because their gmake doesn't do incremental builds it seems.
-	# Dep.git("https://github.com/facebook/zstd", "v1.5.7"),
+	# XXX We use specifically Meson even though Bob supports gmake, because ZSTD doesn't seem to do incremental builds properly with gmake.
+	Dep.git("https://github.com/facebook/zstd", "v1.5.7")
+		.cd("build/meson"),
 ]
 
 let src = ["main.c", "conn.c", "elp.c", "query.c"]
