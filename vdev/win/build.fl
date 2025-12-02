@@ -4,6 +4,10 @@
 import bob
 import bob.cargo
 
+deps = [
+	Dep.local("../../kos"),
+]
+
 let target = Cargo.build()
 let lib_path = target + "libwin.so"
 

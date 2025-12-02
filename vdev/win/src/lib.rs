@@ -472,4 +472,5 @@ pub static mut VDRIVER: vdriver_t = vdriver_t {
 	vdev_id_hi: 0,
 	notif_cb: None,
 	notif_data: std::ptr::null_mut(),
+	lib: std::ptr::null_mut(),
 };
