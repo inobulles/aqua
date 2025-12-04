@@ -218,9 +218,11 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 	LOG_V(cls, "Got surface capabilities.");
 
 	// Create WebGPU backend on UI object.
+	// TODO Obviously, this is wrong. But will suffice for now.
 
 	uint64_t const hid = wgpu_get_hid(state->wgpu_ctx);
-	uint64_t const cid = wgpu_get_cid(state->wgpu_ctx);
+	// uint64_t const cid = wgpu_get_cid(state->wgpu_ctx);
+	uint64_t const cid = (uint64_t) (uintptr_t) state->wgpu_ctx;
 
 	LOG_V(cls, "Creating WebGPU UI backend with WebGPU device %lu:%lu (HID:CID).", hid, cid);
 
