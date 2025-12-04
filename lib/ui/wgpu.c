@@ -378,6 +378,17 @@ err_create_view:
 }
 
 void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res) {
+	x_res = x_res == 0 ? 800 : x_res;
+	y_res = y_res == 0 ? 600 : y_res;
+
+	state->x_res = x_res;
+	state->y_res = y_res;
+
+	if (state->surface == NULL) {
+		LOG_V(cls, "Surface not yet created, skipping resize.");
+		return;
+	}
+
 	state->config.device = state->device;
 	state->config.usage = WGPUTextureUsage_RenderAttachment;
 	state->config.format = state->caps.formats[0];
@@ -385,11 +396,6 @@ void ui_wgpu_ez_resize(ui_wgpu_ez_state_t* state, uint32_t x_res, uint32_t y_res
 	state->config.alphaMode = state->caps.alphaModes[0];
 	state->config.width = x_res;
 	state->config.height = y_res;
-
-	if (state->surface == NULL) {
-		LOG_V(cls, "Surface not yet created, skipping resize.");
-		return;
-	}
 
 	LOG_V(cls, "Resizing to %ux%u and (re)configuring surface.", x_res, y_res);
 

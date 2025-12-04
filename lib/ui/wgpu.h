@@ -88,6 +88,10 @@ typedef struct {
 	 * For the surface to be configured, you must call the {@link ui_wgpu_ez_resize} function whenever the window is resized.
 	 */
 	bool configured;
+	/**
+	 * X/Y resolution.
+	 */
+	uint32_t x_res, y_res;
 } ui_wgpu_ez_state_t;
 
 /**
