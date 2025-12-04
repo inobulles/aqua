@@ -32,7 +32,7 @@ func GoUiBackendWgpuInit(
 		dev: wgpu.CreateDeviceFromRaw(dev_raw),
 	}
 
-	wgpu.SetGlobalCtx(unsafe.Pointer(uintptr(hid)))
+	wgpu.SetGlobalCtx(unsafe.Pointer(uintptr(cid)))
 
 	// TODO Have to set global context somehow.
 	// Oof, this is gonna be complicated actually.
