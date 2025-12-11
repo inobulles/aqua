@@ -22,6 +22,7 @@ struct action {
 		} conn;
 
 		struct {
+			vid_t vdev_id;
 			uint64_t conn_id;
 			uint32_t fn_id;
 			kos_val_t const* args;

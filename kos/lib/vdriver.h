@@ -126,11 +126,12 @@ typedef struct {
 	 * The VDRIVER should send a {@link KOS_NOTIF_CALL_RET} or {@link KOS_NOTIF_CALL_FAIL} notification in response.
 	 *
 	 * @param cookie The cookie used to identify the request. This should be passed back to any structs sent back to the KOS which need it.
+	 * @param vdev_id The ID of the VDEV the connection is for. This should always be the same for a given connection and the parameter mostly exists out of convenience.
 	 * @param conn_id The ID of the connection to call the function on.
 	 * @param fn_id The ID of the function to call.
 	 * @param args The arguments to pass to the function.
 	 */
-	void (*call)(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args);
+	void (*call)(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args);
 } vdriver_t;
 
 /**

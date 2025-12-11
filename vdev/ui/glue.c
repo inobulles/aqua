@@ -147,7 +147,9 @@ extern void GoUiDestroy(uintptr_t ui);
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device);
 extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
 
-static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
+static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
+	(void) vdev_id;
+
 	assert(VDRIVER.notif_cb != NULL);
 
 	kos_notif_t notif = {

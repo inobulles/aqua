@@ -120,7 +120,9 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
-static void call(kos_cookie_t cookie, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
+static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
+	(void) vdev_id;
+
 	assert(VDRIVER.notif_cb != NULL);
 
 	kos_notif_t notif = {
