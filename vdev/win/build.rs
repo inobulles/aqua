@@ -26,10 +26,7 @@ fn main() {
 	let bob_prefix = ".bob/amd64-FreeBSD/prefix"; // env::var("BOB_PREFIX").unwrap();
 	let inc_path = format!("-I{bob_prefix}/include");
 
-	cc::Build::new()
-		.file(vdriver_src)
-		.flag(&inc_path)
-		.compile("vdriver");
+	cc::Build::new().file(vdriver_src).flag(&inc_path).compile("vdriver");
 
 	// Generate bindings.
 
