@@ -3,5 +3,14 @@
 
 import bob
 
-deps = ["font", "win", "wgpu", "ui"].map(Dep.local)
+deps = [
+	"audio",
+	"font",
+	"test",
+	"win",
+	"wgpu",
+	"ui",
+	"vr",
+].map(Dep.local)
+
 run = none
