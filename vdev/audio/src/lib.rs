@@ -79,47 +79,52 @@ struct StreamConfig {
 	channels: u16,
 }
 
-static FNS: [Fn; 1] = [Fn {
-	name: "get_configs",
-	ret_type: kos_type_t_KOS_TYPE_BUF,
-	params: &[],
-	cb: |vdev_id, _args| {
-		// TODO Proper error conditions.
+static FNS: [Fn; 1] = [
+	Fn {
+		name: "get_configs",
+		ret_type: kos_type_t_KOS_TYPE_BUF,
+		params: &[],
+		cb: |vdev_id, _args| {
+			// TODO Proper error conditions.
 
-		let dev = VDEV_MAP.lock().unwrap().get(&vdev_id).cloned().unwrap();
+			let dev = VDEV_MAP.lock().unwrap().get(&vdev_id).cloned().unwrap();
 
-		let output_configs = match dev.supported_output_configs() {
-			Ok(f) => f.collect(),
-			Err(e) => {
-				println!("Error getting supported output configs: {e:?}.");
-				Vec::new()
+			let output_configs = match dev.supported_output_configs() {
+				Ok(f) => f.collect(),
+				Err(e) => {
+					println!("Error getting supported output configs: {e:?}.");
+					Vec::new()
+				}
+			};
+
+			let mut out = Vec::new();
+
+			for config in output_configs.into_iter() {
+				match config.buffer_size() {
+					cpal::SupportedBufferSize::Range { min, max } => out.push(StreamConfig {
+						sample_format: config.sample_format() as u8,
+						min_sample_rate: config.min_sample_rate().0,
+						max_sample_rate: config.max_sample_rate().0,
+						min_buf_size: *min,
+						max_buf_size: *max,
+						channels: config.channels(),
+					}),
+					cpal::SupportedBufferSize::Unknown => (),
+				}
 			}
-		};
 
-		let mut out = Vec::new();
-
-		for config in output_configs.into_iter() {
-			match config.buffer_size() {
-				cpal::SupportedBufferSize::Range { min, max } => out.push(StreamConfig {
-					sample_format: config.sample_format() as u8,
-					min_sample_rate: config.min_sample_rate().0,
-					max_sample_rate: config.max_sample_rate().0,
-					min_buf_size: *min,
-					max_buf_size: *max,
-					channels: config.channels(),
-				}),
-				cpal::SupportedBufferSize::Unknown => (),
-			}
-		}
-
-		Some(kos_val_t {
-			buf: kos_val_t__bindgen_ty_1 {
-				size: out.len() as u32,
-				ptr: out.as_ptr() as *const c_void,
-			},
-		})
+			Some(kos_val_t {
+				buf: kos_val_t__bindgen_ty_1 {
+					size: out.len() as u32,
+					ptr: out.as_ptr() as *const c_void,
+				},
+			})
+		},
 	},
-}];
+	// TODO The API I want is to simply open a stream and be able to shove data to it continuously.
+	// To do this, we should have an open stream function, a write function, a play function, and a pause function (so we can buffer a bunch of frames if we're expecting a lot of network latency/jitter).
+	// The CPAL API where it calls back to ask for data won't work for us because then we'll have minimum 1.5 RTT latency over the network rather than just 0.5 RTT.
+];
 
 static VDEV_MAP: Lazy<Mutex<HashMap<vid_t, Device>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
