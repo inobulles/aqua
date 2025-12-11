@@ -11,10 +11,12 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 extern crate cpal;
 
 use std::collections::HashMap;
+use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
 use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::{Device, SampleFormat};
 use ctor::ctor;
 use once_cell::sync::Lazy;
 
@@ -64,21 +66,62 @@ struct Fn {
 	name: &'static str,
 	ret_type: kos_type_t,
 	params: &'static [Param],
-	cb: fn(args: *const kos_val_t) -> Option<kos_val_t>,
+	cb: fn(vdev_id: vid_t, args: *const kos_val_t) -> Option<kos_val_t>,
 }
 
-static FNS: [Fn; 0] = [
-	// TODO
-];
-
-#[derive(Clone)]
-pub struct StoredDevice {
-	pub human: String,
-	pub host_id: cpal::HostId,
-	pub device: cpal::Device,
+#[repr(C)]
+struct StreamConfig {
+	sample_format: u8,
+	min_sample_rate: u32,
+	max_sample_rate: u32,
+	min_buf_size: u32,
+	max_buf_size: u32,
+	channels: u16,
 }
 
-pub static VDEV_MAP: Lazy<Mutex<HashMap<vid_t, StoredDevice>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static FNS: [Fn; 1] = [Fn {
+	name: "get_configs",
+	ret_type: kos_type_t_KOS_TYPE_BUF,
+	params: &[],
+	cb: |vdev_id, _args| {
+		// TODO Proper error conditions.
+
+		let dev = VDEV_MAP.lock().unwrap().get(&vdev_id).cloned().unwrap();
+
+		let output_configs = match dev.supported_output_configs() {
+			Ok(f) => f.collect(),
+			Err(e) => {
+				println!("Error getting supported output configs: {e:?}.");
+				Vec::new()
+			}
+		};
+
+		let mut out = Vec::new();
+
+		for config in output_configs.into_iter() {
+			match config.buffer_size() {
+				cpal::SupportedBufferSize::Range { min, max } => out.push(StreamConfig {
+					sample_format: config.sample_format() as u8,
+					min_sample_rate: config.min_sample_rate().0,
+					max_sample_rate: config.max_sample_rate().0,
+					min_buf_size: *min,
+					max_buf_size: *max,
+					channels: config.channels(),
+				}),
+				cpal::SupportedBufferSize::Unknown => (),
+			}
+		}
+
+		Some(kos_val_t {
+			buf: kos_val_t__bindgen_ty_1 {
+				size: out.len() as u32,
+				ptr: out.as_ptr() as *const c_void,
+			},
+		})
+	},
+}];
+
+static VDEV_MAP: Lazy<Mutex<HashMap<vid_t, Device>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[allow(static_mut_refs)]
 extern "C" fn probe() {
@@ -89,7 +132,7 @@ extern "C" fn probe() {
 
 	for host_id in cpal::available_hosts() {
 		let host = cpal::host_from_id(host_id).expect("could not get host from ID");
-		let devices = host.devices().expect("could not get host's devices");
+		let devices = host.output_devices().expect("could not get host's devices");
 
 		for device in devices {
 			let human = device.name().expect("could not get device name");
@@ -97,12 +140,7 @@ extern "C" fn probe() {
 			// Insert device into global device map.
 
 			let mut map = VDEV_MAP.lock().expect("device map poisoned");
-
-			map.insert(cur_vdev_id, StoredDevice {
-				human: human.clone(),
-				host_id,
-				device: device.clone(),
-			});
+			map.insert(cur_vdev_id, device.clone());
 
 			// Emit actual KOS attach notification.
 
@@ -160,8 +198,87 @@ extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 		return;
 	}
 
-	let CONSTS: [Const; 0] = [
-		// TODO (explicit typing can be removed once I add consts).
+	let CONSTS = [
+		Const {
+			name: "SAMPLE_FORMAT_I8",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::I8 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_I16",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::I16 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_I24",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::I24 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_I32",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::I32 as u8,
+			},
+		},
+		// TODO I48 when CPAL adds that.
+		Const {
+			name: "SAMPLE_FORMAT_I64",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::I64 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_U8",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::U8 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_U16",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::U16 as u8,
+			},
+		},
+		// TODO U24 when CPAL adds that.
+		Const {
+			name: "SAMPLE_FORMAT_U32",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::U32 as u8,
+			},
+		},
+		// TODO U48 when CPAL adds that.
+		Const {
+			name: "SAMPLE_FORMAT_U64",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::U64 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_F32",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::F32 as u8,
+			},
+		},
+		Const {
+			name: "SAMPLE_FORMAT_F64",
+			kind: kos_type_t_KOS_TYPE_U8,
+			val: kos_val_t {
+				u8_: SampleFormat::F64 as u8,
+			},
+		},
 	];
 
 	let consts = CONSTS
@@ -211,9 +328,9 @@ extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn call(cookie: u64, conn_id: u64, fn_id: u64, args: *const kos_val_t) {
+unsafe extern "C" fn call(cookie: u64, vdev_id: vid_t, conn_id: u64, fn_id: u64, args: *const kos_val_t) {
 	assert!(VDRIVER.notif_cb.is_some());
-	let ret = (FNS[fn_id as usize].cb)(args);
+	let ret = (FNS[fn_id as usize].cb)(vdev_id, args);
 
 	VDRIVER.notif_cb.unwrap()(
 		&kos_notif_t {
