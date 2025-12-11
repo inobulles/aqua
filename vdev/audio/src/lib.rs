@@ -10,10 +10,13 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate cpal;
 
+use std::collections::HashMap;
 use std::os::raw::c_char;
+use std::sync::Mutex;
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use ctor::ctor;
+use once_cell::sync::Lazy;
 
 const SPEC: &str = "aquabsd.black.audio";
 const VERS: u32 = 0;
@@ -68,6 +71,15 @@ static FNS: [Fn; 0] = [
 	// TODO
 ];
 
+#[derive(Clone)]
+pub struct StoredDevice {
+	pub human: String,
+	pub host_id: cpal::HostId,
+	pub device: cpal::Device,
+}
+
+pub static VDEV_MAP: Lazy<Mutex<HashMap<vid_t, StoredDevice>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
 #[allow(static_mut_refs)]
 extern "C" fn probe() {
 	let notif_cb = unsafe { VDRIVER.notif_cb };
@@ -81,6 +93,18 @@ extern "C" fn probe() {
 
 		for device in devices {
 			let human = device.name().expect("could not get device name");
+
+			// Insert device into global device map.
+
+			let mut map = VDEV_MAP.lock().expect("device map poisoned");
+
+			map.insert(cur_vdev_id, StoredDevice {
+				human: human.clone(),
+				host_id,
+				device: device.clone(),
+			});
+
+			// Emit actual KOS attach notification.
 
 			unsafe {
 				notif_cb.unwrap()(
@@ -114,23 +138,24 @@ extern "C" fn probe() {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
-	assert!(VDRIVER.notif_cb.is_some());
+extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
+	let notif_cb = unsafe { VDRIVER.notif_cb };
+	assert!(notif_cb.is_some());
 
-	// TODO We need to check if we have this vdev, yo.
-
-	if false {
-		VDRIVER.notif_cb.unwrap()(
-			&kos_notif_t {
-				kind: kos_notif_kind_t_KOS_NOTIF_CONN_FAIL,
-				conn_id: 0,
-				cookie,
-				__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
-					conn_fail: kos_notif_t__bindgen_ty_1__bindgen_ty_3 {},
+	if !VDEV_MAP.lock().unwrap().contains_key(&vdev_id) {
+		unsafe {
+			notif_cb.unwrap()(
+				&kos_notif_t {
+					kind: kos_notif_kind_t_KOS_NOTIF_CONN_FAIL,
+					conn_id: 0,
+					cookie,
+					__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
+						conn_fail: kos_notif_t__bindgen_ty_1__bindgen_ty_3 {},
+					},
 				},
-			},
-			VDRIVER.notif_data,
-		);
+				VDRIVER.notif_data,
+			);
+		}
 
 		return;
 	}
@@ -139,48 +164,50 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 		// TODO (explicit typing can be removed once I add consts).
 	];
 
-	VDRIVER.notif_cb.unwrap()(
-		&kos_notif_t {
-			kind: kos_notif_kind_t_KOS_NOTIF_CONN,
-			conn_id,
-			cookie,
-			__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
-				conn: kos_notif_t__bindgen_ty_1__bindgen_ty_4 {
-					const_count: CONSTS.len() as u32,
-					consts: CONSTS
-						.iter()
-						.map(|x| kos_const_t {
-							name: str_to_slice::<u8, 64>(x.name),
-							type_: x.kind,
-							val: x.val,
-						})
-						.collect::<Vec<_>>()
-						.as_ptr(),
-					fn_count: FNS.len() as u32,
-					fns: FNS
-						.clone()
-						.map(|x| kos_fn_t {
-							name: str_to_slice::<u8, 64>(x.name),
-							ret_type: x.ret_type,
-							param_count: x.params.len() as u32,
-							params: Box::into_raw(
-								// TODO Should we ever bother to free this?
-								x.params
-									.iter()
-									.map(|param| kos_param_t {
-										type_: param.kind,
-										name: str_to_slice::<u8, 64>(param.name),
-									})
-									.collect::<Vec<_>>()
-									.into_boxed_slice(),
-							) as *const kos_param_t,
-						})
-						.as_ptr(),
+	let consts = CONSTS
+		.iter()
+		.map(|x| kos_const_t {
+			name: str_to_slice::<u8, 64>(x.name),
+			type_: x.kind,
+			val: x.val,
+		})
+		.collect::<Vec<_>>();
+
+	let fns = FNS.clone().map(|x| kos_fn_t {
+		name: str_to_slice::<u8, 64>(x.name),
+		ret_type: x.ret_type,
+		param_count: x.params.len() as u32,
+		params: Box::into_raw(
+			// TODO Should we ever bother to free this?
+			x.params
+				.iter()
+				.map(|param| kos_param_t {
+					type_: param.kind,
+					name: str_to_slice::<u8, 64>(param.name),
+				})
+				.collect::<Vec<_>>()
+				.into_boxed_slice(),
+		) as *const kos_param_t,
+	});
+
+	unsafe {
+		notif_cb.unwrap()(
+			&kos_notif_t {
+				kind: kos_notif_kind_t_KOS_NOTIF_CONN,
+				conn_id,
+				cookie,
+				__bindgen_anon_1: kos_notif_t__bindgen_ty_1 {
+					conn: kos_notif_t__bindgen_ty_1__bindgen_ty_4 {
+						const_count: CONSTS.len() as u32,
+						consts: consts.as_ptr(),
+						fn_count: FNS.len() as u32,
+						fns: fns.as_ptr(),
+					},
 				},
 			},
-		},
-		VDRIVER.notif_data,
-	);
+			VDRIVER.notif_data,
+		);
+	}
 }
 
 #[allow(static_mut_refs)]
