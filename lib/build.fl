@@ -15,6 +15,10 @@ let libs = {
 		"src": ["root.c"],
 		"include": ["root.h"],
 	},
+	"audio": {
+		"src": ["audio.c"],
+		"include": ["audio.h"],
+	},
 	"font": {
 		"src": ["font.c"],
 		"include": ["font.h"],
