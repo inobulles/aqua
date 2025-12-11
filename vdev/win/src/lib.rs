@@ -425,7 +425,7 @@ unsafe extern "C" fn conn(cookie: u64, vdev_id: vid_t, conn_id: u64) {
 }
 
 #[allow(static_mut_refs)]
-unsafe extern "C" fn call(cookie: u64, conn_id: u64, fn_id: u64, args: *const kos_val_t) {
+unsafe extern "C" fn call(cookie: u64, _vdev_id: vid_t, conn_id: u64, fn_id: u64, args: *const kos_val_t) {
 	assert!(VDRIVER.notif_cb.is_some());
 	let ret = (FNS[fn_id as usize].cb)(args);
 

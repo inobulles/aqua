@@ -379,7 +379,7 @@ static void call_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	vdriver_t* const vdriver = conn->vdriver;
 	assert(vdriver != NULL);
 
-	vdriver->call(cookie, action->call.conn_id, action->call.fn_id, action->call.args);
+	vdriver->call(cookie, action->call.vdev_id, action->call.conn_id, action->call.fn_id, action->call.args);
 }
 
 static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {

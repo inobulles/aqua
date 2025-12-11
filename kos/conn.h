@@ -52,6 +52,11 @@ typedef struct {
 	};
 
 	/**
+	 * VDEV ID.
+	 */
+	vid_t vdev_id;
+
+	/**
 	 * The number of functions the VDEV this connection is for supports.
 	 */
 	size_t fn_count;
