@@ -1,0 +1,29 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+
+deps = [
+	Dep.local("../../kos"),
+	Dep.local("../../lib"),
+	Dep.local("../../vdev/audio"),
+]
+
+let src = ["main.c"]
+
+let obj = Cc([
+	"-std=c11", "-g",
+	"-Wall", "-Wextra", "-Werror",
+]).compile(src)
+
+let cmd = Linker([
+	"-L/usr/local/lib",
+	"-lumber", "-lvdriver_loader",
+	"-laqua", "-laqua_root", "-laqua_audio",
+]).link(obj)
+
+install = {
+	cmd: "bin/music-player",
+}
+
+run = ["music-player"]
