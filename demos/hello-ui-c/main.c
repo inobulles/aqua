@@ -4,6 +4,7 @@
 #include <aqua/ui/wgpu.h>
 #include <aqua/wgpu.h>
 #include <aqua/win.h>
+#include <aqua/font.h>
 
 #include <umber.h>
 
@@ -94,6 +95,23 @@ int main(void) {
 		goto err_no_ui_vdev;
 	}
 
+	// Get the best font VDEV.
+
+	kos_vdev_descr_t* const font_vdev = aqua_get_best_vdev(font_init(ctx));
+
+	if (font_vdev == NULL) {
+		LOG_F(init_cls, "No font VDEV found.");
+		goto err_no_font_vdev;
+	}
+
+	LOG_I(init_cls, "Using font VDEV \"%s\".", (char*) font_vdev->human);
+	font_ctx_t font_ctx = font_conn(font_vdev);
+
+	if (font_ctx == NULL) {
+		LOG_F(init_cls, "Failed to connect to font VDEV.");
+		goto err_no_font_vdev;
+	}
+
 	// Create a window.
 
 	win_t const win = win_create(win_ctx);
@@ -143,6 +161,10 @@ err_ui_create:
 	win_destroy(win);
 
 err_win_create:
+
+	font_disconn(font_ctx);
+
+err_no_font_vdev:
 
 	ui_disconn(ui_ctx);
 
