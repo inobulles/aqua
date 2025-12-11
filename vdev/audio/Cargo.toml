@@ -1,0 +1,15 @@
+[package]
+name = "audio"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+bindgen = "0.71.1"
+cc = "1.2.32"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ctor = "0.2.9"
+cpal = "0.16.0"
