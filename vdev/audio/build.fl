@@ -1,0 +1,22 @@
+# This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
+# Copyright (c) 2025 Aymeric Wibo
+
+import bob
+import bob.cargo
+
+deps = [
+	Dep.local("../../kos"),
+]
+
+let target = Cargo.build()
+let lib_path = target + "libaudio.so"
+
+if Platform.os() == "Darwin" {
+	lib_path = target + "libaudio.dylib"
+}
+
+install = {
+	lib_path: "lib/vdriver/aquabsd.black.audio.vdriver",
+}
+
+run = none
