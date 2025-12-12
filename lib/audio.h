@@ -81,3 +81,26 @@ void audio_disconn(audio_ctx_t ctx);
  * @return A flat list of config structs. The caller is responsible for freeing this memory. Returns `NULL` on error.
  */
 audio_config_t const* audio_get_configs(audio_ctx_t ctx, size_t* config_count_ref);
+
+/**
+ * Open a new stream.
+ *
+ * The ringbuffer size dictates how much data we can push in advance to the VDEV.
+ * This is especially useful in high latency/jittery scenarios, such as when streaming audio over the network, where you'd want to set this higher.
+ *
+ * @param ctx The audio library component context.
+ * @param config_sample_format Sample format of the desired config.
+ * @param config_channels Number of channels of the desired config.
+ * @param config_sample_rate Sample rate of the desired config.
+ * @param config_buf_size Buffer size of the desired config.
+ * @param ringbuf_size Size of the ringbuffer, in units of the sample format (i.e. not bytes!).
+ * @returns A stream handle.
+ */
+audio_stream_t audio_open_stream(
+	audio_ctx_t ctx,
+	uint8_t config_sample_format,
+	uint16_t config_channels,
+	uint32_t config_sample_rate,
+	uint32_t config_buf_size,
+	uint32_t ringbuf_size
+);
