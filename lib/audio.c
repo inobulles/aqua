@@ -22,6 +22,7 @@ struct audio_ctx_t {
 
 	struct {
 		uint32_t get_configs;
+		uint32_t open_stream;
 	} fns;
 
 	struct {
@@ -40,6 +41,11 @@ struct audio_ctx_t {
 
 	bool last_success;
 	kos_val_t last_ret;
+};
+
+struct audio_stream_t {
+	audio_ctx_t ctx;
+	kos_opaque_ptr_t opaque_ptr;
 };
 
 static component_t comp;
@@ -160,6 +166,24 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.get_configs = i;
 		}
+
+		if (
+			strcmp(name, "open_stream") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 5 &&
+			fn->params[0].type == KOS_TYPE_U8 &&
+			strcmp((char*) fn->params[0].name, "config_sample_format") == 0 &&
+			fn->params[1].type == KOS_TYPE_U16 &&
+			strcmp((char*) fn->params[1].name, "config_channels") == 0 &&
+			fn->params[2].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[2].name, "config_sample_rate") == 0 &&
+			fn->params[3].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[3].name, "config_buf_size") == 0 &&
+			fn->params[4].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[4].name, "ringbuf_size") == 0
+		) {
+			ctx->fns.open_stream = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -207,6 +231,42 @@ audio_config_t const* audio_get_configs(audio_ctx_t ctx, size_t* config_count_re
 
 	*config_count_ref = ctx->last_ret.buf.size / sizeof(audio_config_t);
 	return ctx->last_ret.buf.ptr;
+}
+
+audio_stream_t audio_open_stream(
+	audio_ctx_t ctx,
+	uint8_t config_sample_format,
+	uint16_t config_channels,
+	uint32_t config_sample_rate,
+	uint32_t config_buf_size,
+	uint32_t ringbuf_size
+) {
+	if (!ctx->is_conn) {
+		return NULL;
+	}
+
+	audio_stream_t const stream = calloc(1, sizeof *stream);
+
+	if (stream == NULL) {
+		fprintf(stderr, "Failed to allocate audio stream.");
+		return NULL;
+	}
+
+	kos_val_t const args[] = {
+		{.u8 = config_sample_format},
+		{.u16 = config_channels},
+		{.u32 = config_sample_rate},
+		{.u32 = config_buf_size},
+		{.u32 = ringbuf_size},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.open_stream, args);
+	kos_flush(true);
+
+	stream->ctx = ctx;
+	stream->opaque_ptr = ctx->last_ret.opaque_ptr;
+
+	return stream;
 }
 
 static component_t comp = {
