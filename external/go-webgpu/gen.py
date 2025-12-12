@@ -4,8 +4,7 @@
 import os
 import re
 
-# TODO Stuff like this isn't converted yet:
-# ref = wgpuDeviceCreateTexture(device, descriptor);
+# TODO Update to upstream, now that they have pulled in my changes.
 
 GIT_URL = "https://github.com/obiwac/webgpu"
 GIT_BRANCH = "feature/v24"
@@ -55,8 +54,8 @@ for f in os.listdir("."):
 	# Replace WebGPU calls (in C).
 
 	code = re.sub(
-		r"\twgpu([A-Z]\w+)\s*\(",
-		lambda m: f"\taqua_wgpu{m.group(1)}(gowebgpu_ctx, ",
+		r"(\s)wgpu([A-Z]\w+)\s*\(",
+		lambda m: f"{m.group(1)}aqua_wgpu{m.group(2)}(gowebgpu_ctx, ",
 		code,
 	)
 
