@@ -73,7 +73,7 @@ static inline void gowebgpu_command_encoder_copy_texture_to_texture(WGPUCommandE
 static inline WGPUCommandBuffer gowebgpu_command_encoder_finish(WGPUCommandEncoder commandEncoder, WGPUCommandBufferDescriptor const * descriptor, WGPUDevice device, void * error_userdata) {
 	WGPUCommandBuffer ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuCommandEncoderFinish(commandEncoder, descriptor);
+	ref = aqua_wgpuCommandEncoderFinish(gowebgpu_ctx, commandEncoder, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
