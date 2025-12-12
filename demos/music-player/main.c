@@ -8,6 +8,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
+#define SAMPLE_RATE 44100
 
 int main(void) {
 	umber_class_t const* const cls = umber_class_new("demos.music-player", UMBER_LVL_VERBOSE, "Super simple music player demo");
@@ -56,8 +59,36 @@ int main(void) {
 	size_t config_count;
 	audio_config_t const* const configs = audio_get_configs(audio_ctx, &config_count);
 
-	(void) configs;
-	LOG_I(cls, "Found %zu configs.", config_count);
+	LOG_I(cls, "Found %zu configs. Looking for F32 (%d).", config_count, AUDIO_SAMPLE_FORMAT_F32);
+
+	audio_config_t const* config = NULL;
+
+	for (size_t i = 0; i < config_count; i++) {
+		if (
+			configs[i].sample_format == AUDIO_SAMPLE_FORMAT_U32 &&
+			SAMPLE_RATE >= configs[i].min_sample_rate &&
+			SAMPLE_RATE <= configs[i].max_sample_rate
+		) {
+			config = &configs[i];
+		}
+	}
+
+	if (config == NULL) {
+		LOG_F(cls, "Couldn't find satisfactory config.");
+		goto err_conn;
+	}
+
+	LOG_I(cls, "Config sample format: %d", config->sample_format);
+	LOG_I(cls, "Config channels: %d", config->channels);
+	LOG_I(cls, "Config sample rate range: [%u; %u]", config->min_sample_rate, config->max_sample_rate);
+	LOG_I(cls, "Config buffer size range: [%u; %u]", config->min_buf_size, config->max_buf_size);
+
+	size_t const RINGBUF_SEC = 3;
+	audio_stream_t const stream = audio_open_stream(audio_ctx, config->sample_format, config->channels, SAMPLE_RATE, 1000, SAMPLE_RATE * RINGBUF_SEC);
+
+	(void) stream;
+
+	sleep(10);
 
 	// TODO Generate sound over here so we can actually play it. Read from MP3 file immediately because cool.
 
