@@ -21,7 +21,7 @@ fn main() {
 	// Build VDRIVER helper library.
 	// TODO A big issue at the moment is that rust_analyzer will fail because it can't run build.rs because obviously BOB_PREFIX is not gonna be set.
 
-	let bob_prefix = ".bob/amd64-FreeBSD/prefix"; // env::var("BOB_PREFIX").unwrap();
+	let bob_prefix = env::var("BOB_PREFIX").unwrap();
 	let inc_path = format!("-I{bob_prefix}/include");
 
 	cc::Build::new().file(vdriver_src).flag(&inc_path).compile("vdriver");
