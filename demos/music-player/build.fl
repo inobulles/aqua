@@ -13,6 +13,7 @@ let src = ["main.c"]
 
 let obj = Cc([
 	"-std=c11", "-g",
+	"-I/usr/local/include",
 	"-Wall", "-Wextra", "-Werror",
 ]).compile(src)
 
@@ -20,6 +21,7 @@ let cmd = Linker([
 	"-L/usr/local/lib",
 	"-lumber", "-lvdriver_loader",
 	"-laqua", "-laqua_root", "-laqua_audio",
+	"-lmpg123",
 ]).link(obj)
 
 install = {
