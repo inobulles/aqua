@@ -36,9 +36,9 @@ int main(void) {
 	for (; it.vdev != NULL; aqua_vdev_it_next(&it)) {
 		kos_vdev_descr_t* const vdev = it.vdev;
 
-		LOG_I(cls, "Found VDEV: %s (spec=%s, pref=%d).", vdev->human, vdev->spec, vdev->pref);
+		LOG_I(cls, "Found VDEV: %s (host_id=%d, spec=%s, pref=%d).", vdev->human, vdev->host_id, vdev->spec, vdev->pref);
 
-		if (audio_vdev == NULL || strncmp((char const*) vdev->human, "oss", 3)) {
+		if (audio_vdev == NULL || strncmp((char const*) vdev->human, "oss", 3) == 0) {
 			audio_vdev = vdev;
 		}
 	}
@@ -68,7 +68,7 @@ int main(void) {
 
 	for (size_t i = 0; i < config_count; i++) {
 		if (
-			configs[i].sample_format == AUDIO_SAMPLE_FORMAT_U32 &&
+			configs[i].sample_format == AUDIO_SAMPLE_FORMAT_F32 &&
 			SAMPLE_RATE >= configs[i].min_sample_rate &&
 			SAMPLE_RATE <= configs[i].max_sample_rate
 		) {
