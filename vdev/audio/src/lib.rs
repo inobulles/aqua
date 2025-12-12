@@ -15,7 +15,7 @@ use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
-use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, SampleFormat};
 use ctor::ctor;
 use once_cell::sync::Lazy;
@@ -79,7 +79,30 @@ struct StreamConfig {
 	channels: u16,
 }
 
-static FNS: [Fn; 1] = [
+struct Stream {
+	stream: cpal::Stream,
+	// TODO Ringbuffer goes here.
+}
+
+fn open_stream<T>(dev: &cpal::Device, config: cpal::StreamConfig) -> Stream
+where
+	T: cpal::SizedSample + cpal::FromSample<f32>,
+{
+	// Maybe this should return our own stream object which contains not only the CPAL stream object, but also the ring buffer we write to through our API.
+
+	Stream {
+		stream: dev
+			.build_output_stream(
+				&config,
+				move |data: &mut [T], _: &cpal::OutputCallbackInfo| println!("TODO"),
+				|err| eprintln!("an error occurred on stream: {err}"),
+				None,
+			)
+			.expect("Failed to build stream."),
+	}
+}
+
+static FNS: [Fn; 3] = [
 	Fn {
 		name: "get_configs",
 		ret_type: kos_type_t_KOS_TYPE_BUF,
@@ -118,6 +141,61 @@ static FNS: [Fn; 1] = [
 					size: out.len() as u32,
 					ptr: out.as_ptr() as *const c_void,
 				},
+			})
+		},
+	},
+	Fn {
+		name: "open_stream",
+		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		params: &[
+			Param {
+				name: "sample_format",
+				kind: kos_type_t_KOS_TYPE_U8,
+			},
+			Param {
+				name: "channels",
+				kind: kos_type_t_KOS_TYPE_U16,
+			},
+			Param {
+				name: "sample_rate",
+				kind: kos_type_t_KOS_TYPE_U32,
+			},
+			Param {
+				name: "buf_size",
+				kind: kos_type_t_KOS_TYPE_U32,
+			},
+		],
+		cb: |vdev_id, args| {
+			let dev = VDEV_MAP.lock().unwrap().get(&vdev_id).cloned().unwrap();
+
+			let sample_format = unsafe { (*args).u8_ };
+			let channels = unsafe { (*args.add(1)).u16_ };
+			let sample_rate = unsafe { (*args.add(2)).u32_ };
+			let buf_size = unsafe { (*args.add(3)).u32_ };
+
+			let config = cpal::StreamConfig {
+				channels: channels,
+				sample_rate: cpal::SampleRate(sample_rate),
+				buffer_size: cpal::BufferSize::Fixed(buf_size),
+			};
+
+			let stream = Box::new(match sample_format {
+				x if x == SampleFormat::I8 as u8 => open_stream::<i8>(&dev, config),
+				x if x == SampleFormat::I16 as u8 => open_stream::<i16>(&dev, config),
+				x if x == SampleFormat::I24 as u8 => open_stream::<cpal::I24>(&dev, config),
+				x if x == SampleFormat::I32 as u8 => open_stream::<i32>(&dev, config),
+				x if x == SampleFormat::I64 as u8 => open_stream::<i64>(&dev, config),
+				x if x == SampleFormat::U8 as u8 => open_stream::<u8>(&dev, config),
+				x if x == SampleFormat::U16 as u8 => open_stream::<u16>(&dev, config),
+				x if x == SampleFormat::U32 as u8 => open_stream::<u32>(&dev, config),
+				x if x == SampleFormat::U64 as u8 => open_stream::<u64>(&dev, config),
+				x if x == SampleFormat::F32 as u8 => open_stream::<f32>(&dev, config),
+				x if x == SampleFormat::F64 as u8 => open_stream::<f64>(&dev, config),
+				sample_format => panic!("Unsupported sample format '{sample_format}'"),
+			});
+
+			Some(kos_val_t {
+				opaque_ptr: unsafe { vdriver_make_opaque_ptr(Box::into_raw(stream) as *mut c_void) },
 			})
 		},
 	},
