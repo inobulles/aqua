@@ -14,8 +14,8 @@ extern crate ringbuf;
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::os::raw::c_char;
-use std::{ptr, slice};
 use std::sync::{Arc, Mutex};
+use std::{ptr, slice};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, SampleFormat};
@@ -74,6 +74,7 @@ struct Fn {
 }
 
 #[repr(C)]
+#[derive(Debug)]
 struct StreamConfig {
 	sample_format: u8,
 	min_sample_rate: u32,
@@ -188,16 +189,17 @@ static FNS: [Fn; 4] = [
 
 			// We need to allocate this memory in C because the KOS is responsible for freeing this memory.
 
-			let ptr = unsafe { malloc(out.len() as u64) } as *mut u8;
+			let bytes = out.len() * std::mem::size_of::<StreamConfig>();
+			let ptr = unsafe { malloc(bytes as u64) } as *mut u8;
 			assert!(!ptr.is_null(), "Failed to allocate.");
 
 			unsafe {
-				ptr::copy_nonoverlapping(out.as_ptr() as *mut u8, ptr, out.len());
+				ptr::copy_nonoverlapping(out.as_ptr() as *mut u8, ptr, bytes);
 			}
 
 			Some(kos_val_t {
 				buf: kos_val_t__bindgen_ty_1 {
-					size: out.len() as u32,
+					size: bytes as u32,
 					ptr: ptr as *const c_void,
 				},
 			})
