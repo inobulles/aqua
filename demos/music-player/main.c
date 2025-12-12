@@ -10,7 +10,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#define SAMPLE_RATE 44100
+#include <mpg123.h>
+
+#define SAMPLE_RATE 48000
+#define MP3_PATH "misery-business.mp3"
 
 int main(void) {
 	umber_class_t const* const cls = umber_class_new("demos.music-player", UMBER_LVL_VERBOSE, "Super simple music player demo");
@@ -83,14 +86,67 @@ int main(void) {
 	LOG_I(cls, "Config sample rate range: [%u; %u]", config->min_sample_rate, config->max_sample_rate);
 	LOG_I(cls, "Config buffer size range: [%u; %u]", config->min_buf_size, config->max_buf_size);
 
-	size_t const RINGBUF_SEC = 3;
-	audio_stream_t const stream = audio_open_stream(audio_ctx, config->sample_format, config->channels, SAMPLE_RATE, 1000, SAMPLE_RATE * RINGBUF_SEC);
+	size_t const RINGBUF_SEC = 20;
+	audio_stream_t const stream = audio_open_stream(audio_ctx, config->sample_format, 1, SAMPLE_RATE, 1000, SAMPLE_RATE * RINGBUF_SEC);
 
-	(void) stream;
+	// MP3 decoding.
 
-	sleep(10);
+	mpg123_handle* mh = NULL;
+	int err = MPG123_OK;
 
-	// TODO Generate sound over here so we can actually play it. Read from MP3 file immediately because cool.
+	if (mpg123_init() != MPG123_OK) {
+		LOG_F(cls, "mpg123_init() failed.");
+		return EXIT_FAILURE;
+	}
+
+	mh = mpg123_new(NULL, &err);
+	if (!mh) {
+		LOG_F(cls, "mpg123_new failed: %s", mpg123_plain_strerror(err));
+		return EXIT_FAILURE;
+	}
+
+	mpg123_param(mh, MPG123_VERBOSE, 2, 0.0);
+
+	mpg123_format_none(mh);
+	mpg123_format(mh, SAMPLE_RATE, 1, MPG123_ENC_FLOAT_32);
+
+	if (mpg123_open(mh, MP3_PATH) != MPG123_OK) {
+		LOG_F(cls, "Failed to open MP3: %s", MP3_PATH);
+		return EXIT_FAILURE;
+	}
+
+	size_t temp_buf_bytes = 4096 * config->channels * sizeof(float);
+	float* decode_buf = malloc(temp_buf_bytes);
+
+	while (1) {
+		size_t done = 0;
+		int ret = mpg123_read(mh, (unsigned char*) decode_buf, temp_buf_bytes, &done);
+
+		if (ret == MPG123_DONE) {
+			LOG_I(cls, "Finished decoding.");
+			break;
+		}
+		if (ret != MPG123_OK && ret != MPG123_NEW_FORMAT) {
+			LOG_F(cls, "mpg123_read error: %s", mpg123_strerror(mh));
+			break;
+		}
+
+		if (done == 0) {
+			continue;
+		}
+
+		// Push decoded PCM to audio stream.
+
+		audio_stream_write(stream, decode_buf, done);
+	}
+
+	free(decode_buf);
+	mpg123_close(mh);
+	mpg123_delete(mh);
+	mpg123_exit();
+
+	LOG_I(cls, "Waiting for playback...");
+	sleep(20);
 
 	rv = EXIT_SUCCESS;
 	audio_disconn(audio_ctx);
