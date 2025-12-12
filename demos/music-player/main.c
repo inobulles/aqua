@@ -32,7 +32,7 @@ int main(void) {
 
 		LOG_I(cls, "Found VDEV: %s (spec=%s, pref=%d).", vdev->human, vdev->spec, vdev->pref);
 
-		if (audio_vdev == NULL || vdev->pref > audio_vdev->pref) {
+		if (audio_vdev == NULL || strncmp((char const*) vdev->human, "oss", 3)) {
 			audio_vdev = vdev;
 		}
 	}
@@ -52,6 +52,12 @@ int main(void) {
 		LOG_F(cls, "Failed to connect to audio VDEV.");
 		goto err_conn;
 	}
+
+	size_t config_count;
+	audio_config_t const* const configs = audio_get_configs(audio_ctx, &config_count);
+
+	(void) configs;
+	LOG_I(cls, "Found %zu configs.", config_count);
 
 	// TODO Generate sound over here so we can actually play it. Read from MP3 file immediately because cool.
 
