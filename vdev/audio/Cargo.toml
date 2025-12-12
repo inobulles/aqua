@@ -14,3 +14,4 @@ crate-type = ["cdylib"]
 ctor = "0.2.9"
 cpal = "0.16.0"
 once_cell = "1.21.3"
+ringbuf = "0.4.8"
