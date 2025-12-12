@@ -13,11 +13,31 @@
 typedef struct audio_ctx_t* audio_ctx_t;
 
 /**
- * An audio stream config.
+ * Audio stream object.
+ */
+typedef struct audio_stream_t* audio_stream_t;
+
+/**
+ * Sample formats.
+ */
+uint8_t AUDIO_SAMPLE_FORMAT_I8;
+uint8_t AUDIO_SAMPLE_FORMAT_I16;
+uint8_t AUDIO_SAMPLE_FORMAT_I24;
+uint8_t AUDIO_SAMPLE_FORMAT_I32;
+uint8_t AUDIO_SAMPLE_FORMAT_I64;
+uint8_t AUDIO_SAMPLE_FORMAT_U8;
+uint8_t AUDIO_SAMPLE_FORMAT_U16;
+uint8_t AUDIO_SAMPLE_FORMAT_U32;
+uint8_t AUDIO_SAMPLE_FORMAT_U64;
+uint8_t AUDIO_SAMPLE_FORMAT_F32;
+uint8_t AUDIO_SAMPLE_FORMAT_F64;
+
+/**
+ * An audio stream config range.
  *
  * TODO Document these members.
  */
-typedef struct __attribute__((packed)) {
+typedef struct {
 	uint8_t sample_format;
 	uint32_t min_sample_rate;
 	uint32_t max_sample_rate;
