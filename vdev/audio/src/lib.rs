@@ -9,16 +9,20 @@
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate cpal;
+extern crate ringbuf;
 
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::os::raw::c_char;
-use std::sync::Mutex;
+use std::slice;
+use std::sync::{Arc, Mutex};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, SampleFormat};
 use ctor::ctor;
 use once_cell::sync::Lazy;
+use ringbuf::traits::{Consumer, Producer, Split};
+use ringbuf::{CachingProd, HeapRb, SharedRb};
 
 const SPEC: &str = "aquabsd.black.audio";
 const VERS: u32 = 0;
@@ -81,28 +85,74 @@ struct StreamConfig {
 
 struct Stream {
 	stream: cpal::Stream,
-	// TODO Ringbuffer goes here.
+	ringbuf: CachingProd<Arc<SharedRb<ringbuf::storage::Heap<u8>>>>,
 }
 
-fn open_stream<T>(dev: &cpal::Device, config: cpal::StreamConfig) -> Stream
+fn open_stream<T>(dev: &cpal::Device, config: cpal::StreamConfig, ringbuf_size: usize) -> Stream
 where
 	T: cpal::SizedSample + cpal::FromSample<f32>,
 {
-	// Maybe this should return our own stream object which contains not only the CPAL stream object, but also the ring buffer we write to through our API.
+	let sample_size = std::mem::size_of::<T>();
+	let ringbuf = HeapRb::new(ringbuf_size * sample_size);
+	let (prod, mut cons) = ringbuf.split();
 
-	Stream {
-		stream: dev
-			.build_output_stream(
-				&config,
-				move |data: &mut [T], _: &cpal::OutputCallbackInfo| println!("TODO"),
-				|err| eprintln!("an error occurred on stream: {err}"),
-				None,
-			)
-			.expect("Failed to build stream."),
-	}
+	let stream = dev
+		.build_output_stream(
+			&config,
+			move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
+				// TODO Figure out multiple channels.
+
+				for frame in data.chunks_mut(config.channels as usize) {
+					for sample in frame.iter_mut() {
+						let mut buf = [0u8; 8]; // Max size for u64/f64.
+						let needed = sample_size.min(buf.len());
+
+						let got = cons.pop_slice(&mut buf[..needed]);
+
+						if got < needed {
+							// Underrun, output silence.
+
+							*sample = T::EQUILIBRIUM;
+							continue;
+						}
+
+						let val = match sample_size {
+							1 => T::from_sample(i8::from_le_bytes([buf[0]]) as f32),
+							2 => {
+								let v = i16::from_le_bytes(buf[..2].try_into().unwrap());
+								T::from_sample(v as f32)
+							}
+							3 => {
+								let v = i32::from_le_bytes([buf[0], buf[1], buf[2], 0]);
+								T::from_sample(v as f32)
+							}
+							4 => {
+								let v = f32::from_le_bytes(buf[..4].try_into().unwrap());
+								T::from_sample(v)
+							}
+							8 => {
+								let v = f64::from_le_bytes(buf[..8].try_into().unwrap());
+								T::from_sample(v as f32)
+							}
+							_ => {
+								*sample = T::EQUILIBRIUM;
+								continue;
+							}
+						};
+
+						*sample = val;
+					}
+				}
+			},
+			|err| eprintln!("an error occurred on stream: {err}"),
+			None,
+		)
+		.expect("Failed to build stream.");
+
+	Stream { ringbuf: prod, stream }
 }
 
-static FNS: [Fn; 3] = [
+static FNS: [Fn; 4] = [
 	Fn {
 		name: "get_configs",
 		ret_type: kos_type_t_KOS_TYPE_BUF,
@@ -149,19 +199,23 @@ static FNS: [Fn; 3] = [
 		ret_type: kos_type_t_KOS_TYPE_OPAQUE_PTR,
 		params: &[
 			Param {
-				name: "sample_format",
+				name: "config_sample_format",
 				kind: kos_type_t_KOS_TYPE_U8,
 			},
 			Param {
-				name: "channels",
+				name: "config_channels",
 				kind: kos_type_t_KOS_TYPE_U16,
 			},
 			Param {
-				name: "sample_rate",
+				name: "config_sample_rate",
 				kind: kos_type_t_KOS_TYPE_U32,
 			},
 			Param {
-				name: "buf_size",
+				name: "config_buf_size",
+				kind: kos_type_t_KOS_TYPE_U32,
+			},
+			Param {
+				name: "ringbuf_size",
 				kind: kos_type_t_KOS_TYPE_U32,
 			},
 		],
@@ -172,6 +226,7 @@ static FNS: [Fn; 3] = [
 			let channels = unsafe { (*args.add(1)).u16_ };
 			let sample_rate = unsafe { (*args.add(2)).u32_ };
 			let buf_size = unsafe { (*args.add(3)).u32_ };
+			let ringbuf_size = unsafe { (*args.add(4)).u32_ } as usize;
 
 			let config = cpal::StreamConfig {
 				channels: channels,
@@ -180,23 +235,53 @@ static FNS: [Fn; 3] = [
 			};
 
 			let stream = Box::new(match sample_format {
-				x if x == SampleFormat::I8 as u8 => open_stream::<i8>(&dev, config),
-				x if x == SampleFormat::I16 as u8 => open_stream::<i16>(&dev, config),
-				x if x == SampleFormat::I24 as u8 => open_stream::<cpal::I24>(&dev, config),
-				x if x == SampleFormat::I32 as u8 => open_stream::<i32>(&dev, config),
-				x if x == SampleFormat::I64 as u8 => open_stream::<i64>(&dev, config),
-				x if x == SampleFormat::U8 as u8 => open_stream::<u8>(&dev, config),
-				x if x == SampleFormat::U16 as u8 => open_stream::<u16>(&dev, config),
-				x if x == SampleFormat::U32 as u8 => open_stream::<u32>(&dev, config),
-				x if x == SampleFormat::U64 as u8 => open_stream::<u64>(&dev, config),
-				x if x == SampleFormat::F32 as u8 => open_stream::<f32>(&dev, config),
-				x if x == SampleFormat::F64 as u8 => open_stream::<f64>(&dev, config),
+				x if x == SampleFormat::I8 as u8 => open_stream::<i8>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::I16 as u8 => open_stream::<i16>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::I24 as u8 => open_stream::<cpal::I24>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::I32 as u8 => open_stream::<i32>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::I64 as u8 => open_stream::<i64>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::U8 as u8 => open_stream::<u8>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::U16 as u8 => open_stream::<u16>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::U32 as u8 => open_stream::<u32>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::U64 as u8 => open_stream::<u64>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::F32 as u8 => open_stream::<f32>(&dev, config, ringbuf_size),
+				x if x == SampleFormat::F64 as u8 => open_stream::<f64>(&dev, config, ringbuf_size),
 				sample_format => panic!("Unsupported sample format '{sample_format}'"),
 			});
 
 			Some(kos_val_t {
 				opaque_ptr: unsafe { vdriver_make_opaque_ptr(Box::into_raw(stream) as *mut c_void) },
 			})
+		},
+	},
+	Fn {
+		name: "write",
+		ret_type: kos_type_t_KOS_TYPE_VOID,
+		params: &[
+			Param {
+				name: "stream",
+				kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+			},
+			Param {
+				name: "buf",
+				kind: kos_type_t_KOS_TYPE_BUF,
+			},
+		],
+		cb: |_vdev_id, args| {
+			let stream_ptr = unsafe { vdriver_unwrap_local_opaque_ptr((*args).opaque_ptr) };
+			assert!(
+				!stream_ptr.is_null(),
+				"Non-local opaque pointer passed to play for stream."
+			);
+
+			let mut stream = unsafe { Box::from_raw(stream_ptr as *mut Stream) };
+			let buf = unsafe { (*args.add(1)).buf };
+			let slice = unsafe { slice::from_raw_parts(buf.ptr as *const u8, buf.size as usize) };
+
+			stream.ringbuf.push_slice(slice);
+
+			let _ = Box::into_raw(stream); // Don't drop memory.
+			None
 		},
 	},
 	Fn {
