@@ -6,3 +6,7 @@ target
 tests/pool
 
 demos/music-player/misery-business.mp3
+
+external/go-webgpu/libwgpu_native.a
+external/go-webgpu/webgpu.h
+external/go-webgpu/wgpu.h
