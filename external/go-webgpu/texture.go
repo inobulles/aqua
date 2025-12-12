@@ -13,7 +13,7 @@ extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUE
 static inline WGPUTextureView gowebgpu_texture_create_view(WGPUTexture texture, WGPUTextureViewDescriptor const * descriptor, WGPUDevice device, void * error_userdata) {
 	WGPUTextureView ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuTextureCreateView(texture, descriptor);
+	ref = aqua_wgpuTextureCreateView(gowebgpu_ctx, texture, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,

@@ -4,6 +4,9 @@
 import os
 import re
 
+# TODO Stuff like this isn't converted yet:
+# ref = wgpuDeviceCreateTexture(device, descriptor);
+
 GIT_URL = "https://github.com/obiwac/webgpu"
 GIT_BRANCH = "feature/v24"
 
