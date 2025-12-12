@@ -24,6 +24,20 @@ struct audio_ctx_t {
 		uint32_t get_configs;
 	} fns;
 
+	struct {
+		uint8_t SAMPLE_FORMAT_I8;
+		uint8_t SAMPLE_FORMAT_I16;
+		uint8_t SAMPLE_FORMAT_I24;
+		uint8_t SAMPLE_FORMAT_I32;
+		uint8_t SAMPLE_FORMAT_I64;
+		uint8_t SAMPLE_FORMAT_U8;
+		uint8_t SAMPLE_FORMAT_U16;
+		uint8_t SAMPLE_FORMAT_U32;
+		uint8_t SAMPLE_FORMAT_U64;
+		uint8_t SAMPLE_FORMAT_F32;
+		uint8_t SAMPLE_FORMAT_F64;
+	} consts;
+
 	bool last_success;
 	kos_val_t last_ret;
 };
@@ -94,6 +108,42 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 	ctx->conn_id = notif->conn_id;
 	ctx->is_conn = true;
+
+	// Read constants.
+
+	memset(&ctx->consts, 0xFF, sizeof ctx->consts);
+
+	for (size_t i = 0; i < notif->conn.const_count; i++) {
+		kos_const_t const* const c = &notif->conn.consts[i];
+		char const* const name = (void*) c->name;
+
+#define SAMPLE_FORMAT_CONST(type)   \
+	if (strcmp(name, #type) == 0) {  \
+		ctx->consts.type = c->val.u8; \
+		AUDIO_##type = c->val.u8; /* XXX Yeah, this is disgusting. */ \
+	}
+
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_I8);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_I16);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_I24);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_I32);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_I64);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_U8);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_U16);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_U32);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_U64);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_F32);
+		SAMPLE_FORMAT_CONST(SAMPLE_FORMAT_F64);
+
+#undef SAMPLE_FORMAT_CONST
+	}
+
+	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
+		if (((uint32_t*) &ctx->consts)[i] == -1u) {
+			ctx->is_conn = false;
+			break;
+		}
+	}
 
 	// Read functions.
 
