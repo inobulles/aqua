@@ -14,7 +14,7 @@ extern crate ringbuf;
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::os::raw::c_char;
-use std::slice;
+use std::{ptr, slice};
 use std::sync::{Arc, Mutex};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -186,10 +186,19 @@ static FNS: [Fn; 4] = [
 				}
 			}
 
+			// We need to allocate this memory in C because the KOS is responsible for freeing this memory.
+
+			let ptr = unsafe { malloc(out.len() as u64) } as *mut u8;
+			assert!(!ptr.is_null(), "Failed to allocate.");
+
+			unsafe {
+				ptr::copy_nonoverlapping(out.as_ptr() as *mut u8, ptr, out.len());
+			}
+
 			Some(kos_val_t {
 				buf: kos_val_t__bindgen_ty_1 {
 					size: out.len() as u32,
-					ptr: out.as_ptr() as *const c_void,
+					ptr: ptr as *const c_void,
 				},
 			})
 		},
