@@ -23,6 +23,7 @@ struct audio_ctx_t {
 	struct {
 		uint32_t get_configs;
 		uint32_t open_stream;
+		uint32_t write;
 	} fns;
 
 	struct {
@@ -88,6 +89,11 @@ audio_ctx_t audio_conn(kos_vdev_descr_t const* vdev) {
 
 	kos_flush(true);
 
+	if (!ctx->is_conn) {
+		free(ctx);
+		return NULL;
+	}
+
 	return ctx;
 }
 
@@ -123,9 +129,9 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		kos_const_t const* const c = &notif->conn.consts[i];
 		char const* const name = (void*) c->name;
 
-#define SAMPLE_FORMAT_CONST(type)   \
-	if (strcmp(name, #type) == 0) {  \
-		ctx->consts.type = c->val.u8; \
+#define SAMPLE_FORMAT_CONST(type)                                   \
+	if (strcmp(name, #type) == 0) {                                  \
+		ctx->consts.type = c->val.u8;                                 \
 		AUDIO_##type = c->val.u8; /* XXX Yeah, this is disgusting. */ \
 	}
 
@@ -183,6 +189,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[4].name, "ringbuf_size") == 0
 		) {
 			ctx->fns.open_stream = i;
+		}
+
+		if (
+			strcmp(name, "write") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "stream") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "buf") == 0
+		) {
+			ctx->fns.write = i;
 		}
 	}
 
@@ -267,6 +285,25 @@ audio_stream_t audio_open_stream(
 	stream->opaque_ptr = ctx->last_ret.opaque_ptr;
 
 	return stream;
+}
+
+void audio_stream_write(audio_stream_t stream, void* buf, size_t len) {
+	audio_ctx_t const ctx = stream->ctx;
+
+	if (!ctx->is_conn) {
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = stream->opaque_ptr},
+		{.buf = {
+			 .ptr = buf,
+			 .size = len,
+		 }},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.write, args);
+	kos_flush(true);
 }
 
 static component_t comp = {
