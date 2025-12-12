@@ -74,7 +74,7 @@ audio_ctx_t audio_conn(kos_vdev_descr_t const* vdev);
 void audio_disconn(audio_ctx_t ctx);
 
 /**
- * Get all streaming configs supported by VDEV.
+ * Get all audio streaming configs supported by an audio VDEV.
  *
  * @param ctx The audio library component context.
  * @param config_count_ref Reference to config count.
@@ -83,7 +83,7 @@ void audio_disconn(audio_ctx_t ctx);
 audio_config_t const* audio_get_configs(audio_ctx_t ctx, size_t* config_count_ref);
 
 /**
- * Open a new stream.
+ * Open a new audio stream.
  *
  * The ringbuffer size dictates how much data we can push in advance to the VDEV.
  * This is especially useful in high latency/jittery scenarios, such as when streaming audio over the network, where you'd want to set this higher.
@@ -104,3 +104,12 @@ audio_stream_t audio_open_stream(
 	uint32_t config_buf_size,
 	uint32_t ringbuf_size
 );
+
+/**
+ * Write samples to an audio stream.
+ *
+ * @param stream The audio stream to write samples to.
+ * @param buf The buffer of samples to write.
+ * @param len The length of the sample buffer. This should be a multiple of the size of the sampling format selected when opening the stream.
+ */
+void audio_stream_write(audio_stream_t stream, void* buf, size_t len);
