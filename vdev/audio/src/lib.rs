@@ -199,6 +199,27 @@ static FNS: [Fn; 3] = [
 			})
 		},
 	},
+	Fn {
+		name: "play",
+		ret_type: kos_type_t_KOS_TYPE_VOID,
+		params: &[Param {
+			name: "stream",
+			kind: kos_type_t_KOS_TYPE_OPAQUE_PTR,
+		}],
+		cb: |_vdev_id, args| {
+			let stream_ptr = unsafe { vdriver_unwrap_local_opaque_ptr((*args).opaque_ptr) };
+			assert!(
+				!stream_ptr.is_null(),
+				"Non-local opaque pointer passed to play for stream."
+			);
+
+			let stream = unsafe { Box::from_raw(stream_ptr as *mut Stream) };
+			stream.stream.play().expect("failed to play stream");
+
+			let _ = Box::into_raw(stream); // Don't drop memory.
+			None
+		},
+	},
 	// TODO The API I want is to simply open a stream and be able to shove data to it continuously.
 	// To do this, we should have an open stream function, a write function, a play function, and a pause function (so we can buffer a bunch of frames if we're expecting a lot of network latency/jitter).
 	// The CPAL API where it calls back to ask for data won't work for us because then we'll have minimum 1.5 RTT latency over the network rather than just 0.5 RTT.
