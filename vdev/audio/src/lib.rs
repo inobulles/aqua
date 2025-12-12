@@ -150,6 +150,10 @@ where
 		)
 		.expect("Failed to build stream.");
 
+	// Some platforms will play automatically, but some wont, so we do have to do this anyways.
+
+	stream.play().unwrap();
+
 	Stream { ringbuf: prod, stream }
 }
 
