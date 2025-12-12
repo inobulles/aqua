@@ -13,7 +13,7 @@ extern void gowebgpu_error_callback_c(enum WGPUPopErrorScopeStatus status, WGPUE
 static inline WGPUBindGroup gowebgpu_device_create_bind_group(WGPUDevice device, WGPUBindGroupDescriptor const * descriptor, void * error_userdata) {
 	WGPUBindGroup ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateBindGroup(device, descriptor);
+	ref = aqua_wgpuDeviceCreateBindGroup(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -28,7 +28,7 @@ static inline WGPUBindGroup gowebgpu_device_create_bind_group(WGPUDevice device,
 static inline WGPUBindGroupLayout gowebgpu_device_create_bind_group_layout(WGPUDevice device, WGPUBindGroupLayoutDescriptor const * descriptor, void * error_userdata) {
 	WGPUBindGroupLayout ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateBindGroupLayout(device, descriptor);
+	ref = aqua_wgpuDeviceCreateBindGroupLayout(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -43,7 +43,7 @@ static inline WGPUBindGroupLayout gowebgpu_device_create_bind_group_layout(WGPUD
 static inline WGPUBuffer gowebgpu_device_create_buffer(WGPUDevice device, WGPUBufferDescriptor const * descriptor, void * error_userdata) {
 	WGPUBuffer ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateBuffer(device, descriptor);
+	ref = aqua_wgpuDeviceCreateBuffer(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -88,7 +88,7 @@ static inline WGPUComputePipeline gowebgpu_device_create_compute_pipeline(WGPUDe
 static inline WGPUPipelineLayout gowebgpu_device_create_pipeline_layout(WGPUDevice device, WGPUPipelineLayoutDescriptor const * descriptor, void * error_userdata) {
 	WGPUPipelineLayout ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreatePipelineLayout(device, descriptor);
+	ref = aqua_wgpuDeviceCreatePipelineLayout(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -118,7 +118,7 @@ static inline WGPUQuerySet gowebgpu_device_create_query_set(WGPUDevice device, W
 static inline WGPURenderPipeline gowebgpu_device_create_render_pipeline(WGPUDevice device, WGPURenderPipelineDescriptor const * descriptor, void * error_userdata) {
 	WGPURenderPipeline ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateRenderPipeline(device, descriptor);
+	ref = aqua_wgpuDeviceCreateRenderPipeline(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -133,7 +133,7 @@ static inline WGPURenderPipeline gowebgpu_device_create_render_pipeline(WGPUDevi
 static inline WGPUSampler gowebgpu_device_create_sampler(WGPUDevice device, WGPUSamplerDescriptor const * descriptor, void * error_userdata) {
 	WGPUSampler ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateSampler(device, descriptor);
+	ref = aqua_wgpuDeviceCreateSampler(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -148,7 +148,7 @@ static inline WGPUSampler gowebgpu_device_create_sampler(WGPUDevice device, WGPU
 static inline WGPUShaderModule gowebgpu_device_create_shader_module(WGPUDevice device, WGPUShaderModuleDescriptor const * descriptor, void * error_userdata) {
 	WGPUShaderModule ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateShaderModule(device, descriptor);
+	ref = aqua_wgpuDeviceCreateShaderModule(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -163,7 +163,7 @@ static inline WGPUShaderModule gowebgpu_device_create_shader_module(WGPUDevice d
 static inline WGPUTexture gowebgpu_device_create_texture(WGPUDevice device, WGPUTextureDescriptor const * descriptor, void * error_userdata) {
 	WGPUTexture ref = NULL;
 	aqua_wgpuDevicePushErrorScope(gowebgpu_ctx, device, WGPUErrorFilter_Validation);
-	ref = wgpuDeviceCreateTexture(device, descriptor);
+	ref = aqua_wgpuDeviceCreateTexture(gowebgpu_ctx, device, descriptor);
 
 	WGPUPopErrorScopeCallbackInfo const err_cb = {
 		.callback = gowebgpu_error_callback_c,
@@ -190,7 +190,7 @@ type Device struct {
 type errorCallback func(typ ErrorType, message string)
 
 //export gowebgpu_error_callback_go
-func gowebgpu_error_callback_go(_type C.WGPUErrorType, message *C.WGPUStringView, userdata unsafe.Pointer) {
+func gowebgpu_error_callback_go(_type C.WGPUErrorType, message C.WGPUStringView, userdata unsafe.Pointer) {
 	handle := *(*cgo.Handle)(userdata)
 	cb, ok := handle.Value().(errorCallback)
 	if ok {
