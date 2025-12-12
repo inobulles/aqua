@@ -113,7 +113,8 @@ where
 						if got < needed {
 							// Underrun, output silence.
 
-							*sample = T::EQUILIBRIUM;
+							// *sample = T::EQUILIBRIUM;
+							*sample = T::from_sample(unsafe { f32::from_bits(i32::cast_unsigned(rand())) });
 							continue;
 						}
 
