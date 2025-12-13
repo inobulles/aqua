@@ -20,6 +20,7 @@ import (
 type WgpuBackend struct {
 	Backend
 	dev    wgpu.Device
+	queue  *wgpu.Queue
 	format wgpu.TextureFormat
 
 	title_font *Font
@@ -287,9 +288,11 @@ func GoUiBackendWgpuInit(
 	}
 
 	wgpu.SetGlobalCtx(unsafe.Pointer(uintptr(cid)))
+	dev := wgpu.CreateDeviceFromRaw(dev_raw)
 
 	backend := &WgpuBackend{
-		dev:        wgpu.CreateDeviceFromRaw(dev_raw),
+		dev:        dev,
+		queue:      dev.GetQueue(),
 		format:     wgpu.TextureFormat(format),
 		title_font: title_font,
 	}
