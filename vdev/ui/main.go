@@ -46,7 +46,7 @@ func GoUiGetRoot(ui_raw C.uintptr_t) C.uintptr_t {
 	ui_handle := cgo.Handle(ui_raw)
 	ui := ui_handle.Value().(*Ui)
 
-	root_handle := cgo.NewHandle(ui.root)
+	root_handle := cgo.NewHandle(&ui.root)
 	return C.uintptr_t(root_handle)
 }
 
