@@ -49,3 +49,8 @@ struct ui_t {
 	ui_ctx_t ctx;
 	kos_opaque_ptr_t opaque_ptr;
 };
+
+struct ui_elem_t {
+	ui_t ui;
+	kos_opaque_ptr_t opaque_ptr;
+};

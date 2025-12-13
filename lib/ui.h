@@ -105,7 +105,7 @@ void ui_destroy(ui_t ui);
  * You must first get the root element of the UI before you can add any elements to it with {@link ui_add}.
  *
  * @param ui The UI object.
- * @return The root element.
+ * @return The root element or `NULL` if something went wrong. This is allocated on the heap and must be freed with {@link free}.
  */
 ui_elem_t ui_get_root(ui_t ui);
 
