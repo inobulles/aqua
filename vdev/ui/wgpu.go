@@ -287,7 +287,10 @@ func GoUiBackendWgpuRender(
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	backend := ui.backend.(*WgpuBackend)
 
-	ui.reflow(x_res, y_res)
+	if ui.dirty {
+		ui.reflow(x_res, y_res)
+		ui.dirty = false
+	}
 
 	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
 	frame := wgpu.TextureViewFromRaw(frame_raw)
