@@ -96,7 +96,14 @@ ui_t ui_create(ui_ctx_t ctx) {
 	}
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.create, NULL);
+	ctx->last_success = false;
 	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_E(cls, "Failed to create UI.");
+		free(ui);
+		return NULL;
+	}
 
 	ui->ctx = ctx;
 	ui->opaque_ptr = ctx->last_ret.opaque_ptr;
