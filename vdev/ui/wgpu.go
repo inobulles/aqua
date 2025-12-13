@@ -52,6 +52,7 @@ func GoUiBackendWgpuRender(
 	ui_raw C.uintptr_t,
 	frame_raw unsafe.Pointer,
 	cmd_enc_raw unsafe.Pointer,
+	x_res, y_res uint32,
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	backend := ui.backend.(*WgpuBackend)

@@ -113,11 +113,13 @@ static kos_fn_t const FNS[] = {
 	{
 		.name = "backend_wgpu_render",
 		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.param_count = 5,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "ui"},
 			{KOS_TYPE_OPAQUE_PTR, "frame"},
 			{KOS_TYPE_OPAQUE_PTR, "command_encoder"},
+			{KOS_TYPE_U32, "x_res"},
+			{KOS_TYPE_U32, "y_res"},
 		},
 	},
 };
