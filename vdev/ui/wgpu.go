@@ -7,7 +7,10 @@ package main
 #include "../../kos/lib/vdriver.h"
 */
 import "C"
+
 import (
+	"fmt"
+	"image"
 	"runtime/cgo"
 	"unsafe"
 
@@ -20,6 +23,180 @@ type WgpuBackend struct {
 	format wgpu.TextureFormat
 
 	title_font *Font
+
+	regular_pipeline *RegularPipeline
+}
+
+type WgpuBackendTextData struct {
+	data *image.RGBA
+
+	tex     *wgpu.Texture
+	view    *wgpu.TextureView
+	sampler *wgpu.Sampler
+
+	bind_group *wgpu.BindGroup
+
+	// TODO Probably can be generically reused in a quad kinda thing.
+
+	vbo         *wgpu.Buffer
+	ibo         *wgpu.Buffer
+	index_count uint32
+}
+
+type Vertex struct {
+	X, Y float32
+	U, V float32
+}
+
+func QuadVertices(w, h float32) []Vertex {
+	w = 1
+	h = 1
+
+	return []Vertex{
+		{0, 0, 0.0, 0.0},
+		{w, 0, 1.0, 0.0},
+		{w, h, 1.0, 1.0},
+		{0, h, 0.0, 1.0},
+	}
+}
+
+func QuadIndices() []uint16 {
+	return []uint16{
+		0, 1, 2,
+		2, 3, 0,
+	}
+}
+
+func (b *WgpuBackend) generate_text(e *Text) {
+	// TODO Split into multiple functions when I make quad thing made only once for backend, because cleaning when error is kinda disgusting currently.
+
+	// If we already have backend data, free everything.
+
+	if e.backend_data != nil {
+		data := e.backend_data.(WgpuBackendTextData)
+
+		data.tex.Release()
+		data.view.Release()
+		data.sampler.Release()
+		data.bind_group.Release()
+		data.vbo.Release()
+		data.ibo.Release()
+	}
+
+	// Generate new text.
+
+	data := WgpuBackendTextData{
+		data: b.title_font.Render(e.text, int(e.ElemBase().flow_w)),
+	}
+
+	w := uint32(data.data.Bounds().Dx())
+	h := uint32(data.data.Bounds().Dy())
+
+	tex_size := wgpu.Extent3D{
+		Width:              w,
+		Height:             h,
+		DepthOrArrayLayers: 1,
+	}
+
+	var err error
+
+	if data.tex, err = b.dev.CreateTexture(&wgpu.TextureDescriptor{
+		Label:         fmt.Sprintf("Texture (%s)", e.text),
+		Size:          tex_size,
+		MipLevelCount: 1,
+		SampleCount:   1,
+		Dimension:     wgpu.TextureDimension2D,
+		Format:        wgpu.TextureFormatRGBA8Unorm,
+		Usage:         wgpu.TextureUsageTextureBinding | wgpu.TextureUsageCopyDst,
+	}); err != nil {
+		println("Can't create texture.")
+		return
+	}
+
+	if err = b.dev.GetQueue().WriteTexture(
+		data.tex.AsImageCopy(),
+		data.data.Pix,
+		&wgpu.TexelCopyBufferLayout{
+			Offset:       0,
+			BytesPerRow:  4 * w,
+			RowsPerImage: h,
+		},
+		&tex_size,
+	); err != nil {
+		println("Can't write texture.")
+		data.tex.Release()
+		return
+	}
+
+	if data.view, err = data.tex.CreateView(nil); err != nil {
+		println("Can't create texture view.")
+		data.tex.Release()
+		return
+	}
+
+	if data.sampler, err = b.dev.CreateSampler(&wgpu.SamplerDescriptor{
+		AddressModeU:  wgpu.AddressModeClampToEdge,
+		AddressModeV:  wgpu.AddressModeClampToEdge,
+		AddressModeW:  wgpu.AddressModeClampToEdge,
+		MagFilter:     wgpu.FilterModeLinear,
+		MinFilter:     wgpu.FilterModeLinear,
+		MipmapFilter:  wgpu.MipmapFilterModeLinear,
+		MaxAnisotropy: 1,
+	}); err != nil {
+		println("Can't create sampler.")
+		data.tex.Release()
+		data.view.Release()
+		return
+	}
+
+	// Bind group shit.
+
+	if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+		Layout: b.regular_pipeline.bind_group_layout,
+		Entries: []wgpu.BindGroupEntry{
+			{
+				Binding:     0,
+				TextureView: data.view,
+			},
+			{
+				Binding: 1,
+				Sampler: data.sampler,
+			},
+		},
+	}); err != nil {
+		println("Can't create bind group.")
+		data.tex.Release()
+		data.view.Release()
+		data.sampler.Release()
+		return
+	}
+
+	// Generate VBO/IBO.
+	// TODO This should probably be done only once for the WHOLE backend, not once for every text object.
+
+	if data.vbo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
+		Label:    fmt.Sprintf("VBO (%s)", e.text),
+		Contents: wgpu.ToBytes(QuadVertices(float32(w), float32(h))),
+		Usage:    wgpu.BufferUsageVertex,
+	}); err != nil {
+		println("Can't create VBO.")
+		data.tex.Release()
+		data.view.Release()
+		return
+	}
+
+	if data.ibo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
+		Label:    fmt.Sprintf("IBO (%s)", e.text),
+		Contents: wgpu.ToBytes(QuadIndices()),
+		Usage:    wgpu.BufferUsageIndex,
+	}); err != nil {
+		println("Can't create IBO.")
+		data.tex.Release()
+		data.view.Release()
+		return
+	}
+
+	e.backend_data = data
 }
 
 func (b *WgpuBackend) calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32) {
