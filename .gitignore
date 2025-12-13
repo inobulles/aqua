@@ -4,3 +4,5 @@
 compile_commands.json
 target
 tests/pool
+
+demos/music-player/misery-business.mp3
