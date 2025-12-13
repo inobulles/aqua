@@ -16,11 +16,21 @@ type Backend interface {
 
 type Ui struct {
 	backend Backend
+	root    Div
 }
 
 //export GoUiCreate
 func GoUiCreate() C.uintptr_t {
 	ui := &Ui{}
+
+	ui.root = Div{
+		Elem: Elem{
+			kind:   ElemKindDiv,
+			ui:     ui,
+			parent: nil,
+		},
+	}.defaults()
+
 	handle := cgo.NewHandle(ui)
 	return C.uintptr_t(handle)
 }
@@ -29,8 +39,17 @@ func GoUiCreate() C.uintptr_t {
 func GoUiDestroy(ui_raw C.uintptr_t) {
 	handle := cgo.Handle(ui_raw)
 	defer handle.Delete()
+}
 
-	// ui := handle.Value().(*Ui)
+//export GoUiGetRoot
+func GoUiGetRoot(ui_raw C.uintptr_t) C.uintptr_t {
+	ui_handle := cgo.Handle(ui_raw)
+	ui := ui_handle.Value().(*Ui)
+
+	root_handle := cgo.NewHandle(ui.root)
+	return C.uintptr_t(root_handle)
+}
+
 }
 
 func main() {}

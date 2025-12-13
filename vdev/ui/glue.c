@@ -143,6 +143,7 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 
 extern uintptr_t GoUiCreate(void);
 extern void GoUiDestroy(uintptr_t ui);
+extern uintptr_t GoUiGetRoot(uintptr_t ui);
 
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device);
 extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
@@ -176,6 +177,17 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		}
 
 		GoUiDestroy((uintptr_t) ui);
+		break;
+	case 2:
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'get_root' called with non-local or NULL UI.");
+			break;
+		}
+
+		void* const root = (void*) GoUiGetRoot((uintptr_t) ui);
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(root);
 		break;
 	// WebGPU backend specific stuff.
 	case 4:
