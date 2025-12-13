@@ -56,6 +56,8 @@ func GoUiBackendWgpuRender(
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	backend := ui.backend.(*WgpuBackend)
 
+	ui.reflow()
+
 	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
 	frame := wgpu.TextureViewFromRaw(frame_raw)
 
