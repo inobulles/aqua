@@ -80,13 +80,22 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "add",
+		.name = "add_div",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "parent"},
+			{KOS_TYPE_BUF, "semantics"},
+		},
+	},
+	{
+		.name = "add_text",
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{KOS_TYPE_OPAQUE_PTR, "ui"},
-			{KOS_TYPE_U32, "kind"},
+			{KOS_TYPE_OPAQUE_PTR, "parent"},
 			{KOS_TYPE_BUF, "semantics"},
+			{KOS_TYPE_BUF, "text"},
 		},
 	},
 	// WebGPU backend specific stuff.
@@ -144,6 +153,8 @@ static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
 extern uintptr_t GoUiCreate(void);
 extern void GoUiDestroy(uintptr_t ui);
 extern uintptr_t GoUiGetRoot(uintptr_t ui);
+extern uintptr_t GoUiAddDiv(uintptr_t parent, char const* semantics, size_t semantics_len);
+extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
 
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device);
 extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
@@ -189,8 +200,42 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		void* const root = (void*) GoUiGetRoot((uintptr_t) ui);
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(root);
 		break;
-	// WebGPU backend specific stuff.
+	case 3:
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'add_div' called with non-local or NULL UI.");
+			break;
+		}
+
+		void* const div = (void*) GoUiAddDiv(
+			(uintptr_t) ui,
+			(char const*) args[1].buf.ptr,
+			args[1].buf.size
+		);
+
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(div);
+		break;
 	case 4:
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'add_text' called with non-local or NULL UI.");
+			break;
+		}
+
+		void* const text = (void*) GoUiAddText(
+			(uintptr_t) ui,
+			(char const*) args[1].buf.ptr,
+			args[1].buf.size,
+			(char const*) args[2].buf.ptr,
+			args[2].buf.size
+		);
+
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(text);
+		break;
+	// WebGPU backend specific stuff.
+	case 5:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
@@ -207,7 +252,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device);
 		break;
-	case 5:
+	case 6:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {

@@ -17,6 +17,10 @@ type Backend interface {
 type Ui struct {
 	backend Backend
 	root    Div
+
+	// This must be set if anything which will affect the flow of the UI is changed.
+	// This will trigger a reflow upon the next render (see the Ui.reflow function).
+	dirty bool
 }
 
 //export GoUiCreate
@@ -48,6 +52,67 @@ func GoUiGetRoot(ui_raw C.uintptr_t) C.uintptr_t {
 
 	root_handle := cgo.NewHandle(&ui.root)
 	return C.uintptr_t(root_handle)
+}
+
+// TODO A lot of the code in GoUiAddDiv and GoUiAddText can be factored out.
+
+//export GoUiAddDiv
+func GoUiAddDiv(
+	parent_raw C.uintptr_t,
+	semantics *C.char,
+	semantics_len C.size_t,
+) C.uintptr_t {
+	parent := elem_from_raw(parent_raw).(Div)
+	ui := parent.ui
+
+	if parent.kind != ElemKindDiv {
+		panic("GoUiAddDiv: parent is not a div")
+	}
+
+	elem := Div{
+		Elem: Elem{
+			kind:   ElemKindDiv,
+			ui:     ui,
+			parent: parent,
+		},
+	}.defaults()
+
+	parent.children = append(parent.children, &elem)
+	ui.dirty = true
+
+	handle := cgo.NewHandle(elem)
+	return C.uintptr_t(handle)
+}
+
+//export GoUiAddText
+func GoUiAddText(
+	parent_raw C.uintptr_t,
+	semantics *C.char,
+	semantics_len C.size_t,
+	text *C.char,
+	text_len C.size_t,
+) C.uintptr_t {
+	parent := elem_from_raw(parent_raw).(Div)
+	ui := parent.ui
+
+	if parent.kind != ElemKindDiv {
+		panic("GoUiAddText: parent is not a div")
+	}
+
+	elem := &Text{
+		Elem: Elem{
+			kind:   ElemKindText,
+			ui:     ui,
+			parent: parent,
+		},
+		text: C.GoString(text),
+	}
+
+	parent.children = append(parent.children, elem)
+	ui.dirty = true
+
+	handle := cgo.NewHandle(elem)
+	return C.uintptr_t(handle)
 }
 
 }
