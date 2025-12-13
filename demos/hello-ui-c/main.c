@@ -112,6 +112,9 @@ int main(void) {
 		goto err_ui_create;
 	}
 
+	ui_elem_t const root = ui_get_root(ui);
+	ui_add_text(root, "text.title", "Hello world!");
+
 	// Set up UI backend.
 
 	ui_wgpu_ez_state_t state;
