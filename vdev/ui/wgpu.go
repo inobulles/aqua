@@ -199,6 +199,28 @@ func (b *WgpuBackend) generate_text(e *Text) {
 	e.backend_data = data
 }
 
+func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
+	switch e := elem.(type) {
+	case *Text:
+		if e.backend_data == nil {
+			b.generate_text(e)
+		}
+
+		data := e.backend_data.(WgpuBackendTextData)
+		b.regular_pipeline.Set(render_pass, data.bind_group)
+
+		render_pass.SetVertexBuffer(0, data.vbo, 0, wgpu.WholeSize)
+		render_pass.SetIndexBuffer(data.ibo, wgpu.IndexFormatUint16, 0, wgpu.WholeSize)
+		render_pass.DrawIndexed(6, 1, 0, 0, 0)
+	case *Div:
+		for _, child := range e.children {
+			b.render(child, render_pass)
+		}
+	default:
+		panic("Unknown element kind.")
+	}
+}
+
 func (b *WgpuBackend) calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32) {
 	switch e := elem.(type) {
 	case *Text:
@@ -233,6 +255,11 @@ func GoUiBackendWgpuInit(
 		dev:        wgpu.CreateDeviceFromRaw(dev_raw),
 		format:     wgpu.TextureFormat(format),
 		title_font: title_font,
+	}
+
+	if backend.regular_pipeline, err = backend.NewRegularPipeline(); err != nil {
+		println("Failed to create regular pipeline.")
+		return
 	}
 
 	ui.backend = backend
@@ -274,9 +301,9 @@ func GoUiBackendWgpuRender(
 				StoreOp: wgpu.StoreOpStore,
 				ClearValue: wgpu.Color{
 					R: 0.0,
-					G: 1.0,
+					G: 0.0,
 					B: 0.0,
-					A: 1.0,
+					A: 0.5,
 				},
 			},
 		},
@@ -285,8 +312,7 @@ func GoUiBackendWgpuRender(
 	render_pass := cmd_enc.BeginRenderPass(&render_pass_descr)
 	defer render_pass.Release()
 
-	// TODO render_pass.SetPipeline()
-	// TODO render_pass.Draw()
+	backend.render(&ui.root, render_pass)
 
 	render_pass.End()
 }
