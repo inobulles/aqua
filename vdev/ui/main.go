@@ -66,7 +66,7 @@ func GoUiAddDiv(
 	semantics *C.char,
 	semantics_len C.size_t,
 ) C.uintptr_t {
-	parent := elem_from_raw(parent_raw).(Div)
+	parent := elem_from_raw(parent_raw).(*Div)
 	ui := parent.ui
 
 	if parent.kind != ElemKindDiv {
@@ -96,7 +96,7 @@ func GoUiAddText(
 	text *C.char,
 	text_len C.size_t,
 ) C.uintptr_t {
-	parent := elem_from_raw(parent_raw).(Div)
+	parent := elem_from_raw(parent_raw).(*Div)
 	ui := parent.ui
 
 	if parent.kind != ElemKindDiv {

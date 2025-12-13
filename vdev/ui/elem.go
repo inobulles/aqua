@@ -20,11 +20,14 @@ type IElem interface {
 	// Recalculate the size and position of the element.
 	// If this element is a div, it will recursively do this for all its children too.
 	reflow()
+
+	// Get base element struct.
+	ElemBase() *Elem
 }
 
 type Elem struct {
 	IElem
-	kind ElemKind
+	kind ElemKind // TODO Necessary?
 
 	ui     *Ui
 	parent IElem
@@ -132,7 +135,10 @@ func (e *Elem) rem_attr(key string) {
 	delete(e.attrs, key)
 }
 
-func elem_from_raw(raw C.uintptr_t) IElem {
+func elem_from_raw(raw C.uintptr_t) any {
 	handle := cgo.Handle(raw)
-	return handle.Value().(IElem)
+	return handle.Value()
 }
+
+func (d *Div) ElemBase() *Elem  { return &d.Elem }
+func (t *Text) ElemBase() *Elem { return &t.Elem }
