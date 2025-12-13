@@ -36,7 +36,8 @@ struct ui_ctx_t {
 		uint32_t create;
 		uint32_t destroy;
 		uint32_t get_root;
-		uint32_t add;
+		uint32_t add_div;
+		uint32_t add_text;
 	} fns;
 
 	// Backend-specific functions.

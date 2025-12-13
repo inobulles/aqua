@@ -110,11 +110,22 @@ void ui_destroy(ui_t ui);
 ui_elem_t ui_get_root(ui_t ui);
 
 /**
- * Add an element to the UI.
+ * Add a div element to the UI.
  *
- * @param parent The parent element to add the new element under. This must be an element of {@link UI_ELEM_KIND_DIV} kind.
- * @param kind The kind of the new element.
- * @param semantics The semantic string of the new element. This is entirely implementation-specific.
- * @return The new element or `NULL` if allocation failed.
+ * A div is a container element which has other elements as its children.
+ *
+ * @param parent The parent element to add the new element under. This must be a div element.
+ * @param semantics The semantic string of the new element. This is entirely implementation specific.
+ * @return The new element or `NULL` if something went wrong. This is allocated on the heap and must be freed with {@link free}.
  */
-ui_elem_t ui_add(ui_elem_t parent, ui_elem_kind_t kind, char const* semantics);
+ui_elem_t ui_add_div(ui_elem_t parent, char const* semantics);
+
+/**
+ * Add a text element to the UI.
+ *
+ * @param parent The parent element to add the new element under. This must be a div element.
+ * @param semantics The semantic string of the new element. This is entirely implementation specific.
+ * @param text The text to display in the element.
+ * @return The new element or `NULL` if something went wrong. This is allocated on the heap and must be freed with {@link free}.
+ */
+ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text);
