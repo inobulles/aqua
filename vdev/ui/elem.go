@@ -41,7 +41,8 @@ type Elem struct {
 
 	mt, mb, ml, mr Dimension // Margin.
 
-	// Absolute position & size of the element after reflowing, in screen pixels.
+	// Position & size of the element after reflowing, in screen pixels.
+	// This is relative to the parent.
 
 	flow_x, flow_y uint32
 	flow_w, flow_h uint32
