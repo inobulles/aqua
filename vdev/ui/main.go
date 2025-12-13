@@ -15,7 +15,7 @@ type Backend interface {
 	// Returns how much space an element will take up.
 	// The backend will try to fit it within the maximum width and height supplied, but it may not be able to.
 	// For example, the element in question could be text, in which case if it must wrap to fit within max_w, it might very well have to extend beyond max_h.
-	calculate_size(elem IElem, max_w, max_h float32) (w, h float32)
+	calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32)
 }
 
 type Ui struct {

@@ -22,6 +22,17 @@ type WgpuBackend struct {
 	title_font *Font
 }
 
+func (b *WgpuBackend) calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32) {
+	switch e := elem.(type) {
+	case *Text:
+		return b.title_font.Measure(e.text, int(max_w))
+	case *Div:
+		panic("Shouldn't be asking backend to calculate size of Div.")
+	default:
+		panic("Unknown element kind.")
+	}
+}
+
 //export GoUiBackendWgpuInit
 func GoUiBackendWgpuInit(
 	ui_raw C.uintptr_t,
