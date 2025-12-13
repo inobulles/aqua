@@ -6,6 +6,9 @@ struct VertOut {
 	@location(0) uv: vec2f,
 };
 
+@group(0) @binding(0)
+var<uniform> mvp: mat4x4<f32>;
+
 @vertex
 fn vert_main(
 	@location(0) pos: vec2f,
@@ -23,9 +26,9 @@ struct FragOut {
 	@location(0) colour: vec4f,
 };
 
-@group(0) @binding(0)
-var t: texture_2d<f32>;
 @group(0) @binding(1)
+var t: texture_2d<f32>;
+@group(0) @binding(2)
 var s: sampler;
 
 @fragment

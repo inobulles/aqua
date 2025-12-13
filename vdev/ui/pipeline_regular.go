@@ -38,8 +38,15 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 
 	pipeline, err := b.NewPipeline("Regular", regular_shader_src,
 		[]wgpu.BindGroupLayoutEntry{
-			{ // Texture.
+			{ // Model-view-projection matrix.
 				Binding:    0,
+				Visibility: wgpu.ShaderStageVertex,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
+			{ // Texture.
+				Binding:    1,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -48,7 +55,7 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 				},
 			},
 			{ // Sampler.
-				Binding:    1,
+				Binding:    2,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,
