@@ -6,6 +6,16 @@ This provides an interface for creating UIs in AQUA programs.
 For the most part, there is just one "de facto" implementation, but this is made as a device so that UIs can be rendered on multiple different machines which could potentially implement this differently to fit their form factors better.
 E.g. a mobile device might want to implement this using native UI components, or a VR headset could forgo the traditional layout of a UI and render the UI in 3D space instead.
 
+## Development
+
+Since `gopls` isn't started by Bob, the `CGO_CFLAGS` environment variable is not set correctly.
+Thus, you must set it manually when starting your IDE.
+E.g.:
+
+```sh
+CGO_CFLAGS="-I$(realpath vdev/ui/.bob/amd64-FreeBSD/prefix/include/)" nvim vdev/ui/main.go
+```
+
 ## WebGPU backend
 
 The primary (and currently only) backend for this implementation is WebGPU, done through the [`.wgpu`](../wgpu/README.md) device.
