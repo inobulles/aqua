@@ -37,7 +37,14 @@ func GoUiBackendWgpuInit(
 	// TODO Have to set global context somehow.
 	// Oof, this is gonna be complicated actually.
 	// Okay, so this is how I'm gonna approach this:
-	// - First, we gonna wanna
+	// - First, we need the client's connection to be passed on to us so that we can use it.
+	// - Or, we could still need to connect, but be able to "inherit" an existing connection somehow? But the connection ID entirely depends on the KOS and the VDEV we're trying to share doesn't know of this number.
+	// - This is probably going to require quite a bit of reworking of stuff.
+	// - I can use this opportunity to figure out how the .wgpu device's surface-from-window creation is going to work. We must reject creation on a window which is not on the same host. But even then being able to do this is not a guarantee cuz the devices could be in different processes. What's the solution to this? Do we use the hid:vid to figure out if the device is local or UDS to us?
+
+	// - Should we figure out a way to do .wgpu and .win on different devices?
+	// - This means we gotta render .wgpu on an offscreen buffer and then transfer it to .win -> not too bad a solution actually.
+	// - Same solution for UDS devices.
 }
 
 //export GoUiBackendWgpuRender
