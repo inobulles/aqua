@@ -130,7 +130,8 @@ func (d Div) defaults() Div {
 
 type Text struct {
 	Elem
-	text string
+	text         string
+	backend_data any
 }
 
 func (e *Elem) set_attr(key string, val string) {
