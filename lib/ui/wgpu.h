@@ -15,9 +15,10 @@
  * @param hid The host ID of the WebGPU VDEV.
  * @param vid The VDEV ID of the WebGPU VDEV.
  * @param device The WebGPU device to use.
+ * @param format Format of the surface.
  * @return 0 on success, or a negative error code on failure.
  */
-int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device);
+int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUTextureFormat format);
 
 /**
  * Render the UI using the WebGPU backend.

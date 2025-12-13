@@ -16,7 +16,8 @@ import (
 
 type WgpuBackend struct {
 	Backend
-	dev wgpu.Device
+	dev    wgpu.Device
+	format wgpu.TextureFormat
 }
 
 //export GoUiBackendWgpuInit
@@ -25,6 +26,7 @@ func GoUiBackendWgpuInit(
 	hid C.uint64_t,
 	cid C.uint64_t,
 	dev_raw unsafe.Pointer,
+	format C.uint32_t,
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 

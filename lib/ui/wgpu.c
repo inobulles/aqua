@@ -17,7 +17,7 @@ static __attribute__((constructor)) void init(void) {
 	cls = umber_class_new("aqua.lib.ui.wgpu", UMBER_LVL_INFO, "AQUA standard library: UI: WebGPU backend.");
 }
 
-int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device) {
+int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device, WGPUTextureFormat format) {
 	assert(ui != NULL);
 	ui_ctx_t const ctx = ui->ctx;
 
@@ -31,6 +31,7 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device) {
 		{.u64 = hid},
 		{.u64 = cid},
 		{.opaque_ptr = {ctx->hid, (uintptr_t) device}},
+		{.u32 = format},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->backend_wgpu_fns.init, args);
@@ -228,7 +229,9 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	LOG_V(cls, "Creating WebGPU UI backend with WebGPU device %lu:%lu (HID:CID).", hid, cid);
 
-	if (ui_wgpu_init(state->ui, hid, cid, state->device) < 0) {
+	// TODO Format should be passed when configuring really, we're not supposed to know this in advance.
+
+	if (ui_wgpu_init(state->ui, hid, cid, state->device, WGPUTextureFormat_RGBA8UnormSrgb) < 0) {
 		LOG_E(cls, "Failed to create WebGPU UI backend.");
 		goto err_backend_init;
 	}

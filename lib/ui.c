@@ -356,7 +356,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		if (
 			strcmp(name, "backend_wgpu_init") == 0 &&
 			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 4 &&
+			fn->param_count == 5 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "ui") == 0 &&
 			fn->params[1].type == KOS_TYPE_U64 &&
@@ -364,7 +364,9 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			fn->params[2].type == KOS_TYPE_U64 &&
 			strcmp((char*) fn->params[2].name, "cid") == 0 &&
 			fn->params[3].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[3].name, "device") == 0
+			strcmp((char*) fn->params[3].name, "device") == 0 &&
+			fn->params[4].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[4].name, "format") == 0
 		) {
 			ctx->backend_wgpu_fns.init = i;
 		}
