@@ -3,30 +3,39 @@
 
 package main
 
-func (e Div) reflow() {
+func (e Div) reflow(max_w, max_h uint32) {
 	// TODO Find max size of div here and pass that down.
 	// Text can then wrap to fit that size.
 
 	for _, child := range e.children {
-		child.reflow()
+		child.reflow(max_w, max_h)
+
+		// TODO Proper layout algorithm.
+
+		child.ElemBase().flow_x = e.ElemBase().flow_x
+		child.ElemBase().flow_y = e.ElemBase().flow_y
 	}
 }
 
-func (e Text) reflow() {
-	// ui := e.ui
-	// ui.backend.calculate_size(e, 0, 0)
+func (e *Text) reflow(max_w, max_h uint32) {
+	ui := e.ui
+	e.flow_w, e.flow_h = ui.backend.calculate_size(e, max_w, max_h)
 }
 
-func (ui *Ui) reflow() {
+func (ui *Ui) reflow(x_res, y_res uint32) {
 	// We only reflow if the UI is dirty (i.e. needs a reflow).
-	// TODO Is it better design to have the caller check for this or does it not actually matter? Find arguments for and against.
 
 	if !ui.dirty {
-		return
+		panic("UI should only be reflowed when dirty!")
 	}
 
-	ui.dirty = false
-	ui.root.reflow()
+	ui.root.flow_w = x_res
+	ui.root.flow_h = y_res
+
+	ui.root.flow_x = 0
+	ui.root.flow_y = 0
+
+	ui.root.reflow(x_res, y_res)
 
 	// Get initial size of leaves.
 	// We gonna wanna do a DFS and all that for inputs.

@@ -19,7 +19,8 @@ const (
 type IElem interface {
 	// Recalculate the size and position of the element.
 	// If this element is a div, it will recursively do this for all its children too.
-	reflow()
+	// The element will not exceed the dimensions given by the max_w and max_h arguments.
+	reflow(max_w, max_h uint32)
 
 	// Get base element struct.
 	ElemBase() *Elem
@@ -39,6 +40,11 @@ type Elem struct {
 	attrs map[string]string
 
 	mt, mb, ml, mr Dimension // Margin.
+
+	// Absolute position & size of the element after reflowing, in screen pixels.
+
+	flow_x, flow_y uint32
+	flow_w, flow_h uint32
 }
 
 type OverflowKind int
