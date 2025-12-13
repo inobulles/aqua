@@ -33,3 +33,10 @@ func (Dimension) full() Dimension {
 		val:  1,
 	}
 }
+
+func (Dimension) pixels(pixels uint32) Dimension {
+	return Dimension{
+		kind: DimensionUnitsPixels,
+		val:  float32(pixels),
+	}
+}
