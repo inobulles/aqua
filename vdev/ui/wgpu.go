@@ -34,6 +34,7 @@ type WgpuBackendTextData struct {
 	view    *wgpu.TextureView
 	sampler *wgpu.Sampler
 
+	mvp_buf    *wgpu.Buffer
 	bind_group *wgpu.BindGroup
 
 	// TODO Probably can be generically reused in a quad kinda thing.
@@ -149,17 +150,32 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		return
 	}
 
+	// Create MVP matrix buffer.
+
+	if data.mvp_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
+		Size:  64,
+		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
+	}); err != nil {
+		println("Can't create MVP matrix buffer.")
+		return
+	}
+
 	// Bind group shit.
 
 	if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
 		Layout: b.regular_pipeline.bind_group_layout,
 		Entries: []wgpu.BindGroupEntry{
 			{
-				Binding:     0,
+				Binding: 0,
+				Buffer:  data.mvp_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     1,
 				TextureView: data.view,
 			},
 			{
-				Binding: 1,
+				Binding: 2,
 				Sampler: data.sampler,
 			},
 		},
