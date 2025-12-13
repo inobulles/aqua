@@ -28,9 +28,11 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device);
  * @param ui The UI object to render.
  * @param frame The WebGPU frame texture view to render to.
  * @param command_encoder The WebGPU command encoder to use for rendering.
+ * @param x_res The X resolution of the surface we're rendering to.
+ * @param y_res The Y resolution of the surface we're rendering to.
  * @return 0 on success, or a negative error code on failure.
  */
-int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder);
+int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res);
 
 /**
  * Easy setup WebGPU UI backend state.

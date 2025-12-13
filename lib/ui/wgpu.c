@@ -47,7 +47,7 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device) {
 	return 0;
 }
 
-int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder) {
+int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res) {
 	assert(ui != NULL);
 	ui_ctx_t const ctx = ui->ctx;
 
@@ -55,6 +55,8 @@ int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_en
 		{.opaque_ptr = ui->opaque_ptr},
 		{.opaque_ptr = {ctx->hid, (uintptr_t) frame}},
 		{.opaque_ptr = {ctx->hid, (uintptr_t) command_encoder}},
+		{.u32 = x_res},
+		{.u32 = y_res},
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->backend_wgpu_fns.render, args);
@@ -333,7 +335,7 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 
 	LOG_V(cls, "Rendering UI itself.");
 
-	if (ui_wgpu_render(state->ui, frame, encoder) < 0) {
+	if (ui_wgpu_render(state->ui, frame, encoder, state->x_res, state->y_res) < 0) {
 		LOG_E(cls, "Failed to render UI.");
 		goto err_render_ui;
 	}
