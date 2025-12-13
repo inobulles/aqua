@@ -153,6 +153,78 @@ ui_elem_t ui_get_root(ui_t ui) {
 	return elem;
 }
 
+ui_elem_t ui_add_div(ui_elem_t parent, char const* semantics) {
+	ui_t const ui = parent->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	ui_elem_t const elem = calloc(1, sizeof *elem);
+
+	if (elem == NULL) {
+		LOG_E(cls, "Failed to allocate UI element object.");
+		return NULL;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = parent->opaque_ptr},
+		{.buf = {
+			 .ptr = (void*) semantics,
+			 .size = strlen(semantics),
+		 }},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.add_div, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_E(cls, "Failed to add div element.");
+		return NULL;
+	}
+
+	elem->ui = ui;
+	elem->opaque_ptr = ctx->last_ret.opaque_ptr;
+
+	return elem;
+}
+
+ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text) {
+	ui_t const ui = parent->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	ui_elem_t const elem = calloc(1, sizeof *elem);
+
+	if (elem == NULL) {
+		LOG_E(cls, "Failed to allocate UI element object.");
+		return NULL;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = parent->opaque_ptr},
+		{.buf = {
+			 .ptr = (void*) semantics,
+			 .size = strlen(semantics),
+		 }},
+		{.buf = {
+			 .ptr = (void*) text,
+			 .size = strlen(text),
+		 }},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.add_text, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_E(cls, "Failed to add text element.");
+		return NULL;
+	}
+
+	elem->ui = ui;
+	elem->opaque_ptr = ctx->last_ret.opaque_ptr;
+
+	return elem;
+}
+
 static void notif_call_ret(kos_notif_t const* notif, void* data) {
 	ui_ctx_t const ctx = data;
 
@@ -236,17 +308,29 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		}
 
 		if (
-			strcmp(name, "add") == 0 &&
+			strcmp(name, "add_div") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "parent") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "semantics") == 0
+		) {
+			ctx->fns.add_div = i;
+		}
+
+		if (
+			strcmp(name, "add_text") == 0 &&
 			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
 			fn->param_count == 3 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[0].name, "ui") == 0 &&
-			fn->params[1].type == KOS_TYPE_U32 &&
-			strcmp((char*) fn->params[1].name, "kind") == 0 &&
+			strcmp((char*) fn->params[0].name, "parent") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "semantics") == 0 &&
 			fn->params[2].type == KOS_TYPE_BUF &&
-			strcmp((char*) fn->params[2].name, "semantics") == 0
+			strcmp((char*) fn->params[2].name, "text") == 0
 		) {
-			ctx->fns.add = i;
+			ctx->fns.add_text = i;
 		}
 	}
 
