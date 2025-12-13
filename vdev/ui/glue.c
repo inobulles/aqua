@@ -102,12 +102,13 @@ static kos_fn_t const FNS[] = {
 	{
 		.name = "backend_wgpu_init",
 		.ret_type = KOS_TYPE_VOID,
-		.param_count = 4,
+		.param_count = 5,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "ui"},
 			{KOS_TYPE_U64, "hid"},
 			{KOS_TYPE_U64, "cid"},
 			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_U32, "format"},
 		},
 	},
 	{
@@ -158,7 +159,7 @@ extern uintptr_t GoUiGetRoot(uintptr_t ui);
 extern uintptr_t GoUiAddDiv(uintptr_t parent, char const* semantics, size_t semantics_len);
 extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
 
-extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device);
+extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device, uint32_t format);
 extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
 
 static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
@@ -252,7 +253,9 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 			break;
 		}
 
-		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device);
+		uint32_t const format = args[4].u32;
+
+		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device, format);
 		break;
 	case 6:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
