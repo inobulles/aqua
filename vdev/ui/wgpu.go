@@ -52,15 +52,12 @@ type Vertex struct {
 	U, V float32
 }
 
-func QuadVertices(w, h float32) []Vertex {
-	w = 1
-	h = 1
-
+func QuadVertices() []Vertex {
 	return []Vertex{
-		{0, 0, 0.0, 0.0},
-		{w, 0, 1.0, 0.0},
-		{w, h, 1.0, 1.0},
-		{0, h, 0.0, 1.0},
+		{0, 0, 1, 0},
+		{1, 0, 1, 1},
+		{1, 1, 0, 1},
+		{0, 1, 0, 0},
 	}
 }
 
@@ -218,7 +215,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 
 	if data.vbo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
 		Label:    fmt.Sprintf("VBO (%s)", e.text),
-		Contents: wgpu.ToBytes(QuadVertices(float32(w), float32(h))),
+		Contents: wgpu.ToBytes(QuadVertices()),
 		Usage:    wgpu.BufferUsageVertex,
 	}); err != nil {
 		println("Can't create VBO.")
