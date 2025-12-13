@@ -68,20 +68,44 @@ func QuadIndices() []uint16 {
 	}
 }
 
+func (b *WgpuBackend) free_elem(elem IElem) {
+	switch e := elem.(type) {
+	case *Text:
+		data := e.backend_data.(WgpuBackendTextData)
+
+		if data.tex != nil {
+			data.tex.Release()
+		}
+		if data.view != nil {
+			data.view.Release()
+		}
+		if data.sampler != nil {
+			data.sampler.Release()
+		}
+		if data.mvp_buf != nil {
+			data.mvp_buf.Release()
+		}
+		if data.bind_group != nil {
+			data.bind_group.Release()
+		}
+		if data.vbo != nil {
+			data.vbo.Release()
+		}
+		if data.ibo != nil {
+			data.ibo.Release()
+		}
+
+		e.backend_data = nil
+	}
+}
+
 func (b *WgpuBackend) generate_text(e *Text) {
 	// TODO Split into multiple functions when I make quad thing made only once for backend, because cleaning when error is kinda disgusting currently.
 
 	// If we already have backend data, free everything.
 
 	if e.backend_data != nil {
-		data := e.backend_data.(WgpuBackendTextData)
-
-		data.tex.Release()
-		data.view.Release()
-		data.sampler.Release()
-		data.bind_group.Release()
-		data.vbo.Release()
-		data.ibo.Release()
+		b.free_elem(e)
 	}
 
 	// Generate new text.
@@ -111,6 +135,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		Usage:         wgpu.TextureUsageTextureBinding | wgpu.TextureUsageCopyDst,
 	}); err != nil {
 		println("Can't create texture.")
+		b.free_elem(e)
 		return
 	}
 
@@ -125,13 +150,13 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		&tex_size,
 	); err != nil {
 		println("Can't write texture.")
-		data.tex.Release()
+		b.free_elem(e)
 		return
 	}
 
 	if data.view, err = data.tex.CreateView(nil); err != nil {
 		println("Can't create texture view.")
-		data.tex.Release()
+		b.free_elem(e)
 		return
 	}
 
@@ -145,8 +170,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		MaxAnisotropy: 1,
 	}); err != nil {
 		println("Can't create sampler.")
-		data.tex.Release()
-		data.view.Release()
+		b.free_elem(e)
 		return
 	}
 
@@ -157,6 +181,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 	}); err != nil {
 		println("Can't create MVP matrix buffer.")
+		b.free_elem(e)
 		return
 	}
 
@@ -181,9 +206,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		},
 	}); err != nil {
 		println("Can't create bind group.")
-		data.tex.Release()
-		data.view.Release()
-		data.sampler.Release()
+		b.free_elem(e)
 		return
 	}
 
@@ -196,8 +219,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		Usage:    wgpu.BufferUsageVertex,
 	}); err != nil {
 		println("Can't create VBO.")
-		data.tex.Release()
-		data.view.Release()
+		b.free_elem(e)
 		return
 	}
 
@@ -207,8 +229,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		Usage:    wgpu.BufferUsageIndex,
 	}); err != nil {
 		println("Can't create IBO.")
-		data.tex.Release()
-		data.view.Release()
+		b.free_elem(e)
 		return
 	}
 
