@@ -98,12 +98,10 @@ type Div struct {
 }
 
 func (d Div) defaults() Div {
-	// No padding by default.
-
-	d.pt = Dimension{}.zero()
-	d.pb = Dimension{}.zero()
-	d.pl = Dimension{}.zero()
-	d.pr = Dimension{}.zero()
+	d.pt = Dimension{}.pixels(10)
+	d.pb = Dimension{}.pixels(10)
+	d.pl = Dimension{}.pixels(20)
+	d.pr = Dimension{}.pixels(20)
 
 	// Take up full width and height of the parent by default.
 	// TODO We need to see how the shrinking works, but we'll probably want to do something like the min width always being full, but the height being as small as the children (with a max width of the height so overflow is scrolled, on the root div at least).
