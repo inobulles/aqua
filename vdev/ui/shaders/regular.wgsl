@@ -16,7 +16,7 @@ fn vert_main(
 ) -> VertOut {
 	var out: VertOut;
 
-	out.pos = vec4(pos, 1., 1.);
+	out.pos = mvp * vec4(pos, 0., 1.);
 	out.uv = uv;
 
 	return out;

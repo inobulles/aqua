@@ -246,6 +246,19 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		data := e.backend_data.(WgpuBackendTextData)
 		b.regular_pipeline.Set(render_pass, data.bind_group)
 
+		mvp := [4][4]float32{
+			{2 * float32(e.flow_w) / float32(b.x_res), 0, 0, 0},
+			{0, 2 * float32(e.flow_h) / float32(b.y_res), 0, 0},
+			{0, 0, 1, 0},
+			{
+				-1 + 2*float32(e.flow_x)/float32(b.x_res),
+				1 - 2*(float32(e.flow_y)+float32(e.flow_h))/float32(b.y_res),
+				0, 1,
+			},
+		}
+
+		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+
 		render_pass.SetVertexBuffer(0, data.vbo, 0, wgpu.WholeSize)
 		render_pass.SetIndexBuffer(data.ibo, wgpu.IndexFormatUint16, 0, wgpu.WholeSize)
 		render_pass.DrawIndexed(6, 1, 0, 0, 0)
