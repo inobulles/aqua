@@ -124,6 +124,35 @@ void ui_destroy(ui_t ui) {
 	free(ui);
 }
 
+ui_elem_t ui_get_root(ui_t ui) {
+	ui_ctx_t const ctx = ui->ctx;
+
+	ui_elem_t const elem = calloc(1, sizeof *elem);
+
+	if (elem == NULL) {
+		LOG_E(cls, "Failed to allocate UI element object.");
+		return NULL;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = ui->opaque_ptr},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_root, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_E(cls, "Failed to get root element.");
+		return NULL;
+	}
+
+	elem->ui = ui;
+	elem->opaque_ptr = ctx->last_ret.opaque_ptr;
+
+	return elem;
+}
+
 static void notif_call_ret(kos_notif_t const* notif, void* data) {
 	ui_ctx_t const ctx = data;
 
