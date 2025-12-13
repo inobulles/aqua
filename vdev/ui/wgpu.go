@@ -18,6 +18,8 @@ type WgpuBackend struct {
 	Backend
 	dev    wgpu.Device
 	format wgpu.TextureFormat
+
+	title_font *Font
 }
 
 //export GoUiBackendWgpuInit
@@ -30,11 +32,22 @@ func GoUiBackendWgpuInit(
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 
-	ui.backend = &WgpuBackend{
-		dev: wgpu.CreateDeviceFromRaw(dev_raw),
+	title_font, err := NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Black.ttf", 70)
+
+	if err != nil {
+		println("Failed to load font.")
+		return
 	}
 
 	wgpu.SetGlobalCtx(unsafe.Pointer(uintptr(cid)))
+
+	backend := &WgpuBackend{
+		dev:        wgpu.CreateDeviceFromRaw(dev_raw),
+		format:     wgpu.TextureFormat(format),
+		title_font: title_font,
+	}
+
+	ui.backend = backend
 
 	// TODO Have to set global context somehow.
 	// Oof, this is gonna be complicated actually.
