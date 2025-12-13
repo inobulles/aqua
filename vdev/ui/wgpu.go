@@ -23,6 +23,8 @@ type WgpuBackend struct {
 	queue  *wgpu.Queue
 	format wgpu.TextureFormat
 
+	x_res, y_res uint32
+
 	title_font *Font
 
 	regular_pipeline *RegularPipeline
@@ -354,6 +356,9 @@ func GoUiBackendWgpuRender(
 
 	render_pass := cmd_enc.BeginRenderPass(&render_pass_descr)
 	defer render_pass.Release()
+
+	backend.x_res = x_res
+	backend.y_res = y_res
 
 	backend.render(&ui.root, render_pass)
 

@@ -160,7 +160,7 @@ extern uintptr_t GoUiAddDiv(uintptr_t parent, char const* semantics, size_t sema
 extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
 
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device, uint32_t format);
-extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder);
+extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder, uint32_t x_res, uint32_t y_res);
 
 static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	(void) vdev_id;
@@ -273,7 +273,10 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 			break;
 		}
 
-		GoUiBackendWgpuRender((uintptr_t) ui, frame_encoder, command_encoder);
+		uint32_t const x_res = args[3].u32;
+		uint32_t const y_res = args[4].u32;
+
+		GoUiBackendWgpuRender((uintptr_t) ui, frame_encoder, command_encoder, x_res, y_res);
 		break;
 	default:
 		assert(false); // TODO This should probably return CALL_FAIL or something.
