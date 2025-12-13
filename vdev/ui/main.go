@@ -115,6 +115,17 @@ func GoUiAddText(
 	return C.uintptr_t(handle)
 }
 
+//export GoUiSetAttr
+func GoUiSetAttr(elem_raw C.uintptr_t, key_raw *C.char, val *C.char) {
+	elem := elem_from_raw(elem_raw).(*Elem)
+	key := C.GoString(key_raw)
+
+	if val == nil {
+		elem.rem_attr(key)
+		return
+	}
+
+	elem.set_attr(key, C.GoString(val))
 }
 
 func main() {}
