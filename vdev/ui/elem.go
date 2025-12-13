@@ -145,5 +145,18 @@ func elem_from_raw(raw C.uintptr_t) any {
 	return handle.Value()
 }
 
+func (e *Elem) dimension_to_px(d Dimension) uint32 {
+	switch d.kind {
+	case DimensionUnitsZero:
+		return 0
+	case DimensionUnitsPixels:
+		return uint32(d.val)
+	case DimensionUnitsParentFraction:
+		panic("TODO")
+	}
+
+	panic("Unknown dimension kind.")
+}
+
 func (d *Div) ElemBase() *Elem  { return &d.Elem }
 func (t *Text) ElemBase() *Elem { return &t.Elem }
