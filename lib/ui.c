@@ -225,6 +225,34 @@ ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text)
 	return elem;
 }
 
+bool ui_set_attr(ui_elem_t elem, char const* key, char const* val) {
+	ui_t const ui = elem->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = elem->opaque_ptr},
+		{.buf = {
+			 .ptr = (void*) key,
+			 .size = strlen(key),
+		 }},
+		{.buf = {
+			 .ptr = (void*) val,
+			 .size = strlen(val),
+		 }},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.set_attr, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		LOG_E(cls, "Failed to set attribute.");
+		return NULL;
+	}
+
+	return ctx->last_ret.b;
+}
+
 static void notif_call_ret(kos_notif_t const* notif, void* data) {
 	ui_ctx_t const ctx = data;
 
@@ -331,6 +359,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[2].name, "text") == 0
 		) {
 			ctx->fns.add_text = i;
+		}
+
+		if (
+			strcmp(name, "set_attr") == 0 &&
+			fn->ret_type == KOS_TYPE_BOOL &&
+			fn->param_count == 3 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "elem") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "key") == 0 &&
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "val") == 0
+		) {
+			ctx->fns.set_attr = i;
 		}
 	}
 
