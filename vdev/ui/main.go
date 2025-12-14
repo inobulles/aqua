@@ -113,16 +113,27 @@ func GoUiAddText(
 }
 
 //export GoUiSetAttr
-func GoUiSetAttr(elem_raw C.uintptr_t, key_raw *C.char, val *C.char) {
+func GoUiSetAttr(
+	elem_raw C.uintptr_t,
+	key_raw *C.char,
+	key_len C.size_t,
+	val_raw *C.char,
+	val_len C.size_t,
+) bool {
 	elem := elem_from_raw(elem_raw).(*Elem)
 	key := C.GoString(key_raw)
 
-	if val == nil {
+	// TODO We should return true if attribute actually exists.
+	// TODO Maybe we should just rely on CALL_RET_FAIL or whatever instead.
+
+	if val_len == 0 {
 		elem.rem_attr(key)
-		return
+		return false
 	}
 
-	elem.set_attr(key, C.GoString(val))
+	val := C.GoString(val_raw)
+	elem.set_attr(key, val)
+	return false
 }
 
 func main() {}
