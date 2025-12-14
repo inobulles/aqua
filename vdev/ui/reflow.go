@@ -3,6 +3,21 @@
 
 package main
 
+import "fmt"
+
+func align_off(align Align, container_size uint32, elem_size uint32) uint32 {
+	switch align {
+	case AlignBegin:
+		return 0
+	case AlignCentre:
+		return container_size/2 - elem_size/2
+	case AlignEnd:
+		return container_size - elem_size
+	default:
+		panic(fmt.Sprintf("unexpected main.Align: %#v", align))
+	}
+}
+
 func (e Div) reflow(max_w, max_h uint32) {
 	// TODO Find max size of div here and pass that down.
 	// Text can then wrap to fit that size.
@@ -13,10 +28,33 @@ func (e Div) reflow(max_w, max_h uint32) {
 	for _, child := range e.children {
 		child.reflow(max_w, max_h)
 
+		cw, ch := child.ElemBase().flow_w, child.ElemBase().flow_h
+
 		child.ElemBase().flow_x = flow_x
 		child.ElemBase().flow_y = flow_y
 
-		flow_y += child.ElemBase().flow_h
+		switch e.flow_direction {
+		case AxisY: // Elements flow from top to bottom.
+			flow_y += ch
+			flow_y += e.dimension_to_px(e.gap_y)
+
+			child.ElemBase().flow_x = flow_x + align_off(
+				e.content_align_x,
+				max_w,
+				child.ElemBase().flow_w,
+			)
+		case AxisX: // Elements flow from left to right.
+			flow_x += cw
+			flow_x += e.dimension_to_px(e.gap_x)
+
+			child.ElemBase().flow_y = flow_y + align_off(
+				e.content_align_y,
+				max_h,
+				child.ElemBase().flow_h,
+			)
+		default:
+			panic(fmt.Sprintf("unexpected main.Axis: %#v", e.flow_direction))
+		}
 	}
 }
 

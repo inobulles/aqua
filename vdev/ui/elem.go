@@ -98,6 +98,7 @@ type Div struct {
 
 	flow_direction                   Axis
 	flow_wrap                        bool
+	gap_x, gap_y                     Dimension // Spacing between elements.
 	content_align_x, content_align_y Align
 }
 
@@ -122,9 +123,12 @@ func (d Div) defaults() Div {
 	// Content starts at the top left and flows downwards.
 	// We don't want to wrap by default because that would mean starting a new column up top once we reach the bottom.
 
+	d.gap_x = Dimension{}.pixels(10)
+	d.gap_y = Dimension{}.pixels(10)
+
 	d.flow_direction = AxisY
 	d.flow_wrap = false
-	d.content_align_x = AlignBegin
+	d.content_align_x = AlignCentre
 	d.content_align_y = AlignBegin
 
 	return d
