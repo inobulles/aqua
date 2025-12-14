@@ -131,6 +131,29 @@ ui_elem_t ui_add_div(ui_elem_t parent, char const* semantics);
 ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text);
 
 /**
+ * Set a string attribute on a UI element.
+ *
+ * Please use the generic {@link ui_set_attr} macro instead!
+ */
+bool ui_set_attr_str(ui_elem_t elem, char const* key, char const* val);
+
+/**
+ * Set a 32-bit unsigned integer attribute on a UI element.
+ *
+ * Please use the generic {@link ui_set_attr} macro instead!
+ */
+bool ui_set_attr_u32(ui_elem_t elem, char const* key, uint32_t val);
+
+/**
+ * Set a 32-bit float attribute on a UI element.
+ *
+ * Please use the generic {@link ui_set_attr} macro instead!
+ */
+bool ui_set_attr_f32(ui_elem_t elem, char const* key, float val);
+
+// clang-format off
+
+/**
  * Set an attribute on a UI element.
  *
  * Attempts to set the attribute identified by {@code key} to the given value on the specified element.
@@ -139,7 +162,16 @@ ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text)
  *
  * @param elem The element on which to set the attribute.
  * @param key The attribute name.
- * @param val The attribute value.
+ * @param val The attribute value. This can either be a string, 32-bit float, or 32-bit unsigned integer.
  * @return {@code true} if the attribute was successfully set and is valid for the given element, {@code false} otherwise.
  */
-bool ui_set_attr(ui_elem_t elem, char const* key, char const* val);
+#define ui_set_attr(elem, key, val)   \
+    _Generic((val),                   \
+        char const*: ui_set_attr_str, \
+        char*:       ui_set_attr_str, \
+        float:       ui_set_attr_f32, \
+        double:      ui_set_attr_f32, \
+        uint32_t:    ui_set_attr_u32  \
+    )((elem), (key), (val))
+
+// clang-format on
