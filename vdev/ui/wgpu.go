@@ -100,6 +100,17 @@ func (b *WgpuBackend) free_elem(elem IElem) {
 	}
 }
 
+func (b *WgpuBackend) get_font(e *Text) *Font {
+	switch e.semantic {
+	case TextSemanticParagraph:
+		return b.paragraph_font
+	case TextSemanticTitle:
+		return b.title_font
+	default:
+		panic(fmt.Sprintf("unexpected main.TextSemantic: %#v", e.semantic))
+	}
+}
+
 func (b *WgpuBackend) generate_text(e *Text) {
 	// TODO Split into multiple functions when I make quad thing made only once for backend, because cleaning when error is kinda disgusting currently.
 
@@ -112,7 +123,7 @@ func (b *WgpuBackend) generate_text(e *Text) {
 	// Generate new text.
 
 	data := WgpuBackendTextData{
-		data: b.title_font.Render(e.text, int(e.ElemBase().flow_w)),
+		data: b.get_font(e).Render(e.text, int(e.ElemBase().flow_w)),
 	}
 
 	w := uint32(data.data.Bounds().Dx())
@@ -275,7 +286,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 func (b *WgpuBackend) calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32) {
 	switch e := elem.(type) {
 	case *Text:
-		return b.title_font.Measure(e.text, int(max_w))
+		return b.get_font(e).Measure(e.text, int(max_w))
 	case *Div:
 		panic("Shouldn't be asking backend to calculate size of Div.")
 	default:
