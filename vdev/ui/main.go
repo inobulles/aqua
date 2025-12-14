@@ -103,14 +103,7 @@ func GoUiAddText(
 		panic("GoUiAddText: parent is not a div")
 	}
 
-	elem := &Text{
-		Elem: Elem{
-			kind:   ElemKindText,
-			ui:     ui,
-			parent: parent,
-		},
-		text: C.GoString(text),
-	}
+	elem := Text{}.construct(ui, parent, C.GoString(text), C.GoString(semantics))
 
 	parent.children = append(parent.children, elem)
 	ui.dirty = true

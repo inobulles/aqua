@@ -7,7 +7,10 @@ package main
 #include <stdint.h>
 */
 import "C"
-import "runtime/cgo"
+import (
+	"fmt"
+	"runtime/cgo"
+)
 
 type ElemKind int
 
@@ -127,10 +130,41 @@ func (d Div) defaults() Div {
 	return d
 }
 
+type TextSemantic int
+
+const (
+	TextSemanticTitle TextSemantic = iota
+	TextSemanticParagraph
+)
+
 type Text struct {
 	Elem
 	text         string
+	semantic     TextSemantic
 	backend_data any
+}
+
+func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) *Text {
+	var semantic TextSemantic
+
+	switch semantic_str {
+	case "text.title":
+		semantic = TextSemanticTitle
+	default:
+		fmt.Errorf("Unknown text semantic '%s'. Defaulting to 'text.paragraph'.", semantic_str)
+	case "text.paragraph":
+		semantic = TextSemanticParagraph
+	}
+
+	return &Text{
+		Elem: Elem{
+			kind:   ElemKindText,
+			ui:     ui,
+			parent: parent,
+		},
+		text:     text,
+		semantic: semantic,
+	}
 }
 
 func (e *Elem) set_attr(key string, val string) {
