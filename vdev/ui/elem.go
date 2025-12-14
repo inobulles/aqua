@@ -40,7 +40,7 @@ type Elem struct {
 	// Obligatory attributes are all fields of their relevant structs instead.
 	// TODO Should we even do this? Or just have everything as fields?
 
-	attrs map[string]string
+	attrs map[string]any
 
 	mt, mb, ml, mr Dimension // Margin.
 
@@ -161,13 +161,14 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 			kind:   ElemKindText,
 			ui:     ui,
 			parent: parent,
+			attrs:  make(map[string]any),
 		},
 		text:     text,
 		semantic: semantic,
 	}
 }
 
-func (e *Elem) set_attr(key string, val string) {
+func (e *Elem) set_attr(key string, val any) {
 	e.attrs[key] = val
 }
 
