@@ -32,3 +32,12 @@ func rot_mat(angle float32) [4][4]float32 {
 		{0, 0, 0, 1},
 	}
 }
+
+func scale_mat(scale float32) [4][4]float32 {
+	return [4][4]float32{
+		{scale, 0, 0, 0},
+		{0, scale, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1},
+	}
+}
