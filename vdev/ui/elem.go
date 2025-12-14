@@ -176,6 +176,14 @@ func (e *Elem) rem_attr(key string) {
 	delete(e.attrs, key)
 }
 
+func (e *Elem) get_attr(key string) any {
+	if v, ok := e.attrs[key]; ok {
+		return v
+	}
+
+	return nil
+}
+
 func elem_from_raw(raw C.uintptr_t) any {
 	handle := cgo.Handle(raw)
 	return handle.Value()
