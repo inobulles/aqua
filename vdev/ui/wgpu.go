@@ -273,6 +273,10 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 			mvp = mul_mat(mvp, rot_mat(rot.(float32)))
 		}
 
+		if scale := elem.ElemBase().get_attr("scale"); scale != nil {
+			mvp = mul_mat(mvp, scale_mat(scale.(float32)))
+		}
+
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 
 		render_pass.SetVertexBuffer(0, data.vbo, 0, wgpu.WholeSize)
