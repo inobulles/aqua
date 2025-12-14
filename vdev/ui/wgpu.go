@@ -25,7 +25,8 @@ type WgpuBackend struct {
 
 	x_res, y_res uint32
 
-	title_font *Font
+	title_font     *Font
+	paragraph_font *Font
 
 	regular_pipeline *RegularPipeline
 }
@@ -292,21 +293,25 @@ func GoUiBackendWgpuInit(
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 
-	title_font, err := NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Black.ttf", 70)
-
-	if err != nil {
-		println("Failed to load font.")
-		return
-	}
-
 	wgpu.SetGlobalCtx(unsafe.Pointer(uintptr(cid)))
 	dev := wgpu.CreateDeviceFromRaw(dev_raw)
 
 	backend := &WgpuBackend{
-		dev:        dev,
-		queue:      dev.GetQueue(),
-		format:     wgpu.TextureFormat(format),
-		title_font: title_font,
+		dev:    dev,
+		queue:  dev.GetQueue(),
+		format: wgpu.TextureFormat(format),
+	}
+
+	var err error
+
+	if backend.title_font, err = NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Black.ttf", 70); err != nil {
+		println("Failed to load title font.")
+		return
+	}
+
+	if backend.paragraph_font, err = NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Regular.ttf", 20); err != nil {
+		println("Failed to load title font.")
+		return
 	}
 
 	if backend.regular_pipeline, err = backend.NewRegularPipeline(); err != nil {
