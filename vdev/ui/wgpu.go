@@ -55,10 +55,10 @@ type Vertex struct {
 
 func QuadVertices() []Vertex {
 	return []Vertex{
-		{0, 0, 1, 0},
-		{1, 0, 1, 1},
-		{1, 1, 0, 1},
-		{0, 1, 0, 0},
+		{-.5, -.5, 1, 0},
+		{.5, -.5, 1, 1},
+		{.5, .5, 0, 1},
+		{-.5, .5, 0, 0},
 	}
 }
 
@@ -263,10 +263,14 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 			{0, 2 * float32(e.flow_h) / float32(b.y_res), 0, 0},
 			{0, 0, 1, 0},
 			{
-				-1 + 2*float32(e.flow_x)/float32(b.x_res),
-				1 - 2*(float32(e.flow_y)+float32(e.flow_h))/float32(b.y_res),
+				-1 + 2*(float32(e.flow_x)+float32(e.flow_w)/2)/float32(b.x_res),
+				1 - 2*(float32(e.flow_y)+float32(e.flow_h)/2)/float32(b.y_res),
 				0, 1,
 			},
+		}
+
+		if rot := elem.ElemBase().get_attr("rot"); rot != nil {
+			mvp = mul_mat(mvp, rot_mat(rot.(float32)))
 		}
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
