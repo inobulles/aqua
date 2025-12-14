@@ -36,6 +36,7 @@ func GoUiCreate() C.uintptr_t {
 			kind:   ElemKindDiv,
 			ui:     ui,
 			parent: nil,
+			attrs:  make(map[string]any),
 		},
 	}.defaults()
 
@@ -46,7 +47,7 @@ func GoUiCreate() C.uintptr_t {
 //export GoUiDestroy
 func GoUiDestroy(ui_raw C.uintptr_t) {
 	handle := cgo.Handle(ui_raw)
-	defer handle.Delete()
+	handle.Delete()
 }
 
 //export GoUiGetRoot
@@ -78,6 +79,7 @@ func GoUiAddDiv(
 			kind:   ElemKindDiv,
 			ui:     ui,
 			parent: parent,
+			attrs:  make(map[string]any),
 		},
 	}.defaults()
 
@@ -112,27 +114,43 @@ func GoUiAddText(
 	return C.uintptr_t(handle)
 }
 
-//export GoUiSetAttr
-func GoUiSetAttr(
+// TODO We should return true if attribute actually exists.
+// TODO Maybe we should just rely on CALL_RET_FAIL or whatever instead.
+
+//export GoUiSetAttrStr
+func GoUiSetAttrStr(
 	elem_raw C.uintptr_t,
 	key_raw *C.char,
 	key_len C.size_t,
 	val_raw *C.char,
 	val_len C.size_t,
 ) bool {
-	elem := elem_from_raw(elem_raw).(*Elem)
-	key := C.GoString(key_raw)
+	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
+	elem.set_attr(C.GoString(key_raw), C.GoString(val_raw))
+	return false
+}
 
-	// TODO We should return true if attribute actually exists.
-	// TODO Maybe we should just rely on CALL_RET_FAIL or whatever instead.
+//export GoUiSetAttrU32
+func GoUiSetAttrU32(
+	elem_raw C.uintptr_t,
+	key_raw *C.char,
+	key_len C.size_t,
+	val C.uint32_t,
+) bool {
+	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
+	elem.set_attr(C.GoString(key_raw), val)
+	return false
+}
 
-	if val_len == 0 {
-		elem.rem_attr(key)
-		return false
-	}
-
-	val := C.GoString(val_raw)
-	elem.set_attr(key, val)
+//export GoUiSetAttrF32
+func GoUiSetAttrF32(
+	elem_raw C.uintptr_t,
+	key_raw *C.char,
+	key_len C.size_t,
+	val float32,
+) bool {
+	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
+	elem.set_attr(C.GoString(key_raw), val)
 	return false
 }
 
