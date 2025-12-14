@@ -129,3 +129,17 @@ ui_elem_t ui_add_div(ui_elem_t parent, char const* semantics);
  * @return The new element or `NULL` if something went wrong. This is allocated on the heap and must be freed with {@link free}.
  */
 ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text);
+
+/**
+ * Set an attribute on a UI element.
+ *
+ * Attempts to set the attribute identified by {@code key} to the given value on the specified element.
+ * Attribute validity is element-specific; if the attribute is not supported by the element, this function will fail.
+ * If the attribute already has a value, it will be overwritten.
+ *
+ * @param elem The element on which to set the attribute.
+ * @param key The attribute name.
+ * @param val The attribute value.
+ * @return {@code true} if the attribute was successfully set and is valid for the given element, {@code false} otherwise.
+ */
+bool ui_set_attr(ui_elem_t elem, char const* key, char const* val);
