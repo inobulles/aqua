@@ -39,6 +39,7 @@ type WgpuBackendTextData struct {
 	sampler *wgpu.Sampler
 
 	mvp_buf    *wgpu.Buffer
+	colour_buf *wgpu.Buffer
 	bind_group *wgpu.BindGroup
 
 	// TODO Probably can be generically reused in a quad kinda thing.
@@ -85,6 +86,9 @@ func (b *WgpuBackend) free_elem(elem IElem) {
 		}
 		if data.mvp_buf != nil {
 			data.mvp_buf.Release()
+		}
+		if data.colour_buf != nil {
+			data.colour_buf.Release()
 		}
 		if data.bind_group != nil {
 			data.bind_group.Release()
@@ -197,6 +201,17 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		return
 	}
 
+	// Create colour vector buffer.
+
+	if data.colour_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
+		Size:  16,
+		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
+	}); err != nil {
+		println("Can't create colour vector buffer.")
+		b.free_elem(e)
+		return
+	}
+
 	// Bind group shit.
 
 	if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
@@ -208,11 +223,16 @@ func (b *WgpuBackend) generate_text(e *Text) {
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding:     1,
+				Binding: 1,
+				Buffer:  data.colour_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     2,
 				TextureView: data.view,
 			},
 			{
-				Binding: 2,
+				Binding: 3,
 				Sampler: data.sampler,
 			},
 		},
@@ -278,6 +298,9 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		}
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+
+		colour := [4]float32{0, 0, 0, 0}
+		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 
 		render_pass.SetVertexBuffer(0, data.vbo, 0, wgpu.WholeSize)
 		render_pass.SetIndexBuffer(data.ibo, wgpu.IndexFormatUint16, 0, wgpu.WholeSize)

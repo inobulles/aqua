@@ -76,7 +76,7 @@ func (b *WgpuBackend) NewPipeline(
 			Targets: []wgpu.ColorTargetState{
 				{
 					Format:    b.format,
-					Blend:     &wgpu.BlendStatePremultipliedAlphaBlending,
+					Blend:     &wgpu.BlendStateAlphaBlending,
 					WriteMask: wgpu.ColorWriteMaskAll,
 				},
 			},

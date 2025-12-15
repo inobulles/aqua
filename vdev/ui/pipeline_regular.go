@@ -45,8 +45,15 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 					Type: wgpu.BufferBindingTypeUniform,
 				},
 			},
-			{ // Texture.
+			{ // Colour.
 				Binding:    1,
+				Visibility: wgpu.ShaderStageFragment,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
+			{ // Texture.
+				Binding:    2,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -55,7 +62,7 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 				},
 			},
 			{ // Sampler.
-				Binding:    2,
+				Binding:    3,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,
