@@ -13,6 +13,7 @@ var<uniform> mvp: mat4x4<f32>;
 fn vert_main(
 	@location(0) pos: vec2f,
 	@location(1) uv: vec2f,
+	@location(2) normal: vec3f,
 ) -> VertOut {
 	var out: VertOut;
 

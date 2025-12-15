@@ -33,6 +33,11 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 				Offset:         4 * 2,
 				ShaderLocation: 1,
 			},
+			{ // Normal (nx, ny, nz).
+				Format:         wgpu.VertexFormatFloat32x3,
+				Offset:         4 * (2 + 2),
+				ShaderLocation: 2,
+			},
 		},
 	}
 

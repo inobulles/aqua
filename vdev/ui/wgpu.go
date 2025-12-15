@@ -42,32 +42,7 @@ type WgpuBackendTextData struct {
 	colour_buf *wgpu.Buffer
 	bind_group *wgpu.BindGroup
 
-	// TODO Probably can be generically reused in a quad kinda thing.
-
-	vbo         *wgpu.Buffer
-	ibo         *wgpu.Buffer
-	index_count uint32
-}
-
-type Vertex struct {
-	X, Y float32
-	U, V float32
-}
-
-func QuadVertices() []Vertex {
-	return []Vertex{
-		{-.5, -.5, 1, 0},
-		{.5, -.5, 1, 1},
-		{.5, .5, 0, 1},
-		{-.5, .5, 0, 0},
-	}
-}
-
-func QuadIndices() []uint16 {
-	return []uint16{
-		0, 1, 2,
-		2, 3, 0,
-	}
+	model *Model
 }
 
 func (b *WgpuBackend) free_elem(elem IElem) {
@@ -93,11 +68,8 @@ func (b *WgpuBackend) free_elem(elem IElem) {
 		if data.bind_group != nil {
 			data.bind_group.Release()
 		}
-		if data.vbo != nil {
-			data.vbo.Release()
-		}
-		if data.ibo != nil {
-			data.ibo.Release()
+		if data.model != nil {
+			data.model.release()
 		}
 
 		e.backend_data = nil
@@ -242,28 +214,8 @@ func (b *WgpuBackend) generate_text(e *Text) {
 		return
 	}
 
-	// Generate VBO/IBO.
-	// TODO This should probably be done only once for the WHOLE backend, not once for every text object.
-
-	if data.vbo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
-		Label:    fmt.Sprintf("VBO (%s)", e.text),
-		Contents: wgpu.ToBytes(QuadVertices()),
-		Usage:    wgpu.BufferUsageVertex,
-	}); err != nil {
-		println("Can't create VBO.")
-		b.free_elem(e)
-		return
-	}
-
-	if data.ibo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
-		Label:    fmt.Sprintf("IBO (%s)", e.text),
-		Contents: wgpu.ToBytes(QuadIndices()),
-		Usage:    wgpu.BufferUsageIndex,
-	}); err != nil {
-		println("Can't create IBO.")
-		b.free_elem(e)
-		return
-	}
+	data.model = &Model{}
+	data.model.gen_pane(b, float32(w), float32(h), 10)
 
 	e.backend_data = data
 }
@@ -279,8 +231,8 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		b.regular_pipeline.Set(render_pass, data.bind_group)
 
 		mvp := [4][4]float32{
-			{2 * float32(e.flow_w) / float32(b.x_res), 0, 0, 0},
-			{0, 2 * float32(e.flow_h) / float32(b.y_res), 0, 0},
+			{2 / float32(b.x_res), 0, 0, 0},
+			{0, 2 / float32(b.y_res), 0, 0},
 			{0, 0, 1, 0},
 			{
 				-1 + 2*(float32(e.flow_x)+float32(e.flow_w)/2)/float32(b.x_res),
@@ -302,9 +254,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		colour := [4]float32{0, 0, 0, 0}
 		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 
-		render_pass.SetVertexBuffer(0, data.vbo, 0, wgpu.WholeSize)
-		render_pass.SetIndexBuffer(data.ibo, wgpu.IndexFormatUint16, 0, wgpu.WholeSize)
-		render_pass.DrawIndexed(6, 1, 0, 0, 0)
+		data.model.draw(render_pass)
 	case *Div:
 		for _, child := range e.children {
 			b.render(child, render_pass)
