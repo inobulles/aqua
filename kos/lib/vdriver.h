@@ -119,6 +119,7 @@ typedef struct {
 	 * @param conn_id The ID of the connection to create. These connection IDs are allocated and managed by the KOS.
 	 */
 	void (*conn)(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id);
+
 	/**
 	 * The call function of the VDRIVER.
 	 *

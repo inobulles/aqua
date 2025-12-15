@@ -36,7 +36,7 @@ func NewFontFromFile(path string, size float64) (*Font, error) {
 	face, err := opentype.NewFace(fnt, &opentype.FaceOptions{
 		Size:    size,
 		DPI:     72,
-		Hinting: font.HintingFull,
+		Hinting: font.HintingNone, // Weirdly, looks more hinted without hinting than when set to HintingFull...
 	})
 	if err != nil {
 		println("Couldn't create new font face.")

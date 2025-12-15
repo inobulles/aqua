@@ -251,7 +251,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 
-		colour := [4]float32{0, 0, 0, 0}
+		colour := [4]float32{1, 0, 1, 0.5}
 		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 
 		data.model.draw(render_pass)

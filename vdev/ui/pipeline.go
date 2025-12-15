@@ -82,6 +82,8 @@ func (b *WgpuBackend) NewPipeline(
 			},
 		},
 		Multisample: wgpu.MultisampleState{
+			// TODO Once we get around to multisampling, I'm gonna wanna render to a texture and then blit that texture to the screen.
+			// See this example: https://github.com/samdauwe/webgpu-native-examples/blob/master/src/examples/msaa_line.c
 			Count:                  1,
 			Mask:                   0xFFFFFFFF,
 			AlphaToCoverageEnabled: false,
