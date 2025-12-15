@@ -379,6 +379,9 @@ static void call_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	vdriver_t* const vdriver = conn->vdriver;
 	assert(vdriver != NULL);
 
+	// TODO It seems the VDEV ID is just 0, either here or in call_gv.
+	// Maybe the testing device should expose 2 VDEVs so we can test this correctly?
+
 	vdriver->call(cookie, action->call.vdev_id, action->call.conn_id, action->call.fn_id, action->call.args);
 }
 

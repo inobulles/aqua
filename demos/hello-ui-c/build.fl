@@ -17,7 +17,7 @@ let obj = Cc([
 
 let cmd = Linker([
 	"-L/usr/local/lib",
-	"-laqua", "-laqua_root", "-laqua_win", "-laqua_wgpu", "-laqua_ui", "-lumber",
+	"-laqua", "-laqua_root", "-laqua_win", "-laqua_wgpu", "-laqua_ui", "-lumber", "-lm",
 ]).link(obj)
 
 install = {

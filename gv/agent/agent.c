@@ -79,6 +79,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		a->conn_id = notif->conn_id;
 
 		// Keep track of functions for future calls.
+		// TODO We need to copy this memory, as notif->conn.fns gets freed. But first check where its actually being freed because we might not have to free it here.
 
 		a->fn_count = notif->conn.fn_count;
 		a->fns = notif->conn.fns;

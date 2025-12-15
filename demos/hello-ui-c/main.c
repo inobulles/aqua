@@ -7,6 +7,8 @@
 
 #include <umber.h>
 
+#include <math.h>
+
 static umber_class_t const* init_cls = NULL;
 
 static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
@@ -18,10 +20,16 @@ static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
 	ui_wgpu_ez_resize(state, x_res, y_res);
 }
 
+static ui_elem_t para;
+static float x = 0;
+
 static void redraw(win_t win, void* data) {
 	ui_wgpu_ez_state_t* const state = data;
 	(void) win;
 
+	// ui_set_attr(para, "rot", x);
+	// ui_set_attr(para, "scale", (sin(x) / 2 + .5) / 4 + .75);
+	x += 0.01;
 	ui_wgpu_ez_render(state);
 }
 
@@ -114,6 +122,7 @@ int main(void) {
 
 	ui_elem_t const root = ui_get_root(ui);
 	ui_add_text(root, "text.title", "Hello world!");
+	para = ui_add_text(root, "text.paragraph", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.");
 
 	// Set up UI backend.
 
