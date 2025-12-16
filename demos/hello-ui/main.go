@@ -50,8 +50,32 @@ func main() {
 		panic("No UI VDEV found.")
 	}
 
+	ui_ctx := ui_comp.Conn(found)
+
+	if ui_ctx.GetSupportedBackends()&aqua.UI_BACKEND_WGPU == 0 {
+		panic("WebGPU UI backend is not supported.")
+	}
+
 	// Create window.
 
 	win := win_ctx.Create()
+	defer win.Destroy()
+
+	// Create a UI.
+
+	ui := ui_ctx.Create()
+	defer ui.Destroy()
+
+	root := ui.GetRoot()
+	root.AddText("text.title", "Hello world!")
+
+	// TODO Set up UI backend.
+
+	// Start window loop.
+
+	win.RegisterRedrawCb(func() {
+		println("redraw", win)
+	})
+
 	win.Loop()
 }
