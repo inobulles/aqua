@@ -34,6 +34,22 @@ func main() {
 
 	win_ctx := win_comp.Conn(found)
 
+	// Get WebGPU VDEV.
+
+	wgpu_comp := ctx.WgpuInit()
+	iter = wgpu_comp.NewVdevIter()
+
+	for vdev := iter.Next(); vdev != nil; vdev = iter.Next() {
+		fmt.Printf("Found WebGPU VDEV: %s (\"%s\", from \"%s\").\n", vdev.Spec, vdev.Human, vdev.VdriverHuman)
+		found = vdev
+	}
+
+	if found == nil {
+		panic("No WebGPU VDEV found.")
+	}
+
+	wgpu_ctx := wgpu_comp.Conn(found)
+
 	// Get UI VDEV.
 
 	ui_comp := ctx.UiInit()
@@ -69,12 +85,22 @@ func main() {
 	root := ui.GetRoot()
 	root.AddText("text.title", "Hello world!")
 
-	// TODO Set up UI backend.
+	// Set up UI backend.
+
+	state, err := ui.WgpuEzSetup(win, wgpu_ctx)
+
+	if err != nil {
+		panic("UI WebGPU backend setup failed.")
+	}
 
 	// Start window loop.
 
 	win.RegisterRedrawCb(func() {
-		println("redraw", win)
+		state.Render()
+	})
+
+	win.RegisterResizeCb(func(x_res, y_res uint32) {
+		state.Resize(x_res, y_res)
 	})
 
 	win.Loop()
