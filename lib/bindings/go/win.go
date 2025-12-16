@@ -10,6 +10,10 @@ package aqua
 */
 import "C"
 
+type WinComponent struct {
+	Component
+}
+
 type WinCtx struct {
 	ctx C.win_ctx_t
 }
@@ -19,17 +23,19 @@ type Win struct {
 	win C.win_t
 }
 
-func (c *Context) WinInit() *Component {
+func (c *Context) WinInit() *WinComponent {
 	comp := C.win_init(c.internal)
 
 	if comp == nil {
 		return nil
 	}
 
-	return &Component{internal: comp}
+	return &WinComponent{
+		Component{internal: comp},
+	}
 }
 
-func (c *Component) Conn(vdev *VdevDescr) *WinCtx {
+func (c *WinComponent) Conn(vdev *VdevDescr) *WinCtx {
 	if vdev == nil {
 		return nil
 	}
@@ -40,7 +46,7 @@ func (c *Component) Conn(vdev *VdevDescr) *WinCtx {
 		return nil
 	}
 
-	return &WinCtx{ctx: ctx}
+	return &WinCtx{ctx}
 }
 
 func (c *WinCtx) Create() *Win {
