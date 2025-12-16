@@ -68,6 +68,10 @@ func (c *WinCtx) Create() *Win {
 	}
 }
 
+func (w *Win) Destroy() {
+	C.win_destroy(w.win)
+}
+
 //export go_lib_bindings_win_redraw_cb
 func go_lib_bindings_win_redraw_cb(_ C.win_t, data unsafe.Pointer) {
 	handle := *(*cgo.Handle)(data)
