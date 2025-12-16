@@ -7,8 +7,14 @@ package aqua
 #cgo LDFLAGS: -laqua_win
 
 #include <aqua/win.h>
+
+extern void go_lib_bindings_win_redraw_cb(win_t win, void* data);
 */
 import "C"
+import (
+	"runtime/cgo"
+	"unsafe"
+)
 
 type WinComponent struct {
 	Component
@@ -60,6 +66,25 @@ func (c *WinCtx) Create() *Win {
 		ctx: c,
 		win: win,
 	}
+}
+
+//export go_lib_bindings_win_redraw_cb
+func go_lib_bindings_win_redraw_cb(_ C.win_t, data unsafe.Pointer) {
+	handle := *(*cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(func()); ok {
+		cb()
+	}
+}
+
+func (w *Win) RegisterRedrawCb(cb func()) {
+	cb_handle := cgo.NewHandle(cb)
+
+	C.win_register_redraw_cb(
+		w.win,
+		C.win_redraw_cb_t(C.go_lib_bindings_win_redraw_cb),
+		unsafe.Pointer(&cb_handle),
+	)
 }
 
 func (w *Win) Loop() {
