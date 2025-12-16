@@ -21,6 +21,7 @@ func (b *WgpuBackend) NewPipeline(
 	src string,
 	bind_group_layout_entries []wgpu.BindGroupLayoutEntry,
 	vbo_layouts []wgpu.VertexBufferLayout,
+	blend *wgpu.BlendState,
 ) (*Pipeline, error) {
 	pipeline := &Pipeline{}
 	var err error
@@ -76,7 +77,7 @@ func (b *WgpuBackend) NewPipeline(
 			Targets: []wgpu.ColorTargetState{
 				{
 					Format:    b.format,
-					Blend:     &wgpu.BlendStateAlphaBlending,
+					Blend:     blend,
 					WriteMask: wgpu.ColorWriteMaskAll,
 				},
 			},

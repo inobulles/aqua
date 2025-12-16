@@ -61,6 +61,7 @@ func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
 		[]wgpu.VertexBufferLayout{
 			vbo_layout,
 		},
+		&wgpu.BlendStateAlphaBlending,
 	)
 
 	if err != nil {
