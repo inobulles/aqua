@@ -130,7 +130,7 @@ func (d Div) defaults() Div {
 
 	d.flow_direction = AxisY
 	d.flow_wrap = false
-	d.content_align_x = AlignCentre
+	d.content_align_x = AlignBegin
 	d.content_align_y = AlignBegin
 
 	return d
