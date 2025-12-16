@@ -28,6 +28,7 @@ type WgpuBackend struct {
 	paragraph_font *Font
 
 	regular_pipeline *RegularPipeline
+	solid_pipeline   *SolidPipeline
 }
 
 type IWgpuBackendData interface {
@@ -78,8 +79,6 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		mvp = mul_mat(mvp, scale_mat(scale.(float32)))
 	}
 
-	colour := [4]float32{1, 0, 1, 0.5}
-
 	// Element specific rendering.
 
 	switch e := elem.(type) {
@@ -91,11 +90,32 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		data := e.backend_data.(WgpuBackendTextData)
 		b.regular_pipeline.Set(render_pass, data.bind_group)
 
+		colour := [4]float32{}
+
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 
 		data.model.draw(render_pass)
 	case *Div:
+		if e.backend_data == nil {
+			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
+		} else {
+			data := e.backend_data.(WgpuBackendDivData)
+			data.model.gen_pane(b, float32(e.flow_w), float32(e.flow_h), 10)
+		}
+
+		data := e.backend_data.(WgpuBackendDivData)
+		b.solid_pipeline.Set(render_pass, data.bind_group)
+
+		colour := [4]float32{0, 0, 0, 1}
+
+		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
+
+		data.model.draw(render_pass)
+
+		// Render children.
+
 		for _, child := range e.children {
 			b.render(child, render_pass)
 		}
@@ -148,6 +168,11 @@ func GoUiBackendWgpuInit(
 
 	if backend.regular_pipeline, err = backend.NewRegularPipeline(); err != nil {
 		println("Failed to create regular pipeline.")
+		return
+	}
+
+	if backend.solid_pipeline, err = backend.NewSolidPipeline(); err != nil {
+		println("Failed to create solid pipeline.")
 		return
 	}
 

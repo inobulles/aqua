@@ -177,7 +177,7 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 	}
 
 	data.model = &Model{}
-	data.model.gen_pane(b, float32(w), float32(h), 10)
+	data.model.gen_quad(b, float32(w), float32(h))
 
 	e.backend_data = data
 }
