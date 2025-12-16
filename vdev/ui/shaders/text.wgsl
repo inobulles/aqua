@@ -28,23 +28,15 @@ struct FragOut {
 };
 
 @group(0) @binding(1)
-var<uniform> colour: vec4f;
-@group(0) @binding(2)
 var t: texture_2d<f32>;
-@group(0) @binding(3)
+@group(0) @binding(2)
 var s: sampler;
 
 @fragment
 fn frag_main(vert: VertOut) -> FragOut {
 	var out: FragOut;
 
-	// XXX Blending is not correct now, but imma wait to replace Go's font rendering before I fix this properly.
-
-	let src = textureSample(t, s, vert.uv);
-	let alpha = src.a + colour.a * (1.0 - src.a);
-	let rgb = (src.rgb * src.a + colour.rgb * colour.a * (1.0 - src.a)) / alpha;
-
-	out.colour = vec4<f32>(rgb, alpha);
+	out.colour = textureSample(t, s, vert.uv);;
 
 	return out;
 }

@@ -19,7 +19,6 @@ type WgpuBackendTextData struct {
 	sampler *wgpu.Sampler
 
 	mvp_buf    *wgpu.Buffer
-	colour_buf *wgpu.Buffer
 	bind_group *wgpu.BindGroup
 
 	model *Model
@@ -37,9 +36,6 @@ func (d *WgpuBackendTextData) release() {
 	}
 	if d.mvp_buf != nil {
 		d.mvp_buf.Release()
-	}
-	if d.colour_buf != nil {
-		d.colour_buf.Release()
 	}
 	if d.bind_group != nil {
 		d.bind_group.Release()
@@ -135,17 +131,6 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 		return
 	}
 
-	// Create colour vector buffer.
-
-	if data.colour_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
-		Size:  16,
-		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
-	}); err != nil {
-		println("Can't create colour vector buffer.")
-		b.free_elem(e)
-		return
-	}
-
 	// Bind group shit.
 
 	if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
@@ -157,16 +142,11 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding: 1,
-				Buffer:  data.colour_buf,
-				Size:    wgpu.WholeSize,
-			},
-			{
-				Binding:     2,
+				Binding:     1,
 				TextureView: data.view,
 			},
 			{
-				Binding: 3,
+				Binding: 2,
 				Sampler: data.sampler,
 			},
 		},
