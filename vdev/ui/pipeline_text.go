@@ -10,15 +10,15 @@ import (
 	"obiw.ac/aqua/wgpu"
 )
 
-type RegularPipeline struct {
+type TextPipeline struct {
 	Pipeline
 	vbo_layout wgpu.VertexBufferLayout
 }
 
-//go:embed shaders/regular.wgsl
-var regular_shader_src string
+//go:embed shaders/text.wgsl
+var text_shader_src string
 
-func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
+func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 	vbo_layout := wgpu.VertexBufferLayout{
 		ArrayStride: uint64(unsafe.Sizeof(Vertex{})),
 		StepMode:    wgpu.VertexStepModeVertex,
@@ -41,7 +41,7 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Regular", regular_shader_src,
+	pipeline, err := b.NewPipeline("Text", text_shader_src,
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,
@@ -50,15 +50,8 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 					Type: wgpu.BufferBindingTypeUniform,
 				},
 			},
-			{ // Colour.
-				Binding:    1,
-				Visibility: wgpu.ShaderStageFragment,
-				Buffer: wgpu.BufferBindingLayout{
-					Type: wgpu.BufferBindingTypeUniform,
-				},
-			},
 			{ // Texture.
-				Binding:    2,
+				Binding:    1,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -67,7 +60,7 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 				},
 			},
 			{ // Sampler.
-				Binding:    3,
+				Binding:    2,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,
@@ -77,18 +70,19 @@ func (b *WgpuBackend) NewRegularPipeline() (*RegularPipeline, error) {
 		[]wgpu.VertexBufferLayout{
 			vbo_layout,
 		},
+		&wgpu.BlendStatePremultipliedAlphaBlending,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &RegularPipeline{
+	return &TextPipeline{
 		Pipeline:   *pipeline,
 		vbo_layout: vbo_layout,
 	}, nil
 }
 
-func (pipeline *RegularPipeline) Release() {
+func (pipeline *TextPipeline) Release() {
 	pipeline.Pipeline.Release()
 }

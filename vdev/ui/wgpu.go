@@ -27,7 +27,7 @@ type WgpuBackend struct {
 	title_font     *Font
 	paragraph_font *Font
 
-	regular_pipeline *RegularPipeline
+	regular_pipeline *TextPipeline
 	solid_pipeline   *SolidPipeline
 }
 
@@ -90,10 +90,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		data := e.backend_data.(WgpuBackendTextData)
 		b.regular_pipeline.Set(render_pass, data.bind_group)
 
-		colour := [4]float32{}
-
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
-		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 
 		data.model.draw(render_pass)
 	case *Div:
@@ -166,7 +163,7 @@ func GoUiBackendWgpuInit(
 		return
 	}
 
-	if backend.regular_pipeline, err = backend.NewRegularPipeline(); err != nil {
+	if backend.regular_pipeline, err = backend.NewTextPipeline(); err != nil {
 		println("Failed to create regular pipeline.")
 		return
 	}
