@@ -104,7 +104,20 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		data := e.backend_data.(WgpuBackendDivData)
 		b.solid_pipeline.Set(render_pass, data.bind_group)
 
-		colour := [4]float32{0, 0, 0, 1}
+		colour := [4]float32{0, 0, 0, 0}
+
+		if r := elem.ElemBase().get_attr("bg.r"); r != nil {
+			colour[0] = r.(float32)
+		}
+		if g := elem.ElemBase().get_attr("bg.g"); g != nil {
+			colour[1] = g.(float32)
+		}
+		if b := elem.ElemBase().get_attr("bg.b"); b != nil {
+			colour[2] = b.(float32)
+		}
+		if a := elem.ElemBase().get_attr("bg.a"); a != nil {
+			colour[3] = a.(float32)
+		}
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
