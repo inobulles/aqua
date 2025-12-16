@@ -10,7 +10,6 @@ import "C"
 
 import (
 	"fmt"
-	"image"
 	"runtime/cgo"
 	"unsafe"
 
@@ -31,49 +30,17 @@ type WgpuBackend struct {
 	regular_pipeline *RegularPipeline
 }
 
-type WgpuBackendTextData struct {
-	data *image.RGBA
-
-	tex     *wgpu.Texture
-	view    *wgpu.TextureView
-	sampler *wgpu.Sampler
-
-	mvp_buf    *wgpu.Buffer
-	colour_buf *wgpu.Buffer
-	bind_group *wgpu.BindGroup
-
-	model *Model
+type IWgpuBackendData interface {
+	release()
 }
 
 func (b *WgpuBackend) free_elem(elem IElem) {
-	switch e := elem.(type) {
-	case *Text:
-		data := e.backend_data.(WgpuBackendTextData)
-
-		if data.tex != nil {
-			data.tex.Release()
-		}
-		if data.view != nil {
-			data.view.Release()
-		}
-		if data.sampler != nil {
-			data.sampler.Release()
-		}
-		if data.mvp_buf != nil {
-			data.mvp_buf.Release()
-		}
-		if data.colour_buf != nil {
-			data.colour_buf.Release()
-		}
-		if data.bind_group != nil {
-			data.bind_group.Release()
-		}
-		if data.model != nil {
-			data.model.release()
-		}
-
-		e.backend_data = nil
+	switch e := elem.ElemBase().backend_data.(type) {
+	case IWgpuBackendData:
+		e.release()
 	}
+
+	elem.ElemBase().backend_data = nil
 }
 
 func (b *WgpuBackend) get_font(e *Text) *Font {
@@ -87,171 +54,44 @@ func (b *WgpuBackend) get_font(e *Text) *Font {
 	}
 }
 
-func (b *WgpuBackend) generate_text(e *Text) {
-	// TODO Split into multiple functions when I make quad thing made only once for backend, because cleaning when error is kinda disgusting currently.
-
-	// If we already have backend data, free everything.
-
-	if e.backend_data != nil {
-		b.free_elem(e)
-	}
-
-	// Generate new text.
-
-	data := WgpuBackendTextData{
-		data: b.get_font(e).Render(e.text, int(e.ElemBase().flow_w)),
-	}
-
-	w := uint32(data.data.Bounds().Dx())
-	h := uint32(data.data.Bounds().Dy())
-
-	tex_size := wgpu.Extent3D{
-		Width:              w,
-		Height:             h,
-		DepthOrArrayLayers: 1,
-	}
-
-	var err error
-
-	if data.tex, err = b.dev.CreateTexture(&wgpu.TextureDescriptor{
-		Label:         fmt.Sprintf("Texture (%s)", e.text),
-		Size:          tex_size,
-		MipLevelCount: 1,
-		SampleCount:   1,
-		Dimension:     wgpu.TextureDimension2D,
-		Format:        wgpu.TextureFormatRGBA8Unorm,
-		Usage:         wgpu.TextureUsageTextureBinding | wgpu.TextureUsageCopyDst,
-	}); err != nil {
-		println("Can't create texture.")
-		b.free_elem(e)
-		return
-	}
-
-	if err = b.dev.GetQueue().WriteTexture(
-		data.tex.AsImageCopy(),
-		data.data.Pix,
-		&wgpu.TexelCopyBufferLayout{
-			Offset:       0,
-			BytesPerRow:  4 * w,
-			RowsPerImage: h,
-		},
-		&tex_size,
-	); err != nil {
-		println("Can't write texture.")
-		b.free_elem(e)
-		return
-	}
-
-	if data.view, err = data.tex.CreateView(nil); err != nil {
-		println("Can't create texture view.")
-		b.free_elem(e)
-		return
-	}
-
-	if data.sampler, err = b.dev.CreateSampler(&wgpu.SamplerDescriptor{
-		AddressModeU:  wgpu.AddressModeClampToEdge,
-		AddressModeV:  wgpu.AddressModeClampToEdge,
-		AddressModeW:  wgpu.AddressModeClampToEdge,
-		MagFilter:     wgpu.FilterModeLinear,
-		MinFilter:     wgpu.FilterModeLinear,
-		MipmapFilter:  wgpu.MipmapFilterModeLinear,
-		MaxAnisotropy: 1,
-	}); err != nil {
-		println("Can't create sampler.")
-		b.free_elem(e)
-		return
-	}
-
-	// Create MVP matrix buffer.
-
-	if data.mvp_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
-		Size:  64,
-		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
-	}); err != nil {
-		println("Can't create MVP matrix buffer.")
-		b.free_elem(e)
-		return
-	}
-
-	// Create colour vector buffer.
-
-	if data.colour_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
-		Size:  16,
-		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
-	}); err != nil {
-		println("Can't create colour vector buffer.")
-		b.free_elem(e)
-		return
-	}
-
-	// Bind group shit.
-
-	if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-		Layout: b.regular_pipeline.bind_group_layout,
-		Entries: []wgpu.BindGroupEntry{
-			{
-				Binding: 0,
-				Buffer:  data.mvp_buf,
-				Size:    wgpu.WholeSize,
-			},
-			{
-				Binding: 1,
-				Buffer:  data.colour_buf,
-				Size:    wgpu.WholeSize,
-			},
-			{
-				Binding:     2,
-				TextureView: data.view,
-			},
-			{
-				Binding: 3,
-				Sampler: data.sampler,
-			},
-		},
-	}); err != nil {
-		println("Can't create bind group.")
-		b.free_elem(e)
-		return
-	}
-
-	data.model = &Model{}
-	data.model.gen_pane(b, float32(w), float32(h), 10)
-
-	e.backend_data = data
-}
-
 func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
+	// Create MVP matrix.
+
+	base := elem.ElemBase()
+
+	mvp := [4][4]float32{
+		{2 / float32(b.x_res), 0, 0, 0},
+		{0, 2 / float32(b.y_res), 0, 0},
+		{0, 0, 1, 0},
+		{
+			-1 + 2*(float32(base.flow_x)+float32(base.flow_w)/2)/float32(b.x_res),
+			1 - 2*(float32(base.flow_y)+float32(base.flow_h)/2)/float32(b.y_res),
+			0, 1,
+		},
+	}
+
+	if rot := elem.ElemBase().get_attr("rot"); rot != nil {
+		mvp = mul_mat(mvp, rot_mat(rot.(float32)))
+	}
+
+	if scale := elem.ElemBase().get_attr("scale"); scale != nil {
+		mvp = mul_mat(mvp, scale_mat(scale.(float32)))
+	}
+
+	colour := [4]float32{1, 0, 1, 0.5}
+
+	// Element specific rendering.
+
 	switch e := elem.(type) {
 	case *Text:
 		if e.backend_data == nil {
-			b.generate_text(e)
+			b.gen_text_backend_data(e)
 		}
 
 		data := e.backend_data.(WgpuBackendTextData)
 		b.regular_pipeline.Set(render_pass, data.bind_group)
 
-		mvp := [4][4]float32{
-			{2 / float32(b.x_res), 0, 0, 0},
-			{0, 2 / float32(b.y_res), 0, 0},
-			{0, 0, 1, 0},
-			{
-				-1 + 2*(float32(e.flow_x)+float32(e.flow_w)/2)/float32(b.x_res),
-				1 - 2*(float32(e.flow_y)+float32(e.flow_h)/2)/float32(b.y_res),
-				0, 1,
-			},
-		}
-
-		if rot := elem.ElemBase().get_attr("rot"); rot != nil {
-			mvp = mul_mat(mvp, rot_mat(rot.(float32)))
-		}
-
-		if scale := elem.ElemBase().get_attr("scale"); scale != nil {
-			mvp = mul_mat(mvp, scale_mat(scale.(float32)))
-		}
-
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
-
-		colour := [4]float32{1, 0, 1, 0.5}
 		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 
 		data.model.draw(render_pass)

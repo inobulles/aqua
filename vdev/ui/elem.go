@@ -49,6 +49,8 @@ type Elem struct {
 
 	flow_x, flow_y uint32
 	flow_w, flow_h uint32
+
+	backend_data any
 }
 
 type OverflowKind int
@@ -143,9 +145,8 @@ const (
 
 type Text struct {
 	Elem
-	text         string
-	semantic     TextSemantic
-	backend_data any
+	text     string
+	semantic TextSemantic
 }
 
 func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) *Text {
