@@ -22,11 +22,16 @@ func (e Div) reflow(max_w, max_h uint32) {
 	// TODO Find max size of div here and pass that down.
 	// Text can then wrap to fit that size.
 
-	flow_x := e.dimension_to_px(e.pl)
-	flow_y := e.dimension_to_px(e.pt)
+	pl := e.dimension_to_px(e.pl)
+	pr := e.dimension_to_px(e.pr)
+	pt := e.dimension_to_px(e.pt)
+	pb := e.dimension_to_px(e.pb)
+
+	flow_x := pl
+	flow_y := pt
 
 	for _, child := range e.children {
-		child.reflow(max_w, max_h)
+		child.reflow(max_w-pl-pr, max_h-pt-pb)
 
 		cw, ch := child.ElemBase().flow_w, child.ElemBase().flow_h
 
