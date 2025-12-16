@@ -9,6 +9,7 @@ package aqua
 #include <aqua/win.h>
 
 extern void go_lib_bindings_win_redraw_cb(win_t win, void* data);
+extern void go_lib_bindings_win_resize_cb(win_t win, void* data, uint32_t x_res, uint32_t y_res);
 */
 import "C"
 import (
@@ -72,21 +73,44 @@ func (w *Win) Destroy() {
 	C.win_destroy(w.win)
 }
 
+type WinRedrawCb func()
+
 //export go_lib_bindings_win_redraw_cb
 func go_lib_bindings_win_redraw_cb(_ C.win_t, data unsafe.Pointer) {
 	handle := *(*cgo.Handle)(data)
 
-	if cb, ok := handle.Value().(func()); ok {
+	if cb, ok := handle.Value().(WinRedrawCb); ok {
 		cb()
 	}
 }
 
-func (w *Win) RegisterRedrawCb(cb func()) {
+func (w *Win) RegisterRedrawCb(cb WinRedrawCb) {
 	cb_handle := cgo.NewHandle(cb)
 
 	C.win_register_redraw_cb(
 		w.win,
 		C.win_redraw_cb_t(C.go_lib_bindings_win_redraw_cb),
+		unsafe.Pointer(&cb_handle),
+	)
+}
+
+type WinResizeCb func(x_res, y_res uint32)
+
+//export go_lib_bindings_win_resize_cb
+func go_lib_bindings_win_resize_cb(_ C.win_t, data unsafe.Pointer, x_res, y_res C.uint32_t) {
+	handle := *(*cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WinResizeCb); ok {
+		cb(uint32(x_res), uint32(y_res))
+	}
+}
+
+func (w *Win) RegisterResizeCb(cb WinResizeCb) {
+	cb_handle := cgo.NewHandle(cb)
+
+	C.win_register_resize_cb(
+		w.win,
+		C.win_resize_cb_t(C.go_lib_bindings_win_resize_cb),
 		unsafe.Pointer(&cb_handle),
 	)
 }
