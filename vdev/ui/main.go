@@ -6,7 +6,7 @@ package main
 /*
 #cgo LDFLAGS: -laqua -lvdriver -lumber
 
-#include "../../kos/lib/vdriver.h"
+#include <aqua/vdriver.h>
 */
 import "C"
 import "runtime/cgo"
