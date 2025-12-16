@@ -7,9 +7,13 @@ package aqua
 #cgo LDFLAGS: -laqua_ui
 
 #include <aqua/ui.h>
+#include <aqua/ui/wgpu.h>
 */
 import "C"
-import "unsafe"
+import (
+	"errors"
+	"unsafe"
+)
 
 type UiComponent struct {
 	Component
@@ -101,4 +105,32 @@ func (e *UiElem) AddText(semantics, text string) *UiElem {
 		ui:   e.ui,
 		elem: C.ui_add_text(e.elem, c_semantics, c_text),
 	}
+}
+
+// WebGPU backend stuff.
+
+type UiWgpuEzState struct {
+	internal C.ui_wgpu_ez_state_t
+}
+
+func (u *Ui) WgpuEzSetup(win *Win, wgpu_ctx *WgpuCtx) (*UiWgpuEzState, error) {
+	state := &UiWgpuEzState{}
+
+	if C.ui_wgpu_ez_setup(&state.internal, u.ui, win.win, wgpu_ctx.ctx) != 0 {
+		return nil, errors.New("ui_wgpu_ez_setup failed")
+	}
+
+	return state, nil
+}
+
+func (s *UiWgpuEzState) Render() error {
+	if C.ui_wgpu_ez_render(&s.internal) != 0 {
+		return errors.New("ui_wgpu_ez_render failed")
+	}
+
+	return nil
+}
+
+func (s *UiWgpuEzState) Resize(x_res, y_res uint32) {
+	C.ui_wgpu_ez_resize(&s.internal, C.uint32_t(x_res), C.uint32_t(y_res))
 }
