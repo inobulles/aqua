@@ -4,7 +4,7 @@
 package main
 
 /*
-#include "../../kos/lib/vdriver.h"
+#include <aqua/vdriver.h>
 */
 import "C"
 
