@@ -281,12 +281,27 @@ bool ui_set_attr_dim(ui_elem_t elem, char const* key, ui_dim_t dim) {
 	ui_t const ui = elem->ui;
 	ui_ctx_t const ctx = ui->ctx;
 
-	kos_val_t const vals[2] = {
+	kos_val_t const vals[] = {
 		{.u32 = dim.units},
 		{.f32 = dim.val},
 	};
 
-	return ui_set_attr_common(ctx, ctx->fns.set_attr_dim, elem, key, 2, vals);
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_dim, elem, key, sizeof vals / sizeof *vals, vals);
+}
+
+bool ui_set_attr_raster(ui_elem_t elem, char const* key, ui_raster_t raster) {
+	ui_t const ui = elem->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	size_t const size = raster.x_res * raster.y_res * 4;
+
+	kos_val_t const vals[] = {
+		{.u32 = raster.x_res},
+		{.u32 = raster.y_res},
+		{.buf = {size, raster.data}},
+	};
+
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_raster, elem, key, sizeof vals / sizeof *vals, vals);
 }
 
 static void notif_call_ret(kos_notif_t const* notif, void* data) {
@@ -431,6 +446,24 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[3].name, "val") == 0
 		) {
 			ctx->fns.set_attr_dim = i;
+		}
+
+		if (
+			strcmp(name, "set_attr_raster") == 0 &&
+			fn->ret_type == KOS_TYPE_BOOL &&
+			fn->param_count == 5 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "elem") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "key") == 0 &&
+			fn->params[2].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[2].name, "x_res") == 0 &&
+			fn->params[3].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[3].name, "y_res") == 0 &&
+			fn->params[4].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[4].name, "data") == 0
+		) {
+			ctx->fns.set_attr_raster = i;
 		}
 	}
 
