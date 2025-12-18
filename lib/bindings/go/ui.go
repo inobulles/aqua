@@ -75,6 +75,11 @@ func (UiDim) Pixels(pixels uint32) UiDim {
 	}
 }
 
+type UiRaster struct {
+	XRes, YRes uint32
+	Data       []byte
+}
+
 func (c *Context) UiInit() *UiComponent {
 	comp := C.ui_init(c.internal)
 
@@ -169,7 +174,17 @@ func (e *UiElem) SetAttr(key string, val any) {
 	case UiDim:
 		C.ui_set_attr_dim(e.elem, c_key, C.ui_dim_t{
 			units: C.ui_dim_units_t(v.kind),
-			val: C.float(v.val),
+			val:   C.float(v.val),
+		})
+	case UiRaster:
+		if uint32(len(v.Data)) != v.XRes*v.YRes*4 {
+			panic("wrong size for data")
+		}
+
+		C.ui_set_attr_raster(e.elem, c_key, C.ui_raster_t{
+			x_res: C.uint32_t(v.XRes),
+			y_res: C.uint32_t(v.YRes),
+			data:  unsafe.Pointer(&v.Data[0]),
 		})
 	case float64:
 		panic(fmt.Sprintf("unexpected value type for attribute: %T (did you mean to cast to float32 first?)", val))
