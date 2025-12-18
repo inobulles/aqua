@@ -225,12 +225,20 @@ ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text)
 	return elem;
 }
 
-static bool ui_set_attr_common(ui_ctx_t ctx, uint32_t fn_id, ui_elem_t elem, char const* key, kos_val_t val) {
-	kos_val_t const args[] = {
-		{.opaque_ptr = elem->opaque_ptr},
-		{.buf = {strlen(key), (void*) key}},
-		val,
-	};
+static bool ui_set_attr_common(
+	ui_ctx_t ctx,
+	uint32_t fn_id,
+	ui_elem_t elem,
+	char const* key,
+	size_t val_count,
+	kos_val_t const vals[val_count]
+) {
+	kos_val_t args[2 + val_count];
+
+	args[0] = (kos_val_t) {.opaque_ptr = elem->opaque_ptr};
+	args[1] = (kos_val_t) {.buf = {strlen(key), (void*) key}};
+
+	memcpy(&args[2], vals, val_count * sizeof *vals);
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, fn_id, args);
 	ctx->last_success = false;
@@ -252,21 +260,33 @@ bool ui_set_attr_str(ui_elem_t elem, char const* key, char const* val) {
 		.buf = {strlen(val), (void*) val},
 	};
 
-	return ui_set_attr_common(ctx, ctx->fns.set_attr_str, elem, key, kos_val);
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_str, elem, key, 1, &kos_val);
 }
 
 bool ui_set_attr_u32(ui_elem_t elem, char const* key, uint32_t val) {
 	ui_t const ui = elem->ui;
 	ui_ctx_t const ctx = ui->ctx;
 
-	return ui_set_attr_common(ctx, ctx->fns.set_attr_u32, elem, key, (kos_val_t) {.u32 = val});
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_u32, elem, key, 1, &(kos_val_t) {.u32 = val});
 }
 
 bool ui_set_attr_f32(ui_elem_t elem, char const* key, float val) {
 	ui_t const ui = elem->ui;
 	ui_ctx_t const ctx = ui->ctx;
 
-	return ui_set_attr_common(ctx, ctx->fns.set_attr_f32, elem, key, (kos_val_t) {.f32 = val});
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_f32, elem, key, 1, &(kos_val_t) {.f32 = val});
+}
+
+bool ui_set_attr_dim(ui_elem_t elem, char const* key, ui_dim_t dim) {
+	ui_t const ui = elem->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	kos_val_t const vals[2] = {
+		{.u32 = dim.units},
+		{.f32 = dim.val},
+	};
+
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_dim, elem, key, 2, vals);
 }
 
 static void notif_call_ret(kos_notif_t const* notif, void* data) {
@@ -395,6 +415,22 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			if (strcmp(name, "set_attr_f32") == 0 && fn->params[2].type == KOS_TYPE_F32) {
 				ctx->fns.set_attr_f32 = i;
 			}
+		}
+
+		if (
+			strcmp(name, "set_attr_dim") == 0 &&
+			fn->ret_type == KOS_TYPE_BOOL &&
+			fn->param_count == 4 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "elem") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "key") == 0 &&
+			fn->params[2].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[2].name, "units") == 0 &&
+			fn->params[3].type == KOS_TYPE_F32 &&
+			strcmp((char*) fn->params[3].name, "val") == 0
+		) {
+			ctx->fns.set_attr_dim = i;
 		}
 	}
 

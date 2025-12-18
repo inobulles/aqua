@@ -46,6 +46,25 @@ typedef enum {
 } ui_supported_backends_t;
 
 /**
+ * Dimension unit kinds.
+ */
+typedef enum {
+	UI_DIM_UNITS_ZERO,
+	UI_DIM_UNITS_PARENT_FRAC,
+	UI_DIM_UNITS_PIXELS,
+} ui_dim_units_t;
+
+/**
+ * Dimension structure.
+ *
+ * A dimension contains the units in which it is expressed and its value.
+ */
+typedef struct {
+	ui_dim_units_t units;
+	float val;
+} ui_dim_t;
+
+/**
  * Initialize the UI library component.
  *
  * @param ctx The AQUA library context.
@@ -151,6 +170,13 @@ bool ui_set_attr_u32(ui_elem_t elem, char const* key, uint32_t val);
  */
 bool ui_set_attr_f32(ui_elem_t elem, char const* key, float val);
 
+/**
+ * Set a dimension attribute on a UI element.
+ *
+ * Please use the generic {@link ui_set_attr} macro instead!
+ */
+bool ui_set_attr_dim(ui_elem_t elem, char const* key, ui_dim_t dim);
+
 // clang-format off
 
 /**
@@ -171,7 +197,8 @@ bool ui_set_attr_f32(ui_elem_t elem, char const* key, float val);
         char*:       ui_set_attr_str, \
         float:       ui_set_attr_f32, \
         double:      ui_set_attr_f32, \
-        uint32_t:    ui_set_attr_u32  \
+        uint32_t:    ui_set_attr_u32, \
+        ui_dim_t:    ui_set_attr_dim  \
     )((elem), (key), (val))
 
 // clang-format on
