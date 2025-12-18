@@ -162,9 +162,10 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 	switch semantic_str {
 	case "text.title":
 		semantic = TextSemanticTitle
+	case "text.paragraph":
+		semantic = TextSemanticParagraph
 	default:
 		fmt.Errorf("Unknown text semantic '%s'. Defaulting to 'text.paragraph'.", semantic_str)
-	case "text.paragraph":
 		semantic = TextSemanticParagraph
 	}
 
