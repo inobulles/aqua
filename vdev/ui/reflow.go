@@ -18,7 +18,7 @@ func align_off(align Align, container_size uint32, elem_size uint32) uint32 {
 	}
 }
 
-func (e Div) reflow(max_w, max_h uint32) {
+func (e *Div) reflow(max_w, max_h uint32) {
 	// TODO Find max size of div here and pass that down.
 	// Text can then wrap to fit that size.
 
@@ -60,6 +60,15 @@ func (e Div) reflow(max_w, max_h uint32) {
 		default:
 			panic(fmt.Sprintf("unexpected main.Axis: %#v", e.flow_direction))
 		}
+	}
+
+	// Make sure div is not smaller than minimum size.
+
+	if min_w := e.get_attr("min_w"); min_w != nil {
+		e.flow_w = max(e.flow_w, e.dimension_to_px(min_w.(Dimension)))
+	}
+	if min_h := e.get_attr("min_h"); min_h != nil {
+		e.flow_h = max(e.flow_h, e.dimension_to_px(min_h.(Dimension)))
 	}
 }
 
