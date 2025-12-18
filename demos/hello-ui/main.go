@@ -3,10 +3,17 @@
 
 package main
 
-import "fmt"
-import "obiw.ac/aqua"
+import (
+	"fmt"
+	"runtime"
+
+	"obiw.ac/aqua"
+)
 
 func main() {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	ctx := aqua.Init()
 
 	if ctx == nil {
