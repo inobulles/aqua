@@ -9,6 +9,8 @@ import (
 	"obiw.ac/aqua/wgpu"
 )
 
+// TODO Should really make this an interface to make my life easier.
+
 type Pipeline struct {
 	shader            *wgpu.ShaderModule
 	bind_group_layout *wgpu.BindGroupLayout
