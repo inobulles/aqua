@@ -9,6 +9,7 @@ package main
 import "C"
 import (
 	"fmt"
+	"os"
 	"runtime/cgo"
 )
 
@@ -165,7 +166,7 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 	case "text.paragraph":
 		semantic = TextSemanticParagraph
 	default:
-		fmt.Errorf("Unknown text semantic '%s'. Defaulting to 'text.paragraph'.", semantic_str)
+		fmt.Fprintf(os.Stderr, "Unknown text semantic '%s'. Defaulting to 'text.paragraph'.\n", semantic_str)
 		semantic = TextSemanticParagraph
 	}
 
