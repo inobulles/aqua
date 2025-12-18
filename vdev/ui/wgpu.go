@@ -211,6 +211,10 @@ func GoUiBackendWgpuRender(
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	backend := ui.backend.(*WgpuBackend)
 
+	if x_res != ui.root.flow_w || y_res != ui.root.flow_h { // Make UI dirty on resize.
+		ui.dirty = true
+	}
+
 	if ui.dirty {
 		ui.reflow(x_res, y_res)
 		ui.dirty = false
