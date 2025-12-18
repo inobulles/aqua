@@ -41,6 +41,40 @@ const (
 	UI_BACKEND_WGPU UiSupportedBackends = C.UI_BACKEND_WGPU
 )
 
+type UiDimUnits int
+
+const (
+	UI_DIM_UNITS_ZERO        UiDimUnits = C.UI_DIM_UNITS_ZERO
+	UI_DIM_UNITS_PARENT_FRAC UiDimUnits = C.UI_DIM_UNITS_PARENT_FRAC
+	UI_DIM_UNITS_PIXELS      UiDimUnits = C.UI_DIM_UNITS_PIXELS
+)
+
+type UiDim struct {
+	kind UiDimUnits
+	val  float32
+}
+
+func (UiDim) Zero() UiDim {
+	return UiDim{
+		kind: UI_DIM_UNITS_ZERO,
+		val:  0,
+	}
+}
+
+func (UiDim) Full() UiDim {
+	return UiDim{
+		kind: UI_DIM_UNITS_PARENT_FRAC,
+		val:  1,
+	}
+}
+
+func (UiDim) Pixels(pixels uint32) UiDim {
+	return UiDim{
+		kind: UI_DIM_UNITS_PIXELS,
+		val:  float32(pixels),
+	}
+}
+
 func (c *Context) UiInit() *UiComponent {
 	comp := C.ui_init(c.internal)
 
@@ -132,8 +166,15 @@ func (e *UiElem) SetAttr(key string, val any) {
 		C.ui_set_attr_f32(e.elem, c_key, C.float(v))
 	case uint32:
 		C.ui_set_attr_u32(e.elem, c_key, C.uint32_t(v))
+	case UiDim:
+		C.ui_set_attr_dim(e.elem, c_key, C.ui_dim_t{
+			units: C.ui_dim_units_t(v.kind),
+			val: C.float(v.val),
+		})
+	case float64:
+		panic(fmt.Sprintf("unexpected value type for attribute: %T (did you mean to cast to float32 first?)", val))
 	default:
-		panic(fmt.Sprintf("unexpected value type for attribute: %#v", val))
+		panic(fmt.Sprintf("unexpected value type for attribute: %T", val))
 	}
 }
 
