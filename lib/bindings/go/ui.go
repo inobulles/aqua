@@ -12,6 +12,7 @@ package aqua
 import "C"
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 )
 
@@ -114,6 +115,25 @@ func (e *UiElem) AddDiv(semantics string) *UiElem {
 	return &UiElem{
 		ui:   e.ui,
 		elem: C.ui_add_div(e.elem, c_semantics),
+	}
+}
+
+func (e *UiElem) SetAttr(key string, val any) {
+	c_key := C.CString(key)
+	defer C.free(unsafe.Pointer(c_key))
+
+	switch v := val.(type) {
+	case string:
+		c_val := C.CString(v)
+		defer C.free(unsafe.Pointer(c_val))
+
+		C.ui_set_attr_str(e.elem, c_key, c_val)
+	case float32:
+		C.ui_set_attr_f32(e.elem, c_key, C.float(v))
+	case uint32:
+		C.ui_set_attr_u32(e.elem, c_key, C.uint32_t(v))
+	default:
+		panic(fmt.Sprintf("unexpected value type for attribute: %#v", val))
 	}
 }
 
