@@ -128,6 +128,17 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_F32, "val"},
 		},
 	},
+	{
+		.name = "set_attr_dim",
+		.ret_type = KOS_TYPE_BOOL,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "elem"},
+			{KOS_TYPE_BUF, "key"},
+			{KOS_TYPE_U32, "units"},
+			{KOS_TYPE_F32, "val"},
+		},
+	},
 	// WebGPU backend specific stuff.
 	{
 		.name = "backend_wgpu_init",
@@ -191,6 +202,7 @@ extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t sem
 extern bool GoUiSetAttrStr(uintptr_t elem, char const* key, size_t key_len, char const* val, size_t val_len);
 extern bool GoUiSetAttrU32(uintptr_t elem, char const* key, size_t key_len, uint32_t val);
 extern bool GoUiSetAttrF32(uintptr_t elem, char const* key, size_t key_len, float val);
+extern bool GoUiSetAttrDim(uintptr_t elem, char const* key, size_t key_len, uint32_t units, float val);
 
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device, uint32_t format);
 extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder, uint32_t x_res, uint32_t y_res);
@@ -274,6 +286,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 	case 5:
 	case 6:
 	case 7:
+	case 8:
 		elem = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (elem == NULL) {
@@ -307,11 +320,22 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].f32
 			);
 			break;
+		case 8:
+			notif.call_ret.ret.b = GoUiSetAttrDim(
+				(uintptr_t) elem,
+				(char const*) args[1].buf.ptr,
+				args[1].buf.size,
+				args[2].u32,
+				args[3].f32
+			);
+			break;
+		default:
+			assert(false);
 		}
 
 		break;
 	// WebGPU backend specific stuff.
-	case 8:
+	case 9:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
@@ -330,7 +354,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device, format);
 		break;
-	case 9:
+	case 10:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
