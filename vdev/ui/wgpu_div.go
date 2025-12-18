@@ -12,6 +12,10 @@ type WgpuBackendDivData struct {
 
 	mvp_buf    *wgpu.Buffer
 	colour_buf *wgpu.Buffer
+
+	tex *WgpuTexture
+
+	pipeline   *Pipeline
 	bind_group *wgpu.BindGroup
 
 	model *Model
@@ -23,6 +27,9 @@ func (d *WgpuBackendDivData) release() {
 	}
 	if d.colour_buf != nil {
 		d.colour_buf.Release()
+	}
+	if d.tex != nil {
+		d.tex.Release()
 	}
 	if d.bind_group != nil {
 		d.bind_group.Release()
@@ -65,26 +72,60 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		return
 	}
 
-	// Bind group shit.
+	// If we have a raster background attribute, create texture.
 
-	if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-		Layout: b.solid_pipeline.bind_group_layout,
-		Entries: []wgpu.BindGroupEntry{
-			{
-				Binding: 0,
-				Buffer:  data.mvp_buf,
-				Size:    wgpu.WholeSize,
+	switch bg := e.get_attr("bg").(type) {
+	case Raster:
+		if data.tex, err = b.NewTexture("Div texture", bg.x_res, bg.y_res, bg.data); err != nil {
+			panic(err)
+		}
+	}
+
+	// Bind group shit (solid bind group if no texture, or texture bind group if texture).
+
+	if data.tex == nil {
+		if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+			Layout: b.solid_pipeline.bind_group_layout,
+			Entries: []wgpu.BindGroupEntry{
+				{
+					Binding: 0,
+					Buffer:  data.mvp_buf,
+					Size:    wgpu.WholeSize,
+				},
+				{
+					Binding: 1,
+					Buffer:  data.colour_buf,
+					Size:    wgpu.WholeSize,
+				},
 			},
-			{
-				Binding: 1,
-				Buffer:  data.colour_buf,
-				Size:    wgpu.WholeSize,
+		}); err != nil {
+			println("Can't create solid bind group.")
+			b.free_elem(e)
+			return
+		}
+	} else {
+		if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+			Layout: b.texture_pipeline.bind_group_layout,
+			Entries: []wgpu.BindGroupEntry{
+				{
+					Binding: 0,
+					Buffer:  data.mvp_buf,
+					Size:    wgpu.WholeSize,
+				},
+				{
+					Binding:     1,
+					TextureView: data.tex.view,
+				},
+				{
+					Binding: 2,
+					Sampler: data.tex.sampler,
+				},
 			},
-		},
-	}); err != nil {
-		println("Can't create bind group.")
-		b.free_elem(e)
-		return
+		}); err != nil {
+			println("Can't create texture bind group.")
+			b.free_elem(e)
+			return
+		}
 	}
 
 	// Generate pane model.
