@@ -29,6 +29,7 @@ type WgpuBackend struct {
 
 	regular_pipeline *TextPipeline
 	solid_pipeline   *SolidPipeline
+	texture_pipeline *TexturePipeline
 }
 
 type IWgpuBackendData interface {
@@ -183,6 +184,11 @@ func GoUiBackendWgpuInit(
 
 	if backend.solid_pipeline, err = backend.NewSolidPipeline(); err != nil {
 		println("Failed to create solid pipeline.")
+		return
+	}
+
+	if backend.texture_pipeline, err = backend.NewTexturePipeline(); err != nil {
+		println("Failed to create texture pipeline.")
 		return
 	}
 
