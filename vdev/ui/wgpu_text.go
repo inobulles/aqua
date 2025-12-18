@@ -16,10 +16,7 @@ type WgpuBackendTextData struct {
 	flow_w uint32
 	data   *image.RGBA
 
-	tex     *wgpu.Texture
-	view    *wgpu.TextureView
-	sampler *wgpu.Sampler
-
+	tex        *WgpuTexture
 	mvp_buf    *wgpu.Buffer
 	bind_group *wgpu.BindGroup
 
@@ -29,12 +26,6 @@ type WgpuBackendTextData struct {
 func (d *WgpuBackendTextData) release() {
 	if d.tex != nil {
 		d.tex.Release()
-	}
-	if d.view != nil {
-		d.view.Release()
-	}
-	if d.sampler != nil {
-		d.sampler.Release()
 	}
 	if d.mvp_buf != nil {
 		d.mvp_buf.Release()
@@ -68,59 +59,13 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 	w := uint32(data.data.Bounds().Dx())
 	h := uint32(data.data.Bounds().Dy())
 
-	tex_size := wgpu.Extent3D{
-		Width:              w,
-		Height:             h,
-		DepthOrArrayLayers: 1,
-	}
-
 	var err error
 
-	if data.tex, err = b.dev.CreateTexture(&wgpu.TextureDescriptor{
-		Label:         fmt.Sprintf("Texture (%s)", e.text),
-		Size:          tex_size,
-		MipLevelCount: 1,
-		SampleCount:   1,
-		Dimension:     wgpu.TextureDimension2D,
-		Format:        wgpu.TextureFormatRGBA8Unorm,
-		Usage:         wgpu.TextureUsageTextureBinding | wgpu.TextureUsageCopyDst,
-	}); err != nil {
-		println("Can't create texture.")
-		b.free_elem(e)
-		return
-	}
-
-	if err = b.dev.GetQueue().WriteTexture(
-		data.tex.AsImageCopy(),
-		data.data.Pix,
-		&wgpu.TexelCopyBufferLayout{
-			Offset:       0,
-			BytesPerRow:  4 * w,
-			RowsPerImage: h,
-		},
-		&tex_size,
+	if data.tex, err = b.NewTexture(
+		fmt.Sprintf("Texture (%s)", e.text),
+		w, h, data.data.Pix,
 	); err != nil {
-		println("Can't write texture.")
-		b.free_elem(e)
-		return
-	}
-
-	if data.view, err = data.tex.CreateView(nil); err != nil {
-		println("Can't create texture view.")
-		b.free_elem(e)
-		return
-	}
-
-	if data.sampler, err = b.dev.CreateSampler(&wgpu.SamplerDescriptor{
-		AddressModeU:  wgpu.AddressModeClampToEdge,
-		AddressModeV:  wgpu.AddressModeClampToEdge,
-		AddressModeW:  wgpu.AddressModeClampToEdge,
-		MagFilter:     wgpu.FilterModeLinear,
-		MinFilter:     wgpu.FilterModeLinear,
-		MipmapFilter:  wgpu.MipmapFilterModeLinear,
-		MaxAnisotropy: 1,
-	}); err != nil {
-		println("Can't create sampler.")
+		println("Can't create texture.")
 		b.free_elem(e)
 		return
 	}
@@ -148,11 +93,11 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 			},
 			{
 				Binding:     1,
-				TextureView: data.view,
+				TextureView: data.tex.view,
 			},
 			{
 				Binding: 2,
-				Sampler: data.sampler,
+				Sampler: data.tex.sampler,
 			},
 		},
 	}); err != nil {
