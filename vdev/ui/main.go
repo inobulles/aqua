@@ -9,7 +9,10 @@ package main
 #include <aqua/vdriver.h>
 */
 import "C"
-import "runtime/cgo"
+import (
+	"runtime/cgo"
+	"unsafe"
+)
 
 type Backend interface {
 	// Returns how much space an element will take up.
@@ -152,6 +155,26 @@ func GoUiSetAttrDim(
 	elem.set_attr(C.GoString(key_raw), Dimension{
 		units: DimensionUnits(units),
 		val:   float32(val),
+	})
+	return false
+}
+
+//export GoUiSetAttrRaster
+func GoUiSetAttrRaster(
+	elem_raw C.uintptr_t,
+	key_raw *C.char,
+	key_len C.size_t,
+	x_res C.uint32_t,
+	y_res C.uint32_t,
+	data unsafe.Pointer,
+) bool {
+	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
+	size := x_res * y_res * 4
+
+	elem.set_attr(C.GoString(key_raw), Raster{
+		x_res: uint32(x_res),
+		y_res: uint32(y_res),
+		data:  unsafe.Slice((*byte)(data), size),
 	})
 	return false
 }
