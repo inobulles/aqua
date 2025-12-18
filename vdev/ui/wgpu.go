@@ -83,7 +83,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 
 	switch e := elem.(type) {
 	case *Text:
-		if e.backend_data == nil {
+		if e.backend_data == nil || e.flow_w != e.backend_data.(WgpuBackendTextData).flow_w {
 			b.gen_text_backend_data(e)
 		}
 
