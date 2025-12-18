@@ -12,7 +12,9 @@ import (
 
 type WgpuBackendTextData struct {
 	IWgpuBackendData
-	data *image.RGBA
+
+	flow_w uint32
+	data   *image.RGBA
 
 	tex     *wgpu.Texture
 	view    *wgpu.TextureView
@@ -56,8 +58,11 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 
 	// Generate new text.
 
+	flow_w := e.ElemBase().flow_w
+
 	data := WgpuBackendTextData{
-		data: b.get_font(e).Render(e.text, int(e.ElemBase().flow_w)),
+		flow_w: flow_w,
+		data:   b.get_font(e).Render(e.text, int(flow_w)),
 	}
 
 	w := uint32(data.data.Bounds().Dx())
