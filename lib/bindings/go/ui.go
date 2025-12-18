@@ -107,6 +107,16 @@ func (e *UiElem) AddText(semantics, text string) *UiElem {
 	}
 }
 
+func (e *UiElem) AddDiv(semantics string) *UiElem {
+	c_semantics := C.CString(semantics)
+	defer C.free(unsafe.Pointer(c_semantics))
+
+	return &UiElem{
+		ui:   e.ui,
+		elem: C.ui_add_div(e.elem, c_semantics),
+	}
+}
+
 // WebGPU backend stuff.
 
 type UiWgpuEzState struct {
