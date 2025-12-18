@@ -16,27 +16,27 @@ const (
 )
 
 type Dimension struct {
-	kind DimensionUnits
-	val  float32
+	units DimensionUnits
+	val   float32
 }
 
 func (Dimension) zero() Dimension {
 	return Dimension{
-		kind: DimensionUnitsZero,
-		val:  0,
+		units: DimensionUnitsZero,
+		val:   0,
 	}
 }
 
 func (Dimension) full() Dimension {
 	return Dimension{
-		kind: DimensionUnitsParentFraction,
-		val:  1,
+		units: DimensionUnitsParentFraction,
+		val:   1,
 	}
 }
 
 func (Dimension) pixels(pixels uint32) Dimension {
 	return Dimension{
-		kind: DimensionUnitsPixels,
-		val:  float32(pixels),
+		units: DimensionUnitsPixels,
+		val:   float32(pixels),
 	}
 }
