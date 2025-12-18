@@ -195,7 +195,7 @@ func elem_from_raw(raw C.uintptr_t) any {
 }
 
 func (e *Elem) dimension_to_px(d Dimension) uint32 {
-	switch d.kind {
+	switch d.units {
 	case DimensionUnitsZero:
 		return 0
 	case DimensionUnitsPixels:
