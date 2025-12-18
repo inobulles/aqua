@@ -31,14 +31,7 @@ type Ui struct {
 func GoUiCreate() C.uintptr_t {
 	ui := &Ui{}
 
-	ui.root = Div{
-		Elem: Elem{
-			kind:   ElemKindDiv,
-			ui:     ui,
-			parent: nil,
-			attrs:  make(map[string]any),
-		},
-	}.defaults()
+	ui.root = *Div{}.construct(ui, nil, "root")
 
 	handle := cgo.NewHandle(ui)
 	return C.uintptr_t(handle)
@@ -74,16 +67,9 @@ func GoUiAddDiv(
 		panic("GoUiAddDiv: parent is not a div")
 	}
 
-	elem := Div{
-		Elem: Elem{
-			kind:   ElemKindDiv,
-			ui:     ui,
-			parent: parent,
-			attrs:  make(map[string]any),
-		},
-	}.defaults()
+	elem := Div{}.construct(ui, parent, C.GoString(semantics))
 
-	parent.children = append(parent.children, &elem)
+	parent.children = append(parent.children, elem)
 	ui.dirty = true
 
 	handle := cgo.NewHandle(elem)

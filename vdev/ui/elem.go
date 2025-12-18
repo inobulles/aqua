@@ -104,36 +104,43 @@ type Div struct {
 	content_align_x, content_align_y Align
 }
 
-func (d Div) defaults() Div {
-	d.pt = Dimension{}.pixels(10)
-	d.pb = Dimension{}.pixels(10)
-	d.pl = Dimension{}.pixels(20)
-	d.pr = Dimension{}.pixels(20)
+func (d Div) construct(ui *Ui, parent IElem, semantic string) *Div {
+	return &Div{
+		Elem: Elem{
+			kind:   ElemKindDiv,
+			ui:     ui,
+			parent: parent,
+			attrs:  make(map[string]any),
+		},
 
-	// Take up full width and height of the parent by default.
-	// TODO We need to see how the shrinking works, but we'll probably want to do something like the min width always being full, but the height being as small as the children (with a max width of the height so overflow is scrolled, on the root div at least).
+		pt: Dimension{}.pixels(10),
+		pb: Dimension{}.pixels(10),
+		pl: Dimension{}.pixels(20),
+		pr: Dimension{}.pixels(20),
 
-	d.max_w = Dimension{}.full()
-	d.max_h = Dimension{}.full()
+		// Take up full width and height of the parent by default.
+		// TODO We need to see how the shrinking works, but we'll probably want to do something like the min width always being full, but the height being as small as the children (with a max width of the height so overflow is scrolled, on the root div at least).
 
-	// Clip X axis overflow by default, but allow scrolling on the Y axis.
+		max_w: Dimension{}.full(),
+		max_h: Dimension{}.full(),
 
-	d.overflow_x = OverflowKindClip
-	d.overflow_y = OverflowKindScroll
+		// Clip X axis overflow by default, but allow scrolling on the Y axis.
 
-	// Page-style flow by default.
-	// Content starts at the top left and flows downwards.
-	// We don't want to wrap by default because that would mean starting a new column up top once we reach the bottom.
+		overflow_x: OverflowKindClip,
+		overflow_y: OverflowKindScroll,
 
-	d.gap_x = Dimension{}.pixels(10)
-	d.gap_y = Dimension{}.pixels(10)
+		// Page-style flow by default.
+		// Content starts at the top left and flows downwards.
+		// We don't want to wrap by default because that would mean starting a new column up top once we reach the bottom.
 
-	d.flow_direction = AxisY
-	d.flow_wrap = false
-	d.content_align_x = AlignBegin
-	d.content_align_y = AlignBegin
+		gap_x: Dimension{}.pixels(10),
+		gap_y: Dimension{}.pixels(10),
 
-	return d
+		flow_direction:  AxisY,
+		flow_wrap:       false,
+		content_align_x: AlignBegin,
+		content_align_y: AlignBegin,
+	}
 }
 
 type TextSemantic int
