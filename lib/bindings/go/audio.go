@@ -152,17 +152,21 @@ func (c *AudioCtx) OpenStream(
 	return &AudioStream{stream}, nil
 }
 
-func AudioBufferNew[T AudioSample](s []T) AudioBuffer {
-	if len(s) == 0 {
+func AudioBufferNewCount[T AudioSample](s []T, count int) AudioBuffer {
+	if len(s) == 0 || count <= 0 {
 		return AudioBuffer{}
 	}
 
 	return AudioBuffer{
 		data: unsafe.Pointer(&s[0]),
-		size: C.size_t(unsafe.Sizeof(s[0]) * uintptr(len(s))),
+		size: C.size_t(unsafe.Sizeof(s[0]) * uintptr(count)),
 	}
 }
 
-func (s *AudioStream) Write(buf *AudioBuffer) {
+func AudioBufferNew[T AudioSample](s []T) AudioBuffer {
+	return AudioBufferNewCount(s, len(s))
+}
+
+func (s *AudioStream) Write(buf AudioBuffer) {
 	C.audio_stream_write(s.stream, buf.data, buf.size)
 }
