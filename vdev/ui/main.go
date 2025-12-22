@@ -127,7 +127,7 @@ func GoUiSetAttrU32(
 	val C.uint32_t,
 ) bool {
 	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
-	elem.set_attr(C.GoString(key_raw), val)
+	elem.set_attr(C.GoString(key_raw), uint32(val))
 	return false
 }
 
@@ -140,6 +140,18 @@ func GoUiSetAttrF32(
 ) bool {
 	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
 	elem.set_attr(C.GoString(key_raw), float32(val))
+	return false
+}
+
+//export GoUiSetAttrOpaquePtr
+func GoUiSetAttrOpaquePtr(
+	elem_raw C.uintptr_t,
+	key_raw *C.char,
+	key_len C.size_t,
+	val unsafe.Pointer,
+) bool {
+	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
+	elem.set_attr(C.GoString(key_raw), val)
 	return false
 }
 
