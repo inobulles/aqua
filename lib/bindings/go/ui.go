@@ -171,6 +171,8 @@ func (e *UiElem) SetAttr(key string, val any) {
 		C.ui_set_attr_f32(e.elem, c_key, C.float(v))
 	case uint32:
 		C.ui_set_attr_u32(e.elem, c_key, C.uint32_t(v))
+	case unsafe.Pointer:
+		C.ui_set_attr_opaque_ptr(e.elem, c_key, v)
 	case UiDim:
 		C.ui_set_attr_dim(e.elem, c_key, C.ui_dim_t{
 			units: C.ui_dim_units_t(v.kind),
