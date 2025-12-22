@@ -179,6 +179,13 @@ bool ui_set_attr_u32(ui_elem_t elem, char const* key, uint32_t val);
 bool ui_set_attr_f32(ui_elem_t elem, char const* key, float val);
 
 /**
+ * Set an opaque pointer attribute on a UI element.
+ *
+ * Please use the generic {@link ui_set_attr} macro instead!
+ */
+bool ui_set_attr_opaque_ptr(ui_elem_t elem, char const* key, void* val);
+
+/**
  * Set a dimension attribute on a UI element.
  *
  * Please use the generic {@link ui_set_attr} macro instead!
@@ -203,18 +210,19 @@ bool ui_set_attr_raster(ui_elem_t elem, char const* key, ui_raster_t raster);
  *
  * @param elem The element on which to set the attribute.
  * @param key The attribute name.
- * @param val The attribute value. This can either be a (C) string, 32-bit float, 32-bit unsigned integer, {@link ui_dim_t}, or {@link ui_raster_t}.
+ * @param val The attribute value. This can either be a (C) string, 32-bit float, 32-bit unsigned integer, opaque pointer, {@link ui_dim_t}, or {@link ui_raster_t}.
  * @return {@code true} if the attribute was successfully set and is valid for the given element, {@code false} otherwise.
  */
-#define ui_set_attr(elem, key, val)     \
-    _Generic((val),                     \
-        char const*: ui_set_attr_str,   \
-        char*:       ui_set_attr_str,   \
-        float:       ui_set_attr_f32,   \
-        double:      ui_set_attr_f32,   \
-        uint32_t:    ui_set_attr_u32,   \
-        ui_dim_t:    ui_set_attr_dim,   \
-        ui_raster_t: ui_set_attr_raster \
+#define ui_set_attr(elem, key, val)          \
+    _Generic((val),                          \
+        char const*: ui_set_attr_str,        \
+        char*:       ui_set_attr_str,        \
+        float:       ui_set_attr_f32,        \
+        double:      ui_set_attr_f32,        \
+        uint32_t:    ui_set_attr_u32,        \
+        void*:       ui_set_attr_opaque_ptr, \
+        ui_dim_t:    ui_set_attr_dim,        \
+        ui_raster_t: ui_set_attr_raster      \
     )((elem), (key), (val))
 
 // clang-format on
