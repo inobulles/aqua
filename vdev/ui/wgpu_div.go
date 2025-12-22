@@ -4,6 +4,8 @@
 package main
 
 import (
+	"unsafe"
+
 	"obiw.ac/aqua/wgpu"
 )
 
@@ -79,6 +81,14 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		if data.tex, err = b.NewTexture("Div texture", bg.x_res, bg.y_res, bg.data); err != nil {
 			panic(err)
 		}
+	}
+
+	// If we have a WebGPU background attribute, get it.
+
+	if bg := e.get_attr("bg.wgpu_tex_view"); bg != nil {
+		view := wgpu.TextureViewFromRaw(bg.(unsafe.Pointer))
+		data.tex = &WgpuTexture{view: &view}
+		data.tex.CreateSampler(b)
 	}
 
 	// Bind group shit (solid bind group if no texture, or texture bind group if texture).

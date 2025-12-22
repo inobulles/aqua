@@ -11,6 +11,24 @@ type WgpuTexture struct {
 	sampler *wgpu.Sampler
 }
 
+func (t *WgpuTexture) CreateSampler(b *WgpuBackend) error {
+	var err error
+
+	if t.sampler, err = b.dev.CreateSampler(&wgpu.SamplerDescriptor{
+		AddressModeU:  wgpu.AddressModeClampToEdge,
+		AddressModeV:  wgpu.AddressModeClampToEdge,
+		AddressModeW:  wgpu.AddressModeClampToEdge,
+		MagFilter:     wgpu.FilterModeLinear,
+		MinFilter:     wgpu.FilterModeLinear,
+		MipmapFilter:  wgpu.MipmapFilterModeLinear,
+		MaxAnisotropy: 1,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (b *WgpuBackend) NewTexture(name string, w, h uint32, data []byte) (*WgpuTexture, error) {
 	tex := WgpuTexture{}
 
@@ -53,15 +71,7 @@ func (b *WgpuBackend) NewTexture(name string, w, h uint32, data []byte) (*WgpuTe
 		return nil, err
 	}
 
-	if tex.sampler, err = b.dev.CreateSampler(&wgpu.SamplerDescriptor{
-		AddressModeU:  wgpu.AddressModeClampToEdge,
-		AddressModeV:  wgpu.AddressModeClampToEdge,
-		AddressModeW:  wgpu.AddressModeClampToEdge,
-		MagFilter:     wgpu.FilterModeLinear,
-		MinFilter:     wgpu.FilterModeLinear,
-		MipmapFilter:  wgpu.MipmapFilterModeLinear,
-		MaxAnisotropy: 1,
-	}); err != nil {
+	if err = tex.CreateSampler(b); err != nil {
 		tex.tex.Release()
 		tex.view.Release()
 		return nil, err
