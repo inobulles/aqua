@@ -19,6 +19,8 @@ typedef struct audio_stream_t* audio_stream_t;
 
 /**
  * Sample formats.
+ *
+ * XXX It's kinda bad that these are globals because it is entirely legitimate to connect to multiple audio VDEVs at a time, and they could all have different values here, but eeeeeeeeeh.
  */
 uint8_t AUDIO_SAMPLE_FORMAT_I8;
 uint8_t AUDIO_SAMPLE_FORMAT_I16;
