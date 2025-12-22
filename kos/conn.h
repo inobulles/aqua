@@ -73,14 +73,16 @@ static uint64_t conn_count = 0;
 /**
  * Create new generic connection, i.e. neither local or GV.
  *
+ * @param VDEV ID of the VDEV we will connect to.
  * @returns Connection ID of new connection.
  */
-static uint64_t conn_new(void) {
+static uint64_t conn_new(vid_t vid) {
 	conns = realloc(conns, (conn_count + 1) * sizeof *conns);
 	assert(conns != NULL);
 
 	conn_t* const conn = &conns[conn_count];
 	conn->alive = false;
+	conn->vdev_id = vid;
 
 	return conn_count++;
 }
@@ -88,11 +90,12 @@ static uint64_t conn_new(void) {
 /**
  * Create new local connection.
  *
+ * @param VDEV ID of the VDEV we will connect to.
  * @param vdriver VDRIVER connection is to.
  * @returns Connection ID of new connection.
  */
-static uint64_t conn_new_local(vdriver_t* vdriver) {
-	uint64_t const cid = conn_new();
+static uint64_t conn_new_local(vid_t vid, vdriver_t* vdriver) {
+	uint64_t const cid = conn_new(vid);
 
 	conns[cid].type = CONN_TYPE_LOCAL;
 	conns[cid].vdriver = vdriver;
@@ -103,12 +106,13 @@ static uint64_t conn_new_local(vdriver_t* vdriver) {
 /**
  * Create new GrapeVine connection.
  *
+ * @param VDEV ID of the VDEV we will connect to.
  * @param sock Socket the connection is happening over.
  * @param sock Remote connection ID.
  * @returns Connection ID of new connection.
  */
-static uint64_t conn_new_gv(int sock, uint64_t remote_cid) {
-	uint64_t const cid = conn_new();
+static uint64_t conn_new_gv(vid_t vid, int sock, uint64_t remote_cid) {
+	uint64_t const cid = conn_new(vid);
 
 	conns[cid].type = CONN_TYPE_GV;
 	conns[cid].remote_cid = remote_cid;
