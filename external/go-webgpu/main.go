@@ -83,3 +83,7 @@ func TextureViewFromRaw(view_raw unsafe.Pointer) TextureView {
 		ref: (C.WGPUTextureView)(view_raw),
 	}
 }
+
+func (v *TextureView) ToRaw() unsafe.Pointer {
+	return unsafe.Pointer(v.ref)
+}
