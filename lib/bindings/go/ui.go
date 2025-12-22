@@ -214,6 +214,10 @@ func (u *Ui) WgpuEzSetup(win *Win, wgpu_ctx *WgpuCtx) (*UiWgpuEzState, error) {
 	return state, nil
 }
 
+func (s *UiWgpuEzState) RawDevice() unsafe.Pointer {
+	return unsafe.Pointer(s.internal.device)
+}
+
 func (s *UiWgpuEzState) Render() error {
 	if C.ui_wgpu_ez_render(&s.internal) != 0 {
 		return errors.New("ui_wgpu_ez_render failed")
