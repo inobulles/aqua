@@ -90,7 +90,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 
 	switch (notif->kind) {
 	case KOS_NOTIF_CONN:
-		// TODO Describe what this is doing exactly, cuz even I'm not sure anymore.
+		// Activate connection we prepared previously in conn_{local,gv}.
 
 		LOG_V(notif_cls, "Received connection notification for connection ID %" PRIu64 ".", notif->conn_id);
 
@@ -189,7 +189,9 @@ static void conn_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	}
 
 	LOG_V(conn_cls, "Found VDRIVER, connecting.");
-	vdriver->conn(cookie, action->conn.vdev_id, conn_new_local(vdriver));
+
+	uint64_t const cid = conn_new_local(action->conn.vdev_id, vdriver);
+	vdriver->conn(cookie, action->conn.vdev_id, cid);
 }
 
 static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
@@ -317,7 +319,7 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	// Create connection.
 
-	notif.conn_id = conn_new_gv(sock, conn_vdev_res->conn_id);
+	notif.conn_id = conn_new_gv(action->conn.vdev_id, sock, conn_vdev_res->conn_id);
 	conn_t* const conn = &conns[notif.conn_id];
 
 	conn->alive = true;
@@ -382,7 +384,7 @@ static void call_local(kos_cookie_t cookie, action_t* action, bool sync) {
 	// TODO It seems the VDEV ID is just 0, either here or in call_gv.
 	// Maybe the testing device should expose 2 VDEVs so we can test this correctly?
 
-	vdriver->call(cookie, action->call.vdev_id, action->call.conn_id, action->call.fn_id, action->call.args);
+	vdriver->call(cookie, conn->vdev_id, action->call.conn_id, action->call.fn_id, action->call.args);
 }
 
 static void call_gv(kos_cookie_t cookie, action_t* action, bool sync) {
