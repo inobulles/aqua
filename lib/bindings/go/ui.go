@@ -198,7 +198,8 @@ func (e *UiElem) SetAttr(key string, val any) {
 // WebGPU backend stuff.
 
 type UiWgpuEzState struct {
-	internal C.ui_wgpu_ez_state_t
+	internal   C.ui_wgpu_ez_state_t
+	RawWgpuCtx unsafe.Pointer
 }
 
 func (u *Ui) WgpuEzSetup(win *Win, wgpu_ctx *WgpuCtx) (*UiWgpuEzState, error) {
@@ -207,6 +208,8 @@ func (u *Ui) WgpuEzSetup(win *Win, wgpu_ctx *WgpuCtx) (*UiWgpuEzState, error) {
 	if C.ui_wgpu_ez_setup(&state.internal, u.ui, win.win, wgpu_ctx.ctx) != 0 {
 		return nil, errors.New("ui_wgpu_ez_setup failed")
 	}
+
+	state.RawWgpuCtx = unsafe.Pointer(state.internal.wgpu_ctx)
 
 	return state, nil
 }
