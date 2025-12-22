@@ -277,6 +277,17 @@ bool ui_set_attr_f32(ui_elem_t elem, char const* key, float val) {
 	return ui_set_attr_common(ctx, ctx->fns.set_attr_f32, elem, key, 1, &(kos_val_t) {.f32 = val});
 }
 
+bool ui_set_attr_opaque_ptr(ui_elem_t elem, char const* key, void* val) {
+	ui_t const ui = elem->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	kos_val_t const opaque_ptr = {
+		.opaque_ptr = {.ptr = (uint64_t) (uintptr_t) val},
+	};
+
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_opaque_ptr, elem, key, 1, &opaque_ptr);
+}
+
 bool ui_set_attr_dim(ui_elem_t elem, char const* key, ui_dim_t dim) {
 	ui_t const ui = elem->ui;
 	ui_ctx_t const ctx = ui->ctx;
@@ -429,6 +440,9 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			}
 			if (strcmp(name, "set_attr_f32") == 0 && fn->params[2].type == KOS_TYPE_F32) {
 				ctx->fns.set_attr_f32 = i;
+			}
+			if (strcmp(name, "set_attr_opaque_ptr") == 0 && fn->params[2].type == KOS_TYPE_OPAQUE_PTR) {
+				ctx->fns.set_attr_opaque_ptr = i;
 			}
 		}
 

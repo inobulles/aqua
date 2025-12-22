@@ -41,6 +41,7 @@ struct ui_ctx_t {
 		uint32_t set_attr_str;
 		uint32_t set_attr_u32;
 		uint32_t set_attr_f32;
+		uint32_t set_attr_opaque_ptr;
 		uint32_t set_attr_dim;
 		uint32_t set_attr_raster;
 	} fns;
