@@ -22,8 +22,24 @@ type AudioCtx struct {
 	ctx C.audio_ctx_t
 }
 
+type AudioSampleFormat uint8
+
+var (
+	AUDIO_SAMPLE_FORMAT_I8  AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_I16 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_I24 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_I32 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_I64 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_U8  AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_U16 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_U32 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_U64 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_F32 AudioSampleFormat
+	AUDIO_SAMPLE_FORMAT_F64 AudioSampleFormat
+)
+
 type AudioConfig struct {
-	SampleFormat  uint8
+	SampleFormat  AudioSampleFormat
 	MinSampleRate uint32
 	MaxSampleRate uint32
 	MinBufSize    uint32
@@ -71,6 +87,18 @@ func (c *AudioComponent) Conn(vdev *VdevDescr) *AudioCtx {
 		return nil
 	}
 
+	AUDIO_SAMPLE_FORMAT_I8 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_I8)
+	AUDIO_SAMPLE_FORMAT_I16 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_I16)
+	AUDIO_SAMPLE_FORMAT_I24 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_I24)
+	AUDIO_SAMPLE_FORMAT_I32 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_I32)
+	AUDIO_SAMPLE_FORMAT_I64 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_I64)
+	AUDIO_SAMPLE_FORMAT_U8 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_U8)
+	AUDIO_SAMPLE_FORMAT_U16 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_U16)
+	AUDIO_SAMPLE_FORMAT_U32 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_U32)
+	AUDIO_SAMPLE_FORMAT_U64 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_U64)
+	AUDIO_SAMPLE_FORMAT_F32 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_F32)
+	AUDIO_SAMPLE_FORMAT_F64 = AudioSampleFormat(C.AUDIO_SAMPLE_FORMAT_F64)
+
 	return &AudioCtx{ctx}
 }
 
@@ -89,7 +117,7 @@ func (c *AudioCtx) GetConfigs() []AudioConfig {
 		raw_config := (*C.audio_config_t)(unsafe.Pointer(uintptr(unsafe.Pointer(raw_configs)) + uintptr(i)*unsafe.Sizeof(*raw_configs)))
 
 		configs[i] = AudioConfig{
-			SampleFormat:  uint8(raw_config.sample_format),
+			SampleFormat:  AudioSampleFormat(raw_config.sample_format),
 			MinSampleRate: uint32(raw_config.min_sample_rate),
 			MaxSampleRate: uint32(raw_config.max_sample_rate),
 			MinBufSize:    uint32(raw_config.min_buf_size),
@@ -102,7 +130,7 @@ func (c *AudioCtx) GetConfigs() []AudioConfig {
 }
 
 func (c *AudioCtx) OpenStream(
-	config_sample_format uint8,
+	config_sample_format AudioSampleFormat,
 	config_channels uint16,
 	config_sample_rate uint32,
 	config_buf_size uint32,
