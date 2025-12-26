@@ -137,10 +137,7 @@ for line in lines:
 		.params = (kos_param_t[]) {{\n"""
 
 	for t, n in zip(param_types, param_names):
-		fns += f"""\t\t\t{{
-				.type = {wgpu_type_to_kos(t)},
-				.name = "{n}",
-			}},\n"""
+		fns += f"""\t\t\t{{{wgpu_type_to_kos(t)}, "{n}"}},\n"""
 
 	fns += "\t\t},\n\t},\n"
 
