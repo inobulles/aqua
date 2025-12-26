@@ -5,6 +5,8 @@
 
 #include <umber.h>
 
+#include "wm_public.h"
+
 #include <wayland-client.h>
 #include <wayland-server-core.h>
 
@@ -22,7 +24,12 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include <webgpu/webgpu.h>
+#include <webgpu/wgpu.h>
+
 typedef struct {
+	aqua_wm_t public;
+
 	// AQUA stuff.
 
 	bool has_ino;
