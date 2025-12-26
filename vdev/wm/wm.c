@@ -11,6 +11,11 @@
 
 #include <umber.h>
 
+#include <wlr/render/vulkan.h>
+
+#include <webgpu/webgpu.h>
+#include <webgpu/wgpu.h>
+
 #include <assert.h>
 #include <stdlib.h>
 
@@ -628,7 +633,9 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to create backend.");
 	}
 
-	LOG_V(cls, "Creating renderer.");
+	LOG_V(cls, "Creating Vulkan renderer.");
+
+	setenv("WLR_RENDERER", "vulkan", true);
 	wm->wlr_renderer = wlr_renderer_autocreate(wm->backend);
 
 	if (wm->wlr_renderer == NULL) {
@@ -862,4 +869,13 @@ void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
 	};
 
 	wlr_surface_for_each_surface(base, read_surface_pixels, &ctx);
+}
+
+WGPUDevice wm_vdev_get_wgpu_dev(wm_t* wm, WGPUInstance instance) {
+	VkInstance const vk_instance = wlr_vk_renderer_get_instance(wm->wlr_renderer);
+	VkPhysicalDevice const vk_phys_dev = wlr_vk_renderer_get_physical_device(wm->wlr_renderer);
+	VkDevice const vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
+	uint32_t const vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
+
+	return wgpuDeviceFromVk(instance, vk_instance, vk_phys_dev, vk_dev, vk_queue_family);
 }
