@@ -5,6 +5,7 @@
 
 #include "root.h"
 #include "win.h"
+#include "wm.h"
 
 #include <aqua/kos.h>
 
@@ -60,6 +61,7 @@ uint64_t wgpu_get_hid(wgpu_ctx_t ctx);
 uint64_t wgpu_get_cid(wgpu_ctx_t ctx);
 
 WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t win);
+WGPUDevice wgpu_device_from_wm(wgpu_ctx_t ctx, WGPUInstance instance, wm_t wm);
 
 // clang-format off
 // PROTOS:BEGIN

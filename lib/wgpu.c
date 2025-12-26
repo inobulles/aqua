@@ -6,6 +6,7 @@
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"
 #include "win_internal.h"
+#include "wm_internal.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -27,6 +28,7 @@ struct wgpu_ctx_t {
 
 	struct {
 		uint32_t surface_from_win;
+		uint32_t device_from_wm;
 		// clang-format off
 // FN_IDS:BEGIN
 		uint32_t wgpuCreateInstance;
@@ -265,6 +267,19 @@ WGPUSurface wgpu_surface_from_win(wgpu_ctx_t ctx, WGPUInstance instance, win_t w
 	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
+WGPUDevice wgpu_device_from_wm(wgpu_ctx_t ctx, WGPUInstance instance, wm_t wm) {
+	kos_val_t const args[] = {
+		{.opaque_ptr = {ctx->hid, (uintptr_t) instance}},
+		{.opaque_ptr = wm->opaque_ptr},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.device_from_wm, args);
+	kos_flush(true);
+
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
+}
+
 aqua_component_t wgpu_init(aqua_ctx_t ctx) {
 	aqua_register_component(ctx, &comp);
 	kos_req_vdev("aquabsd.black.wgpu");
@@ -372,6 +387,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[1].name, "win") == 0
 		) {
 			ctx->fns.surface_from_win = i;
+		}
+
+		if (
+			strcmp(name, "device_from_wm") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "instance") == 0 &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[1].name, "wm") == 0
+		) {
+			ctx->fns.device_from_wm = i;
 		}
 
 		// clang-format off
