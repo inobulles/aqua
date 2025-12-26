@@ -642,6 +642,11 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to create renderer.");
 	}
 
+	wm->public.vk_instance = wlr_vk_renderer_get_instance(wm->wlr_renderer);
+	wm->public.vk_phys_dev = wlr_vk_renderer_get_physical_device(wm->wlr_renderer);
+	wm->public.vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
+	wm->public.vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
+
 	LOG_V(cls, "Initialize buffer factory protocols.");
 
 	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
