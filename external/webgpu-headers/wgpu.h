@@ -287,6 +287,8 @@ WGPU_EXPORT void wgpuRenderPassEncoderEndPipelineStatisticsQuery(WGPURenderPassE
 WGPU_EXPORT void wgpuComputePassEncoderWriteTimestamp(WGPUComputePassEncoder computePassEncoder, WGPUQuerySet querySet, uint32_t queryIndex);
 WGPU_EXPORT void wgpuRenderPassEncoderWriteTimestamp(WGPURenderPassEncoder renderPassEncoder, WGPUQuerySet querySet, uint32_t queryIndex);
 
+WGPU_EXPORT WGPUDevice wgpuDeviceFromVk(WGPUInstance instance, const void * raw_vk_instance, const void * raw_vk_phys_dev, const void * raw_vk_dev, uint32_t family_index);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
