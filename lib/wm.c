@@ -6,6 +6,7 @@
 
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"
+#include "wm_internal.h"
 
 #include <umber.h>
 
@@ -43,24 +44,6 @@ struct wm_ctx_t {
 
 	bool last_success;
 	kos_val_t last_ret;
-};
-
-struct wm_t {
-	wm_ctx_t ctx;
-	kos_opaque_ptr_t opaque_ptr;
-	kos_ino_t ino;
-
-	void* redraw_data;
-	wm_redraw_cb_t redraw;
-
-	void* new_win_data;
-	wm_new_win_cb_t new_win;
-
-	void* destroy_win_data;
-	wm_destroy_win_cb_t destroy_win;
-
-	void* redraw_win_data;
-	wm_redraw_win_cb_t redraw_win;
 };
 
 static umber_class_t const* cls = NULL;
