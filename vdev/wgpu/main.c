@@ -1658,6 +1658,16 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceFromVk(instance, raw_vk_instance, raw_vk_phys_dev, raw_vk_dev, family_index));
 		break;
 	}
+	case 212: {
+		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+		const void * const raw_vk_image = (void*) args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *raw_vk_image);
+		WGPUTextureFormat const format = args[2].u32;
+		uint32_t const x_res = args[3].u32;
+		uint32_t const y_res = args[4].u32;
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuRenderTextureFromVkImage(device, raw_vk_image, format, x_res, y_res));
+		break;
+	}
 // CALL_HANDLERS:END
 		// clang-format on
 	default:
