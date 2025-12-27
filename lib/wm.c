@@ -39,7 +39,6 @@ struct wm_ctx_t {
 		uint32_t register_interrupt;
 		uint32_t loop;
 		uint32_t get_win_fb;
-		uint32_t get_wgpu_dev;
 	} fns;
 
 	bool last_success;
@@ -212,18 +211,6 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.get_win_fb = i;
 		}
-
-		if (
-			strcmp(name, "get_wgpu_dev") == 0 &&
-			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
-			fn->param_count == 2 &&
-			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[0].name, "wm") == 0 &&
-			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[1].name, "instance") == 0
-		) {
-			ctx->fns.get_wgpu_dev = i;
-		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -375,30 +362,6 @@ void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf) {
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_win_fb, args);
 	kos_flush(true);
-}
-
-WGPUDevice wm_get_wgpu_dev(wm_t wm, WGPUInstance instance) {
-	wm_ctx_t const ctx = wm->ctx;
-
-	if (ctx == NULL || !ctx->is_conn) {
-		LOG_E(cls, "No context or not connected.");
-		return NULL;
-	}
-
-	kos_val_t const args[] = {
-		{.opaque_ptr = wm->opaque_ptr},
-		{.opaque_ptr = {0, (uintptr_t) instance}},
-	};
-
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_wgpu_dev, args);
-	kos_flush(true);
-
-	if (!ctx->last_success) {
-		return NULL;
-	}
-
-	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
-	return (WGPUDevice) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 
 typedef struct __attribute__((packed)) {
