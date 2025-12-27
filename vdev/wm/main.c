@@ -114,15 +114,6 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_PTR, "buf"},
 		},
 	},
-	{
-		.name = "get_wgpu_dev",
-		.ret_type = KOS_TYPE_OPAQUE_PTR,
-		.param_count = 2,
-		.params = (kos_param_t[]) {
-			{KOS_TYPE_OPAQUE_PTR, "wm"},
-			{KOS_TYPE_OPAQUE_PTR, "instance"},
-		},
-	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -219,28 +210,6 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 
 		void* const buf = (void*) args[1].ptr.ptr; // TODO BAD! BAD!
 		wm_vdev_get_fb(toplevel, buf);
-
-		break;
-	}
-	case 5: { // get_wgpu_dev
-		wm_t* const wm = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
-
-		if (wm == NULL) {
-			LOG_E(cls, "Tried to get WebGPU device for non-local or NULL WM.");
-			notif.kind = KOS_NOTIF_CALL_FAIL;
-			break;
-		}
-
-		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[1].opaque_ptr);
-
-		if (instance == NULL) {
-			LOG_E(cls, "Tried to get WebGPU device with non-local or NULL WebGPU instance.");
-			notif.kind = KOS_NOTIF_CALL_FAIL;
-			break;
-		}
-
-		WGPUDevice const dev = wm_vdev_get_wgpu_dev(wm, instance);
-		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(dev);
 
 		break;
 	}
