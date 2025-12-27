@@ -13,8 +13,8 @@ deps = [
 
 # TODO https://github.com/inobulles/bob/issues/108
 
-let wlroots_cflags = PkgConfig.cflags("wlroots-0.19")
-let wlroots_libs = PkgConfig.libs("wlroots-0.19")
+let wlroots_cflags = PkgConfig.cflags("wlroots-0.20")
+let wlroots_libs = PkgConfig.libs("wlroots-0.20")
 
 let obj = Cc([
 	"-std=c11", "-g", "-fPIC",
