@@ -1949,6 +1949,18 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_U32, "family_index"},
 		},
 	},
+	{
+		.name = "wgpuRenderTextureFromVkImage",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 5,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "raw_vk_image"},
+			{KOS_TYPE_U32, "format"},
+			{KOS_TYPE_U32, "x_res"},
+			{KOS_TYPE_U32, "y_res"},
+		},
+	},
 // FNS:END
 	// clang-format on
 };
