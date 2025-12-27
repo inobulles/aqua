@@ -7,9 +7,6 @@
 
 #include <aqua/kos.h>
 
-#include <webgpu/webgpu.h>
-#include <webgpu/wgpu.h>
-
 /**
  * WM library component context.
  */
@@ -175,14 +172,3 @@ void wm_loop(wm_t wm);
  * @param buf Buffer to copy the window contents to.
  */
 void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf);
-
-/**
- * Get WebGPU device ({@link WGPUDevice}) from WM.
- *
- * This can be used to render to the WM.
- *
- * @param wm The WM object which we want to get the WebGPU device of.
- * @param instance The WebGPU instance to create the WebGPU device for.
- * @return A WebGPU device.
- */
-WGPUDevice wm_get_wgpu_dev(wm_t wm, WGPUInstance instance);
