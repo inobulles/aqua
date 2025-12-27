@@ -10,10 +10,6 @@ BASE_FN_ID = 2
 
 PACKED = "__attribute__((packed))"
 
-# We must first attempt to build once first to ensure dependencies are downloaded.
-
-os.system("bob build")
-
 # WebGPU commands in the spec which aren't yet implemented by wgpu-native.
 
 WGPU_BLACKLIST = (
@@ -21,10 +17,10 @@ WGPU_BLACKLIST = (
 	"wgpuSurfaceSetLabel",
 )
 
-with open(".bob/prefix/include/webgpu/webgpu.h") as f:
+with open("../../external/webgpu-headers/webgpu.h") as f:
 	(*lines,) = map(str.rstrip, f.readlines())
 
-with open(".bob/prefix/include/webgpu/wgpu.h") as f:
+with open("../../external/webgpu-headers/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
 
 
