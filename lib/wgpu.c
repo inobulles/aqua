@@ -240,6 +240,7 @@ struct wgpu_ctx_t {
 		uint32_t wgpuRenderPassEncoderEndPipelineStatisticsQuery;
 		uint32_t wgpuComputePassEncoderWriteTimestamp;
 		uint32_t wgpuRenderPassEncoderWriteTimestamp;
+		uint32_t wgpuDeviceFromVk;
 // FN_IDS:END
 		// clang-format on
 	} fns;
@@ -2965,6 +2966,24 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[2].name, "queryIndex") == 0
 		) {
 			ctx->fns.wgpuRenderPassEncoderWriteTimestamp = i;
+		}
+
+		if (
+			strcmp(name, "wgpuDeviceFromVk") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 5 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "instance") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "raw_vk_instance") == 0 &&
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "raw_vk_phys_dev") == 0 &&
+			fn->params[3].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[3].name, "raw_vk_dev") == 0 &&
+			fn->params[4].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[4].name, "family_index") == 0
+		) {
+			ctx->fns.wgpuDeviceFromVk = i;
 		}
 // FN_VALIDATORS:END
 		// clang-format on
@@ -6276,7 +6295,35 @@ void aqua_wgpuRenderPassEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPURenderPassEnco
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuRenderPassEncoderWriteTimestamp, args);
 	kos_flush(true);
-	
+}
+
+WGPUDevice aqua_wgpuDeviceFromVk(wgpu_ctx_t ctx, WGPUInstance instance, const void * raw_vk_instance, const void * raw_vk_phys_dev, const void * raw_vk_dev, uint32_t family_index) {
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = {ctx->hid, (uintptr_t) instance},
+		},
+		{
+			.buf.size = sizeof *raw_vk_instance,
+			.buf.ptr = (void*) raw_vk_instance,
+		},
+		{
+			.buf.size = sizeof *raw_vk_phys_dev,
+			.buf.ptr = (void*) raw_vk_phys_dev,
+		},
+		{
+			.buf.size = sizeof *raw_vk_dev,
+			.buf.ptr = (void*) raw_vk_dev,
+		},
+		{
+			.u32 = family_index,
+		}
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuDeviceFromVk, args);
+	kos_flush(true);
+
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
 }
 // FNS:END
 // clang-format on
