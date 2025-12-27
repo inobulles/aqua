@@ -6,6 +6,7 @@
 
 #define __AQUA_LIB_COMPONENT__
 #include "component.h"
+#include "wm_internal.h"
 
 #include <umber.h>
 
@@ -42,24 +43,6 @@ struct wm_ctx_t {
 
 	bool last_success;
 	kos_val_t last_ret;
-};
-
-struct wm_t {
-	wm_ctx_t ctx;
-	kos_opaque_ptr_t opaque_ptr;
-	kos_ino_t ino;
-
-	void* redraw_data;
-	wm_redraw_cb_t redraw;
-
-	void* new_win_data;
-	wm_new_win_cb_t new_win;
-
-	void* destroy_win_data;
-	wm_destroy_win_cb_t destroy_win;
-
-	void* redraw_win_data;
-	wm_redraw_win_cb_t redraw_win;
 };
 
 static umber_class_t const* cls = NULL;
@@ -387,6 +370,11 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
+	uint64_t raw_image;
+} intr_redraw_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
 	uint64_t win;
 	char const* app_id;
 } intr_new_win_t;
@@ -424,8 +412,14 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 	}
 
 	if (intr->type == ctx->consts.INTR_REDRAW) {
+		intr_redraw_t const* const redraw = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *redraw) {
+			return; // TODO Error message.
+		}
+
 		if (wm->redraw != NULL) {
-			wm->redraw(wm, wm->redraw_data);
+			wm->redraw(wm, (void*) (uintptr_t) redraw->raw_image, wm->redraw_data);
 		}
 	}
 

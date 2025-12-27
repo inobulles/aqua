@@ -7,13 +7,14 @@ import bob.pkg_config
 deps = [
 	# Dep.git("https://gitlab.freedesktop.org/wlroots/wlroots", "0.19.2"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
+	Dep.local("../../external/webgpu-headers"),
 	Dep.local("../../kos"),
 ]
 
 # TODO https://github.com/inobulles/bob/issues/108
 
-let wlroots_cflags = PkgConfig.cflags("wlroots-0.19")
-let wlroots_libs = PkgConfig.libs("wlroots-0.19")
+let wlroots_cflags = PkgConfig.cflags("wlroots-0.20")
+let wlroots_libs = PkgConfig.libs("wlroots-0.20")
 
 let obj = Cc([
 	"-std=c11", "-g", "-fPIC",

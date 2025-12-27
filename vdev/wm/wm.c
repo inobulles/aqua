@@ -11,6 +11,12 @@
 
 #include <umber.h>
 
+#include <wlr/render/swapchain.h>
+#include <wlr/render/vulkan.h>
+
+#include <webgpu/webgpu.h>
+#include <webgpu/wgpu.h>
+
 #include <assert.h>
 #include <stdlib.h>
 
@@ -37,6 +43,7 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
+	uint64_t raw_image;
 } redraw_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -129,20 +136,50 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct wlr_output* const wlr_output = output->output;
 	struct wlr_scene_output* scene_output = wlr_scene_get_scene_output(wm->scene, wlr_output);
 
-	LOG_V(cls, "Render scene and commit output.");
-	wlr_scene_output_commit(scene_output, NULL);
+	LOG_V(cls, "Initialize output state.");
+
+	struct wlr_output_state state;
+	wlr_output_state_init(&state);
+
+	LOG_V(cls, "Acquire swapchain image.");
+
+	if (!wlr_output_configure_primary_swapchain(wlr_output, &state, &wlr_output->swapchain)) {
+		LOG_E(cls, "Failed to create or configure primary swapchain.");
+		return;
+	}
+
+	struct wlr_buffer* const buf = wlr_swapchain_acquire(wlr_output->swapchain);
+
+	if (buf == NULL) {
+		LOG_E(cls, "Failed to acquire swapchain image.");
+		return;
+	}
+
+	struct wlr_vk_image_attribs attribs;
+	wlr_vk_buffer_get_image_attribs(wm->wlr_renderer, buf, &attribs);
+
+	LOG_V(cls, "Take care of rendering.");
+
+	redraw_intr_t intr = {
+		.intr = INTR_REDRAW,
+		.raw_image = (uintptr_t) attribs.image,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
+
+	LOG_V(cls, "Set swapchain image to output and release it.");
+
+	wlr_output_state_set_buffer(&state, buf);
+	wlr_buffer_unlock(buf);
+
+	LOG_V(cls, "Commit output state.");
+
+	wlr_output_commit_state(wlr_output, &state);
+	wlr_output_state_finish(&state);
 
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	wlr_scene_output_send_frame_done(scene_output, &now);
-
-	// Send interrupt.
-
-	redraw_intr_t intr = {
-		.intr = INTR_REDRAW,
-	};
-
-	interrupt(wm, sizeof intr, &intr);
 
 	// If we have a Firefox window, redraw it too.
 
@@ -628,12 +665,19 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to create backend.");
 	}
 
-	LOG_V(cls, "Creating renderer.");
+	LOG_V(cls, "Creating Vulkan renderer.");
+
+	setenv("WLR_RENDERER", "vulkan", true);
 	wm->wlr_renderer = wlr_renderer_autocreate(wm->backend);
 
 	if (wm->wlr_renderer == NULL) {
 		FAIL("Failed to create renderer.");
 	}
+
+	wm->public.vk_instance = wlr_vk_renderer_get_instance(wm->wlr_renderer);
+	wm->public.vk_phys_dev = wlr_vk_renderer_get_physical_device(wm->wlr_renderer);
+	wm->public.vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
+	wm->public.vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
 
 	LOG_V(cls, "Initialize buffer factory protocols.");
 
@@ -862,4 +906,13 @@ void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
 	};
 
 	wlr_surface_for_each_surface(base, read_surface_pixels, &ctx);
+}
+
+WGPUDevice wm_vdev_get_wgpu_dev(wm_t* wm, WGPUInstance instance) {
+	VkInstance const vk_instance = wlr_vk_renderer_get_instance(wm->wlr_renderer);
+	VkPhysicalDevice const vk_phys_dev = wlr_vk_renderer_get_physical_device(wm->wlr_renderer);
+	VkDevice const vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
+	uint32_t const vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
+
+	return wgpuDeviceFromVk(instance, vk_instance, vk_phys_dev, vk_dev, vk_queue_family);
 }

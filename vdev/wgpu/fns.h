@@ -9,14 +9,17 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "win",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+		},
+	},
+	{
+		.name = "device_from_wm",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
 		},
 	},
 
@@ -30,10 +33,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -41,10 +41,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "capabilities",
-			},
+			{KOS_TYPE_BUF, "capabilities"},
 		},
 	},
 	{
@@ -52,10 +49,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "procName",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "procName"},
 		},
 	},
 	{
@@ -63,14 +57,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "features",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
+			{KOS_TYPE_BUF, "features"},
 		},
 	},
 	{
@@ -78,14 +66,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "info",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
+			{KOS_TYPE_BUF, "info"},
 		},
 	},
 	{
@@ -93,14 +75,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "limits",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
+			{KOS_TYPE_BUF, "limits"},
 		},
 	},
 	{
@@ -108,14 +84,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_BOOL,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "feature",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
+			{KOS_TYPE_U32, "feature"},
 		},
 	},
 	{
@@ -123,18 +93,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
+			{KOS_TYPE_BUF, "descriptor"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -142,10 +103,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
 		},
 	},
 	{
@@ -153,10 +111,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
 		},
 	},
 	{
@@ -164,10 +119,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "adapterInfo",
-			},
+			{KOS_TYPE_BUF, "adapterInfo"},
 		},
 	},
 	{
@@ -175,14 +127,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "bindGroup",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "bindGroup"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -190,10 +136,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "bindGroup",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "bindGroup"},
 		},
 	},
 	{
@@ -201,10 +144,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "bindGroup",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "bindGroup"},
 		},
 	},
 	{
@@ -212,14 +152,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "bindGroupLayout",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "bindGroupLayout"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -227,10 +161,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "bindGroupLayout",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "bindGroupLayout"},
 		},
 	},
 	{
@@ -238,10 +169,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "bindGroupLayout",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "bindGroupLayout"},
 		},
 	},
 	{
@@ -249,10 +177,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -260,18 +185,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U32, "offset"},
+			{KOS_TYPE_U32, "size"},
 		},
 	},
 	{
@@ -279,10 +195,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -290,18 +203,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U32, "offset"},
+			{KOS_TYPE_U32, "size"},
 		},
 	},
 	{
@@ -309,10 +213,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -320,10 +221,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -331,26 +229,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "mode",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "size",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "mode"},
+			{KOS_TYPE_U32, "offset"},
+			{KOS_TYPE_U32, "size"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -358,14 +241,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -373,10 +250,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -384,10 +258,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -395,10 +266,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
 		},
 	},
 	{
@@ -406,14 +274,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandBuffer",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandBuffer"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -421,10 +283,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandBuffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandBuffer"},
 		},
 	},
 	{
@@ -432,10 +291,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandBuffer",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandBuffer"},
 		},
 	},
 	{
@@ -443,14 +299,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -458,14 +308,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -473,22 +317,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U64, "size"},
 		},
 	},
 	{
@@ -496,30 +328,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "source",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "sourceOffset",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "destination",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "destinationOffset",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "source"},
+			{KOS_TYPE_U64, "sourceOffset"},
+			{KOS_TYPE_OPAQUE_PTR, "destination"},
+			{KOS_TYPE_U64, "destinationOffset"},
+			{KOS_TYPE_U64, "size"},
 		},
 	},
 	{
@@ -527,22 +341,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "source",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "destination",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "copySize",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_BUF, "source"},
+			{KOS_TYPE_BUF, "destination"},
+			{KOS_TYPE_BUF, "copySize"},
 		},
 	},
 	{
@@ -550,22 +352,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "source",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "destination",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "copySize",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_BUF, "source"},
+			{KOS_TYPE_BUF, "destination"},
+			{KOS_TYPE_BUF, "copySize"},
 		},
 	},
 	{
@@ -573,22 +363,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "source",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "destination",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "copySize",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_BUF, "source"},
+			{KOS_TYPE_BUF, "destination"},
+			{KOS_TYPE_BUF, "copySize"},
 		},
 	},
 	{
@@ -596,14 +374,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -611,14 +383,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "markerLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "markerLabel"},
 		},
 	},
 	{
@@ -626,10 +392,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
 		},
 	},
 	{
@@ -637,14 +400,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "groupLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "groupLabel"},
 		},
 	},
 	{
@@ -652,30 +409,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstQuery",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryCount",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "destination",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "destinationOffset",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_U32, "firstQuery"},
+			{KOS_TYPE_U32, "queryCount"},
+			{KOS_TYPE_OPAQUE_PTR, "destination"},
+			{KOS_TYPE_U64, "destinationOffset"},
 		},
 	},
 	{
@@ -683,14 +422,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -698,18 +431,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_U32, "queryIndex"},
 		},
 	},
 	{
@@ -717,10 +441,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
 		},
 	},
 	{
@@ -728,10 +449,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "commandEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "commandEncoder"},
 		},
 	},
 	{
@@ -739,22 +457,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "workgroupCountX",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "workgroupCountY",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "workgroupCountZ",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_U32, "workgroupCountX"},
+			{KOS_TYPE_U32, "workgroupCountY"},
+			{KOS_TYPE_U32, "workgroupCountZ"},
 		},
 	},
 	{
@@ -762,18 +468,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "indirectBuffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "indirectOffset",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "indirectBuffer"},
+			{KOS_TYPE_U64, "indirectOffset"},
 		},
 	},
 	{
@@ -781,10 +478,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
 		},
 	},
 	{
@@ -792,14 +486,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "markerLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "markerLabel"},
 		},
 	},
 	{
@@ -807,10 +495,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
 		},
 	},
 	{
@@ -818,14 +503,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "groupLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "groupLabel"},
 		},
 	},
 	{
@@ -833,26 +512,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "groupIndex",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "group",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "dynamicOffsetCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "dynamicOffsets",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_U32, "groupIndex"},
+			{KOS_TYPE_OPAQUE_PTR, "group"},
+			{KOS_TYPE_U32, "dynamicOffsetCount"},
+			{KOS_TYPE_BUF, "dynamicOffsets"},
 		},
 	},
 	{
@@ -860,14 +524,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -875,14 +533,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "pipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "pipeline"},
 		},
 	},
 	{
@@ -890,10 +542,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
 		},
 	},
 	{
@@ -901,10 +550,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
 		},
 	},
 	{
@@ -912,14 +558,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePipeline",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "groupIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePipeline"},
+			{KOS_TYPE_U32, "groupIndex"},
 		},
 	},
 	{
@@ -927,14 +567,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePipeline",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePipeline"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -942,10 +576,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePipeline"},
 		},
 	},
 	{
@@ -953,10 +584,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePipeline"},
 		},
 	},
 	{
@@ -964,14 +592,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -979,14 +601,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -994,14 +610,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1009,14 +619,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1024,14 +628,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1039,18 +637,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -1058,14 +647,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1073,14 +656,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1088,14 +665,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1103,14 +674,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1118,18 +683,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -1137,14 +693,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1152,14 +702,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1167,14 +711,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1182,10 +720,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -1193,10 +728,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_BUF,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -1204,14 +736,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "features",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "features"},
 		},
 	},
 	{
@@ -1219,14 +745,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "limits",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "limits"},
 		},
 	},
 	{
@@ -1234,10 +754,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -1245,10 +762,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -1256,14 +770,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_BOOL,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "feature",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_U32, "feature"},
 		},
 	},
 	{
@@ -1271,14 +779,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -1286,14 +788,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "filter",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_U32, "filter"},
 		},
 	},
 	{
@@ -1301,14 +797,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -1316,10 +806,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -1327,10 +814,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
 		},
 	},
 	{
@@ -1338,14 +822,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1353,14 +831,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "features",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "features"},
 		},
 	},
 	{
@@ -1368,10 +840,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
 		},
 	},
 	{
@@ -1379,18 +848,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "options",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "options"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -1398,22 +858,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "futureCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "futures",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "timeoutNS",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_U32, "futureCount"},
+			{KOS_TYPE_BUF, "futures"},
+			{KOS_TYPE_U64, "timeoutNS"},
 		},
 	},
 	{
@@ -1421,10 +869,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
 		},
 	},
 	{
@@ -1432,10 +877,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
 		},
 	},
 	{
@@ -1443,14 +885,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "pipelineLayout",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "pipelineLayout"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -1458,10 +894,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "pipelineLayout",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "pipelineLayout"},
 		},
 	},
 	{
@@ -1469,10 +902,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "pipelineLayout",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "pipelineLayout"},
 		},
 	},
 	{
@@ -1480,10 +910,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
 		},
 	},
 	{
@@ -1491,10 +918,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
 		},
 	},
 	{
@@ -1502,10 +926,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
 		},
 	},
 	{
@@ -1513,14 +934,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -1528,10 +943,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
 		},
 	},
 	{
@@ -1539,10 +951,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
 		},
 	},
 	{
@@ -1550,14 +959,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -1565,14 +968,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -1580,18 +977,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "commandCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "commands",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
+			{KOS_TYPE_U32, "commandCount"},
+			{KOS_TYPE_BUF, "commands"},
 		},
 	},
 	{
@@ -1599,26 +987,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "bufferOffset",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "data",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "bufferOffset"},
+			{KOS_TYPE_OPAQUE_PTR, "data"},
+			{KOS_TYPE_U32, "size"},
 		},
 	},
 	{
@@ -1626,30 +999,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "destination",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "data",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "dataSize",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "dataLayout",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "writeSize",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
+			{KOS_TYPE_BUF, "destination"},
+			{KOS_TYPE_OPAQUE_PTR, "data"},
+			{KOS_TYPE_U32, "dataSize"},
+			{KOS_TYPE_BUF, "dataLayout"},
+			{KOS_TYPE_BUF, "writeSize"},
 		},
 	},
 	{
@@ -1657,10 +1012,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
 		},
 	},
 	{
@@ -1668,10 +1020,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
 		},
 	},
 	{
@@ -1679,14 +1028,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundle",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundle"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -1694,10 +1037,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundle",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundle"},
 		},
 	},
 	{
@@ -1705,10 +1045,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundle",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundle"},
 		},
 	},
 	{
@@ -1716,26 +1053,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "vertexCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "instanceCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstVertex",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstInstance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_U32, "vertexCount"},
+			{KOS_TYPE_U32, "instanceCount"},
+			{KOS_TYPE_U32, "firstVertex"},
+			{KOS_TYPE_U32, "firstInstance"},
 		},
 	},
 	{
@@ -1743,30 +1065,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "indexCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "instanceCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstIndex",
-			},
-			{
-				.type = KOS_TYPE_I32,
-				.name = "baseVertex",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstInstance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_U32, "indexCount"},
+			{KOS_TYPE_U32, "instanceCount"},
+			{KOS_TYPE_U32, "firstIndex"},
+			{KOS_TYPE_I32, "baseVertex"},
+			{KOS_TYPE_U32, "firstInstance"},
 		},
 	},
 	{
@@ -1774,18 +1078,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "indirectBuffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "indirectOffset",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "indirectBuffer"},
+			{KOS_TYPE_U64, "indirectOffset"},
 		},
 	},
 	{
@@ -1793,18 +1088,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "indirectBuffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "indirectOffset",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "indirectBuffer"},
+			{KOS_TYPE_U64, "indirectOffset"},
 		},
 	},
 	{
@@ -1812,14 +1098,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -1827,14 +1107,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "markerLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "markerLabel"},
 		},
 	},
 	{
@@ -1842,10 +1116,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
 		},
 	},
 	{
@@ -1853,14 +1124,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "groupLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "groupLabel"},
 		},
 	},
 	{
@@ -1868,26 +1133,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "groupIndex",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "group",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "dynamicOffsetCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "dynamicOffsets",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_U32, "groupIndex"},
+			{KOS_TYPE_OPAQUE_PTR, "group"},
+			{KOS_TYPE_U32, "dynamicOffsetCount"},
+			{KOS_TYPE_BUF, "dynamicOffsets"},
 		},
 	},
 	{
@@ -1895,26 +1145,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "format",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U32, "format"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U64, "size"},
 		},
 	},
 	{
@@ -1922,14 +1157,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -1937,14 +1166,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "pipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "pipeline"},
 		},
 	},
 	{
@@ -1952,26 +1175,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "slot",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
+			{KOS_TYPE_U32, "slot"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U64, "size"},
 		},
 	},
 	{
@@ -1979,10 +1187,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
 		},
 	},
 	{
@@ -1990,10 +1195,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderBundleEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderBundleEncoder"},
 		},
 	},
 	{
@@ -2001,14 +1203,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "queryIndex"},
 		},
 	},
 	{
@@ -2016,26 +1212,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "vertexCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "instanceCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstVertex",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstInstance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "vertexCount"},
+			{KOS_TYPE_U32, "instanceCount"},
+			{KOS_TYPE_U32, "firstVertex"},
+			{KOS_TYPE_U32, "firstInstance"},
 		},
 	},
 	{
@@ -2043,30 +1224,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "indexCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "instanceCount",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstIndex",
-			},
-			{
-				.type = KOS_TYPE_I32,
-				.name = "baseVertex",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "firstInstance",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "indexCount"},
+			{KOS_TYPE_U32, "instanceCount"},
+			{KOS_TYPE_U32, "firstIndex"},
+			{KOS_TYPE_I32, "baseVertex"},
+			{KOS_TYPE_U32, "firstInstance"},
 		},
 	},
 	{
@@ -2074,18 +1237,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "indirectBuffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "indirectOffset",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "indirectBuffer"},
+			{KOS_TYPE_U64, "indirectOffset"},
 		},
 	},
 	{
@@ -2093,18 +1247,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "indirectBuffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "indirectOffset",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "indirectBuffer"},
+			{KOS_TYPE_U64, "indirectOffset"},
 		},
 	},
 	{
@@ -2112,10 +1257,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
 		},
 	},
 	{
@@ -2123,10 +1265,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
 		},
 	},
 	{
@@ -2134,18 +1273,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "bundleCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "bundles",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "bundleCount"},
+			{KOS_TYPE_BUF, "bundles"},
 		},
 	},
 	{
@@ -2153,14 +1283,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "markerLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "markerLabel"},
 		},
 	},
 	{
@@ -2168,10 +1292,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
 		},
 	},
 	{
@@ -2179,14 +1300,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "groupLabel",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "groupLabel"},
 		},
 	},
 	{
@@ -2194,26 +1309,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "groupIndex",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "group",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "dynamicOffsetCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "dynamicOffsets",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "groupIndex"},
+			{KOS_TYPE_OPAQUE_PTR, "group"},
+			{KOS_TYPE_U32, "dynamicOffsetCount"},
+			{KOS_TYPE_BUF, "dynamicOffsets"},
 		},
 	},
 	{
@@ -2221,14 +1321,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "color",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_BUF, "color"},
 		},
 	},
 	{
@@ -2236,26 +1330,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "format",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U32, "format"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U64, "size"},
 		},
 	},
 	{
@@ -2263,14 +1342,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -2278,14 +1351,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "pipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "pipeline"},
 		},
 	},
 	{
@@ -2293,26 +1360,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "x",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "y",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "width",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "height",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "x"},
+			{KOS_TYPE_U32, "y"},
+			{KOS_TYPE_U32, "width"},
+			{KOS_TYPE_U32, "height"},
 		},
 	},
 	{
@@ -2320,14 +1372,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "reference",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "reference"},
 		},
 	},
 	{
@@ -2335,26 +1381,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "slot",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "size",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_U32, "slot"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U64, "size"},
 		},
 	},
 	{
@@ -2362,34 +1393,13 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 7,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_F32,
-				.name = "x",
-			},
-			{
-				.type = KOS_TYPE_F32,
-				.name = "y",
-			},
-			{
-				.type = KOS_TYPE_F32,
-				.name = "width",
-			},
-			{
-				.type = KOS_TYPE_F32,
-				.name = "height",
-			},
-			{
-				.type = KOS_TYPE_F32,
-				.name = "minDepth",
-			},
-			{
-				.type = KOS_TYPE_F32,
-				.name = "maxDepth",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_F32, "x"},
+			{KOS_TYPE_F32, "y"},
+			{KOS_TYPE_F32, "width"},
+			{KOS_TYPE_F32, "height"},
+			{KOS_TYPE_F32, "minDepth"},
+			{KOS_TYPE_F32, "maxDepth"},
 		},
 	},
 	{
@@ -2397,10 +1407,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
 		},
 	},
 	{
@@ -2408,10 +1415,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
 		},
 	},
 	{
@@ -2419,14 +1423,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPipeline",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "groupIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPipeline"},
+			{KOS_TYPE_U32, "groupIndex"},
 		},
 	},
 	{
@@ -2434,14 +1432,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPipeline",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPipeline"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -2449,10 +1441,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPipeline"},
 		},
 	},
 	{
@@ -2460,10 +1449,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPipeline",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPipeline"},
 		},
 	},
 	{
@@ -2471,14 +1457,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "sampler",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "sampler"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -2486,10 +1466,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "sampler",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "sampler"},
 		},
 	},
 	{
@@ -2497,10 +1474,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "sampler",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "sampler"},
 		},
 	},
 	{
@@ -2508,14 +1482,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "shaderModule",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "callbackInfo",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "shaderModule"},
+			{KOS_TYPE_BUF, "callbackInfo"},
 		},
 	},
 	{
@@ -2523,14 +1491,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "shaderModule",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "shaderModule"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -2538,10 +1500,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "shaderModule",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "shaderModule"},
 		},
 	},
 	{
@@ -2549,10 +1508,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "shaderModule",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "shaderModule"},
 		},
 	},
 	{
@@ -2560,10 +1516,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "supportedFeatures",
-			},
+			{KOS_TYPE_BUF, "supportedFeatures"},
 		},
 	},
 	{
@@ -2571,10 +1524,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "supportedWGSLLanguageFeatures",
-			},
+			{KOS_TYPE_BUF, "supportedWGSLLanguageFeatures"},
 		},
 	},
 	{
@@ -2582,14 +1532,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "config",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
+			{KOS_TYPE_BUF, "config"},
 		},
 	},
 	{
@@ -2597,18 +1541,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "adapter",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "capabilities",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
+			{KOS_TYPE_OPAQUE_PTR, "adapter"},
+			{KOS_TYPE_BUF, "capabilities"},
 		},
 	},
 	{
@@ -2616,14 +1551,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "surfaceTexture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
+			{KOS_TYPE_BUF, "surfaceTexture"},
 		},
 	},
 	{
@@ -2631,10 +1560,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
 		},
 	},
 	{
@@ -2642,10 +1568,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
 		},
 	},
 	{
@@ -2653,10 +1576,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
 		},
 	},
 	{
@@ -2664,10 +1584,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "surface",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "surface"},
 		},
 	},
 	{
@@ -2675,10 +1592,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "surfaceCapabilities",
-			},
+			{KOS_TYPE_BUF, "surfaceCapabilities"},
 		},
 	},
 	{
@@ -2686,14 +1600,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -2701,10 +1609,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2712,10 +1617,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2723,10 +1625,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2734,10 +1633,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2745,10 +1641,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2756,10 +1649,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2767,10 +1657,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2778,10 +1665,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U64,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2789,10 +1673,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2800,14 +1681,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -2815,10 +1690,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2826,10 +1698,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "texture",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "texture"},
 		},
 	},
 	{
@@ -2837,14 +1706,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "textureView",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "label",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "textureView"},
+			{KOS_TYPE_OPAQUE_PTR, "label"},
 		},
 	},
 	{
@@ -2852,10 +1715,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "textureView",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "textureView"},
 		},
 	},
 	{
@@ -2863,10 +1723,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "textureView",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "textureView"},
 		},
 	},
 	{
@@ -2874,14 +1731,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "report",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "report"},
 		},
 	},
 	{
@@ -2889,18 +1740,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U32,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "instance",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "options",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "adapters",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "options"},
+			{KOS_TYPE_BUF, "adapters"},
 		},
 	},
 	{
@@ -2908,18 +1750,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_U64,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "queue",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "commandCount",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "commands",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "queue"},
+			{KOS_TYPE_U32, "commandCount"},
+			{KOS_TYPE_BUF, "commands"},
 		},
 	},
 	{
@@ -2927,18 +1760,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_BOOL,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BOOL,
-				.name = "wait",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "submissionIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BOOL, "wait"},
+			{KOS_TYPE_BUF, "submissionIndex"},
 		},
 	},
 	{
@@ -2946,14 +1770,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "device",
-			},
-			{
-				.type = KOS_TYPE_BUF,
-				.name = "descriptor",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "descriptor"},
 		},
 	},
 	{
@@ -2961,14 +1779,8 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 2,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "callback",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "userdata",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "callback"},
+			{KOS_TYPE_OPAQUE_PTR, "userdata"},
 		},
 	},
 	{
@@ -2976,10 +1788,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_U32,
-				.name = "level",
-			},
+			{KOS_TYPE_U32, "level"},
 		},
 	},
 	{
@@ -2994,26 +1803,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "stages",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "sizeBytes",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "data",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_U64, "stages"},
+			{KOS_TYPE_U32, "offset"},
+			{KOS_TYPE_U32, "sizeBytes"},
+			{KOS_TYPE_OPAQUE_PTR, "data"},
 		},
 	},
 	{
@@ -3021,22 +1815,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "sizeBytes",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "data",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_U32, "offset"},
+			{KOS_TYPE_U32, "sizeBytes"},
+			{KOS_TYPE_OPAQUE_PTR, "data"},
 		},
 	},
 	{
@@ -3044,26 +1826,11 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "stages",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "sizeBytes",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "data",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_U64, "stages"},
+			{KOS_TYPE_U32, "offset"},
+			{KOS_TYPE_U32, "sizeBytes"},
+			{KOS_TYPE_OPAQUE_PTR, "data"},
 		},
 	},
 	{
@@ -3071,22 +1838,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "count",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U32, "count"},
 		},
 	},
 	{
@@ -3094,22 +1849,10 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "count",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_U32, "count"},
 		},
 	},
 	{
@@ -3117,30 +1860,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "count_buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "count_buffer_offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "max_count",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_OPAQUE_PTR, "count_buffer"},
+			{KOS_TYPE_U64, "count_buffer_offset"},
+			{KOS_TYPE_U32, "max_count"},
 		},
 	},
 	{
@@ -3148,30 +1873,12 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 6,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "encoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "offset",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "count_buffer",
-			},
-			{
-				.type = KOS_TYPE_U64,
-				.name = "count_buffer_offset",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "max_count",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "encoder"},
+			{KOS_TYPE_OPAQUE_PTR, "buffer"},
+			{KOS_TYPE_U64, "offset"},
+			{KOS_TYPE_OPAQUE_PTR, "count_buffer"},
+			{KOS_TYPE_U64, "count_buffer_offset"},
+			{KOS_TYPE_U32, "max_count"},
 		},
 	},
 	{
@@ -3179,18 +1886,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_U32, "queryIndex"},
 		},
 	},
 	{
@@ -3198,10 +1896,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
 		},
 	},
 	{
@@ -3209,18 +1904,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_U32, "queryIndex"},
 		},
 	},
 	{
@@ -3228,10 +1914,7 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 1,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
 		},
 	},
 	{
@@ -3239,18 +1922,9 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "computePassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "computePassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_U32, "queryIndex"},
 		},
 	},
 	{
@@ -3258,18 +1932,33 @@ static kos_fn_t const FNS[] = {
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 3,
 		.params = (kos_param_t[]) {
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "renderPassEncoder",
-			},
-			{
-				.type = KOS_TYPE_OPAQUE_PTR,
-				.name = "querySet",
-			},
-			{
-				.type = KOS_TYPE_U32,
-				.name = "queryIndex",
-			},
+			{KOS_TYPE_OPAQUE_PTR, "renderPassEncoder"},
+			{KOS_TYPE_OPAQUE_PTR, "querySet"},
+			{KOS_TYPE_U32, "queryIndex"},
+		},
+	},
+	{
+		.name = "wgpuDeviceFromVk",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 5,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "raw_vk_instance"},
+			{KOS_TYPE_BUF, "raw_vk_phys_dev"},
+			{KOS_TYPE_BUF, "raw_vk_dev"},
+			{KOS_TYPE_U32, "family_index"},
+		},
+	},
+	{
+		.name = "wgpuRenderTextureFromVkImage",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 5,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "raw_vk_image"},
+			{KOS_TYPE_U32, "format"},
+			{KOS_TYPE_U32, "x_res"},
+			{KOS_TYPE_U32, "y_res"},
 		},
 	},
 // FNS:END

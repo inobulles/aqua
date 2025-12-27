@@ -6,13 +6,9 @@ from datetime import datetime
 
 year = datetime.now().year
 
-BASE_FN_ID = 1
+BASE_FN_ID = 2
 
 PACKED = "__attribute__((packed))"
-
-# We must first attempt to build once first to ensure dependencies are downloaded.
-
-os.system("bob build")
 
 # WebGPU commands in the spec which aren't yet implemented by wgpu-native.
 
@@ -21,10 +17,10 @@ WGPU_BLACKLIST = (
 	"wgpuSurfaceSetLabel",
 )
 
-with open(".bob/prefix/include/webgpu/webgpu.h") as f:
+with open("../../external/webgpu-headers/webgpu.h") as f:
 	(*lines,) = map(str.rstrip, f.readlines())
 
-with open(".bob/prefix/include/webgpu/wgpu.h") as f:
+with open("../../external/webgpu-headers/wgpu.h") as f:
 	lines += [*map(str.rstrip, f.readlines())]
 
 
@@ -137,10 +133,7 @@ for line in lines:
 		.params = (kos_param_t[]) {{\n"""
 
 	for t, n in zip(param_types, param_names):
-		fns += f"""\t\t\t{{
-				.type = {wgpu_type_to_kos(t)},
-				.name = "{n}",
-			}},\n"""
+		fns += f"""\t\t\t{{{wgpu_type_to_kos(t)}, "{n}"}},\n"""
 
 	fns += "\t\t},\n\t},\n"
 
@@ -271,19 +264,20 @@ for line in lines:
 		ret = ""
 
 	elif ret_type == "WGPUFuture":
-		ret = f"\n\treturn (WGPUFuture) {{.id = ctx->last_ret.u64}};"
+		ret = f"\n\treturn (WGPUFuture) {{.id = ctx->last_ret.u64}};\n"
 
 	elif ret_type == "WGPUAdapterInfo":
-		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;"
+		ret = f"\n\treturn *(WGPUAdapterInfo*) ctx->last_ret.buf.ptr;\n"
 
 	elif kos_ret_type == "KOS_TYPE_OPAQUE_PTR":
 		ret = f"""
 	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
-	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;"""
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
+"""
 
 	else:
 		union = kos_type_to_union(kos_ret_type)
-		ret = f"\n\treturn ctx->last_ret.{union};"
+		ret = f"\n\treturn ctx->last_ret.{union};\n"
 
 	lib_impls += f"""{lib_fn_sig} {{
 	kos_val_t const args[] = {{
@@ -292,8 +286,7 @@ for line in lines:
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.{name}, args);
 	kos_flush(true);
-	{ret}
-}}
+{ret}}}
 
 """
 
