@@ -4,8 +4,7 @@
 import bob
 
 deps = [
-	# TODO Use branch with our extensions here.
-	Dep.git("https://github.com/gfx-rs/wgpu-native", "v24.0.3.1"),
+	Dep.git("https://github.com/inobulles/wgpu-native", "aqua"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
 	Dep.local("../../external/webgpu-headers"),
 	Dep.local("../win"),
