@@ -1646,6 +1646,18 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		wgpuRenderPassEncoderWriteTimestamp(renderPassEncoder, querySet, queryIndex);
 		break;
 	}
+	case 211: {
+		WGPUInstance const instance = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+		const void * const raw_vk_instance = (void*) args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *raw_vk_instance);
+		const void * const raw_vk_phys_dev = (void*) args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *raw_vk_phys_dev);
+		const void * const raw_vk_dev = (void*) args[3].buf.ptr;
+		assert(args[3].buf.size == sizeof *raw_vk_dev);
+		uint32_t const family_index = args[4].u32;
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuDeviceFromVk(instance, raw_vk_instance, raw_vk_phys_dev, raw_vk_dev, family_index));
+		break;
+	}
 // CALL_HANDLERS:END
 		// clang-format on
 	default:

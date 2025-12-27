@@ -1937,6 +1937,18 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_U32, "queryIndex"},
 		},
 	},
+	{
+		.name = "wgpuDeviceFromVk",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 5,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "instance"},
+			{KOS_TYPE_BUF, "raw_vk_instance"},
+			{KOS_TYPE_BUF, "raw_vk_phys_dev"},
+			{KOS_TYPE_BUF, "raw_vk_dev"},
+			{KOS_TYPE_U32, "family_index"},
+		},
+	},
 // FNS:END
 	// clang-format on
 };
