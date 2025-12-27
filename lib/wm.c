@@ -407,6 +407,11 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
+	uint64_t raw_image;
+} intr_redraw_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
 	uint64_t win;
 	char const* app_id;
 } intr_new_win_t;
@@ -444,8 +449,14 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 	}
 
 	if (intr->type == ctx->consts.INTR_REDRAW) {
+		intr_redraw_t const* const redraw = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *redraw) {
+			return; // TODO Error message.
+		}
+
 		if (wm->redraw != NULL) {
-			wm->redraw(wm, wm->redraw_data);
+			wm->redraw(wm, (void*) (uintptr_t) redraw->raw_image, wm->redraw_data);
 		}
 	}
 
