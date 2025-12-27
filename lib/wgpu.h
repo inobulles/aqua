@@ -274,5 +274,6 @@ void aqua_wgpuRenderPassEncoderBeginPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPU
 void aqua_wgpuRenderPassEncoderEndPipelineStatisticsQuery(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder);
 void aqua_wgpuComputePassEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPUComputePassEncoder computePassEncoder, WGPUQuerySet querySet, uint32_t queryIndex);
 void aqua_wgpuRenderPassEncoderWriteTimestamp(wgpu_ctx_t ctx, WGPURenderPassEncoder renderPassEncoder, WGPUQuerySet querySet, uint32_t queryIndex);
+WGPUDevice aqua_wgpuDeviceFromVk(wgpu_ctx_t ctx, WGPUInstance instance, const void * raw_vk_instance, const void * raw_vk_phys_dev, const void * raw_vk_dev, uint32_t family_index);
 // PROTOS:END
 // clang-format on
