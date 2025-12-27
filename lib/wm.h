@@ -30,10 +30,14 @@ typedef uint64_t wm_win_t;
 /**
  * WM redraw event callback.
  *
+ * The raw image we have to draw to is acquired by the WM VDEV from its internal swapchain.
+ * You can turn this into e.g. a WebGPU texture with the {@link wgpuRenderTextureFromVkImage} extension.
+ *
  * @param wm The WM object.
+ * @param raw_image Raw image which we have to draw to.
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_redraw_cb}.
  */
-typedef void (*wm_redraw_cb_t)(wm_t wm, void* data);
+typedef void (*wm_redraw_cb_t)(wm_t wm, void* raw_image, void* data);
 
 /**
  * WM new window event callback.
