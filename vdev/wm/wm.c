@@ -11,6 +11,7 @@
 
 #include <umber.h>
 
+#include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
 
 #include <webgpu/webgpu.h>
@@ -42,6 +43,7 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
+	uint64_t raw_image;
 } redraw_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -134,20 +136,50 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct wlr_output* const wlr_output = output->output;
 	struct wlr_scene_output* scene_output = wlr_scene_get_scene_output(wm->scene, wlr_output);
 
-	LOG_V(cls, "Render scene and commit output.");
-	wlr_scene_output_commit(scene_output, NULL);
+	LOG_V(cls, "Initialize output state.");
+
+	struct wlr_output_state state;
+	wlr_output_state_init(&state);
+
+	LOG_V(cls, "Acquire swapchain image.");
+
+	if (!wlr_output_configure_primary_swapchain(wlr_output, &state, &wlr_output->swapchain)) {
+		LOG_E(cls, "Failed to create or configure primary swapchain.");
+		return;
+	}
+
+	struct wlr_buffer* const buf = wlr_swapchain_acquire(wlr_output->swapchain);
+
+	if (buf == NULL) {
+		LOG_E(cls, "Failed to acquire swapchain image.");
+		return;
+	}
+
+	struct wlr_vk_image_attribs attribs;
+	wlr_vk_buffer_get_image_attribs(wm->wlr_renderer, buf, &attribs);
+
+	LOG_V(cls, "Take care of rendering.");
+
+	redraw_intr_t intr = {
+		.intr = INTR_REDRAW,
+		.raw_image = (uintptr_t) attribs.image,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
+
+	LOG_V(cls, "Set swapchain image to output and release it.");
+
+	wlr_output_state_set_buffer(&state, buf);
+	wlr_buffer_unlock(buf);
+
+	LOG_V(cls, "Commit output state.");
+
+	wlr_output_commit_state(wlr_output, &state);
+	wlr_output_state_finish(&state);
 
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	wlr_scene_output_send_frame_done(scene_output, &now);
-
-	// Send interrupt.
-
-	redraw_intr_t intr = {
-		.intr = INTR_REDRAW,
-	};
-
-	interrupt(wm, sizeof intr, &intr);
 
 	// If we have a Firefox window, redraw it too.
 
