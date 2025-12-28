@@ -10,11 +10,18 @@ BASE_FN_ID = 2
 
 PACKED = "__attribute__((packed))"
 
-# WebGPU commands in the spec which aren't yet implemented by wgpu-native.
+# WebGPU functions in the spec which aren't yet implemented by wgpu-native.
 
 WGPU_BLACKLIST = (
 	"wgpuInstanceHasWGSLLanguageFeature",
 	"wgpuSurfaceSetLabel",
+)
+
+# These functions aren't supported on Apple OS'.
+
+WGPU_APPLE_BLACKLIST = (
+	"wgpuDeviceFromVk",
+	"wgpuRenderTextureFromVkImage",
 )
 
 with open("../../external/webgpu-headers/webgpu.h") as f:
@@ -175,7 +182,6 @@ for line in lines:
 	# Generate return code.
 
 	call = f"{name}({', '.join(param_names)})"
-
 	kos_ret_type = wgpu_type_to_kos(ret_type)
 
 	if ret_type == "WGPUFuture":
@@ -199,12 +205,21 @@ for line in lines:
 		ret = f"notif.call_ret.ret.{union} = {call}"
 
 	# Generate actual call handler.
+	# TODO The way we're doing the Apple blacklist is not great.
+	# Ideally, we should never be advertising this function in the first place.
+	# But that makes things difficult with the function ID case statements so let's just ignore this for now.
+
+	if name in WGPU_APPLE_BLACKLIST:
+		call_handlers += "#if !defined(__APPLE__)\n"
 
 	call_handlers += f"""\tcase {fn_id}: {{
 {parser}\t\t{ret};
 		break;
 	}}
 """
+
+	if name in WGPU_APPLE_BLACKLIST:
+		call_handlers += "#endif\n"
 
 	# Generate library prototype and function IDs.
 
