@@ -3,13 +3,19 @@
 
 import bob
 
-deps = [
+let drivers = [
 	"audio",
 	"test",
 	"win",
 	"wgpu",
 	"ui",
 	"vr",
-].map(Dep.local)
+]
+
+if Platform.os() != "Darwin" {
+	drivers = drivers + ["wm"]
+}
+
+deps = drivers.map(Dep.local)
 
 run = none
