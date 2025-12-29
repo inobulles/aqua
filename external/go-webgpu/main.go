@@ -4,9 +4,11 @@
 package wgpu
 
 /*
-#cgo LDFLAGS: -laqua_wgpu
+#cgo LDFLAGS: -laqua_wgpu -laqua_ui
 
 #include <aqua/wgpu.h>
+#include <aqua/ui/wgpu.h>
+
 wgpu_ctx_t gowebgpu_ctx;
 */
 import "C"
@@ -106,4 +108,22 @@ func (d *Device) RenderTextureFromVkImage(raw_image unsafe.Pointer, format Textu
 			C.uint32_t(w), C.uint32_t(h),
 		),
 	}
+}
+
+func (d *Device) UiInit(ui *aqua.Ui, format TextureFormat) {
+	C.ui_wgpu_init(
+		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
+		C.wgpu_get_hid(global_ctx.ctx),
+		C.uint64_t(uintptr(unsafe.Pointer(global_ctx.ctx))),
+		d.ref,
+		C.WGPUTextureFormat(format),
+	)
+}
+
+func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *TextureView, x_res, y_res uint32) {
+	C.ui_wgpu_render(
+		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
+		frame.ref, e.ref,
+		C.uint32_t(x_res), C.uint32_t(y_res),
+	)
 }
