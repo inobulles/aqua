@@ -95,3 +95,15 @@ func TextureViewFromRaw(view_raw unsafe.Pointer) TextureView {
 func (v *TextureView) ToRaw() unsafe.Pointer {
 	return unsafe.Pointer(v.ref)
 }
+
+func (d *Device) RenderTextureFromVkImage(raw_image unsafe.Pointer, format TextureFormat, w, h uint32) Texture {
+	return Texture{
+		deviceRef: d.ref,
+		ref: C.aqua_wgpuRenderTextureFromVkImage(
+			global_ctx.ctx,
+			d.ref, raw_image,
+			C.WGPUTextureFormat(format),
+			C.uint32_t(w), C.uint32_t(h),
+		),
+	}
+}
