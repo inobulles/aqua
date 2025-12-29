@@ -43,3 +43,7 @@ func (c *WgpuComponent) Conn(vdev *VdevDescr) *WgpuCtx {
 
 	return &WgpuCtx{ctx}
 }
+
+func (c *WgpuCtx) Disconn() {
+	C.wgpu_disconn(c.ctx)
+}
