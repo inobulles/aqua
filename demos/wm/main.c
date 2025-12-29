@@ -11,6 +11,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MULTILINE(...) #__VA_ARGS__
 
@@ -74,9 +75,59 @@ typedef struct {
 	uint32_t x_res, y_res;
 } state_t;
 
+float x = 0;
+
+static void redraw(wm_t wm, void* raw_image, void* data) {
+	(void) wm;
+
+	state_t* const s = data;
+
+	WGPUTexture const tex = aqua_wgpuRenderTextureFromVkImage(s->wgpu_ctx, s->device, raw_image, WGPUTextureFormat_RGBA8Snorm, 1280, 720);
+	WGPUTextureView const view = aqua_wgpuTextureCreateView(s->wgpu_ctx, tex, NULL);
+
+	WGPUQueue const queue = aqua_wgpuDeviceGetQueue(s->wgpu_ctx, s->device);
+	assert(queue != NULL);
+
+	WGPUCommandEncoder const cmd_enc = aqua_wgpuDeviceCreateCommandEncoder(s->wgpu_ctx, s->device, &(WGPUCommandEncoderDescriptor) {});
+	assert(cmd_enc != NULL);
+
+	WGPURenderPassColorAttachment const colour_attachments[] = {
+		{
+			.view = view,
+			.loadOp = WGPULoadOp_Clear,
+			.storeOp = WGPUStoreOp_Store,
+			.clearValue = (WGPUColor const) {x, 1, 1, 1},
+		},
+	};
+
+	x += 0.01;
+
+	WGPURenderPassDescriptor const render_pass_descr = {
+		.label = {"render_pass_encoder", WGPU_STRLEN},
+		.colorAttachmentCount = sizeof colour_attachments / sizeof *colour_attachments,
+		.colorAttachments = colour_attachments,
+	};
+
+	WGPURenderPassEncoder const render_pass = aqua_wgpuCommandEncoderBeginRenderPass(s->wgpu_ctx, cmd_enc, &render_pass_descr);
+	assert(render_pass != NULL);
+
+	aqua_wgpuRenderPassEncoderEnd(s->wgpu_ctx, render_pass);
+	aqua_wgpuRenderPassEncoderRelease(s->wgpu_ctx, render_pass);
+
+	WGPUCommandBuffer const cmd_buf = aqua_wgpuCommandEncoderFinish(s->wgpu_ctx, cmd_enc, &(WGPUCommandBufferDescriptor) {});
+	assert(cmd_buf != NULL);
+
+	WGPUCommandBuffer const cmd_bufs[] = {cmd_buf};
+	aqua_wgpuQueueSubmit(s->wgpu_ctx, queue, sizeof cmd_bufs / sizeof *cmd_bufs, cmd_bufs);
+
+	aqua_wgpuCommandEncoderRelease(s->wgpu_ctx, cmd_enc);
+	aqua_wgpuTextureRelease(s->wgpu_ctx, tex);
+}
+
 int main(void) {
 	(void) SHADER_SRC; // TODO REMME
 
+	state_t s;
 	umber_class_t const* const cls = umber_class_new("wm", UMBER_LVL_VERBOSE, "WM demo");
 	aqua_ctx_t const ctx = aqua_init();
 
@@ -112,9 +163,9 @@ int main(void) {
 	}
 
 	LOG_I(cls, "Using WebGPU VDEV \"%s\".", (char*) wgpu_vdev->human);
-	wgpu_ctx_t wgpu_ctx = wgpu_conn(wgpu_vdev);
+	s.wgpu_ctx = wgpu_conn(wgpu_vdev);
 
-	if (wgpu_ctx == NULL) {
+	if (s.wgpu_ctx == NULL) {
 		LOG_F(cls, "Failed to connect to WebGPU VDEV.");
 		return EXIT_FAILURE;
 	}
@@ -129,11 +180,9 @@ int main(void) {
 		goto disconn;
 	}
 
-	printf("test %d\n", __LINE__);
-
 	// Create WebGPU instance.
 
-	WGPUInstance const instance = aqua_wgpuCreateInstance(wgpu_ctx, &(WGPUInstanceDescriptor) {});
+	WGPUInstance const instance = aqua_wgpuCreateInstance(s.wgpu_ctx, &(WGPUInstanceDescriptor) {});
 	printf("test %d\n", __LINE__);
 
 	if (instance == NULL) {
@@ -144,15 +193,16 @@ int main(void) {
 
 	// Get WebGPU device from WM.
 
-	WGPUDevice const dev = wgpu_device_from_wm(wgpu_ctx, instance, wm); // wm_get_wgpu_dev(wm, instance);
+	s.device = wgpu_device_from_wm(s.wgpu_ctx, instance, wm); // wm_get_wgpu_dev(wm, instance);
 
-	if (dev == NULL) {
+	if (s.device == NULL) {
 		LOG_F(cls, "Failed to get WebGPU device.");
 		goto disconn;
 	}
-	printf("test %d\n", __LINE__);
 
-	LOG_I(cls, "Got WebGPU device: %p.", dev);
+	LOG_I(cls, "Got WebGPU device: %p.", s.device);
+
+	wm_register_redraw_cb(wm, redraw, &s);
 
 	// Loop.
 
