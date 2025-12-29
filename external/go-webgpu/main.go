@@ -71,6 +71,14 @@ func CreateDeviceFromRaw(dev_raw unsafe.Pointer) Device {
 	}
 }
 
+func (i *Instance) DeviceFromWm(wm *aqua.Wm) Device {
+	return CreateDeviceFromRaw(unsafe.Pointer(C.wgpu_device_from_wm(
+		global_ctx.ctx,
+		i.ref,
+		C.wm_t(wm.GetInternalYesIKnowWhatImDoing()),
+	)))
+}
+
 func (d *Device) CommandEncoderFromRaw(cmd_enc_raw unsafe.Pointer) CommandEncoder {
 	return CommandEncoder{
 		deviceRef: d.ref,
