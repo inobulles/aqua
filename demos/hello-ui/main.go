@@ -56,6 +56,7 @@ func main() {
 	}
 
 	wgpu_ctx := wgpu_comp.Conn(found)
+	defer wgpu_ctx.Disconn()
 
 	// Get UI VDEV.
 
