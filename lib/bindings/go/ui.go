@@ -195,6 +195,10 @@ func (e *UiElem) SetAttr(key string, val any) {
 	}
 }
 
+func (u *Ui) GetInternalYesIKnowWhatImDoing() unsafe.Pointer {
+	return unsafe.Pointer(u.ui)
+}
+
 // WebGPU backend stuff.
 
 type UiWgpuEzState struct {

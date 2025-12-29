@@ -100,3 +100,7 @@ func (w *Wm) RegisterRedrawCb(cb WmRedrawCb) {
 func (w *Wm) Loop() {
 	C.wm_loop(w.wm)
 }
+
+func (w *Wm) GetInternalYesIKnowWhatImDoing() unsafe.Pointer {
+	return unsafe.Pointer(w.wm)
+}
