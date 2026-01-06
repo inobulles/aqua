@@ -62,9 +62,10 @@ typedef void (*wm_destroy_win_cb_t)(wm_t wm, wm_win_t win, void* data);
  * @param win The WM window handle.
  * @param x_res The new X resolution of the window (can change between calls).
  * @param y_res The new Y resolution of the window (can change between calls).
+ * @param raw_image Raw image containing the window contents.
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_new_win_cb}.
  */
-typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* data);
+typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
 
 /**
  * Initialize the WM library component.
