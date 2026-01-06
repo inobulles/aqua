@@ -183,13 +183,11 @@ int main(void) {
 	// Create WebGPU instance.
 
 	WGPUInstance const instance = aqua_wgpuCreateInstance(s.wgpu_ctx, &(WGPUInstanceDescriptor) {});
-	printf("test %d\n", __LINE__);
 
 	if (instance == NULL) {
 		LOG_F(cls, "Failed to create WebGPU instance.");
 		goto disconn;
 	}
-	printf("test %d\n", __LINE__);
 
 	// Get WebGPU device from WM.
 
@@ -220,103 +218,3 @@ disconn:
 
 	return rv;
 }
-
-/*
-	// Get the first window VDEV and create library component context from that.
-	// TODO Maybe I should have a simple function to do this for me automatically? I.e. init + find best VDEV + connection. Maybe even roll in aqua_init somehow.
-
-	aqua_component_t const win_comp = win_init(ctx);
-	win_ctx_t win_ctx = NULL;
-
-	for (aqua_vdev_it_t it = aqua_vdev_it(win_comp); it.vdev != NULL; aqua_vdev_it_next(&it)) {
-		kos_vdev_descr_t* const vdev = it.vdev;
-		win_ctx = win_conn(vdev);
-
-		if (win_ctx != NULL) {
-			printf("Using window VDEV %s\n", (char*) vdev->human);
-			break;
-		}
-	}
-
-	if (win_ctx == NULL) {
-		fprintf(stderr, "No window VDEV found or failed to connect\n");
-		goto err_no_win_vdev_found;
-	}
-
-	// Get the first WebGPU VDEV and create library component context from that.
-	// TODO Maybe I should have a simple function to do this for me automatically? I.e. init + find best VDEV + connection. Maybe even roll in aqua_init somehow.
-
-	aqua_component_t const wgpu_comp = wgpu_init(ctx);
-	wgpu_ctx_t wgpu_ctx = NULL;
-
-	for (aqua_vdev_it_t it = aqua_vdev_it(wgpu_comp); it.vdev != NULL; aqua_vdev_it_next(&it)) {
-		kos_vdev_descr_t* const vdev = it.vdev;
-		wgpu_ctx = wgpu_conn(vdev);
-
-		if (wgpu_ctx != NULL) {
-			printf("Using WebGPU VDEV %s\n", (char*) vdev->human);
-			break;
-		}
-	}
-
-	if (wgpu_ctx == NULL) {
-		fprintf(stderr, "No WebGPU VDEV found or failed to connect\n");
-		goto err_no_wgpu_vdev_found;
-	}
-
-	// Create window.
-
-	win_t const win = win_create(win_ctx);
-
-	if (win == NULL) {
-		fprintf(stderr, "Failed to create window\n");
-		goto err_win_create;
-	}
-
-	// Set up WebGPU stuff.
-
-	state_t state = {
-		.wgpu_ctx = wgpu_ctx,
-	};
-
-	WGPUInstanceDescriptor const create_instance_descr = {};
-	state.instance = aqua_wgpuCreateInstance(wgpu_ctx, &create_instance_descr);
-
-	if (state.instance == NULL) {
-		fprintf(stderr, "Failed to create WebGPU instance\n");
-		goto err_instance;
-	}
-
-	printf("WebGPU instance created: %p\n", state.instance);
-
-	// Loop the window.
-
-	win_register_redraw_cb(win, redraw, &state);
-	win_register_resize_cb(win, resize, &state);
-
-	win_loop(win);
-
-	// Success!
-
-	rv = EXIT_SUCCESS;
-
-	// Cleanup.
-
-err_instance:
-
-	win_destroy(win);
-
-err_win_create:
-
-	wgpu_disconn(wgpu_ctx);
-
-err_no_wgpu_vdev_found:
-
-	win_disconn(win_ctx);
-
-err_no_win_vdev_found:
-err_aqua_init:
-
-	return rv;
-}
-*/
