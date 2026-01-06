@@ -304,7 +304,7 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 
 	(void) data;
 
-	LOG_V(cls, "Map %s.", toplevel->xdg_toplevel->app_id);
+	LOG_V(cls, "Map toplevel %p (app_id=%s).", toplevel->xdg_toplevel, toplevel->xdg_toplevel->app_id);
 
 	wl_list_insert(&wm->toplevels, &toplevel->link);
 	focus_toplevel(toplevel);
@@ -375,7 +375,7 @@ static void toplevel_destroy(struct wl_listener* listener, void* data) {
 
 	(void) data;
 
-	LOG_V(cls, "Destroying %s.", toplevel->xdg_toplevel->app_id);
+	LOG_V(cls, "Destroying toplevel.");
 
 	wl_list_remove(&toplevel->map.link);
 	wl_list_remove(&toplevel->unmap.link);
@@ -422,6 +422,47 @@ static void new_popup(struct wl_listener* listener, void* data) {
 	(void) data;
 
 	LOG_F(cls, "TODO: %s", __func__);
+}
+
+static void surf_config(struct wl_listener* listener, void* data) {
+	surf_t* const surf = wl_container_of(listener, surf, config);
+	struct wlr_box const geom = surf->xdg_surface->geometry;
+
+	(void) data;
+
+	LOG_V(cls, "Configure XDG surface (%ux%u+%u+%u) for toplevel %p.", geom.width, geom.height, geom.x, geom.y, surf->xdg_surface->toplevel);
+}
+
+static void surf_destroy(struct wl_listener* listener, void* data) {
+	surf_t* const surf = wl_container_of(listener, surf, destroy);
+
+	(void) data;
+
+	LOG_V(cls, "Destroying XDG surface.");
+
+	wl_list_remove(&surf->config.link);
+	wl_list_remove(&surf->destroy.link);
+
+	free(surf);
+}
+
+static void new_xdg_surface(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, new_xdg_toplevel);
+	struct wlr_xdg_surface* const xdg_surface = data;
+
+	LOG_V(cls, "New XDG surface.");
+
+	surf_t* const surf = calloc(1, sizeof *surf);
+	assert(surf != NULL);
+
+	surf->wm = wm;
+	surf->xdg_surface = xdg_surface;
+
+	surf->config.notify = surf_config;
+	wl_signal_add(&xdg_surface->events.configure, &surf->config);
+
+	surf->destroy.notify = surf_destroy;
+	wl_signal_add(&xdg_surface->events.destroy, &surf->destroy);
 }
 
 static void cursor_motion(struct wl_listener* listener, void* data) {
@@ -761,6 +802,9 @@ wm_t* wm_vdev_create(void) {
 
 	wm->new_xdg_popup.notify = new_popup;
 	wl_signal_add(&wm->xdg_shell->events.new_popup, &wm->new_xdg_popup);
+
+	wm->new_xdg_surface.notify = new_xdg_surface;
+	wl_signal_add(&wm->xdg_shell->events.new_surface, &wm->new_xdg_surface);
 
 	LOG_V(cls, "Create cursor.");
 	wm->cursor = wlr_cursor_create();

@@ -72,6 +72,7 @@ typedef struct {
 	struct wlr_xdg_shell* xdg_shell;
 	struct wl_listener new_xdg_toplevel;
 	struct wl_listener new_xdg_popup;
+	struct wl_listener new_xdg_surface;
 	struct wl_list toplevels;
 
 	// Cursor stuff.
@@ -100,6 +101,16 @@ typedef struct {
 	struct wl_listener commit;
 	struct wl_listener destroy;
 } toplevel_t;
+
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
+	struct wlr_xdg_surface* xdg_surface;
+
+	struct wl_listener config;
+	struct wl_listener destroy;
+} surf_t;
 
 typedef enum : uint8_t {
 	INTR_REDRAW,
