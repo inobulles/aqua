@@ -65,6 +65,7 @@ typedef struct __attribute__((packed)) {
 	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
+	uint64_t raw_image;
 } redraw_win_intr_t;
 
 static umber_class_t const* cls = NULL;
@@ -356,15 +357,19 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 		return;
 	}
 
+	struct wlr_vk_image_attribs attribs;
+	wlr_vk_buffer_get_image_attribs(toplevel->wm->wlr_renderer, &toplevel->xdg_toplevel->base->surface->buffer->base, &attribs);
+
 	// Send interrupt.
 
 	struct wlr_texture* const tex = target_surf(xdg_toplevel)->buffer->texture;
 
 	redraw_win_intr_t const intr = {
 		.intr = INTR_REDRAW_WIN,
-		.win = (uint64_t) toplevel,
+		.win = (uintptr_t) toplevel,
 		.x_res = tex->width,
 		.y_res = tex->height,
+		.raw_image = (uintptr_t) attribs.image,
 	};
 
 	interrupt(toplevel->wm, sizeof intr, &intr);
