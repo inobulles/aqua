@@ -10,6 +10,7 @@ package aqua
 
 extern void go_lib_bindings_wm_redraw_cb(wm_t wm, void* raw_image, void* data);
 extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
+extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
 */
 import "C"
@@ -32,6 +33,7 @@ type Wm struct {
 
 	redraw_cb_handle      cgo.Handle
 	new_win_cb_handle     cgo.Handle
+	redraw_win_cb_handle  cgo.Handle
 	destroy_win_cb_handle cgo.Handle
 }
 
@@ -88,6 +90,9 @@ func (w *Wm) Destroy() {
 	}
 	if w.new_win_cb_handle != 0 {
 		w.new_win_cb_handle.Delete()
+	}
+	if w.redraw_win_cb_handle != 0 {
+		w.redraw_win_cb_handle.Delete()
 	}
 	if w.destroy_win_cb_handle != 0 {
 		w.destroy_win_cb_handle.Delete()
@@ -146,6 +151,37 @@ func (w *Wm) RegisterNewWinCb(cb WmNewWinCb) {
 		w.wm,
 		C.wm_new_win_cb_t(C.go_lib_bindings_wm_new_win_cb),
 		unsafe.Pointer(w.new_win_cb_handle),
+	)
+}
+
+type WmRedrawWinCb func(win WmWin, x_res, y_res uint32, raw_image unsafe.Pointer)
+
+//export go_lib_bindings_wm_redraw_win_cb
+func go_lib_bindings_wm_redraw_win_cb(
+	_ C.wm_t,
+	win C.wm_win_t,
+	x_res, y_res C.uint32_t,
+	raw_image unsafe.Pointer,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmRedrawWinCb); ok {
+		cb(WmWin(win), uint32(x_res), uint32(y_res), raw_image)
+	}
+}
+
+func (w *Wm) RegisterRedrawWinCb(cb WmRedrawWinCb) {
+	if w.redraw_win_cb_handle != 0 {
+		w.redraw_win_cb_handle.Delete()
+	}
+
+	w.redraw_win_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_redraw_win_cb(
+		w.wm,
+		C.wm_redraw_win_cb_t(C.go_lib_bindings_wm_redraw_win_cb),
+		unsafe.Pointer(w.redraw_win_cb_handle),
 	)
 }
 
