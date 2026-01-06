@@ -146,12 +146,7 @@ static int setup_surface(state_t* state, win_t win) {
 
 	WGPURequestAdapterOptions const request_adapter_options = {
 		.compatibleSurface = state->surface,
-#if defined(__FreeBSD__)
-		// XXX Vulkan causes GPU hangs on Wayland for some reason.
-		.backendType = WGPUBackendType_OpenGL,
-#else
 		.backendType = WGPUBackendType_Undefined, // Will use anything.
-#endif
 	};
 
 	WGPURequestAdapterCallbackInfo const request_adapter_cb_info = {
