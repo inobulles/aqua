@@ -29,6 +29,10 @@ type WmCtx struct {
 type Wm struct {
 	ctx *WmCtx
 	wm  C.wm_t
+
+	redraw_cb_handle      cgo.Handle
+	new_win_cb_handle     cgo.Handle
+	destroy_win_cb_handle cgo.Handle
 }
 
 type WmWin uint64
@@ -78,6 +82,16 @@ func (c *WmCtx) Create() *Wm {
 
 func (w *Wm) Destroy() {
 	C.wm_destroy(w.wm)
+
+	if w.redraw_cb_handle != 0 {
+		w.redraw_cb_handle.Delete()
+	}
+	if w.new_win_cb_handle != 0 {
+		w.new_win_cb_handle.Delete()
+	}
+	if w.destroy_win_cb_handle != 0 {
+		w.destroy_win_cb_handle.Delete()
+	}
 }
 
 type WmRedrawCb func(raw_image unsafe.Pointer)
@@ -92,12 +106,16 @@ func go_lib_bindings_wm_redraw_cb(_ C.wm_t, raw_image unsafe.Pointer, data unsaf
 }
 
 func (w *Wm) RegisterRedrawCb(cb WmRedrawCb) {
-	cb_handle := cgo.NewHandle(cb) // TODO I'm never deleting this handle - should be held on 'w' I guess.
+	if w.redraw_cb_handle != 0 {
+		w.redraw_cb_handle.Delete()
+	}
+
+	w.redraw_cb_handle = cgo.NewHandle(cb)
 
 	C.wm_register_redraw_cb(
 		w.wm,
 		C.wm_redraw_cb_t(C.go_lib_bindings_wm_redraw_cb),
-		unsafe.Pointer(cb_handle),
+		unsafe.Pointer(w.redraw_cb_handle),
 	)
 }
 
@@ -117,13 +135,17 @@ func go_lib_bindings_wm_new_win_cb(
 	}
 }
 
-func (w* Wm) RegisterNewWinCb(cb WmNewWinCb) {
-	cb_handle := cgo.NewHandle(cb) // TODO I'm never deleting this handle - should be held on 'w' I guess.
+func (w *Wm) RegisterNewWinCb(cb WmNewWinCb) {
+	if w.new_win_cb_handle != 0 {
+		w.new_win_cb_handle.Delete()
+	}
+
+	w.new_win_cb_handle = cgo.NewHandle(cb)
 
 	C.wm_register_new_win_cb(
 		w.wm,
 		C.wm_new_win_cb_t(C.go_lib_bindings_wm_new_win_cb),
-		unsafe.Pointer(cb_handle),
+		unsafe.Pointer(w.new_win_cb_handle),
 	)
 }
 
@@ -142,13 +164,17 @@ func go_lib_bindings_wm_destroy_win_cb(
 	}
 }
 
-func (w* Wm) RegisterDestroyWinCb(cb WmDestroyWinCb) {
-	cb_handle := cgo.NewHandle(cb) // TODO I'm never deleting this handle - should be held on 'w' I guess.
+func (w *Wm) RegisterDestroyWinCb(cb WmDestroyWinCb) {
+	if w.destroy_win_cb_handle != 0 {
+		w.destroy_win_cb_handle.Delete()
+	}
+
+	w.destroy_win_cb_handle = cgo.NewHandle(cb)
 
 	C.wm_register_destroy_win_cb(
 		w.wm,
 		C.wm_destroy_win_cb_t(C.go_lib_bindings_wm_destroy_win_cb),
-		unsafe.Pointer(cb_handle),
+		unsafe.Pointer(w.destroy_win_cb_handle),
 	)
 }
 
