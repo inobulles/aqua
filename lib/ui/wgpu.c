@@ -146,12 +146,7 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	WGPURequestAdapterOptions const req_adapter_opts = {
 		.compatibleSurface = state->surface,
-#if defined(__FreeBSD__)
-		// On FreeBSD, Vulkan sometimes makes kernel panic (for amdgpu and Wayland at least), so force to OpenGL for now.
-		.backendType = WGPUBackendType_OpenGL,
-#else
 		.backendType = WGPUBackendType_Undefined, // Will use anything.
-#endif
 	};
 
 	WGPURequestAdapterCallbackInfo const req_adapter_cb_info = {
