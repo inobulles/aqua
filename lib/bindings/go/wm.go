@@ -9,6 +9,7 @@ package aqua
 #include <aqua/wm.h>
 
 extern void go_lib_bindings_wm_redraw_cb(wm_t wm, void* raw_image, void* data);
+extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
 */
 import "C"
 import (
@@ -28,6 +29,8 @@ type Wm struct {
 	ctx *WmCtx
 	wm  C.wm_t
 }
+
+type WmWin uint64
 
 func (c *Context) WmInit() *WmComponent {
 	comp := C.wm_init(c.internal)
@@ -93,6 +96,32 @@ func (w *Wm) RegisterRedrawCb(cb WmRedrawCb) {
 	C.wm_register_redraw_cb(
 		w.wm,
 		C.wm_redraw_cb_t(C.go_lib_bindings_wm_redraw_cb),
+		unsafe.Pointer(cb_handle),
+	)
+}
+
+type WmNewWinCb func(win WmWin, app_id string)
+
+//export go_lib_bindings_wm_new_win_cb
+func go_lib_bindings_wm_new_win_cb(
+	_ C.wm_t,
+	win C.wm_win_t,
+	app_id *C.char,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmNewWinCb); ok {
+		cb(WmWin(win), C.GoString(app_id))
+	}
+}
+
+func (w* Wm) RegisterNewWinCb(cb WmNewWinCb) {
+	cb_handle := cgo.NewHandle(cb) // TODO I'm never deleting this handle - should be held on 'w' I guess.
+
+	C.wm_register_new_win_cb(
+		w.wm,
+		C.wm_new_win_cb_t(C.go_lib_bindings_wm_new_win_cb),
 		unsafe.Pointer(cb_handle),
 	)
 }
