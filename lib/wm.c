@@ -455,7 +455,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		}
 
 		if (wm->redraw_win != NULL) {
-			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, wm->new_win_data);
+			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, wm->redraw_win_data);
 		}
 	}
 }
