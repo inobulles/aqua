@@ -389,6 +389,7 @@ typedef struct __attribute__((packed)) {
 	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
+	uint64_t raw_image;
 } intr_redraw_win_t;
 
 static void interrupt(kos_notif_t const* notif, void* data) {
@@ -415,7 +416,8 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		intr_redraw_t const* const redraw = notif->interrupt.data;
 
 		if (notif->interrupt.data_size < sizeof *redraw) {
-			return; // TODO Error message.
+			LOG_E(cls, "TODO Error message.");
+			return;
 		}
 
 		if (wm->redraw != NULL) {
@@ -427,7 +429,8 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		intr_new_win_t const* const new_win = notif->interrupt.data;
 
 		if (notif->interrupt.data_size < sizeof *new_win) {
-			return; // TODO Error message.
+			LOG_E(cls, "TODO Error message.");
+			return;
 		}
 
 		if (wm->new_win != NULL) {
@@ -439,7 +442,8 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		intr_destroy_win_t const* const destroy_win = notif->interrupt.data;
 
 		if (notif->interrupt.data_size < sizeof *destroy_win) {
-			return; // TODO Error message.
+			LOG_E(cls, "TODO Error message.");
+			return;
 		}
 
 		if (wm->destroy_win != NULL) {
@@ -451,11 +455,12 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		intr_redraw_win_t const* const redraw_win = notif->interrupt.data;
 
 		if (notif->interrupt.data_size < sizeof *redraw_win) {
-			return; // TODO Error message.
+			LOG_E(cls, "TODO Error message.");
+			return;
 		}
 
 		if (wm->redraw_win != NULL) {
-			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, wm->redraw_win_data);
+			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, (void*) (uintptr_t) redraw_win->raw_image, wm->redraw_win_data);
 		}
 	}
 }
