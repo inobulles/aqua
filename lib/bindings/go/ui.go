@@ -147,6 +147,10 @@ func (e *UiElem) AddText(semantics, text string) *UiElem {
 	}
 }
 
+func (e *UiElem) Rem() {
+	C.ui_rem_elem(e.elem)
+}
+
 func (e *UiElem) AddDiv(semantics string) *UiElem {
 	c_semantics := C.CString(semantics)
 	defer C.free(unsafe.Pointer(c_semantics))
