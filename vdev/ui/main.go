@@ -103,6 +103,27 @@ func GoUiAddText(
 	return C.uintptr_t(handle)
 }
 
+//export GoUiRemElem
+func GoUiRemElem(elem_raw C.uintptr_t) {
+	elem := elem_from_raw(elem_raw).(IElem)
+	parent := elem.ElemBase().parent
+
+	if parent.ElemBase().kind != ElemKindDiv {
+		panic("GoUiRemElem: parent is not a div")
+	}
+
+	div := parent.(*Div)
+
+	for i, child := range div.children {
+		if child == elem {
+			div.children = append(div.children[:i], div.children[i+1:]...)
+			return
+		}
+	}
+
+	panic("GoUiRemElem: element not in parent's children")
+}
+
 // TODO We should return true if attribute actually exists.
 // TODO Maybe we should just rely on CALL_RET_FAIL or whatever instead.
 
