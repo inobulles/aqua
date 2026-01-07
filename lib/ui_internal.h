@@ -38,6 +38,7 @@ struct ui_ctx_t {
 		uint32_t get_root;
 		uint32_t add_div;
 		uint32_t add_text;
+		uint32_t rem_elem;
 		uint32_t set_attr_str;
 		uint32_t set_attr_u32;
 		uint32_t set_attr_f32;

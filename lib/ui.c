@@ -225,6 +225,17 @@ ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text)
 	return elem;
 }
 
+void ui_rem_elem(ui_elem_t elem) {
+	ui_ctx_t const ctx = elem->ui->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = elem->opaque_ptr},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.rem_elem, args);
+	kos_flush(true);
+}
+
 static bool ui_set_attr_common(
 	ui_ctx_t ctx,
 	uint32_t fn_id,
@@ -421,6 +432,16 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[2].name, "text") == 0
 		) {
 			ctx->fns.add_text = i;
+		}
+
+		if (
+			strcmp(name, "rem_elem") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "elem") == 0
+		) {
+			ctx->fns.rem_elem = i;
 		}
 
 		if (
