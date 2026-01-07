@@ -158,6 +158,13 @@ ui_elem_t ui_add_div(ui_elem_t parent, char const* semantics);
 ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text);
 
 /**
+ * Remove an element from its parent.
+ *
+ * @param Element to remove.
+ */
+void ui_rem_elem(ui_elem_t elem);
+
+/**
  * Set a string attribute on a UI element.
  *
  * Please use the generic {@link ui_set_attr} macro instead!
