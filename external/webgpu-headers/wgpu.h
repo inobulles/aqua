@@ -288,7 +288,7 @@ WGPU_EXPORT void wgpuComputePassEncoderWriteTimestamp(WGPUComputePassEncoder com
 WGPU_EXPORT void wgpuRenderPassEncoderWriteTimestamp(WGPURenderPassEncoder renderPassEncoder, WGPUQuerySet querySet, uint32_t queryIndex);
 
 WGPU_EXPORT WGPUDevice wgpuDeviceFromVk(WGPUInstance instance, const void * raw_vk_instance, const void * raw_vk_phys_dev, const void * raw_vk_dev, uint32_t family_index);
-WGPU_EXPORT WGPUTexture wgpuRenderTextureFromVkImage(WGPUDevice device, const void * raw_vk_image, WGPUTextureFormat format, uint32_t x_res, uint32_t y_res);
+WGPU_EXPORT WGPUTexture wgpuTextureFromVkImage(WGPUDevice device, const void * raw_vk_image, WGPUTextureUsage usage, WGPUTextureFormat format, uint32_t x_res, uint32_t y_res);
 
 #ifdef __cplusplus
 } // extern "C"
