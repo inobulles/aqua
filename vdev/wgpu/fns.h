@@ -1950,12 +1950,13 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "wgpuRenderTextureFromVkImage",
+		.name = "wgpuTextureFromVkImage",
 		.ret_type = KOS_TYPE_OPAQUE_PTR,
-		.param_count = 5,
+		.param_count = 6,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "device"},
 			{KOS_TYPE_BUF, "raw_vk_image"},
+			{KOS_TYPE_U64, "usage"},
 			{KOS_TYPE_U32, "format"},
 			{KOS_TYPE_U32, "x_res"},
 			{KOS_TYPE_U32, "y_res"},

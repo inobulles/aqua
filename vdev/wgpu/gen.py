@@ -21,7 +21,7 @@ WGPU_BLACKLIST = (
 
 WGPU_APPLE_BLACKLIST = (
 	"wgpuDeviceFromVk",
-	"wgpuRenderTextureFromVkImage",
+	"wgpuTextureFromVkImage",
 )
 
 with open("../../external/webgpu-headers/webgpu.h") as f:
