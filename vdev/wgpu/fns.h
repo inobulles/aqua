@@ -1962,6 +1962,16 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_U32, "y_res"},
 		},
 	},
+	{
+		.name = "wgpuCommandEncoderFromVk",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "device"},
+			{KOS_TYPE_BUF, "raw_vk_cmd_pool"},
+			{KOS_TYPE_BUF, "raw_vk_cmd_buf"},
+		},
+	},
 // FNS:END
 	// clang-format on
 };
