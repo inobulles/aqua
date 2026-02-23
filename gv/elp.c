@@ -114,7 +114,7 @@ static void* elp_listener(void* arg) {
 		socklen_t recv_addr_len = sizeof recv_addr;
 
 		gv_packet_t buf;
-		ssize_t const len = recvfrom(state->elp_sock, &buf, sizeof buf, 0, (struct sockaddr*) &recv_addr, &recv_addr_len);
+		ssize_t const len = recvfrom(state->elp_sock, &buf, sizeof buf, MSG_WAITALL, (struct sockaddr*) &recv_addr, &recv_addr_len);
 
 		if (len < 0) {
 			LOG_E(state->elp_cls, "recvfrom: %s", strerror(errno));
