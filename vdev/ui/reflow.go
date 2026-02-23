@@ -33,6 +33,17 @@ func (e *Div) reflow(max_w, max_h uint32) {
 	for _, child := range e.children {
 		child.reflow(max_w-pl-pr, max_h-pt-pb)
 
+		if child.ElemBase().is_abs {
+			abs := child.ElemBase().abs
+
+			child.ElemBase().flow_x = e.dimension_to_px_x(abs.x) -
+				uint32(abs.anchor_x*float32(child.ElemBase().flow_w))
+			child.ElemBase().flow_y = e.dimension_to_px_y(abs.y) -
+				uint32(abs.anchor_y*float32(child.ElemBase().flow_h))
+
+			continue
+		}
+
 		cw, ch := child.ElemBase().flow_w, child.ElemBase().flow_h
 
 		child.ElemBase().flow_x = flow_x
