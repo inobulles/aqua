@@ -274,6 +274,13 @@ bool ui_set_attr_str(ui_elem_t elem, char const* key, char const* val) {
 	return ui_set_attr_common(ctx, ctx->fns.set_attr_str, elem, key, 1, &kos_val);
 }
 
+bool ui_set_attr_bool(ui_elem_t elem, char const* key, bool val) {
+	ui_t const ui = elem->ui;
+	ui_ctx_t const ctx = ui->ctx;
+
+	return ui_set_attr_common(ctx, ctx->fns.set_attr_bool, elem, key, 1, &(kos_val_t) {.b = val});
+}
+
 bool ui_set_attr_u32(ui_elem_t elem, char const* key, uint32_t val) {
 	ui_t const ui = elem->ui;
 	ui_ctx_t const ctx = ui->ctx;
@@ -455,6 +462,9 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			if (strcmp(name, "set_attr_str") == 0 && fn->params[2].type == KOS_TYPE_BUF) {
 				ctx->fns.set_attr_str = i;
+			}
+			if (strcmp(name, "set_attr_bool") == 0 && fn->params[2].type == KOS_TYPE_BOOL) {
+				ctx->fns.set_attr_bool = i;
 			}
 			if (strcmp(name, "set_attr_u32") == 0 && fn->params[2].type == KOS_TYPE_U32) {
 				ctx->fns.set_attr_u32 = i;
