@@ -140,6 +140,18 @@ func GoUiSetAttrStr(
 	return false
 }
 
+//export GoUiSetAttrBool
+func GoUiSetAttrBool(
+	elem_raw C.uintptr_t,
+	key_raw *C.char,
+	key_len C.size_t,
+	val C.bool,
+) bool {
+	elem := elem_from_raw(elem_raw).(IElem).ElemBase()
+	elem.set_attr(C.GoString(key_raw), bool(val))
+	return false
+}
+
 //export GoUiSetAttrU32
 func GoUiSetAttrU32(
 	elem_raw C.uintptr_t,

@@ -117,6 +117,16 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
+		.name = "set_attr_bool",
+		.ret_type = KOS_TYPE_BOOL,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "elem"},
+			{KOS_TYPE_BUF, "key"},
+			{KOS_TYPE_BOOL, "val"},
+		},
+	},
+	{
 		.name = "set_attr_u32",
 		.ret_type = KOS_TYPE_BOOL,
 		.param_count = 3,
@@ -231,6 +241,7 @@ extern uintptr_t GoUiAddDiv(uintptr_t parent, char const* semantics, size_t sema
 extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
 extern void GoUiRemElem(uintptr_t elem);
 extern bool GoUiSetAttrStr(uintptr_t elem, char const* key, size_t key_len, char const* val, size_t val_len);
+extern bool GoUiSetAttrBool(uintptr_t elem, char const* key, size_t key_len, bool val);
 extern bool GoUiSetAttrU32(uintptr_t elem, char const* key, size_t key_len, uint32_t val);
 extern bool GoUiSetAttrF32(uintptr_t elem, char const* key, size_t key_len, float val);
 extern bool GoUiSetAttrOpaquePtr(uintptr_t elem, char const* key, size_t key_len, void* val);
@@ -332,6 +343,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 	case 9:
 	case 10:
 	case 11:
+	case 12:
 		elem = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (elem == NULL) {
@@ -350,6 +362,14 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 			);
 			break;
 		case 7:
+			notif.call_ret.ret.b = GoUiSetAttrBool(
+				(uintptr_t) elem,
+				(char const*) args[1].buf.ptr,
+				args[1].buf.size,
+				args[2].b
+			);
+			break;
+		case 8:
 			notif.call_ret.ret.b = GoUiSetAttrU32(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -357,7 +377,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].u32
 			);
 			break;
-		case 8:
+		case 9:
 			notif.call_ret.ret.b = GoUiSetAttrF32(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -365,7 +385,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].f32
 			);
 			break;
-		case 9:;
+		case 10:;
 			void* const ptr = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 
 			if (ptr == NULL) {
@@ -380,7 +400,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				ptr
 			);
 			break;
-		case 10:
+		case 11:
 			notif.call_ret.ret.b = GoUiSetAttrDim(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -389,7 +409,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[3].f32
 			);
 			break;
-		case 11:;
+		case 12:;
 			uint32_t const x_res = args[2].u32;
 			uint32_t const y_res = args[3].u32;
 			kos_val_t const data = args[4];
@@ -411,7 +431,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		break;
 	// WebGPU backend specific stuff.
-	case 12:
+	case 13:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
@@ -430,7 +450,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device, format);
 		break;
-	case 13:
+	case 14:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
