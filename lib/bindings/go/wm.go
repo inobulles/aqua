@@ -12,6 +12,18 @@ extern void go_lib_bindings_wm_redraw_cb(wm_t wm, void* raw_vk_image, void* raw_
 extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
 extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
+extern void go_lib_bindings_wm_mouse_motion_cb(
+	wm_t wm,
+	uint8_t is_abs,
+	double dx,
+	double dy,
+	double x,
+	double y,
+	double unaccel_dx,
+	double unaccel_dy,
+	void* data
+);
+extern void go_lib_bindings_wm_mouse_button_cb( wm_t wm, uint8_t press, uint32_t button, void* data);
 */
 import "C"
 import (
@@ -31,10 +43,12 @@ type Wm struct {
 	ctx *WmCtx
 	wm  C.wm_t
 
-	redraw_cb_handle      cgo.Handle
-	new_win_cb_handle     cgo.Handle
-	redraw_win_cb_handle  cgo.Handle
-	destroy_win_cb_handle cgo.Handle
+	redraw_cb_handle       cgo.Handle
+	new_win_cb_handle      cgo.Handle
+	redraw_win_cb_handle   cgo.Handle
+	destroy_win_cb_handle  cgo.Handle
+	mouse_motion_cb_handle cgo.Handle
+	mouse_button_cb_handle cgo.Handle
 }
 
 type WmWin uint64
@@ -217,6 +231,87 @@ func (w *Wm) RegisterDestroyWinCb(cb WmDestroyWinCb) {
 		w.wm,
 		C.wm_destroy_win_cb_t(C.go_lib_bindings_wm_destroy_win_cb),
 		unsafe.Pointer(w.destroy_win_cb_handle),
+	)
+}
+
+type WmMouseMotionCb func(
+	isAbs bool,
+	dx, dy float64,
+	x, y float64,
+	unaccelDx, unaccelDy float64,
+)
+
+//export go_lib_bindings_wm_mouse_motion_cb
+func go_lib_bindings_wm_mouse_motion_cb(
+	_ C.wm_t,
+	is_abs C.uint8_t,
+	dx C.double,
+	dy C.double,
+	x C.double,
+	y C.double,
+	unaccel_dx C.double,
+	unaccel_dy C.double,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmMouseMotionCb); ok {
+		cb(
+			is_abs != 0,
+			float64(dx),
+			float64(dy),
+			float64(x),
+			float64(y),
+			float64(unaccel_dx),
+			float64(unaccel_dy),
+		)
+	}
+}
+
+func (w *Wm) RegisterMouseMotionCb(cb WmMouseMotionCb) {
+	if w.mouse_motion_cb_handle != 0 {
+		w.mouse_motion_cb_handle.Delete()
+	}
+
+	w.mouse_motion_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_mouse_motion_cb(
+		w.wm,
+		C.wm_mouse_motion_cb_t(C.go_lib_bindings_wm_mouse_motion_cb),
+		unsafe.Pointer(w.mouse_motion_cb_handle),
+	)
+}
+
+type WmMouseButtonCb func(
+	press bool,
+	button uint32,
+)
+
+//export go_lib_bindings_wm_mouse_button_cb
+func go_lib_bindings_wm_mouse_button_cb(
+	_ C.wm_t,
+	press C.uint8_t,
+	button C.uint32_t,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmMouseButtonCb); ok {
+		cb(press != 0, uint32(button))
+	}
+}
+
+func (w *Wm) RegisterMouseButtonCb(cb WmMouseButtonCb) {
+	if w.mouse_button_cb_handle != 0 {
+		w.mouse_button_cb_handle.Delete()
+	}
+
+	w.mouse_button_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_mouse_button_cb(
+		w.wm,
+		C.wm_mouse_button_cb_t(C.go_lib_bindings_wm_mouse_button_cb),
+		unsafe.Pointer(w.mouse_button_cb_handle),
 	)
 }
 
