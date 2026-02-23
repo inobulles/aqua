@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"unsafe"
 
 	"obiw.ac/aqua/wgpu"
@@ -132,7 +133,7 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 				},
 			},
 		}); err != nil {
-			println("Can't create texture bind group.")
+			fmt.Printf("Can't create texture bind group: %s\n", err)
 			b.free_elem(e)
 			return
 		}
