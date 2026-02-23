@@ -105,6 +105,8 @@ func main() {
 	div.SetAttr("bg.b", float32(1.0))
 	div.SetAttr("bg.a", float32(1.0))
 
+	div.SetAttr("abs", true)
+
 	// Set up UI backend.
 
 	state, err := ui.WgpuEzSetup(win, wgpu_ctx)
