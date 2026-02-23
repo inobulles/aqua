@@ -75,7 +75,14 @@ func (UiDim) Full() UiDim {
 	}
 }
 
-func (UiDim) Pixels(pixels uint32) UiDim {
+func (UiDim) ParentFrac(val float64) UiDim {
+	return UiDim{
+		kind: UI_DIM_UNITS_PARENT_FRAC,
+		val:  float32(val),
+	}
+}
+
+func (UiDim) Pixels(pixels int32) UiDim {
 	return UiDim{
 		kind: UI_DIM_UNITS_PIXELS,
 		val:  float32(pixels),
