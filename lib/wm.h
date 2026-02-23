@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 #pragma once
 
@@ -68,6 +68,48 @@ typedef void (*wm_destroy_win_cb_t)(wm_t wm, wm_win_t win, void* data);
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_new_win_cb}.
  */
 typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
+
+/**
+ * WM mouse motion event callback.
+ *
+ * This is called whenever the pointer moves.
+ *
+ * If {@link is_abs} is true, {@link x} and {@link y} contain absolute
+ * coordinates. Otherwise, {@link dx} and {@link dy} contain relative motion.
+ *
+ * @param wm The WM object.
+ * @param is_abs Non-zero if the motion is absolute, zero if relative.
+ * @param dx Relative X motion (valid if is_abs is zero).
+ * @param dy Relative Y motion (valid if is_abs is zero).
+ * @param x Absolute X coordinate (valid if is_abs is non-zero).
+ * @param y Absolute Y coordinate (valid if is_abs is non-zero).
+ * @param unaccel_dx Unaccelerated relative X motion (valid if is_abs is non-zero).
+ * @param unaccel_dy Unaccelerated relative Y motion (valid if is_abs is non-zero).
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_mouse_motion_cb}.
+ */
+typedef void (*wm_mouse_motion_cb_t)(
+	wm_t wm,
+	bool is_abs,
+	double dx,
+	double dy,
+	double x,
+	double y,
+	double unaccel_dx,
+	double unaccel_dy,
+	void* data
+);
+
+/**
+ * WM mouse button event callback.
+ *
+ * This is called whenever a mouse button is pressed or released.
+ *
+ * @param wm The WM object.
+ * @param press True if the button was pressed, false if it was released.
+ * @param button The button identifier.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_mouse_button_cb}.
+ */
+typedef void (*wm_mouse_button_cb_t)(wm_t wm, bool press, uint32_t button, void* data);
 
 /**
  * Initialize the WM library component.
@@ -154,6 +196,28 @@ void wm_register_destroy_win_cb(wm_t wm, wm_destroy_win_cb_t cb, void* data);
  * @param data User-defined data passed to the callback.
  */
 void wm_register_redraw_win_cb(wm_t wm, wm_redraw_win_cb_t cb, void* data);
+
+/**
+ * Register a mouse motion callback.
+ *
+ * These will be called whenever the pointer moves.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_mouse_motion_cb(wm_t wm, wm_mouse_motion_cb_t cb, void* data);
+
+/**
+ * Register a mouse button callback.
+ *
+ * These will be called whenever a mouse button is pressed or released.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_mouse_button_cb(wm_t wm, wm_mouse_button_cb_t cb, void* data);
 
 /**
  * Enter the WM event loop.

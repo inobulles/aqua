@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 #include "wm.h"
 #include <aqua/kos.h>
@@ -31,6 +31,8 @@ struct wm_ctx_t {
 		uint32_t INTR_NEW_WIN;
 		uint32_t INTR_DESTROY_WIN;
 		uint32_t INTR_REDRAW_WIN;
+		uint32_t INTR_MOUSE_MOTION;
+		uint32_t INTR_MOUSE_BUTTON;
 	} consts;
 
 	struct {
@@ -139,6 +141,14 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (strcmp(name, "INTR_REDRAW_WIN") == 0) {
 			ctx->consts.INTR_REDRAW_WIN = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_MOUSE_MOTION") == 0) {
+			ctx->consts.INTR_MOUSE_MOTION = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_MOUSE_BUTTON") == 0) {
+			ctx->consts.INTR_MOUSE_BUTTON = c->val.u8;
 		}
 	}
 
@@ -331,6 +341,16 @@ void wm_register_redraw_win_cb(wm_t wm, wm_redraw_win_cb_t cb, void* data) {
 	wm->redraw_win_data = data;
 }
 
+void wm_register_mouse_motion_cb(wm_t wm, wm_mouse_motion_cb_t cb, void* data) {
+	wm->mouse_motion = cb;
+	wm->mouse_motion_data = data;
+}
+
+void wm_register_mouse_button_cb(wm_t wm, wm_mouse_button_cb_t cb, void* data) {
+	wm->mouse_button = cb;
+	wm->mouse_button_data = data;
+}
+
 void wm_loop(wm_t wm) {
 	wm_ctx_t const ctx = wm->ctx;
 
@@ -393,6 +413,27 @@ typedef struct __attribute__((packed)) {
 	uint32_t y_res;
 	uint64_t raw_image;
 } intr_redraw_win_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint8_t is_abs;
+
+	union {
+		double dx, x;
+	};
+
+	union {
+		double dy, y;
+	};
+
+	double unaccel_dx, unaccel_dy;
+} intr_mouse_motion_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint8_t press;
+	uint32_t button;
+} intr_mouse_button_t;
 
 static void interrupt(kos_notif_t const* notif, void* data) {
 	assert(notif->kind == KOS_NOTIF_INTERRUPT);
@@ -469,6 +510,42 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 
 		if (wm->redraw_win != NULL) {
 			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, (void*) (uintptr_t) redraw_win->raw_image, wm->redraw_win_data);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_MOUSE_MOTION) {
+		intr_mouse_motion_t const* const motion = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *motion) {
+			LOG_E(cls, "TODO Error message.");
+			return;
+		}
+
+		if (wm->mouse_motion != NULL) {
+			wm->mouse_motion(
+				wm,
+				motion->is_abs,
+				motion->dx,
+				motion->dy,
+				motion->x,
+				motion->y,
+				motion->unaccel_dx,
+				motion->unaccel_dy,
+				wm->mouse_motion_data
+			);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_MOUSE_BUTTON) {
+		intr_mouse_button_t const* const button = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *button) {
+			LOG_E(cls, "TODO Error message.");
+			return;
+		}
+
+		if (wm->mouse_button != NULL) {
+			wm->mouse_button(wm, button->press, button->button, wm->mouse_button_data);
 		}
 	}
 }

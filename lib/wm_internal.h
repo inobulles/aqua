@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 #pragma once
 
@@ -25,4 +25,10 @@ struct wm_t {
 
 	void* redraw_win_data;
 	wm_redraw_win_cb_t redraw_win;
+
+	void* mouse_motion_data;
+	wm_mouse_motion_cb_t mouse_motion;
+
+	void* mouse_button_data;
+	wm_mouse_button_cb_t mouse_button;
 };
