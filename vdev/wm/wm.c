@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 // A lot of this code is based on the tinywl reference compositor and the "simple.c" example:
 // https://gitlab.freedesktop.org/wlroots/wlroots/-/blob/master/tinywl
@@ -42,6 +42,19 @@ typedef struct {
 	struct wl_listener destroy;
 } keyborp_t;
 
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
+	struct wlr_pointer* pointer;
+
+	struct wl_listener motion;
+	struct wl_listener motion_abs;
+	struct wl_listener button;
+	struct wl_listener axis;
+	struct wl_listener destroy;
+} mouse_t;
+
 typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t raw_vk_image;
@@ -70,6 +83,27 @@ typedef struct __attribute__((packed)) {
 	uint32_t y_res;
 	uint64_t raw_image;
 } redraw_win_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint8_t is_abs;
+
+	union {
+		double dx, x;
+	};
+
+	union {
+		double dy, y;
+	};
+
+	double unaccel_dx, unaccel_dy;
+} mouse_motion_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint8_t press;
+	uint32_t button;
+} mouse_button_intr_t;
 
 static umber_class_t const* cls = NULL;
 static umber_class_t const* cls_wlr = NULL;
@@ -584,41 +618,6 @@ static void new_xdg_surface(struct wl_listener* listener, void* data) {
 	wl_signal_add(&xdg_surface->events.destroy, &surf->destroy);
 }
 
-static void cursor_motion(struct wl_listener* listener, void* data) {
-	(void) listener;
-	(void) data;
-
-	LOG_F(cls, "TODO: %s", __func__);
-}
-
-static void cursor_motion_absolute(struct wl_listener* listener, void* data) {
-	(void) listener;
-	(void) data;
-
-	LOG_F(cls, "TODO: %s", __func__);
-}
-
-static void cursor_button(struct wl_listener* listener, void* data) {
-	(void) listener;
-	(void) data;
-
-	LOG_F(cls, "TODO: %s", __func__);
-}
-
-static void cursor_axis(struct wl_listener* listener, void* data) {
-	(void) listener;
-	(void) data;
-
-	LOG_F(cls, "TODO: %s", __func__);
-}
-
-static void cursor_frame(struct wl_listener* listener, void* data) {
-	(void) listener;
-	(void) data;
-
-	LOG_F(cls, "TODO: %s", __func__);
-}
-
 static void keyborp_mod(struct wl_listener* listener, void* data) {
 	keyborp_t* const keyborp = wl_container_of(listener, keyborp, mod);
 	struct wlr_keyboard* const wlr_keyboard = keyborp->keyboard;
@@ -687,6 +686,11 @@ static void keyborp_destroy(struct wl_listener* listener, void* data) {
 	free(keyborp);
 }
 
+static void add_seat_cap(wm_t* wm, uint32_t cap) {
+	wm->seat_caps |= cap;
+	wlr_seat_set_capabilities(wm->seat, wm->seat_caps);
+}
+
 static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 	struct wlr_keyboard* const wlr_keyboard = wlr_keyboard_from_input_device(dev);
 
@@ -697,7 +701,7 @@ static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 	keyborp->keyboard = wlr_keyboard;
 
 	// Prepare XKB keymap and assign it to the keyboard.
-	// TODO Non-US layouts.
+	// TODO Other layouts (simply a function for the client to set the keymap, and have this as some kind of state on wm_t?).
 
 	struct xkb_rule_names const rule_names = {
 		.rules = NULL,
@@ -727,9 +731,113 @@ static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
 	wl_list_insert(&wm->keyboards, &keyborp->link);
 
-	// TODO We're going to have to track these cap flags once we have more than just keyborps.
+	add_seat_cap(wm, WL_SEAT_CAPABILITY_KEYBOARD);
+}
 
-	wlr_seat_set_capabilities(wm->seat, WL_SEAT_CAPABILITY_KEYBOARD);
+static void mouse_motion(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, motion);
+	wm_t* const wm = mouse->wm;
+	struct wlr_pointer_motion_event* const event = data;
+
+	mouse_motion_intr_t intr = {
+		.intr = INTR_MOUSE_MOTION,
+		.is_abs = false,
+		.dx = event->delta_x,
+		.dy = event->delta_y,
+		.unaccel_dx = event->unaccel_dx,
+		.unaccel_dy = event->unaccel_dy,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
+}
+
+static void mouse_motion_abs(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, motion_abs);
+	wm_t* const wm = mouse->wm;
+	struct wlr_pointer_motion_absolute_event* const event = data;
+
+	mouse_motion_intr_t intr = {
+		.intr = INTR_MOUSE_MOTION,
+		.is_abs = true,
+		.x = event->x,
+		.y = event->y,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
+}
+
+static void mouse_button(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, button);
+	wm_t* const wm = mouse->wm;
+	struct wlr_pointer_button_event* const event = data;
+
+	assert(
+		event->state == WL_POINTER_BUTTON_STATE_PRESSED ||
+		event->state == WL_POINTER_BUTTON_STATE_RELEASED
+	);
+
+	mouse_button_intr_t intr = {
+		.intr = INTR_MOUSE_BUTTON,
+		.press = event->state == WL_POINTER_BUTTON_STATE_PRESSED,
+		.button = event->button,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
+}
+
+static void mouse_axis(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, axis);
+	struct wlr_pointer_axis_event* const event = data;
+
+	(void) event;
+
+	LOG_F(cls, "TODO: %s", __func__);
+}
+
+static void mouse_destroy(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, destroy);
+
+	(void) data;
+
+	wl_list_remove(&mouse->motion.link);
+	wl_list_remove(&mouse->motion_abs.link);
+	wl_list_remove(&mouse->button.link);
+	wl_list_remove(&mouse->axis.link);
+	wl_list_remove(&mouse->destroy.link);
+	wl_list_remove(&mouse->link);
+
+	free(mouse);
+}
+
+static void new_mouse(wm_t* wm, struct wlr_input_device* dev) {
+	struct wlr_pointer* const wlr_pointer = wlr_pointer_from_input_device(dev);
+
+	mouse_t* const mouse = malloc(sizeof *mouse);
+	assert(mouse != NULL);
+
+	mouse->wm = wm;
+	mouse->pointer = wlr_pointer;
+
+	// TODO This is where we'll want to set stuff like accel profiles etc.
+
+	mouse->motion.notify = mouse_motion;
+	wl_signal_add(&wlr_pointer->events.motion, &mouse->motion);
+
+	mouse->motion_abs.notify = mouse_motion_abs;
+	wl_signal_add(&wlr_pointer->events.motion_absolute, &mouse->motion_abs);
+
+	mouse->button.notify = mouse_button;
+	wl_signal_add(&wlr_pointer->events.button, &mouse->button);
+
+	mouse->axis.notify = mouse_axis;
+	wl_signal_add(&wlr_pointer->events.axis, &mouse->axis);
+
+	mouse->destroy.notify = mouse_destroy;
+	wl_signal_add(&dev->events.destroy, &mouse->destroy);
+
+	wl_list_insert(&wm->mice, &mouse->link);
+
+	add_seat_cap(wm, WL_SEAT_CAPABILITY_POINTER);
 }
 
 static void new_input(struct wl_listener* listener, void* data) {
@@ -741,6 +849,8 @@ static void new_input(struct wl_listener* listener, void* data) {
 		new_keyboard(wm, dev);
 		break;
 	case WLR_INPUT_DEVICE_POINTER:
+		new_mouse(wm, dev);
+		break;
 	case WLR_INPUT_DEVICE_TOUCH:
 	case WLR_INPUT_DEVICE_TABLET:
 	case WLR_INPUT_DEVICE_TABLET_PAD:
@@ -863,6 +973,7 @@ wm_t* wm_vdev_create(void) {
 	LOG_V(cls, "Add listener for when new input methods are available.");
 
 	wl_list_init(&wm->keyboards);
+	wl_list_init(&wm->mice);
 
 	wm->new_input.notify = new_input;
 	wl_signal_add(&wm->backend->events.new_input, &wm->new_input);
@@ -927,38 +1038,14 @@ wm_t* wm_vdev_create(void) {
 	wm->new_xdg_surface.notify = new_xdg_surface;
 	wl_signal_add(&wm->xdg_shell->events.new_surface, &wm->new_xdg_surface);
 
-	LOG_V(cls, "Create cursor.");
-	wm->cursor = wlr_cursor_create();
-
-	if (wm->cursor == NULL) {
-		FAIL("Failed to create cursor");
-	}
-
-	wlr_cursor_attach_output_layout(wm->cursor, wm->output_layout);
-
-	LOG_V(cls, "Add listeners for cursor events.");
-
-	wm->cursor_motion.notify = cursor_motion;
-	wl_signal_add(&wm->cursor->events.motion, &wm->cursor_motion);
-
-	wm->cursor_motion_absolute.notify = cursor_motion_absolute;
-	wl_signal_add(&wm->cursor->events.motion_absolute, &wm->cursor_motion_absolute);
-
-	wm->cursor_button.notify = cursor_button;
-	wl_signal_add(&wm->cursor->events.button, &wm->cursor_button);
-
-	wm->cursor_axis.notify = cursor_axis;
-	wl_signal_add(&wm->cursor->events.axis, &wm->cursor_axis);
-
-	wm->cursor_frame.notify = cursor_frame;
-	wl_signal_add(&wm->cursor->events.frame, &wm->cursor_frame);
-
 	LOG_V(cls, "Create new seat.");
 	wm->seat = wlr_seat_create(wm->display, "seat0");
 
 	if (wm->seat == NULL) {
 		FAIL("Failed to create seat");
 	}
+
+	wm->seat_caps = 0;
 
 	LOG_V(cls, "Add UNIX socket to the Wayland display.");
 	char const* const sock = wl_display_add_socket_auto(wm->display);
