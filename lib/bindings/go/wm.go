@@ -8,7 +8,7 @@ package aqua
 
 #include <aqua/wm.h>
 
-extern void go_lib_bindings_wm_redraw_cb(wm_t wm, void* raw_image, void* data);
+extern void go_lib_bindings_wm_redraw_cb(wm_t wm, void* raw_vk_image, void* raw_vk_cmd_pool, void* raw_vk_cmd_buf, void* data);
 extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
 extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
@@ -99,14 +99,20 @@ func (w *Wm) Destroy() {
 	}
 }
 
-type WmRedrawCb func(raw_image unsafe.Pointer)
+type WmRedrawCb func(raw_vk_image unsafe.Pointer, raw_vk_cmd_pool unsafe.Pointer, raw_vk_cmd_buf unsafe.Pointer)
 
 //export go_lib_bindings_wm_redraw_cb
-func go_lib_bindings_wm_redraw_cb(_ C.wm_t, raw_image unsafe.Pointer, data unsafe.Pointer) {
+func go_lib_bindings_wm_redraw_cb(
+	_ C.wm_t,
+	raw_vk_image unsafe.Pointer,
+	raw_vk_cmd_pool unsafe.Pointer,
+	raw_vk_cmd_buf unsafe.Pointer,
+	data unsafe.Pointer,
+) {
 	handle := (cgo.Handle)(data)
 
 	if cb, ok := handle.Value().(WmRedrawCb); ok {
-		cb(raw_image)
+		cb(raw_vk_image, raw_vk_cmd_pool, raw_vk_cmd_buf)
 	}
 }
 
