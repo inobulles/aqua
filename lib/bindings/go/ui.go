@@ -178,10 +178,12 @@ func (e *UiElem) SetAttr(key string, val any) {
 		defer C.free(unsafe.Pointer(c_val))
 
 		C.ui_set_attr_str(e.elem, c_key, c_val)
-	case float32:
-		C.ui_set_attr_f32(e.elem, c_key, C.float(v))
+	case bool:
+		C.ui_set_attr_bool(e.elem, c_key, C.bool(v))
 	case uint32:
 		C.ui_set_attr_u32(e.elem, c_key, C.uint32_t(v))
+	case float32:
+		C.ui_set_attr_f32(e.elem, c_key, C.float(v))
 	case unsafe.Pointer:
 		C.ui_set_attr_opaque_ptr(e.elem, c_key, v)
 	case UiDim:
