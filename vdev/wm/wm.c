@@ -11,9 +11,9 @@
 
 #include <umber.h>
 
+#include <wlr/render/interface.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
-#include <wlr/render/interface.h>
 
 #include <webgpu/webgpu.h>
 #include <webgpu/wgpu.h>
@@ -185,6 +185,7 @@ static void render(void* wm, struct wlr_render_pass* render_pass) {
 //                 If just overriding the render function, we even let wlroots handle the command buffer creation and import that into WebGPU.
 
 #define WE_HANDLE
+
 // #define WLR_OVERRIDE
 
 static void output_frame_notify(struct wl_listener* listener, void* data) {
