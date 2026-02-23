@@ -116,6 +116,21 @@ func (d *Device) TextureFromVkImage(
 	}
 }
 
+func (d *Device) CommandEncoderFromVk(
+	raw_cmd_pool unsafe.Pointer,
+	raw_cmd_buf unsafe.Pointer,
+) CommandEncoder {
+	return CommandEncoder{
+		deviceRef: d.ref,
+		ref: C.aqua_wgpuCommandEncoderFromVk(
+			global_ctx.ctx,
+			d.ref,
+			raw_cmd_pool,
+			raw_cmd_buf,
+		),
+	}
+}
+
 func (d *Device) UiInit(ui *aqua.Ui, format TextureFormat) {
 	C.ui_wgpu_init(
 		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
