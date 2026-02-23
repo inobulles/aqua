@@ -27,6 +27,13 @@ func (Dimension) zero() Dimension {
 	}
 }
 
+func (Dimension) mid() Dimension {
+	return Dimension{
+		units: DimensionUnitsParentFraction,
+		val:   .5,
+	}
+}
+
 func (Dimension) full() Dimension {
 	return Dimension{
 		units: DimensionUnitsParentFraction,
