@@ -146,7 +146,8 @@ static int setup_surface(ui_wgpu_ez_state_t* state) {
 
 	WGPURequestAdapterOptions const req_adapter_opts = {
 		.compatibleSurface = state->surface,
-		.backendType = WGPUBackendType_Undefined, // Will use anything.
+		// XXX Currently, if using the Vulkan backend, we get a WebGPU command encoder validation error in UI apps.
+		.backendType = WGPUBackendType_OpenGL,
 	};
 
 	WGPURequestAdapterCallbackInfo const req_adapter_cb_info = {
