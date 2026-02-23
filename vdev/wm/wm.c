@@ -13,6 +13,7 @@
 
 #include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
+#include <wlr/render/interface.h>
 
 #include <webgpu/webgpu.h>
 #include <webgpu/wgpu.h>
@@ -43,7 +44,9 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
-	uint64_t raw_image;
+	uint64_t raw_vk_image;
+	uint64_t raw_vk_cmd_pool;
+	uint64_t raw_vk_cmd_buf;
 } redraw_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -128,6 +131,62 @@ static struct wlr_surface* target_surf(struct wlr_xdg_toplevel* toplevel) {
 	return toplevel->base->surface; // Fallback, always guaranteed to exist.
 }
 
+typedef struct {
+	wm_t* wm;
+	struct wlr_vk_image_attribs attribs;
+} render_pass_state_t;
+
+static bool begin_buffer_pass(void* data, struct wlr_buffer* buf) {
+	render_pass_state_t* const s = data;
+	wlr_vk_buffer_get_image_attribs(s->wm->wlr_renderer, buf, &s->attribs);
+
+	return true;
+}
+
+static bool submit_render_pass(void* data) {
+	render_pass_state_t* const s = data;
+
+	LOG_V(cls, "Take care of rendering.");
+
+	redraw_intr_t intr = {
+		.intr = INTR_REDRAW,
+		.raw_vk_image = (uintptr_t) s->attribs.image,
+		.raw_vk_cmd_pool = (uintptr_t) NULL,
+		.raw_vk_cmd_buf = (uintptr_t) NULL,
+	};
+
+	interrupt(s->wm, sizeof intr, &intr);
+
+	return true;
+}
+
+static void render(void* wm, struct wlr_render_pass* render_pass) {
+	LOG_V(cls, "Take care of rendering.");
+
+	VkImage image;
+	VkCommandPool cmd_pool;
+	VkCommandBuffer cmd_buf;
+
+	wlr_vk_render_pass_get_info(render_pass, &image, &cmd_pool, &cmd_buf);
+
+	redraw_intr_t intr = {
+		.intr = INTR_REDRAW,
+		.raw_vk_image = (uintptr_t) image,
+		.raw_vk_cmd_pool = (uintptr_t) cmd_pool,
+		.raw_vk_cmd_buf = (uintptr_t) cmd_buf,
+	};
+
+	interrupt(wm, sizeof intr, &intr);
+}
+
+// XXX This is only for debugging until I don't have a preferred solution:
+// - WE_HANDLE: We handle swapchain acquisition and do all the rendering ourselves.
+// - WLR_OVERRIDE: We set hooks in the regular wlroots render path for render pass creation/submission in wlr_scene_output_build_state.
+//                 If just overriding the render function, we even let wlroots handle the command buffer creation and import that into WebGPU.
+
+#define WE_HANDLE
+// #define WLR_OVERRIDE
+
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
@@ -142,6 +201,7 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct wlr_output_state state;
 	wlr_output_state_init(&state);
 
+#ifdef WE_HANDLE
 	LOG_V(cls, "Acquire swapchain image.");
 
 	if (!wlr_output_configure_primary_swapchain(wlr_output, &state, &wlr_output->swapchain)) {
@@ -155,7 +215,21 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 		LOG_E(cls, "Failed to acquire swapchain image.");
 		return;
 	}
+#endif
 
+	render_pass_state_t render_pass = {.wm = wm};
+
+	(void) render_pass, (void) begin_buffer_pass, (void) submit_render_pass, (void) render;
+
+#ifdef WLR_OVERRIDE
+	wlr_scene_override_begin_buffer_pass(scene_output, begin_buffer_pass, &render_pass);
+	wlr_scene_override_submit_render_pass(scene_output, submit_render_pass, &render_pass);
+	// wlr_scene_override_render(scene_output, render, wm);
+
+	wlr_scene_output_build_state(scene_output, &state, NULL);
+#endif
+
+#ifdef WE_HANDLE
 	struct wlr_vk_image_attribs attribs;
 	wlr_vk_buffer_get_image_attribs(wm->wlr_renderer, buf, &attribs);
 
@@ -163,7 +237,7 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	redraw_intr_t intr = {
 		.intr = INTR_REDRAW,
-		.raw_image = (uintptr_t) attribs.image,
+		.raw_vk_image = (uintptr_t) attribs.image,
 	};
 
 	interrupt(wm, sizeof intr, &intr);
@@ -172,6 +246,7 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	wlr_output_state_set_buffer(&state, buf);
 	wlr_buffer_unlock(buf);
+#endif
 
 	LOG_V(cls, "Commit output state.");
 
@@ -191,7 +266,7 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 			continue;
 		}
 
-		struct wlr_texture* const tex = target_surf(toplevel->xdg_toplevel)->buffer->texture;
+		struct wlr_texture* const tex = wlr_surface_get_texture(target_surf(toplevel->xdg_toplevel));
 
 		redraw_win_intr_t const intr = {
 			.intr = INTR_REDRAW_WIN,
@@ -202,6 +277,8 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 		interrupt(toplevel->wm, sizeof intr, &intr);
 	}
+
+	// wlr_vk_dummy_cb_destroy_textures(wm->cur_dummy_cmd_buf);
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
@@ -345,6 +422,7 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 
 static void toplevel_commit(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
+	wm_t* const wm = toplevel->wm;
 	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
 
 	(void) data;
@@ -357,12 +435,47 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 		return;
 	}
 
-	struct wlr_vk_image_attribs attribs;
-	wlr_vk_buffer_get_image_attribs(toplevel->wm->wlr_renderer, &toplevel->xdg_toplevel->base->surface->buffer->base, &attribs);
-
 	// Send interrupt.
 
-	struct wlr_texture* const tex = target_surf(xdg_toplevel)->buffer->texture;
+	struct wlr_surface* const surf = target_surf(xdg_toplevel);
+	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
+
+	int width = surf->current.width;
+	int height = surf->current.height;
+
+	// XXX Bit of a crazy workaround for allowing us to import wl_shm-only VkImages.
+	// The image contents are never updated if we don't do this (see #32 for more details).
+
+	int stride = width * 4;
+	uint8_t* tmp = calloc(1, stride * height);
+
+	struct wlr_texture_read_pixels_options opts = {
+		.data = tmp,
+		.dst_x = 0,
+		.dst_y = 0,
+		.stride = stride,
+		.format = wlr_texture_preferred_read_format(tex),
+		.src_box = {.width = -1},
+	};
+
+	if (!wlr_texture_read_pixels(tex, &opts)) {
+		free(tmp);
+		return;
+	}
+
+	free(tmp);
+
+	struct wlr_vk_image_attribs attribs;
+	wlr_vk_texture_get_image_attribs(tex, &attribs);
+
+	// TODO We need to figure out a way to not free the VkImage (in vulkan_texture_destroy) before the scene has had a chance to render, i.e. before INTR_REDRAW returns.
+	// We could create some kind of dummy command buffer on wlr_texture.last_used_cb, so that when vulkan_texture_destroy is called, we can just add stuff there and then extract it and destroy the textures ourselves when INTR_REDRAW returns control back to us.
+	// We'll have to make it mega clear either way then that window textures are only valid until the next redraw.
+	// Or maybe the client program should be responsible for freeing this?
+
+	wlr_vk_texture_attach_dummy_last_used_cb(tex, wm->cur_dummy_cmd_buf);
+
+	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
 
 	redraw_win_intr_t const intr = {
 		.intr = INTR_REDRAW_WIN,
@@ -372,7 +485,7 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 		.raw_image = (uintptr_t) attribs.image,
 	};
 
-	interrupt(toplevel->wm, sizeof intr, &intr);
+	interrupt(wm, sizeof intr, &intr);
 }
 
 static void toplevel_destroy(struct wl_listener* listener, void* data) {
@@ -725,6 +838,8 @@ wm_t* wm_vdev_create(void) {
 	wm->public.vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
 	wm->public.vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
 
+	wm->cur_dummy_cmd_buf = wlr_vk_create_dummy_cb();
+
 	LOG_V(cls, "Initialize buffer factory protocols.");
 
 	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
@@ -878,6 +993,10 @@ void wm_vdev_destroy(wm_t* wm) {
 
 	if (wm->allocator != NULL) {
 		wlr_allocator_destroy(wm->allocator);
+	}
+
+	if (wm->cur_dummy_cmd_buf) {
+		wlr_vk_destroy_dummy_cb(wm->cur_dummy_cmd_buf);
 	}
 
 	LOG_F(cls, "TODO alles die hier nog niet gefree'd zijn");
