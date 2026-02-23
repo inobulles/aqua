@@ -61,6 +61,13 @@ func (UiDim) Zero() UiDim {
 	}
 }
 
+func (UiDim) Mid() UiDim {
+	return UiDim{
+		kind: UI_DIM_UNITS_PARENT_FRAC,
+		val:  .5,
+	}
+}
+
 func (UiDim) Full() UiDim {
 	return UiDim{
 		kind: UI_DIM_UNITS_PARENT_FRAC,
