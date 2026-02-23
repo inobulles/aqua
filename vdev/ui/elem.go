@@ -30,6 +30,20 @@ type IElem interface {
 	ElemBase() *Elem
 }
 
+type AbsPos struct {
+	// The absolute position in relation to the parent element.
+
+	x, y Dimension
+
+	// As a fraction of the element's width/height, where the anchor is, from top to bottom and left to right.
+	// E.g.:
+	// - If anchor_x=0, the anchor will be all the way to the left.
+	// - If anchor_y=1, the anchor will be all the way at the bottom.
+	// - If anchor_x=0, the anchor will be in the middle of the X axis.
+
+	anchor_x, anchor_y float32
+}
+
 type Elem struct {
 	IElem
 	kind ElemKind // TODO Necessary?
@@ -50,6 +64,11 @@ type Elem struct {
 
 	flow_x, flow_y uint32
 	flow_w, flow_h uint32
+
+	// Absolute positioning.
+
+	is_abs bool
+	abs    AbsPos
 
 	backend_data any
 }
@@ -105,14 +124,25 @@ type Div struct {
 	content_align_x, content_align_y Align
 }
 
+func construct_elem(kind ElemKind, ui *Ui, parent IElem) Elem {
+	return Elem{
+		kind:   kind,
+		ui:     ui,
+		parent: parent,
+		attrs:  make(map[string]any),
+		is_abs: false,
+		abs: AbsPos{
+			x:        Dimension{}.mid(),
+			y:        Dimension{}.mid(),
+			anchor_x: .5,
+			anchor_y: .5,
+		},
+	}
+}
+
 func (d Div) construct(ui *Ui, parent IElem, semantic string) *Div {
 	return &Div{
-		Elem: Elem{
-			kind:   ElemKindDiv,
-			ui:     ui,
-			parent: parent,
-			attrs:  make(map[string]any),
-		},
+		Elem: construct_elem(ElemKindDiv, ui, parent),
 
 		pt: Dimension{}.pixels(10),
 		pb: Dimension{}.pixels(10),
@@ -171,19 +201,27 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 	}
 
 	return &Text{
-		Elem: Elem{
-			kind:   ElemKindText,
-			ui:     ui,
-			parent: parent,
-			attrs:  make(map[string]any),
-		},
+		Elem:     construct_elem(ElemKindText, ui, parent),
 		text:     text,
 		semantic: semantic,
 	}
 }
 
 func (e *Elem) set_attr(key string, val any) {
-	e.attrs[key] = val
+	switch key {
+	case "abs":
+		e.is_abs = val.(bool)
+	case "abs.x":
+		e.abs.x = val.(Dimension)
+	case "abs.y":
+		e.abs.y = val.(Dimension)
+	case "abs.anchor_x":
+		e.abs.anchor_x = val.(float32)
+	case "abs.anchor_y":
+		e.abs.anchor_y = val.(float32)
+	default:
+		e.attrs[key] = val
+	}
 }
 
 func (e *Elem) rem_attr(key string) {
