@@ -22,10 +22,10 @@ func (e *Div) reflow(max_w, max_h uint32) {
 	// TODO Find max size of div here and pass that down.
 	// Text can then wrap to fit that size.
 
-	pl := e.dimension_to_px(e.pl)
-	pr := e.dimension_to_px(e.pr)
-	pt := e.dimension_to_px(e.pt)
-	pb := e.dimension_to_px(e.pb)
+	pl := e.dimension_to_px_x(e.pl)
+	pr := e.dimension_to_px_x(e.pr)
+	pt := e.dimension_to_px_y(e.pt)
+	pb := e.dimension_to_px_y(e.pb)
 
 	flow_x := pl
 	flow_y := pt
@@ -41,7 +41,7 @@ func (e *Div) reflow(max_w, max_h uint32) {
 		switch e.flow_direction {
 		case AxisY: // Elements flow from top to bottom.
 			flow_y += ch
-			flow_y += e.dimension_to_px(e.gap_y)
+			flow_y += e.dimension_to_px_y(e.gap_y)
 
 			child.ElemBase().flow_x = flow_x + align_off(
 				e.content_align_x,
@@ -50,7 +50,7 @@ func (e *Div) reflow(max_w, max_h uint32) {
 			)
 		case AxisX: // Elements flow from left to right.
 			flow_x += cw
-			flow_x += e.dimension_to_px(e.gap_x)
+			flow_x += e.dimension_to_px_x(e.gap_x)
 
 			child.ElemBase().flow_y = flow_y + align_off(
 				e.content_align_y,
@@ -65,10 +65,10 @@ func (e *Div) reflow(max_w, max_h uint32) {
 	// Make sure div is not smaller than minimum size.
 
 	if min_w := e.get_attr("min_w"); min_w != nil {
-		e.flow_w = max(e.flow_w, e.dimension_to_px(min_w.(Dimension)))
+		e.flow_w = max(e.flow_w, e.dimension_to_px_x(min_w.(Dimension)))
 	}
 	if min_h := e.get_attr("min_h"); min_h != nil {
-		e.flow_h = max(e.flow_h, e.dimension_to_px(min_h.(Dimension)))
+		e.flow_h = max(e.flow_h, e.dimension_to_px_y(min_h.(Dimension)))
 	}
 }
 
