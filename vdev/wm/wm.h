@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 #pragma once
 
@@ -61,6 +61,7 @@ typedef struct {
 
 	struct wl_listener new_input;
 	struct wl_list keyboards;
+	struct wl_list mice;
 
 	// Scene graph.
 
@@ -87,6 +88,7 @@ typedef struct {
 	// Seat stuff.
 
 	struct wlr_seat* seat;
+	uint32_t seat_caps;
 
 	// Backend stuff.
 
@@ -121,6 +123,8 @@ typedef enum : uint8_t {
 	INTR_NEW_WIN,
 	INTR_DESTROY_WIN,
 	INTR_REDRAW_WIN,
+	INTR_MOUSE_MOTION,
+	INTR_MOUSE_BUTTON,
 } intr_t;
 
 void wm_vdev_init(umber_class_t const* cls, umber_class_t const* cls_wlr);

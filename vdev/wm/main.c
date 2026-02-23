@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 #include "wm.h"
 
@@ -71,6 +71,16 @@ static kos_const_t const CONSTS[] = {
 		.name = "INTR_REDRAW_WIN",
 		.type = KOS_TYPE_U8,
 		.val = {.u8 = INTR_REDRAW_WIN},
+	},
+	{
+		.name = "INTR_MOUSE_MOTION",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_MOUSE_MOTION},
+	},
+	{
+		.name = "INTR_MOUSE_BUTTON",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_MOUSE_BUTTON},
 	},
 };
 
