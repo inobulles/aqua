@@ -31,10 +31,12 @@ typedef uint64_t wm_win_t;
  * You can turn this into e.g. a WebGPU texture with the {@link wgpuRenderTextureFromVkImage} extension.
  *
  * @param wm The WM object.
- * @param raw_image Raw image which we have to draw to.
+ * @param raw_vk_image Raw Vulkan image which we have to draw to.
+ * @param raw_vk_cmd_pool Raw Vulkan command pool the {@link raw_vk_cmd_buf} command buffer was created on.
+ * @param raw_vk_cmd_buf Raw Vulkan command buffer we must use for rendering.
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_redraw_cb}.
  */
-typedef void (*wm_redraw_cb_t)(wm_t wm, void* raw_image, void* data);
+typedef void (*wm_redraw_cb_t)(wm_t wm, void* raw_vk_image, void* raw_vk_cmd_pool, void* raw_vk_cmd_buf, void* data);
 
 /**
  * WM new window event callback.
