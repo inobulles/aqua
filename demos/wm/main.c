@@ -75,6 +75,15 @@ typedef struct {
 	uint32_t x_res, y_res;
 } state_t;
 
+static void new_win(wm_t wm, wm_win_t win, char const* app_id, void* data) {
+	(void) wm, (void) win;
+
+	state_t* const s = data;
+	(void) s;
+
+	printf("New window: %s\n", app_id);
+}
+
 float x = 0;
 
 static void redraw(wm_t wm, void* raw_image, void* data) {
@@ -201,6 +210,7 @@ int main(void) {
 	LOG_I(cls, "Got WebGPU device: %p.", s.device);
 
 	wm_register_redraw_cb(wm, redraw, &s);
+	wm_register_new_win_cb(wm, new_win, &s);
 
 	// Loop.
 
