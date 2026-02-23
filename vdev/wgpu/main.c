@@ -1675,6 +1675,17 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		break;
 	}
 #endif
+#if !defined(__APPLE__)
+	case 213: {
+		WGPUDevice const device = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+		const void * const raw_vk_cmd_pool = (void*) args[1].buf.ptr;
+		assert(args[1].buf.size == sizeof *raw_vk_cmd_pool);
+		const void * const raw_vk_cmd_buf = (void*) args[2].buf.ptr;
+		assert(args[2].buf.size == sizeof *raw_vk_cmd_buf);
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(wgpuCommandEncoderFromVk(device, raw_vk_cmd_pool, raw_vk_cmd_buf));
+		break;
+	}
+#endif
 // CALL_HANDLERS:END
 		// clang-format on
 	default:
