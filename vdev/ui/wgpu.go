@@ -134,6 +134,20 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		// Render children.
 
 		for _, child := range e.children {
+			// Recompute position if absolutely positioned.
+			// We need to do this on each frame, because changing the position of an absolutely positioned won't necessarily trigger a reflow (nor would we want it to, for performance reasons).
+
+			if child.ElemBase().is_abs {
+				abs := child.ElemBase().abs
+
+				child.ElemBase().flow_x = e.dimension_to_px_x(abs.x) -
+					uint32(abs.anchor_x*float32(child.ElemBase().flow_w))
+				child.ElemBase().flow_y = e.dimension_to_px_y(abs.y) -
+					uint32(abs.anchor_y*float32(child.ElemBase().flow_h))
+			}
+
+			// Actually render child.
+
 			b.render(child, render_pass)
 		}
 	default:
