@@ -203,14 +203,35 @@ func elem_from_raw(raw C.uintptr_t) any {
 	return handle.Value()
 }
 
-func (e *Elem) dimension_to_px(d Dimension) uint32 {
+func (e *Elem) dimension_to_px_x(d Dimension) uint32 {
 	switch d.units {
 	case DimensionUnitsZero:
 		return 0
 	case DimensionUnitsPixels:
 		return uint32(d.val)
 	case DimensionUnitsParentFraction:
-		panic("TODO")
+		if e.parent == nil {
+			return uint32(float32(e.ui.root.flow_w) * d.val)
+		}
+
+		return uint32(float32(e.parent.ElemBase().flow_w) * d.val)
+	}
+
+	panic("Unknown dimension kind.")
+}
+
+func (e *Elem) dimension_to_px_y(d Dimension) uint32 {
+	switch d.units {
+	case DimensionUnitsZero:
+		return 0
+	case DimensionUnitsPixels:
+		return uint32(d.val)
+	case DimensionUnitsParentFraction:
+		if e.parent == nil {
+			return uint32(float32(e.ui.root.flow_h) * d.val)
+		}
+
+		return uint32(float32(e.parent.ElemBase().flow_h) * d.val)
 	}
 
 	panic("Unknown dimension kind.")
