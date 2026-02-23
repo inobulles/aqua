@@ -28,6 +28,9 @@ type WinCtx struct {
 type Win struct {
 	ctx *WinCtx
 	win C.win_t
+
+	redraw_cb_handle cgo.Handle
+	resize_cb_handle cgo.Handle
 }
 
 func (c *Context) WinInit() *WinComponent {
@@ -85,12 +88,16 @@ func go_lib_bindings_win_redraw_cb(_ C.win_t, data unsafe.Pointer) {
 }
 
 func (w *Win) RegisterRedrawCb(cb WinRedrawCb) {
-	cb_handle := cgo.NewHandle(cb) // TODO I'm never deleting this handle - should be held on 'w' I guess.
+	if w.redraw_cb_handle != 0 {
+		w.redraw_cb_handle.Delete()
+	}
+
+	w.redraw_cb_handle = cgo.NewHandle(cb)
 
 	C.win_register_redraw_cb(
 		w.win,
 		C.win_redraw_cb_t(C.go_lib_bindings_win_redraw_cb),
-		unsafe.Pointer(cb_handle),
+		unsafe.Pointer(w.redraw_cb_handle),
 	)
 }
 
@@ -98,7 +105,7 @@ type WinResizeCb func(x_res, y_res uint32)
 
 //export go_lib_bindings_win_resize_cb
 func go_lib_bindings_win_resize_cb(_ C.win_t, data unsafe.Pointer, x_res, y_res C.uint32_t) {
-	handle := (cgo.Handle)(data) // TODO I'm never deleting this handle - should be held on 'w' I guess.
+	handle := (cgo.Handle)(data)
 
 	if cb, ok := handle.Value().(WinResizeCb); ok {
 		cb(uint32(x_res), uint32(y_res))
@@ -106,12 +113,16 @@ func go_lib_bindings_win_resize_cb(_ C.win_t, data unsafe.Pointer, x_res, y_res 
 }
 
 func (w *Win) RegisterResizeCb(cb WinResizeCb) {
-	cb_handle := cgo.NewHandle(cb)
+	if w.resize_cb_handle != 0 {
+		w.resize_cb_handle.Delete()
+	}
+
+	w.resize_cb_handle = cgo.NewHandle(cb)
 
 	C.win_register_resize_cb(
 		w.win,
 		C.win_resize_cb_t(C.go_lib_bindings_win_resize_cb),
-		unsafe.Pointer(cb_handle),
+		unsafe.Pointer(w.resize_cb_handle),
 	)
 }
 
