@@ -242,6 +242,7 @@ struct wgpu_ctx_t {
 		uint32_t wgpuRenderPassEncoderWriteTimestamp;
 		uint32_t wgpuDeviceFromVk;
 		uint32_t wgpuTextureFromVkImage;
+		uint32_t wgpuCommandEncoderFromVk;
 // FN_IDS:END
 		// clang-format on
 	} fns;
@@ -3005,6 +3006,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[5].name, "y_res") == 0
 		) {
 			ctx->fns.wgpuTextureFromVkImage = i;
+		}
+
+		if (
+			strcmp(name, "wgpuCommandEncoderFromVk") == 0 &&
+			fn->ret_type == KOS_TYPE_OPAQUE_PTR &&
+			fn->param_count == 3 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "device") == 0 &&
+			fn->params[1].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[1].name, "raw_vk_cmd_pool") == 0 &&
+			fn->params[2].type == KOS_TYPE_BUF &&
+			strcmp((char*) fn->params[2].name, "raw_vk_cmd_buf") == 0
+		) {
+			ctx->fns.wgpuCommandEncoderFromVk = i;
 		}
 // FN_VALIDATORS:END
 		// clang-format on
@@ -6371,6 +6386,28 @@ WGPUTexture aqua_wgpuTextureFromVkImage(wgpu_ctx_t ctx, WGPUDevice device, const
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuTextureFromVkImage, args);
+	kos_flush(true);
+
+	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
+	return (void*) (uintptr_t) ctx->last_ret.opaque_ptr.ptr;
+}
+
+WGPUCommandEncoder aqua_wgpuCommandEncoderFromVk(wgpu_ctx_t ctx, WGPUDevice device, const void * raw_vk_cmd_pool, const void * raw_vk_cmd_buf) {
+	kos_val_t const args[] = {
+		{
+			.opaque_ptr = {ctx->hid, (uintptr_t) device},
+		},
+		{
+			.buf.size = sizeof *raw_vk_cmd_pool,
+			.buf.ptr = (void*) raw_vk_cmd_pool,
+		},
+		{
+			.buf.size = sizeof *raw_vk_cmd_buf,
+			.buf.ptr = (void*) raw_vk_cmd_buf,
+		}
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.wgpuCommandEncoderFromVk, args);
 	kos_flush(true);
 
 	assert(ctx->last_ret.opaque_ptr.host_id == ctx->hid);
