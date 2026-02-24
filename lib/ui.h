@@ -160,9 +160,18 @@ ui_elem_t ui_add_text(ui_elem_t parent, char const* semantics, char const* text)
 /**
  * Remove an element from its parent.
  *
- * @param Element to remove.
+ * @param elem Element to remove.
  */
 void ui_rem_elem(ui_elem_t elem);
+
+/**
+ * Move and optionally reparent an element.
+ *
+ * @param elem Element to move.
+ * @param new_parent New parent for the element. If NULL, the parent will not change.
+ * @param beginning Whether to move to the beginning of the parent in the child list. If not moving to the beginning, the element will be moved to the end.
+ */
+void ui_move_elem(ui_elem_t elem, ui_elem_t new_parent, bool beginning);
 
 /**
  * Set a string attribute on a UI element.
