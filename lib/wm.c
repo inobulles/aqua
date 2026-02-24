@@ -468,7 +468,8 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
-	uint8_t press;
+	uint32_t time;
+	uint8_t pressed;
 	uint32_t button;
 } intr_mouse_button_t;
 
@@ -583,7 +584,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		}
 
 		if (wm->mouse_button != NULL) {
-			wm->mouse_button(wm, button->press, button->button, wm->mouse_button_data);
+			wm->mouse_button(wm, button->time, button->pressed, button->button, wm->mouse_button_data);
 		}
 	}
 }
