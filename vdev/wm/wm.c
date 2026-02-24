@@ -744,6 +744,14 @@ void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, u
 	wlr_seat_pointer_notify_motion(seat, time, x, y);
 }
 
+void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button) {
+	struct wlr_seat* const seat = toplevel->wm->seat;
+	enum wl_pointer_button_state const state =
+		pressed ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED;
+
+	wlr_seat_pointer_notify_button(seat, time, button, state);
+}
+
 static void mouse_motion(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, motion);
 	wm_t* const wm = mouse->wm;

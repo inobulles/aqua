@@ -136,3 +136,4 @@ void wm_vdev_loop(wm_t* wm);
 void wm_vdev_get_fb(toplevel_t* toplevel, void* buf);
 
 void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y);
+void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button);
