@@ -102,7 +102,8 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
-	uint8_t press;
+	uint32_t time;
+	uint8_t pressed;
 	uint32_t button;
 } mouse_button_intr_t;
 
@@ -788,7 +789,8 @@ static void mouse_button(struct wl_listener* listener, void* data) {
 
 	mouse_button_intr_t intr = {
 		.intr = INTR_MOUSE_BUTTON,
-		.press = event->state == WL_POINTER_BUTTON_STATE_PRESSED,
+		.time = event->time_msec,
+		.pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED,
 		.button = event->button,
 	};
 
