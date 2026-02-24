@@ -118,6 +118,10 @@ func (w *Wm) WinNotifyMouseMotion(win WmWin, time uint32, x, y uint32) {
 	C.wm_win_notify_mouse_motion(w.wm, C.wm_win_t(win), C.uint32_t(time), C.uint32_t(x), C.uint32_t(y))
 }
 
+func (w *Wm) WinNotifyMouseButton(win WmWin, time uint32, pressed bool, button uint32) {
+	C.wm_win_notify_mouse_button(w.wm, C.wm_win_t(win), C.uint32_t(time), C.bool(pressed), C.uint32_t(button))
+}
+
 type WmRedrawCb func(raw_vk_image unsafe.Pointer, raw_vk_cmd_pool unsafe.Pointer, raw_vk_cmd_buf unsafe.Pointer)
 
 //export go_lib_bindings_wm_redraw_cb
