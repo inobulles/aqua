@@ -41,6 +41,7 @@ struct wm_ctx_t {
 		uint32_t register_interrupt;
 		uint32_t loop;
 		uint32_t get_win_fb;
+		uint32_t win_notify_mouse_motion;
 	} fns;
 
 	bool last_success;
@@ -221,6 +222,22 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.get_win_fb = i;
 		}
+
+		if (
+			strcmp(name, "win_notify_mouse_motion") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 4 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "time") == 0 &&
+			fn->params[2].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[2].name, "x") == 0 &&
+			fn->params[3].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[3].name, "y") == 0
+		) {
+			ctx->fns.win_notify_mouse_motion = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -381,6 +398,25 @@ void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf) {
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_win_fb, args);
+	kos_flush(true);
+}
+
+void wm_win_notify_mouse_motion(wm_t wm, wm_win_t win, uint32_t time, uint32_t x, uint32_t y) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = {0, win}},
+		{.u32 = time},
+		{.u32 = x},
+		{.u32 = y},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_notify_mouse_motion, args);
 	kos_flush(true);
 }
 
