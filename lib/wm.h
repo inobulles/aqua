@@ -107,11 +107,12 @@ typedef void (*wm_mouse_motion_cb_t)(
  * This is called whenever a mouse button is pressed or released.
  *
  * @param wm The WM object.
- * @param press True if the button was pressed, false if it was released.
+ * @param time Time at which event happened. Should only really be used when passing event on with {@link wm_toplevel_notify_mouse_button}.
+ * @param pressed True if the button was pressed, false if it was released.
  * @param button The button identifier.
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_mouse_button_cb}.
  */
-typedef void (*wm_mouse_button_cb_t)(wm_t wm, bool press, uint32_t button, void* data);
+typedef void (*wm_mouse_button_cb_t)(wm_t wm, uint32_t time, bool pressed, uint32_t button, void* data);
 
 /**
  * Initialize the WM library component.

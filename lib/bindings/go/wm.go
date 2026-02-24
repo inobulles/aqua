@@ -24,7 +24,7 @@ extern void go_lib_bindings_wm_mouse_motion_cb(
 	double unaccel_dy,
 	void* data
 );
-extern void go_lib_bindings_wm_mouse_button_cb( wm_t wm, uint8_t press, uint32_t button, void* data);
+extern void go_lib_bindings_wm_mouse_button_cb(wm_t wm, uint32_t time, uint8_t pressed, uint32_t button, void* data);
 */
 import "C"
 import (
@@ -291,21 +291,23 @@ func (w *Wm) RegisterMouseMotionCb(cb WmMouseMotionCb) {
 }
 
 type WmMouseButtonCb func(
-	press bool,
+	time uint32,
+	pressed bool,
 	button uint32,
 )
 
 //export go_lib_bindings_wm_mouse_button_cb
 func go_lib_bindings_wm_mouse_button_cb(
 	_ C.wm_t,
-	press C.uint8_t,
+	time C.uint32_t,
+	pressed C.uint8_t,
 	button C.uint32_t,
 	data unsafe.Pointer,
 ) {
 	handle := (cgo.Handle)(data)
 
 	if cb, ok := handle.Value().(WmMouseButtonCb); ok {
-		cb(press != 0, uint32(button))
+		cb(uint32(time), pressed != 0, uint32(button))
 	}
 }
 
