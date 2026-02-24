@@ -62,7 +62,7 @@ type Elem struct {
 	// Position & size of the element after reflowing, in screen pixels.
 	// This is relative to the parent.
 
-	flow_x, flow_y uint32
+	flow_x, flow_y int32
 	flow_w, flow_h uint32
 
 	// Absolute positioning.
@@ -241,35 +241,35 @@ func elem_from_raw(raw C.uintptr_t) any {
 	return handle.Value()
 }
 
-func (e *Elem) dimension_to_px_x(d Dimension) uint32 {
+func (e *Elem) dimension_to_px_x(d Dimension) int32 {
 	switch d.units {
 	case DimensionUnitsZero:
 		return 0
 	case DimensionUnitsPixels:
-		return uint32(d.val)
+		return int32(d.val)
 	case DimensionUnitsParentFraction:
 		if e.parent == nil {
-			return uint32(float32(e.ui.root.flow_w) * d.val)
+			return int32(float32(e.ui.root.flow_w) * d.val)
 		}
 
-		return uint32(float32(e.parent.ElemBase().flow_w) * d.val)
+		return int32(float32(e.parent.ElemBase().flow_w) * d.val)
 	}
 
 	panic("Unknown dimension kind.")
 }
 
-func (e *Elem) dimension_to_px_y(d Dimension) uint32 {
+func (e *Elem) dimension_to_px_y(d Dimension) int32 {
 	switch d.units {
 	case DimensionUnitsZero:
 		return 0
 	case DimensionUnitsPixels:
-		return uint32(d.val)
+		return int32(d.val)
 	case DimensionUnitsParentFraction:
 		if e.parent == nil {
-			return uint32(float32(e.ui.root.flow_h) * d.val)
+			return int32(float32(e.ui.root.flow_h) * d.val)
 		}
 
-		return uint32(float32(e.parent.ElemBase().flow_h) * d.val)
+		return int32(float32(e.parent.ElemBase().flow_h) * d.val)
 	}
 
 	panic("Unknown dimension kind.")

@@ -141,9 +141,9 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 				abs := child.ElemBase().abs
 
 				child.ElemBase().flow_x = e.dimension_to_px_x(abs.x) -
-					uint32(abs.anchor_x*float32(child.ElemBase().flow_w))
+					int32(abs.anchor_x*float32(child.ElemBase().flow_w))
 				child.ElemBase().flow_y = e.dimension_to_px_y(abs.y) -
-					uint32(abs.anchor_y*float32(child.ElemBase().flow_h))
+					int32(abs.anchor_y*float32(child.ElemBase().flow_h))
 			}
 
 			// Actually render child.

@@ -5,14 +5,14 @@ package main
 
 import "fmt"
 
-func align_off(align Align, container_size uint32, elem_size uint32) uint32 {
+func align_off(align Align, container_size uint32, elem_size uint32) int32 {
 	switch align {
 	case AlignBegin:
 		return 0
 	case AlignCentre:
-		return container_size/2 - elem_size/2
+		return int32(container_size/2) - int32(elem_size/2)
 	case AlignEnd:
-		return container_size - elem_size
+		return int32(container_size) - int32(elem_size)
 	default:
 		panic(fmt.Sprintf("unexpected main.Align: %#v", align))
 	}
@@ -31,7 +31,7 @@ func (e *Div) reflow(max_w, max_h uint32) {
 	flow_y := pt
 
 	for _, child := range e.children {
-		child.reflow(max_w-pl-pr, max_h-pt-pb)
+		child.reflow(max_w-uint32(pl+pr), max_h-uint32(pt+pb))
 
 		if child.ElemBase().is_abs {
 			continue // Take element out of flow if absolutely positioned.
@@ -44,7 +44,7 @@ func (e *Div) reflow(max_w, max_h uint32) {
 
 		switch e.flow_direction {
 		case AxisY: // Elements flow from top to bottom.
-			flow_y += ch
+			flow_y += int32(ch)
 			flow_y += e.dimension_to_px_y(e.gap_y)
 
 			child.ElemBase().flow_x = flow_x + align_off(
@@ -53,7 +53,7 @@ func (e *Div) reflow(max_w, max_h uint32) {
 				child.ElemBase().flow_w,
 			)
 		case AxisX: // Elements flow from left to right.
-			flow_x += cw
+			flow_x += int32(cw)
 			flow_x += e.dimension_to_px_x(e.gap_x)
 
 			child.ElemBase().flow_y = flow_y + align_off(
@@ -69,10 +69,10 @@ func (e *Div) reflow(max_w, max_h uint32) {
 	// Make sure div is not smaller than minimum size.
 
 	if min_w := e.get_attr("min_w"); min_w != nil {
-		e.flow_w = max(e.flow_w, e.dimension_to_px_x(min_w.(Dimension)))
+		e.flow_w = max(e.flow_w, uint32(e.dimension_to_px_x(min_w.(Dimension))))
 	}
 	if min_h := e.get_attr("min_h"); min_h != nil {
-		e.flow_h = max(e.flow_h, e.dimension_to_px_y(min_h.(Dimension)))
+		e.flow_h = max(e.flow_h, uint32(e.dimension_to_px_y(min_h.(Dimension))))
 	}
 }
 
