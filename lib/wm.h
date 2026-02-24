@@ -253,3 +253,14 @@ void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf);
  * @param y New Y position of mouse relative to this window.
  */
 void wm_win_notify_mouse_motion(wm_t wm, wm_win_t win, uint32_t time, uint32_t x, uint32_t y);
+
+/**
+ * Notify WM window of a mouse button press/release event.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle to send the notification to.
+ * @param time The time at which the notification occurred. This should've been gotten from {@link wm_mouse_button_cb_t}.
+ * @param pressed True if the button was pressed, false if it was released.
+ * @param button The button identifier.
+ */
+void wm_win_notify_mouse_button(wm_t wm, wm_win_t win, uint32_t time, bool pressed, uint32_t button);
