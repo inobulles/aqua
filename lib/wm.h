@@ -78,6 +78,7 @@ typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32
  * coordinates. Otherwise, {@link dx} and {@link dy} contain relative motion.
  *
  * @param wm The WM object.
+ * @param time Time at which event happened. Should only really be used when passing event on with {@link wm_toplevel_notify_mouse_motion}.
  * @param is_abs Non-zero if the motion is absolute, zero if relative.
  * @param dx Relative X motion (valid if is_abs is zero).
  * @param dy Relative Y motion (valid if is_abs is zero).
@@ -89,6 +90,7 @@ typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32
  */
 typedef void (*wm_mouse_motion_cb_t)(
 	wm_t wm,
+	uint32_t time,
 	bool is_abs,
 	double dx,
 	double dy,

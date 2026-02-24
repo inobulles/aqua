@@ -14,6 +14,7 @@ extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_r
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
 extern void go_lib_bindings_wm_mouse_motion_cb(
 	wm_t wm,
+	uint32_t time,
 	uint8_t is_abs,
 	double dx,
 	double dy,
@@ -235,6 +236,7 @@ func (w *Wm) RegisterDestroyWinCb(cb WmDestroyWinCb) {
 }
 
 type WmMouseMotionCb func(
+	time uint32,
 	isAbs bool,
 	dx, dy float64,
 	x, y float64,
@@ -244,6 +246,7 @@ type WmMouseMotionCb func(
 //export go_lib_bindings_wm_mouse_motion_cb
 func go_lib_bindings_wm_mouse_motion_cb(
 	_ C.wm_t,
+	time C.uint32_t,
 	is_abs C.uint8_t,
 	dx C.double,
 	dy C.double,
@@ -257,6 +260,7 @@ func go_lib_bindings_wm_mouse_motion_cb(
 
 	if cb, ok := handle.Value().(WmMouseMotionCb); ok {
 		cb(
+			uint32(time),
 			is_abs != 0,
 			float64(dx),
 			float64(dy),

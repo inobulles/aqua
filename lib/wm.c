@@ -416,6 +416,7 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
+	uint32_t time;
 	uint8_t is_abs;
 
 	union {
@@ -524,6 +525,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		if (wm->mouse_motion != NULL) {
 			wm->mouse_motion(
 				wm,
+				motion->time,
 				motion->is_abs,
 				motion->dx,
 				motion->dy,
