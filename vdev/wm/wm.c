@@ -750,6 +750,7 @@ void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, b
 		pressed ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED;
 
 	wlr_seat_pointer_notify_button(seat, time, button, state);
+	focus_toplevel(toplevel);
 }
 
 static void mouse_motion(struct wl_listener* listener, void* data) {
