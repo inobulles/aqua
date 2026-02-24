@@ -735,6 +735,14 @@ static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 	add_seat_cap(wm, WL_SEAT_CAPABILITY_KEYBOARD);
 }
 
+void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y) {
+	struct wlr_seat* const seat = toplevel->wm->seat;
+	struct wlr_surface* const surf = toplevel->xdg_toplevel->base->surface;
+
+	wlr_seat_pointer_notify_enter(seat, surf, x, y);
+	wlr_seat_pointer_notify_motion(seat, time, x, y);
+}
+
 static void mouse_motion(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, motion);
 	wm_t* const wm = mouse->wm;
