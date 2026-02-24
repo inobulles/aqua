@@ -124,6 +124,17 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_PTR, "buf"},
 		},
 	},
+	{
+		.name = "win_notify_mouse_motion",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+			{KOS_TYPE_U32, "time"},
+			{KOS_TYPE_U32, "x"},
+			{KOS_TYPE_U32, "y"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -220,6 +231,19 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 
 		void* const buf = (void*) args[1].ptr.ptr; // TODO BAD! BAD!
 		wm_vdev_get_fb(toplevel, buf);
+
+		break;
+	}
+	case 5: { // win_notify_mouse_motion
+		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
+
+		if (toplevel == NULL) {
+			LOG_E(cls, "Tried to notify bad window of mouse motion.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm_vdev_toplevel_notify_mouse_motion(toplevel, args[1].u32, args[2].u32, args[3].u32);
 
 		break;
 	}
