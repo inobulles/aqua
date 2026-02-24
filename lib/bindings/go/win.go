@@ -74,6 +74,13 @@ func (c *WinCtx) Create() *Win {
 
 func (w *Win) Destroy() {
 	C.win_destroy(w.win)
+
+	if w.redraw_cb_handle != 0 {
+		w.redraw_cb_handle.Delete()
+	}
+	if w.resize_cb_handle != 0 {
+		w.resize_cb_handle.Delete()
+	}
 }
 
 type WinRedrawCb func()
