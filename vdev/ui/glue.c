@@ -107,6 +107,16 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
+		.name = "move_elem",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "elem"},
+			{KOS_TYPE_OPAQUE_PTR, "new_parent"},
+			{KOS_TYPE_BOOL, "beginning"},
+		},
+	},
+	{
 		.name = "set_attr_str",
 		.ret_type = KOS_TYPE_BOOL,
 		.param_count = 3,
@@ -240,6 +250,7 @@ extern uintptr_t GoUiGetRoot(uintptr_t ui);
 extern uintptr_t GoUiAddDiv(uintptr_t parent, char const* semantics, size_t semantics_len);
 extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
 extern void GoUiRemElem(uintptr_t elem);
+extern void GoUiMoveElem(uintptr_t elem, uintptr_t new_parent, bool beginning);
 extern bool GoUiSetAttrStr(uintptr_t elem, char const* key, size_t key_len, char const* val, size_t val_len);
 extern bool GoUiSetAttrBool(uintptr_t elem, char const* key, size_t key_len, bool val);
 extern bool GoUiSetAttrU32(uintptr_t elem, char const* key, size_t key_len, uint32_t val);
@@ -338,12 +349,24 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		GoUiRemElem((uintptr_t) elem);
 		break;
 	case 6:
+		elem = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (elem == NULL) {
+			LOG_E(cls, "'move_elem' called with non-local or NULL element.");
+			break;
+		}
+
+		void* const new_parent = vdriver_unwrap_local_opaque_ptr(args[1].opaque_ptr);
+		GoUiMoveElem((uintptr_t) elem, (uintptr_t) new_parent, args[2].b);
+
+		break;
 	case 7:
 	case 8:
 	case 9:
 	case 10:
 	case 11:
 	case 12:
+	case 13:
 		elem = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (elem == NULL) {
@@ -352,7 +375,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		}
 
 		switch (fn_id) {
-		case 6:
+		case 7:
 			notif.call_ret.ret.b = GoUiSetAttrStr(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -361,7 +384,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].buf.size
 			);
 			break;
-		case 7:
+		case 8:
 			notif.call_ret.ret.b = GoUiSetAttrBool(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -369,7 +392,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].b
 			);
 			break;
-		case 8:
+		case 9:
 			notif.call_ret.ret.b = GoUiSetAttrU32(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -377,7 +400,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].u32
 			);
 			break;
-		case 9:
+		case 10:
 			notif.call_ret.ret.b = GoUiSetAttrF32(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -385,7 +408,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[2].f32
 			);
 			break;
-		case 10:;
+		case 11:;
 			void* const ptr = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 
 			if (ptr == NULL) {
@@ -400,7 +423,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				ptr
 			);
 			break;
-		case 11:
+		case 12:
 			notif.call_ret.ret.b = GoUiSetAttrDim(
 				(uintptr_t) elem,
 				(char const*) args[1].buf.ptr,
@@ -409,7 +432,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 				args[3].f32
 			);
 			break;
-		case 12:;
+		case 13:;
 			uint32_t const x_res = args[2].u32;
 			uint32_t const y_res = args[3].u32;
 			kos_val_t const data = args[4];
@@ -431,7 +454,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		break;
 	// WebGPU backend specific stuff.
-	case 13:
+	case 14:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
@@ -450,7 +473,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device, format);
 		break;
-	case 14:
+	case 15:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {

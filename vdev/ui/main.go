@@ -124,6 +124,51 @@ func GoUiRemElem(elem_raw C.uintptr_t) {
 	panic("GoUiRemElem: element not in parent's children")
 }
 
+//export GoUiMoveElem
+func GoUiMoveElem(elem_raw C.uintptr_t, new_parent_raw C.uintptr_t, beginning C.bool) {
+	elem := elem_from_raw(elem_raw).(IElem)
+
+	// First, we remove the element from the previous parent.
+
+	parent := elem.ElemBase().parent
+
+	if parent.ElemBase().kind != ElemKindDiv {
+		panic("GoUiMoveElem: previous parent is not a div")
+	}
+
+	div := parent.(*Div)
+
+	for i, child := range div.children {
+		if child == elem {
+			div.children = append(div.children[:i], div.children[i+1:]...)
+			break
+		}
+	}
+
+	// Then, we add the element to the beginning or end of the new parent.
+
+	var new_parent IElem
+
+	if new_parent_raw == 0 {
+		new_parent = elem.ElemBase().parent
+	} else {
+		new_parent = elem_from_raw(new_parent_raw).(IElem)
+	}
+
+	if new_parent.ElemBase().kind != ElemKindDiv {
+		panic("GoUiMoveElem: new parent is not a div")
+	}
+
+	div = new_parent.(*Div)
+	elem.ElemBase().parent = new_parent
+
+	if beginning {
+		div.children = append([]IElem{elem}, div.children...)
+	} else {
+		div.children = append(div.children, elem)
+	}
+}
+
 // TODO We should return true if attribute actually exists.
 // TODO Maybe we should just rely on CALL_RET_FAIL or whatever instead.
 
