@@ -165,6 +165,16 @@ func (e *UiElem) Rem() {
 	C.ui_rem_elem(e.elem)
 }
 
+func (e *UiElem) Move(new_parent *UiElem, beginning bool) {
+	var internal C.ui_elem_t = nil
+
+	if new_parent != nil {
+		internal = new_parent.elem
+	}
+
+	C.ui_move_elem(e.elem, internal, C.bool(beginning))
+}
+
 func (e *UiElem) AddDiv(semantics string) *UiElem {
 	c_semantics := C.CString(semantics)
 	defer C.free(unsafe.Pointer(c_semantics))
