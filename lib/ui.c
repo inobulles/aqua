@@ -236,6 +236,19 @@ void ui_rem_elem(ui_elem_t elem) {
 	kos_flush(true);
 }
 
+void ui_move_elem(ui_elem_t elem, ui_elem_t new_parent, bool beginning) {
+	ui_ctx_t const ctx = elem->ui->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = elem->opaque_ptr},
+		{.opaque_ptr = new_parent == NULL ? (kos_opaque_ptr_t) {0, 0} : new_parent->opaque_ptr},
+		{.b = beginning},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.move_elem, args);
+	kos_flush(true);
+}
+
 static bool ui_set_attr_common(
 	ui_ctx_t ctx,
 	uint32_t fn_id,
@@ -449,6 +462,20 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[0].name, "elem") == 0
 		) {
 			ctx->fns.rem_elem = i;
+		}
+
+		if (
+			strcmp(name, "move_elem") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 3 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "elem") == 0 &&
+			fn->params[1].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[1].name, "new_parent") == 0 &&
+			fn->params[2].type == KOS_TYPE_BOOL &&
+			strcmp((char*) fn->params[2].name, "beginning") == 0
+		) {
+			ctx->fns.move_elem = i;
 		}
 
 		if (
