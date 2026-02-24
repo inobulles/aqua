@@ -241,3 +241,14 @@ void wm_loop(wm_t wm);
  * @param buf Buffer to copy the window contents to.
  */
 void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf);
+
+/**
+ * Notify WM window of a mouse motion event.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle to send the notification to.
+ * @param time The time at which the notification occurred. This should've been gotten from {@link wm_mouse_motion_cb_t}.
+ * @param x New X position of mouse relative to this window.
+ * @param y New Y position of mouse relative to this window.
+ */
+void wm_win_notify_mouse_motion(wm_t wm, wm_win_t win, uint32_t time, uint32_t x, uint32_t y);
