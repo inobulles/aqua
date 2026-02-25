@@ -236,6 +236,16 @@ func (e *Elem) get_attr(key string) any {
 	return nil
 }
 
+func (d *Div) do_frost() bool {
+	frost_attr := d.get_attr("frost")
+
+	if frost_attr == nil {
+		return false
+	}
+
+	return frost_attr.(bool)
+}
+
 func elem_from_raw(raw C.uintptr_t) any {
 	handle := cgo.Handle(raw)
 	return handle.Value()

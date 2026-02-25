@@ -22,6 +22,9 @@ type WgpuBackend struct {
 	queue  *wgpu.Queue
 	format wgpu.TextureFormat
 
+	view    wgpu.TextureView
+	sampler *wgpu.Sampler
+
 	x_res, y_res uint32
 
 	title_font     *Font
@@ -30,6 +33,7 @@ type WgpuBackend struct {
 	regular_pipeline *TextPipeline
 	solid_pipeline   *SolidPipeline
 	texture_pipeline *TexturePipeline
+	frost_pipeline   *FrostPipeline
 }
 
 type IWgpuBackendData interface {
@@ -122,12 +126,14 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 				colour[3] = a.(float32)
 			}
 
-			b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 			b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
+		} else if e.do_frost() {
+			b.frost_pipeline.Set(render_pass, data.bind_group)
 		} else {
 			b.texture_pipeline.Set(render_pass, data.bind_group)
-			b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 		}
+
+		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 
 		data.model.draw(render_pass)
 
@@ -212,6 +218,11 @@ func GoUiBackendWgpuInit(
 		return
 	}
 
+	if backend.frost_pipeline, err = backend.NewFrostPipeline(); err != nil {
+		println("Failed to create frost pipeline.")
+		return
+	}
+
 	ui.backend = backend
 
 	// TODO Have to set global context somehow.
@@ -247,13 +258,27 @@ func GoUiBackendWgpuRender(
 	}
 
 	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
-	frame := wgpu.TextureViewFromRaw(frame_raw)
+	backend.view = wgpu.TextureViewFromRaw(frame_raw)
+
+	var err error
+
+	if backend.sampler, err = backend.dev.CreateSampler(&wgpu.SamplerDescriptor{
+		AddressModeU:  wgpu.AddressModeClampToEdge,
+		AddressModeV:  wgpu.AddressModeClampToEdge,
+		AddressModeW:  wgpu.AddressModeClampToEdge,
+		MagFilter:     wgpu.FilterModeLinear,
+		MinFilter:     wgpu.FilterModeLinear,
+		MipmapFilter:  wgpu.MipmapFilterModeLinear,
+		MaxAnisotropy: 1,
+	}); err != nil {
+		panic(err)
+	}
 
 	render_pass_descr := wgpu.RenderPassDescriptor{
 		Label: "render_pass",
 		ColorAttachments: []wgpu.RenderPassColorAttachment{
 			{
-				View:    &frame,
+				View:    &backend.view,
 				LoadOp:  wgpu.LoadOpClear,
 				StoreOp: wgpu.StoreOpStore,
 				ClearValue: wgpu.Color{
