@@ -36,6 +36,8 @@ type WgpuBackend struct {
 	solid_pipeline   *SolidPipeline
 	texture_pipeline *TexturePipeline
 	frost_pipeline   *FrostPipeline
+
+	frost WgpuBackendFrost
 }
 
 type IWgpuBackendData interface {
@@ -101,9 +103,7 @@ func (b *WgpuBackend) render(elem IElem) {
 
 		data.model.draw(b.render_pass)
 	case *Div:
-		if e.do_frost() {
-			b.encounter_frost()
-
+		if e.do_frost() { // XXX Not ideal, but we need to regenerate the bind group.
 			if e.backend_data != nil {
 				data := e.backend_data.(WgpuBackendDivData)
 				data.release()
@@ -116,6 +116,10 @@ func (b *WgpuBackend) render(elem IElem) {
 		} else {
 			data := e.backend_data.(WgpuBackendDivData)
 			data.model.gen_pane(b, float32(e.flow_w), float32(e.flow_h), 10)
+		}
+
+		if e.do_frost() {
+			b.encounter_frost(e)
 		}
 
 		data := e.backend_data.(WgpuBackendDivData)
@@ -206,32 +210,37 @@ func GoUiBackendWgpuInit(
 	var err error
 
 	if backend.title_font, err = NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Black.ttf", 70); err != nil {
-		println("Failed to load title font.")
+		println("Failed to load title font.", err)
 		return
 	}
 
 	if backend.paragraph_font, err = NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Regular.ttf", 20); err != nil {
-		println("Failed to load title font.")
+		println("Failed to load title font.", err)
 		return
 	}
 
 	if backend.regular_pipeline, err = backend.NewTextPipeline(); err != nil {
-		println("Failed to create regular pipeline.")
+		println("Failed to create regular pipeline.", err)
 		return
 	}
 
 	if backend.solid_pipeline, err = backend.NewSolidPipeline(); err != nil {
-		println("Failed to create solid pipeline.")
+		println("Failed to create solid pipeline.", err)
 		return
 	}
 
 	if backend.texture_pipeline, err = backend.NewTexturePipeline(); err != nil {
-		println("Failed to create texture pipeline.")
+		println("Failed to create texture pipeline.", err)
 		return
 	}
 
 	if backend.frost_pipeline, err = backend.NewFrostPipeline(); err != nil {
-		println("Failed to create frost pipeline.")
+		println("Failed to create frost pipeline.", err)
+		return
+	}
+
+	if err = backend.create_frost_pipelines(); err != nil {
+		println("Failed to create frost pipelines.", err)
 		return
 	}
 

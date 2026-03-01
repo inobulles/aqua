@@ -21,6 +21,7 @@ type WgpuBackendDivData struct {
 	bind_group *wgpu.BindGroup
 
 	model *Model
+	frost WgpuBackendDivDataFrost
 }
 
 func (d *WgpuBackendDivData) release() {
@@ -113,11 +114,11 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 			},
 			{
 				Binding:     3,
-				TextureView: b.prev_render_buf.view,
+				TextureView: d.frost.render_bufs[WGPU_FROST_DOWNSAMPLE_STEPS-1].view,
 			},
 			{
 				Binding: 4,
-				Sampler: b.prev_render_buf.sampler,
+				Sampler: d.frost.render_bufs[WGPU_FROST_DOWNSAMPLE_STEPS-1].sampler,
 			},
 		},
 	}); err != nil {
@@ -185,6 +186,11 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 			return
 		}
 	} else if e.do_frost() {
+		if err = data.create_frost(b, w, h); err != nil {
+			b.free_elem(e)
+			return
+		}
+
 		if err = data.create_frost_bind_group(b); err != nil {
 			b.free_elem(e)
 			return
