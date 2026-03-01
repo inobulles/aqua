@@ -12,6 +12,7 @@ import (
 )
 
 const WGPU_FROST_DOWNSAMPLE_STEPS = 3
+const WGPU_FROST_SAMPLE_OFF = 5
 
 type WgpuBackendFrost struct {
 	kawase_down_pipeline *Pipeline
@@ -22,8 +23,8 @@ type WgpuBackendDivDataFrost struct {
 	render_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*WgpuTexture
 	last        *WgpuTexture
 
-	bg_crop_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*wgpu.Buffer
-	res_x, res_y [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
+	frost_param_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*wgpu.Buffer
+	res_x, res_y     [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
 }
 
 //go:embed shaders/frost/kawase_down.wgsl
@@ -107,8 +108,9 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 			return err
 		}
 
-		if f.bg_crop_bufs[i], err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
-			Size:  24,
+		if f.frost_param_bufs[i], err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
+			// Note that the size of the FrostParams struct is 32 bytes because of padding, not 28.
+			Size:  32,
 			Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 		}); err != nil {
 			println("Can't create background crop vector buffer.", err)
@@ -173,7 +175,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 			},
 			{
 				Binding: 2,
-				Buffer:  data.frost.bg_crop_bufs[0],
+				Buffer:  data.frost.frost_param_bufs[0],
 				Size:    wgpu.WholeSize,
 			},
 		},
@@ -182,14 +184,15 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 		println(err)
 	}
 
-	bg_crop := [6]float32{
+	frost_params := [7]float32{
 		1. / float32(b.x_res) * float32(d.flow_x),
 		1. / float32(b.y_res) * float32(d.flow_y),
 		2. / float32(b.x_res), 2. / float32(b.y_res),
 		float32(b.x_res), float32(b.y_res),
+		WGPU_FROST_SAMPLE_OFF,
 	}
 
-	b.queue.WriteBuffer(data.frost.bg_crop_bufs[0], 0, wgpu.ToBytes(bg_crop[:]))
+	b.queue.WriteBuffer(data.frost.frost_param_bufs[0], 0, wgpu.ToBytes(frost_params[:]))
 	b.frost.kawase_down_pipeline.Set(r, bind_group)
 	r.Draw(6, 1, 0, 0)
 
@@ -223,7 +226,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 				},
 				{
 					Binding: 2,
-					Buffer:  data.frost.bg_crop_bufs[i],
+					Buffer:  data.frost.frost_param_bufs[i],
 					Size:    wgpu.WholeSize,
 				},
 			},
@@ -233,9 +236,9 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 		}
 
 		res_x, res_y := float32(data.frost.res_x[i-1]), float32(data.frost.res_y[i-1])
-		bg_crop = [6]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y}
+		frost_params = [7]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
 
-		b.queue.WriteBuffer(data.frost.bg_crop_bufs[i], 0, wgpu.ToBytes(bg_crop[:]))
+		b.queue.WriteBuffer(data.frost.frost_param_bufs[i], 0, wgpu.ToBytes(frost_params[:]))
 		b.frost.kawase_down_pipeline.Set(r, bind_group)
 		r.Draw(6, 1, 0, 0)
 
@@ -272,7 +275,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 				},
 				{
 					Binding: 2,
-					Buffer:  data.frost.bg_crop_bufs[i],
+					Buffer:  data.frost.frost_param_bufs[i],
 					Size:    wgpu.WholeSize,
 				},
 			},
@@ -282,9 +285,9 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 		}
 
 		res_x, res_y := float32(data.frost.res_x[i-1]), float32(data.frost.res_y[i-1])
-		bg_crop = [6]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y}
+		frost_params = [7]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
 
-		b.queue.WriteBuffer(data.frost.bg_crop_bufs[i], 0, wgpu.ToBytes(bg_crop[:]))
+		b.queue.WriteBuffer(data.frost.frost_param_bufs[i], 0, wgpu.ToBytes(frost_params[:]))
 		b.frost.kawase_up_pipeline.Set(r, bind_group)
 		r.Draw(6, 1, 0, 0)
 
