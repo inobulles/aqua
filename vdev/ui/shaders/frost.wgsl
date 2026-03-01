@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2026 Aymeric Wibo
 
 struct VertOut {
 	@builtin(position) pos: vec4f,
