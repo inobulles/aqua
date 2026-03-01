@@ -98,6 +98,17 @@ func (v *TextureView) ToRaw() unsafe.Pointer {
 	return unsafe.Pointer(v.ref)
 }
 
+func (d *Device) TextureFromRaw(tex_raw unsafe.Pointer) Texture {
+	return Texture{
+		deviceRef: d.ref,
+		ref:       (C.WGPUTexture)(tex_raw),
+	}
+}
+
+func (t *Texture) ToRaw() unsafe.Pointer {
+	return unsafe.Pointer(t.ref)
+}
+
 func (d *Device) TextureFromVkImage(
 	raw_image unsafe.Pointer,
 	usage TextureUsage,
