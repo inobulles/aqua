@@ -22,8 +22,9 @@ type WgpuBackend struct {
 	queue  *wgpu.Queue
 	format wgpu.TextureFormat
 
-	view    wgpu.TextureView
-	sampler *wgpu.Sampler
+	render_buf      *WgpuTexture
+	prev_render_buf *WgpuTexture
+	render_pass     *wgpu.RenderPassEncoder
 
 	x_res, y_res uint32
 
@@ -60,7 +61,7 @@ func (b *WgpuBackend) get_font(e *Text) *Font {
 	}
 }
 
-func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
+func (b *WgpuBackend) render(elem IElem) {
 	// Create MVP matrix.
 
 	base := elem.ElemBase()
@@ -93,11 +94,11 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		}
 
 		data := e.backend_data.(WgpuBackendTextData)
-		b.regular_pipeline.Set(render_pass, data.bind_group)
+		b.regular_pipeline.Set(b.render_pass, data.bind_group)
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 
-		data.model.draw(render_pass)
+		data.model.draw(b.render_pass)
 	case *Div:
 		if e.backend_data == nil {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
@@ -109,7 +110,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		data := e.backend_data.(WgpuBackendDivData)
 
 		if data.tex == nil {
-			b.solid_pipeline.Set(render_pass, data.bind_group)
+			b.solid_pipeline.Set(b.render_pass, data.bind_group)
 
 			colour := [4]float32{0, 0, 0, 0}
 
@@ -128,14 +129,14 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 
 			b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 		} else if e.do_frost() {
-			b.frost_pipeline.Set(render_pass, data.bind_group)
+			b.frost_pipeline.Set(b.render_pass, data.bind_group)
 		} else {
-			b.texture_pipeline.Set(render_pass, data.bind_group)
+			b.texture_pipeline.Set(b.render_pass, data.bind_group)
 		}
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 
-		data.model.draw(render_pass)
+		data.model.draw(b.render_pass)
 
 		// Render children.
 
@@ -154,7 +155,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 
 			// Actually render child.
 
-			b.render(child, render_pass)
+			b.render(child)
 		}
 	default:
 		panic("Unknown element kind.")
@@ -248,56 +249,78 @@ func GoUiBackendWgpuRender(
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	backend := ui.backend.(*WgpuBackend)
 
-	if x_res != ui.root.flow_w || y_res != ui.root.flow_h { // Make UI dirty on resize.
+	// Make UI dirty on resize.
+	// Also, recreate the render buffers.
+
+	if x_res != ui.root.flow_w || y_res != ui.root.flow_h {
 		ui.dirty = true
+
+		backend.x_res, backend.y_res = x_res, y_res
+
+		if backend.prev_render_buf != nil {
+			backend.prev_render_buf.Release()
+		}
+
+		if backend.render_buf != nil {
+			backend.render_buf.Release()
+		}
+
+		var err error
+
+		if backend.prev_render_buf, err = backend.NewRenderBuf("Render buffer (A)", x_res, y_res, backend.format); err != nil {
+			panic(err)
+		}
+
+		if backend.render_buf, err = backend.NewRenderBuf("Render buffer (B)", x_res, y_res, backend.format); err != nil {
+			panic(err)
+		}
 	}
+
+	// Do reflow if UI is dirty.
 
 	if ui.dirty {
 		ui.reflow(x_res, y_res)
 		ui.dirty = false
 	}
 
+	// Create initial render pass.
+	// All passes should use LoadOpLoad except for the first.
+
 	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
-	backend.view = wgpu.TextureViewFromRaw(frame_raw)
 
-	var err error
-
-	if backend.sampler, err = backend.dev.CreateSampler(&wgpu.SamplerDescriptor{
-		AddressModeU:  wgpu.AddressModeClampToEdge,
-		AddressModeV:  wgpu.AddressModeClampToEdge,
-		AddressModeW:  wgpu.AddressModeClampToEdge,
-		MagFilter:     wgpu.FilterModeLinear,
-		MinFilter:     wgpu.FilterModeLinear,
-		MipmapFilter:  wgpu.MipmapFilterModeLinear,
-		MaxAnisotropy: 1,
-	}); err != nil {
-		panic(err)
-	}
-
-	render_pass_descr := wgpu.RenderPassDescriptor{
-		Label: "render_pass",
+	backend.render_pass = cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
+		Label: "Initial render pass",
 		ColorAttachments: []wgpu.RenderPassColorAttachment{
 			{
-				View:    &backend.view,
+				View:    backend.render_buf.view,
 				LoadOp:  wgpu.LoadOpClear,
 				StoreOp: wgpu.StoreOpStore,
 				ClearValue: wgpu.Color{
 					R: 0.0,
-					G: 0.0,
+					G: 1.0,
 					B: 0.0,
 					A: 0.5,
 				},
 			},
 		},
-	}
+	})
 
-	render_pass := cmd_enc.BeginRenderPass(&render_pass_descr)
-	defer render_pass.Release()
+	// Actually render UI.
 
-	backend.x_res = x_res
-	backend.y_res = y_res
+	backend.render(&ui.root)
 
-	backend.render(&ui.root, render_pass)
+	// End last render pass.
 
-	render_pass.End()
+	backend.render_pass.End()
+	backend.render_pass.Release()
+
+	// Write last render buffer texture to the final texture view.
+
+	final_tex := backend.dev.TextureFromRaw(frame_raw)
+
+	cmd_enc.CopyTextureToTexture(backend.render_buf.tex.AsImageCopy(), final_tex.AsImageCopy(), &wgpu.Extent3D{
+		Width:              x_res,
+		Height:             y_res,
+		DepthOrArrayLayers: 1,
+	})
 }
