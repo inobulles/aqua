@@ -45,7 +45,7 @@ fn frag_main(vert: VertOut) -> FragOut {
 	// TODO Actually compute frost.
 	// Also, where we're sampling here is actually wrong. But its good to leave it as is for now cuz we'll be able to see if getting background works in the first place.
 
-	var frost_colour = textureSample(bg_t, bg_s, vert.pos.xy / vec2f(1280, 720));
+	var frost_colour = textureSample(bg_t, bg_s, vert.uv);
 
 	// TODO Proper blending obvs.
 

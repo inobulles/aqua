@@ -15,7 +15,7 @@ type FrostPipeline struct {
 	vbo_layout wgpu.VertexBufferLayout
 }
 
-//go:embed shaders/frost.wgsl
+//go:embed shaders/frost/frost.wgsl
 var frost_shader_src string
 
 func (b *WgpuBackend) NewFrostPipeline() (*FrostPipeline, error) {
