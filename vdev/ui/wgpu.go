@@ -74,13 +74,15 @@ func (b *WgpuBackend) encounter_frost() {
 	b.render_buf = b.prev_render_buf
 	b.prev_render_buf = tmp
 
-	// Finally, start a new render pass with our new render buffer.
+	// Then, copy over the contents of the previous render buffer into the new one.
 
 	b.cmd_enc.CopyTextureToTexture(b.prev_render_buf.tex.AsImageCopy(), b.render_buf.tex.AsImageCopy(), &wgpu.Extent3D{
 		Width:              b.x_res,
 		Height:             b.y_res,
 		DepthOrArrayLayers: 1,
 	})
+
+	// Finally, start a new render pass with our new render buffer.
 
 	b.render_pass = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
 		Label: "Intermediate render pass",
