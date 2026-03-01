@@ -42,7 +42,7 @@ var<uniform> frost_params: FrostParams;
 @fragment
 fn frag_main(vert: VertOut) -> FragOut {
 	var centre: vec2f = vert.pos.xy * frost_params.size + frost_params.pos;
-	var inv_res: vec2f = vec2f(1. / frost_params.res.x, 1. / frost_params.res.y);
+	var inv_res: vec2f = 1 / frost_params.res;
 	var o: vec2f = inv_res / 2 * frost_params.off;
 
 	var out: FragOut;
