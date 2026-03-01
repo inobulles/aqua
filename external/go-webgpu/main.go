@@ -152,7 +152,7 @@ func (d *Device) UiInit(ui *aqua.Ui, format TextureFormat) {
 	)
 }
 
-func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *TextureView, x_res, y_res uint32) {
+func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *Texture, x_res, y_res uint32) {
 	C.ui_wgpu_render(
 		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
 		frame.ref, e.ref,
