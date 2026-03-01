@@ -22,6 +22,7 @@ type WgpuBackend struct {
 	queue  *wgpu.Queue
 	format wgpu.TextureFormat
 
+	cmd_enc         wgpu.CommandEncoder
 	render_buf      *WgpuTexture
 	prev_render_buf *WgpuTexture
 	render_pass     *wgpu.RenderPassEncoder
@@ -59,6 +60,44 @@ func (b *WgpuBackend) get_font(e *Text) *Font {
 	default:
 		panic(fmt.Sprintf("unexpected main.TextSemantic: %#v", e.semantic))
 	}
+}
+
+func (b *WgpuBackend) encounter_frost() {
+	// We've encountered frost, end the current render pass.
+
+	b.render_pass.End()
+	b.render_pass.Release()
+
+	// Then, swap the current and previous render buffers.
+
+	tmp := b.render_buf
+	b.render_buf = b.prev_render_buf
+	b.prev_render_buf = tmp
+
+	// Finally, start a new render pass with our new render buffer.
+
+	b.cmd_enc.CopyTextureToTexture(b.prev_render_buf.tex.AsImageCopy(), b.render_buf.tex.AsImageCopy(), &wgpu.Extent3D{
+		Width:              b.x_res,
+		Height:             b.y_res,
+		DepthOrArrayLayers: 1,
+	})
+
+	b.render_pass = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
+		Label: "Intermediate render pass",
+		ColorAttachments: []wgpu.RenderPassColorAttachment{
+			{
+				View:    b.render_buf.view,
+				LoadOp:  wgpu.LoadOpLoad,
+				StoreOp: wgpu.StoreOpStore,
+				ClearValue: wgpu.Color{
+					R: 0.0,
+					G: 0.0,
+					B: 0.0,
+					A: 0.5,
+				},
+			},
+		},
+	})
 }
 
 func (b *WgpuBackend) render(elem IElem) {
@@ -100,6 +139,16 @@ func (b *WgpuBackend) render(elem IElem) {
 
 		data.model.draw(b.render_pass)
 	case *Div:
+		if e.do_frost() {
+			b.encounter_frost()
+
+			if e.backend_data != nil {
+				data := e.backend_data.(WgpuBackendDivData)
+				data.release()
+				e.backend_data = nil
+			}
+		}
+
 		if e.backend_data == nil {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
 		} else {
@@ -247,7 +296,7 @@ func GoUiBackendWgpuRender(
 	x_res, y_res uint32,
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
-	backend := ui.backend.(*WgpuBackend)
+	b := ui.backend.(*WgpuBackend)
 
 	// Make UI dirty on resize.
 	// Also, recreate the render buffers.
@@ -255,23 +304,23 @@ func GoUiBackendWgpuRender(
 	if x_res != ui.root.flow_w || y_res != ui.root.flow_h {
 		ui.dirty = true
 
-		backend.x_res, backend.y_res = x_res, y_res
+		b.x_res, b.y_res = x_res, y_res
 
-		if backend.prev_render_buf != nil {
-			backend.prev_render_buf.Release()
+		if b.prev_render_buf != nil {
+			b.prev_render_buf.Release()
 		}
 
-		if backend.render_buf != nil {
-			backend.render_buf.Release()
+		if b.render_buf != nil {
+			b.render_buf.Release()
 		}
 
 		var err error
 
-		if backend.prev_render_buf, err = backend.NewRenderBuf("Render buffer (A)", x_res, y_res, backend.format); err != nil {
+		if b.prev_render_buf, err = b.NewRenderBuf("Render buffer (A)", x_res, y_res, b.format); err != nil {
 			panic(err)
 		}
 
-		if backend.render_buf, err = backend.NewRenderBuf("Render buffer (B)", x_res, y_res, backend.format); err != nil {
+		if b.render_buf, err = b.NewRenderBuf("Render buffer (B)", x_res, y_res, b.format); err != nil {
 			panic(err)
 		}
 	}
@@ -286,18 +335,18 @@ func GoUiBackendWgpuRender(
 	// Create initial render pass.
 	// All passes should use LoadOpLoad except for the first.
 
-	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
+	b.cmd_enc = b.dev.CommandEncoderFromRaw(cmd_enc_raw)
 
-	backend.render_pass = cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
+	b.render_pass = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
 		Label: "Initial render pass",
 		ColorAttachments: []wgpu.RenderPassColorAttachment{
 			{
-				View:    backend.render_buf.view,
+				View:    b.render_buf.view,
 				LoadOp:  wgpu.LoadOpClear,
 				StoreOp: wgpu.StoreOpStore,
 				ClearValue: wgpu.Color{
 					R: 0.0,
-					G: 1.0,
+					G: 0.0,
 					B: 0.0,
 					A: 0.5,
 				},
@@ -307,18 +356,21 @@ func GoUiBackendWgpuRender(
 
 	// Actually render UI.
 
-	backend.render(&ui.root)
+	b.render(&ui.root)
 
 	// End last render pass.
 
-	backend.render_pass.End()
-	backend.render_pass.Release()
+	b.render_pass.End()
+	b.render_pass.Release()
 
 	// Write last render buffer texture to the final texture view.
+	// This is kind of inefficient for the last render, because we are doing one extra copy for no reason.
+	// I guess a solution would be to look forward to see if there are any other frost elements, and just use the swapchain buffer as the new render buffer if there are none left.
+	// Also, we could fold frost elements together by checking if they are overlapping or not - if not, we render them all in the same render pass.
 
-	final_tex := backend.dev.TextureFromRaw(frame_raw)
+	final_tex := b.dev.TextureFromRaw(frame_raw)
 
-	cmd_enc.CopyTextureToTexture(backend.render_buf.tex.AsImageCopy(), final_tex.AsImageCopy(), &wgpu.Extent3D{
+	b.cmd_enc.CopyTextureToTexture(b.render_buf.tex.AsImageCopy(), final_tex.AsImageCopy(), &wgpu.Extent3D{
 		Width:              x_res,
 		Height:             y_res,
 		DepthOrArrayLayers: 1,

@@ -111,22 +111,13 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 				Binding: 2,
 				Sampler: d.tex.sampler,
 			},
-			// TODO Make this actually the background.
-			// I guess to do this we'd need to:
-			// - Render the whole UI to a temporary render buffer, i.e. not the swapchain's render texture.
-			// - When we encounter a frost element, we finish up with that temporary render texture, and start a new one, using the old one here.
-			// - Before rendering anything else, we should render the old one to the new one.
-			// - Once everything is done, we render the current render buffer to the one we got from the backend (for the swapchain).
-			// This is kind of inefficient for the last render, because we are doing one extra copy for no reason.
-			// I guess a solution would be to look forward to see if there are any other frost elements, and just use the swapchain buffer as the new render buffer if there are none left.
-			// Also, we could fold frost elements together by checking if they are overlapping or not - if not, we render them all in the same render pass.
 			{
 				Binding:     3,
-				TextureView: d.tex.view,
+				TextureView: b.prev_render_buf.view,
 			},
 			{
 				Binding: 4,
-				Sampler: d.tex.sampler,
+				Sampler: b.prev_render_buf.sampler,
 			},
 		},
 	}); err != nil {

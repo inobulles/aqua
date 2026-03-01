@@ -100,7 +100,7 @@ func (b *WgpuBackend) NewTexture(name string, w, h uint32, data []byte) (*WgpuTe
 
 func (b *WgpuBackend) NewRenderBuf(name string, w, h uint32, format wgpu.TextureFormat) (*WgpuTexture, error) {
 	return create_texture_common(b, name, create_tex_size(w, h), format,
-		wgpu.TextureUsageCopySrc|wgpu.TextureUsageRenderAttachment|wgpu.TextureUsageCopyDst)
+		wgpu.TextureUsageCopySrc|wgpu.TextureUsageRenderAttachment|wgpu.TextureUsageCopyDst|wgpu.TextureUsageTextureBinding)
 }
 
 func (t *WgpuTexture) Release() {
