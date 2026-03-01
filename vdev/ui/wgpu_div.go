@@ -114,11 +114,11 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 			},
 			{
 				Binding:     3,
-				TextureView: d.frost.render_bufs[WGPU_FROST_DOWNSAMPLE_STEPS-1].view,
+				TextureView: d.frost.last.view,
 			},
 			{
 				Binding: 4,
-				Sampler: d.frost.render_bufs[WGPU_FROST_DOWNSAMPLE_STEPS-1].sampler,
+				Sampler: d.frost.last.sampler,
 			},
 		},
 	}); err != nil {

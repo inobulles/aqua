@@ -26,6 +26,8 @@ struct FragOut {
 };
 
 struct BgCrop {
+	// XXX pos and size are entirely unused in the upsampling direction.
+	// They are just kept so we can have the same bind group layout as the downsampling shader.
 	pos: vec2f,
 	size: vec2f,
 	res: vec2f,
@@ -45,13 +47,18 @@ fn frag_main(vert: VertOut) -> FragOut {
 	var o: vec2f = inv_res / 2 * 10; // 10 is the strength (sample offset).
 
 	var out: FragOut;
-	out.colour = 4 * textureSample(t, s, centre);
+	out.colour = vec4f(0.);
 
-	out.colour += textureSample(t, s, centre + vec2f( o.x,  o.y));
-	out.colour += textureSample(t, s, centre + vec2f(-o.x,  o.y));
-	out.colour += textureSample(t, s, centre + vec2f( o.x, -o.y));
-	out.colour += textureSample(t, s, centre + vec2f(-o.x, -o.y));
+	out.colour += textureSample(t, s, centre + vec2f(-2 * o.x, 0.));
+	out.colour += textureSample(t, s, centre + vec2f( 2 * o.x, 0.));
+	out.colour += textureSample(t, s, centre + vec2f(0., -2 * o.y));
+	out.colour += textureSample(t, s, centre + vec2f(0.,  2 * o.y));
 
-	out.colour /= 8;
+	out.colour += 2 * textureSample(t, s, centre + vec2f( o.x,  o.y));
+	out.colour += 2 * textureSample(t, s, centre + vec2f(-o.x,  o.y));
+	out.colour += 2 * textureSample(t, s, centre + vec2f( o.x, -o.y));
+	out.colour += 2 * textureSample(t, s, centre + vec2f(-o.x, -o.y));
+
+	out.colour /= 12;
 	return out;
 }

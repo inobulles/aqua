@@ -1,6 +1,8 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
 // Copyright (c) 2026 Aymeric Wibo
 
+// Thanks to https://blog.frost.kiwi/dual-kawase/#dual-kawase-blur!
+
 package main
 
 import (
@@ -12,55 +14,68 @@ import (
 const WGPU_FROST_DOWNSAMPLE_STEPS = 3
 
 type WgpuBackendFrost struct {
-	kawase_down_first_pipeline *Pipeline
+	kawase_down_pipeline *Pipeline
+	kawase_up_pipeline   *Pipeline
 }
 
 type WgpuBackendDivDataFrost struct {
 	render_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*WgpuTexture
+	last        *WgpuTexture
 
 	bg_crop_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*wgpu.Buffer
-	// TODO idk if its really necessary to keep a hold of res_x/y here, cuz we could just write this straight to bg_crop_bufs.
 	res_x, res_y [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
 }
 
 //go:embed shaders/frost/kawase_down.wgsl
 var kawase_down_shader_src string
 
+//go:embed shaders/frost/kawase_up.wgsl
+var kawase_up_shader_src string
+
 func (b *WgpuBackend) create_frost_pipelines() error {
 	f := &b.frost
 	var err error
 
-	// Create first Kawase downsampling pipeline.
+	// XXX There are a lot of things that can be shared between these pipelines, notably the bind group layout, the pipeline layout, and the shader module itself.
+	// But for now this is perfectly fine.
 
-	if f.kawase_down_first_pipeline, err = b.NewPipeline("Frost (Kawase downsampling)", kawase_down_shader_src,
-		[]wgpu.BindGroupLayoutEntry{
-			{ // Background texture.
-				Binding:    0,
-				Visibility: wgpu.ShaderStageFragment,
-				Texture: wgpu.TextureBindingLayout{
-					Multisampled:  false,
-					ViewDimension: wgpu.TextureViewDimension2D,
-					SampleType:    wgpu.TextureSampleTypeFloat,
-				},
-			},
-			{ // Background texture sampler.
-				Binding:    1,
-				Visibility: wgpu.ShaderStageFragment,
-				Sampler: wgpu.SamplerBindingLayout{
-					Type: wgpu.SamplerBindingTypeFiltering,
-				},
-			},
-			{ // Background sampling position and size (crop).
-				Binding:    2,
-				Visibility: wgpu.ShaderStageFragment,
-				Buffer: wgpu.BufferBindingLayout{
-					Type: wgpu.BufferBindingTypeUniform,
-				},
+	bind_group_layout := []wgpu.BindGroupLayoutEntry{
+		{ // Background texture.
+			Binding:    0,
+			Visibility: wgpu.ShaderStageFragment,
+			Texture: wgpu.TextureBindingLayout{
+				Multisampled:  false,
+				ViewDimension: wgpu.TextureViewDimension2D,
+				SampleType:    wgpu.TextureSampleTypeFloat,
 			},
 		},
-		[]wgpu.VertexBufferLayout{},
-		&wgpu.BlendStatePremultipliedAlphaBlending,
-	); err != nil {
+		{ // Background texture sampler.
+			Binding:    1,
+			Visibility: wgpu.ShaderStageFragment,
+			Sampler: wgpu.SamplerBindingLayout{
+				Type: wgpu.SamplerBindingTypeFiltering,
+			},
+		},
+		{ // Background sampling position and size (crop).
+			Binding:    2,
+			Visibility: wgpu.ShaderStageFragment,
+			Buffer: wgpu.BufferBindingLayout{
+				Type: wgpu.BufferBindingTypeUniform,
+			},
+		},
+	}
+
+	// Create dual Kawase downsampling pipeline.
+
+	if f.kawase_down_pipeline, err = b.NewPipeline("Frost (dual Kawase downsampling)", kawase_down_shader_src,
+		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
+		return err
+	}
+
+	// Create dual Kawase upsampling pipeline.
+
+	if f.kawase_up_pipeline, err = b.NewPipeline("Frost (dual Kawase upsampling)", kawase_up_shader_src,
+		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
 		return err
 	}
 
@@ -101,6 +116,9 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 		}
 	}
 
+	// XXX Set last to something as a hack, but ideally we should've rendered the frost before even tried to access it (in WgpuBackendDivData.create_from_bind_group()).
+
+	f.last = f.render_bufs[1]
 	return nil
 }
 
@@ -143,7 +161,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 	})
 
 	bind_group, err := b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-		Layout: f.kawase_down_first_pipeline.bind_group_layout,
+		Layout: f.kawase_down_pipeline.bind_group_layout,
 		Entries: []wgpu.BindGroupEntry{
 			{
 				Binding:     0,
@@ -172,7 +190,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 	}
 
 	b.queue.WriteBuffer(data.frost.bg_crop_bufs[0], 0, wgpu.ToBytes(bg_crop[:]))
-	b.frost.kawase_down_first_pipeline.Set(r, bind_group)
+	b.frost.kawase_down_pipeline.Set(r, bind_group)
 	r.Draw(6, 1, 0, 0)
 
 	r.End()
@@ -180,12 +198,12 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 
 	// Then, the next ones.
 
-	for i := range WGPU_FROST_DOWNSAMPLE_STEPS - 1 {
+	for i := 1; i < WGPU_FROST_DOWNSAMPLE_STEPS; i++ {
 		r = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
 			Label: "Intermediate frost Kawase downsample render pass",
 			ColorAttachments: []wgpu.RenderPassColorAttachment{
 				{
-					View:    data.frost.render_bufs[i+1].view,
+					View:    data.frost.render_bufs[i].view,
 					LoadOp:  wgpu.LoadOpClear,
 					StoreOp: wgpu.StoreOpStore,
 				},
@@ -193,19 +211,19 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 		})
 
 		bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-			Layout: f.kawase_down_first_pipeline.bind_group_layout,
+			Layout: f.kawase_down_pipeline.bind_group_layout,
 			Entries: []wgpu.BindGroupEntry{
 				{
 					Binding:     0,
-					TextureView: data.frost.render_bufs[i].view,
+					TextureView: data.frost.render_bufs[i-1].view,
 				},
 				{
 					Binding: 1,
-					Sampler: data.frost.render_bufs[i].sampler,
+					Sampler: data.frost.render_bufs[i-1].sampler,
 				},
 				{
 					Binding: 2,
-					Buffer:  data.frost.bg_crop_bufs[i+1],
+					Buffer:  data.frost.bg_crop_bufs[i],
 					Size:    wgpu.WholeSize,
 				},
 			},
@@ -214,23 +232,65 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 			println(err)
 		}
 
-		res_x, res_y := float32(data.frost.res_x[i]), float32(data.frost.res_y[i])
+		res_x, res_y := float32(data.frost.res_x[i-1]), float32(data.frost.res_y[i-1])
 		bg_crop = [6]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y}
 
-		b.queue.WriteBuffer(data.frost.bg_crop_bufs[i+1], 0, wgpu.ToBytes(bg_crop[:]))
-		b.frost.kawase_down_first_pipeline.Set(r, bind_group)
+		b.queue.WriteBuffer(data.frost.bg_crop_bufs[i], 0, wgpu.ToBytes(bg_crop[:]))
+		b.frost.kawase_down_pipeline.Set(r, bind_group)
 		r.Draw(6, 1, 0, 0)
 
 		r.End()
 		r.Release()
 	}
 
-	// Then, we do the upsample chain until the last one, where our existing frost shader can take over (and do all the alpha blending with the div texture etc etc).
-	// So we will need 2 different shaders for the frost upsampling then; one intermediate and one, the existing one, final.
-	// That final shader's bind group will have the second to last upsampling render buffer as its texture.
-	// Although actually I wonder if we should have the last shader do the last upsampling step, because then I don't know if we can actually do refraction.
-	// Anyways I think we need 3 or 4 shaders total for this. Whew!
-	// See https://blog.frost.kiwi/dual-kawase/#dual-kawase-blur
+	// Now we move on to the upsample chain.
+	// We want to leave one step left to upsample, which is why we stop at i == 1.
+	// This is so that our final frost shader pass can also do the last Kawase upsampling step.
+
+	for i := WGPU_FROST_DOWNSAMPLE_STEPS - 2; i >= 1; i-- {
+		r = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
+			Label: "Intermediate frost Kawase upsample render pass",
+			ColorAttachments: []wgpu.RenderPassColorAttachment{
+				{
+					View:    data.frost.render_bufs[i].view,
+					LoadOp:  wgpu.LoadOpClear,
+					StoreOp: wgpu.StoreOpStore,
+				},
+			},
+		})
+
+		bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+			Layout: f.kawase_up_pipeline.bind_group_layout,
+			Entries: []wgpu.BindGroupEntry{
+				{
+					Binding:     0,
+					TextureView: data.frost.render_bufs[i+1].view,
+				},
+				{
+					Binding: 1,
+					Sampler: data.frost.render_bufs[i+1].sampler,
+				},
+				{
+					Binding: 2,
+					Buffer:  data.frost.bg_crop_bufs[i],
+					Size:    wgpu.WholeSize,
+				},
+			},
+		})
+		if err != nil {
+			println(err)
+		}
+
+		res_x, res_y := float32(data.frost.res_x[i-1]), float32(data.frost.res_y[i-1])
+		bg_crop = [6]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y}
+
+		b.queue.WriteBuffer(data.frost.bg_crop_bufs[i], 0, wgpu.ToBytes(bg_crop[:]))
+		b.frost.kawase_up_pipeline.Set(r, bind_group)
+		r.Draw(6, 1, 0, 0)
+
+		r.End()
+		r.Release()
+	}
 
 	// Finally, now that our frost is ready, start a new render pass with our new render buffer for the rest of UI rendering.
 
