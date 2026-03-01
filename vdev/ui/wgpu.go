@@ -89,12 +89,6 @@ func (b *WgpuBackend) encounter_frost() {
 				View:    b.render_buf.view,
 				LoadOp:  wgpu.LoadOpLoad,
 				StoreOp: wgpu.StoreOpStore,
-				ClearValue: wgpu.Color{
-					R: 0.0,
-					G: 0.0,
-					B: 0.0,
-					A: 0.5,
-				},
 			},
 		},
 	})
