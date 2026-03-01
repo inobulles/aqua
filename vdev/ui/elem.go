@@ -46,7 +46,8 @@ type AbsPos struct {
 
 type Elem struct {
 	IElem
-	kind ElemKind // TODO Necessary?
+	kind         ElemKind // TODO Necessary?
+	semantic_str string
 
 	ui     *Ui
 	parent IElem
@@ -124,13 +125,14 @@ type Div struct {
 	content_align_x, content_align_y Align
 }
 
-func construct_elem(kind ElemKind, ui *Ui, parent IElem) Elem {
+func construct_elem(kind ElemKind, ui *Ui, parent IElem, semantic_str string) Elem {
 	return Elem{
-		kind:   kind,
-		ui:     ui,
-		parent: parent,
-		attrs:  make(map[string]any),
-		is_abs: false,
+		kind:         kind,
+		ui:           ui,
+		parent:       parent,
+		semantic_str: semantic_str,
+		attrs:        make(map[string]any),
+		is_abs:       false,
 		abs: AbsPos{
 			x:        Dimension{}.mid(),
 			y:        Dimension{}.mid(),
@@ -142,7 +144,7 @@ func construct_elem(kind ElemKind, ui *Ui, parent IElem) Elem {
 
 func (d Div) construct(ui *Ui, parent IElem, semantic string) *Div {
 	return &Div{
-		Elem: construct_elem(ElemKindDiv, ui, parent),
+		Elem: construct_elem(ElemKindDiv, ui, parent, semantic),
 
 		pt: Dimension{}.pixels(10),
 		pb: Dimension{}.pixels(10),
@@ -201,7 +203,7 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 	}
 
 	return &Text{
-		Elem:     construct_elem(ElemKindText, ui, parent),
+		Elem:     construct_elem(ElemKindText, ui, parent, semantic_str),
 		text:     text,
 		semantic: semantic,
 	}
