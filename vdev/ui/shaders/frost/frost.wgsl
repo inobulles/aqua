@@ -29,6 +29,15 @@ struct FragOut {
 	@location(0) colour: vec4f,
 };
 
+struct FrostParams {
+	// XXX pos and size are entirely unused in the upsampling direction.
+	// They are just kept so we can have the same bind group layout as the downsampling shader.
+	pos: vec2f,
+	size: vec2f,
+	res: vec2f,
+	off: f32,
+};
+
 @group(0) @binding(1)
 var t: texture_2d<f32>;
 @group(0) @binding(2)
@@ -37,19 +46,37 @@ var s: sampler;
 var bg_t: texture_2d<f32>;
 @group(0) @binding(4)
 var bg_s: sampler;
+@group(0) @binding(5)
+var<uniform> frost_params: FrostParams;
 
 @fragment
 fn frag_main(vert: VertOut) -> FragOut {
+	// Here, we're actually doing the last stage of the dual Kawase blur algorithm.
+
+	var inv_res: vec2f = 1 / frost_params.res;
+	var centre: vec2f = vert.uv;
+	var o: vec2f = inv_res / 2 * frost_params.off;
+
 	var out: FragOut;
+	out.colour = vec4f(0.);
 
-	// TODO Actually compute frost.
-	// Also, where we're sampling here is actually wrong. But its good to leave it as is for now cuz we'll be able to see if getting background works in the first place.
+	out.colour += textureSample(bg_t, bg_s, centre + vec2f(-2 * o.x, 0.));
+	out.colour += textureSample(bg_t, bg_s, centre + vec2f( 2 * o.x, 0.));
+	out.colour += textureSample(bg_t, bg_s, centre + vec2f(0., -2 * o.y));
+	out.colour += textureSample(bg_t, bg_s, centre + vec2f(0.,  2 * o.y));
 
-	var frost_colour = textureSample(bg_t, bg_s, vert.uv);
+	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x,  o.y));
+	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x,  o.y));
+	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x, -o.y));
+	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x, -o.y));
+
+	out.colour /= 12;
+
+	// Now, we just add our texture on top of that.
 
 	// TODO Proper blending obvs.
 
-	out.colour = frost_colour; // + textureSample(t, s, vert.uv);
+	// out.colour += textureSample(t, s, vert.uv);
 
 	return out;
 }

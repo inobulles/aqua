@@ -120,6 +120,11 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 				Binding: 4,
 				Sampler: d.frost.last.sampler,
 			},
+			{
+				Binding: 5,
+				Buffer:  d.frost.final_frost_param_buf,
+				Size:    wgpu.WholeSize,
+			},
 		},
 	}); err != nil {
 		println("Can't create frost bind group.")
