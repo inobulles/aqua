@@ -103,14 +103,6 @@ func (b *WgpuBackend) render(elem IElem) {
 
 		data.model.draw(b.render_pass)
 	case *Div:
-		if e.do_frost() { // XXX Not ideal, but we need to regenerate the bind group.
-			if e.backend_data != nil {
-				data := e.backend_data.(WgpuBackendDivData)
-				data.release()
-				e.backend_data = nil
-			}
-		}
-
 		if e.backend_data == nil {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
 		} else {
@@ -119,6 +111,13 @@ func (b *WgpuBackend) render(elem IElem) {
 		}
 
 		if e.do_frost() {
+			data := e.backend_data.(WgpuBackendDivData)
+
+			if err := data.create_frost_bind_group(b); err != nil {
+				b.free_elem(e)
+				return
+			}
+
 			b.encounter_frost(e)
 		}
 

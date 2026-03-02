@@ -56,27 +56,26 @@ fn frag_main(vert: VertOut) -> FragOut {
 	var inv_res: vec2f = 1 / frost_params.res;
 	var centre: vec2f = vert.uv;
 	var o: vec2f = inv_res / 2 * frost_params.off;
+	var frost_colour: vec4f = vec4f(0.);
 
-	var out: FragOut;
-	out.colour = vec4f(0.);
+	frost_colour += textureSample(bg_t, bg_s, centre + vec2f(-2 * o.x, 0.));
+	frost_colour += textureSample(bg_t, bg_s, centre + vec2f( 2 * o.x, 0.));
+	frost_colour += textureSample(bg_t, bg_s, centre + vec2f(0., -2 * o.y));
+	frost_colour += textureSample(bg_t, bg_s, centre + vec2f(0.,  2 * o.y));
 
-	out.colour += textureSample(bg_t, bg_s, centre + vec2f(-2 * o.x, 0.));
-	out.colour += textureSample(bg_t, bg_s, centre + vec2f( 2 * o.x, 0.));
-	out.colour += textureSample(bg_t, bg_s, centre + vec2f(0., -2 * o.y));
-	out.colour += textureSample(bg_t, bg_s, centre + vec2f(0.,  2 * o.y));
+	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x,  o.y));
+	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x,  o.y));
+	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x, -o.y));
+	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x, -o.y));
 
-	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x,  o.y));
-	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x,  o.y));
-	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x, -o.y));
-	out.colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x, -o.y));
-
-	out.colour /= 12;
+	frost_colour /= 12;
 
 	// Now, we just add our texture on top of that.
 
-	// TODO Proper blending obvs.
+	var tex_colour: vec4f = textureSample(t, s, vert.uv);
 
-	// out.colour += textureSample(t, s, vert.uv);
+	var out: FragOut;
+	out.colour = tex_colour + frost_colour * (1. - tex_colour.a);
 
 	return out;
 }
