@@ -110,17 +110,6 @@ func (b *WgpuBackend) render(elem IElem) {
 			data.model.gen_pane(b, float32(e.flow_w), float32(e.flow_h), 10)
 		}
 
-		if e.do_frost() {
-			data := e.backend_data.(WgpuBackendDivData)
-
-			if err := data.create_frost_bind_group(b); err != nil {
-				b.free_elem(e)
-				return
-			}
-
-			b.encounter_frost(e)
-		}
-
 		data := e.backend_data.(WgpuBackendDivData)
 
 		if data.tex == nil {
@@ -143,6 +132,7 @@ func (b *WgpuBackend) render(elem IElem) {
 
 			b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 		} else if e.do_frost() {
+			b.encounter_frost(e)
 			b.frost_pipeline.Set(b.render_pass, data.bind_group)
 		} else {
 			b.texture_pipeline.Set(b.render_pass, data.bind_group)
