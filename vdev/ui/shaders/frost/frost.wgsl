@@ -43,39 +43,44 @@ var t: texture_2d<f32>;
 @group(0) @binding(2)
 var s: sampler;
 @group(0) @binding(3)
-var bg_t: texture_2d<f32>;
+var frost_t: texture_2d<f32>;
 @group(0) @binding(4)
-var bg_s: sampler;
+var frost_s: sampler;
 @group(0) @binding(5)
 var<uniform> frost_params: FrostParams;
+
+fn sample_frost(centre: vec2f, off: vec2f) -> vec3f {
+	let colour = textureSample(frost_t, frost_s, centre + off);
+	return colour.rgb * colour.rgb; // Gamma correction (approximating with ^2).
+}
 
 @fragment
 fn frag_main(vert: VertOut) -> FragOut {
 	// Here, we're actually doing the last stage of the dual Kawase blur algorithm.
 
-	var inv_res: vec2f = 1 / frost_params.res;
-	var centre: vec2f = vert.uv;
-	var o: vec2f = inv_res / 2 * frost_params.off;
-	var frost_colour: vec4f = vec4f(0.);
+	let inv_res = 1 / frost_params.res;
+	let centre = vert.uv;
+	let o = inv_res / 2 * frost_params.off;
 
-	frost_colour += textureSample(bg_t, bg_s, centre + vec2f(-2 * o.x, 0.));
-	frost_colour += textureSample(bg_t, bg_s, centre + vec2f( 2 * o.x, 0.));
-	frost_colour += textureSample(bg_t, bg_s, centre + vec2f(0., -2 * o.y));
-	frost_colour += textureSample(bg_t, bg_s, centre + vec2f(0.,  2 * o.y));
+	var frost_colour = vec3f(0.);
 
-	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x,  o.y));
-	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x,  o.y));
-	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f( o.x, -o.y));
-	frost_colour += 2 * textureSample(bg_t, bg_s, centre + vec2f(-o.x, -o.y));
+	frost_colour += sample_frost(centre, vec2f(-2 * o.x, 0.));
+	frost_colour += sample_frost(centre, vec2f( 2 * o.x, 0.));
+	frost_colour += sample_frost(centre, vec2f(0., -2 * o.y));
+	frost_colour += sample_frost(centre, vec2f(0.,  2 * o.y));
 
-	frost_colour /= 12;
+	frost_colour += 2 * sample_frost(centre, vec2f( o.x,  o.y));
+	frost_colour += 2 * sample_frost(centre, vec2f(-o.x,  o.y));
+	frost_colour += 2 * sample_frost(centre, vec2f( o.x, -o.y));
+	frost_colour += 2 * sample_frost(centre, vec2f(-o.x, -o.y));
+
+	frost_colour = sqrt(frost_colour / 12);
 
 	// Now, we just add our texture on top of that.
 
-	var tex_colour: vec4f = textureSample(t, s, vert.uv);
+	let tex_colour = textureSample(t, s, vert.uv);
 
 	var out: FragOut;
-	out.colour = tex_colour + frost_colour * (1. - tex_colour.a);
-
+	out.colour = tex_colour + vec4f(frost_colour, 1.) * (1. - tex_colour.a);
 	return out;
 }
