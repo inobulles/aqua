@@ -23,8 +23,9 @@ type WgpuBackendDivDataFrost struct {
 	render_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*WgpuTexture
 	last        *WgpuTexture
 
-	frost_param_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*wgpu.Buffer
-	res_x, res_y     [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
+	frost_param_bufs      [WGPU_FROST_DOWNSAMPLE_STEPS]*wgpu.Buffer
+	final_frost_param_buf *wgpu.Buffer
+	res_x, res_y          [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
 }
 
 //go:embed shaders/frost/kawase_down.wgsl
@@ -113,10 +114,27 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 			Size:  32,
 			Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 		}); err != nil {
-			println("Can't create background crop vector buffer.", err)
+			println("Can't create frost params vector buffer.", err)
 			return err
 		}
 	}
+
+	// Create final frost parameter buffer.
+	// This will be used by the final stage of the frost shader when doing the last Kawase upsampling step.
+
+	if f.final_frost_param_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
+		// Note that the size of the FrostParams struct is 32 bytes because of padding, not 28.
+		Size:  32,
+		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
+	}); err != nil {
+		println("Can't create final frost params vector buffer.", err)
+		return err
+	}
+
+	res_x, res_y := float32(w/2), float32(h/2)
+	frost_params := [7]float32{0, 0, 0, 0, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
+
+	b.queue.WriteBuffer(f.final_frost_param_buf, 0, wgpu.ToBytes(frost_params[:]))
 
 	// XXX Set last to something as a hack, but ideally we should've rendered the frost before even tried to access it (in WgpuBackendDivData.create_from_bind_group()).
 
@@ -235,8 +253,8 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 			println(err)
 		}
 
-		res_x, res_y := float32(data.frost.res_x[i-1]), float32(data.frost.res_y[i-1])
-		frost_params = [7]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
+		res_x, res_y := float32(data.frost.res_x[i]), float32(data.frost.res_y[i])
+		frost_params = [7]float32{0, 0, 1. / res_x, 1. / res_y, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
 
 		b.queue.WriteBuffer(data.frost.frost_param_bufs[i], 0, wgpu.ToBytes(frost_params[:]))
 		b.frost.kawase_down_pipeline.Set(r, bind_group)
@@ -284,8 +302,8 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 			println(err)
 		}
 
-		res_x, res_y := float32(data.frost.res_x[i-1]), float32(data.frost.res_y[i-1])
-		frost_params = [7]float32{0, 0, 2. / res_x, 2. / res_y, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
+		res_x, res_y := float32(data.frost.res_x[i]), float32(data.frost.res_y[i])
+		frost_params = [7]float32{0, 0, 1. / res_x, 1. / res_y, res_x, res_y, WGPU_FROST_SAMPLE_OFF}
 
 		b.queue.WriteBuffer(data.frost.frost_param_bufs[i], 0, wgpu.ToBytes(frost_params[:]))
 		b.frost.kawase_up_pipeline.Set(r, bind_group)

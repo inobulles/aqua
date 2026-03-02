@@ -84,6 +84,13 @@ func (b *WgpuBackend) NewFrostPipeline() (*FrostPipeline, error) {
 					Type: wgpu.SamplerBindingTypeFiltering,
 				},
 			},
+			{ // Frost parameters.
+				Binding:    5,
+				Visibility: wgpu.ShaderStageFragment,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
 		},
 		[]wgpu.VertexBufferLayout{
 			vbo_layout,
