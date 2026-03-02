@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"unsafe"
 
 	"obiw.ac/aqua/wgpu"
@@ -22,6 +21,7 @@ type WgpuBackendDivData struct {
 	bind_group *wgpu.BindGroup
 
 	model *Model
+	frost WgpuBackendDivDataFrost
 }
 
 func (d *WgpuBackendDivData) release() {
@@ -40,6 +40,97 @@ func (d *WgpuBackendDivData) release() {
 	if d.model != nil {
 		d.model.release()
 	}
+}
+
+func (d *WgpuBackendDivData) create_solid_bind_group(b *WgpuBackend) error {
+	var err error
+
+	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+		Layout: b.solid_pipeline.bind_group_layout,
+		Entries: []wgpu.BindGroupEntry{
+			{
+				Binding: 0,
+				Buffer:  d.mvp_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding: 1,
+				Buffer:  d.colour_buf,
+				Size:    wgpu.WholeSize,
+			},
+		},
+	}); err != nil {
+		println("Can't create solid bind group.")
+	}
+
+	return err
+}
+
+func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend) error {
+	var err error
+
+	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+		Layout: b.texture_pipeline.bind_group_layout,
+		Entries: []wgpu.BindGroupEntry{
+			{
+				Binding: 0,
+				Buffer:  d.mvp_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     1,
+				TextureView: d.tex.view,
+			},
+			{
+				Binding: 2,
+				Sampler: d.tex.sampler,
+			},
+		},
+	}); err != nil {
+		println("Can't create texture bind group.")
+	}
+
+	return err
+}
+
+func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
+	var err error
+
+	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+		Layout: b.frost_pipeline.bind_group_layout,
+		Entries: []wgpu.BindGroupEntry{
+			{
+				Binding: 0,
+				Buffer:  d.mvp_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     1,
+				TextureView: d.tex.view,
+			},
+			{
+				Binding: 2,
+				Sampler: d.tex.sampler,
+			},
+			{
+				Binding:     3,
+				TextureView: d.frost.last.view,
+			},
+			{
+				Binding: 4,
+				Sampler: d.frost.last.sampler,
+			},
+			{
+				Binding: 5,
+				Buffer:  d.frost.final_frost_param_buf,
+				Size:    wgpu.WholeSize,
+			},
+		},
+	}); err != nil {
+		println("Can't create frost bind group.")
+	}
+
+	return err
 }
 
 func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
@@ -92,48 +183,25 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		data.tex.CreateSampler(b)
 	}
 
-	// Bind group shit (solid bind group if no texture, or texture bind group if texture).
+	// Bind group shit.
 
 	if data.tex == nil {
-		if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-			Layout: b.solid_pipeline.bind_group_layout,
-			Entries: []wgpu.BindGroupEntry{
-				{
-					Binding: 0,
-					Buffer:  data.mvp_buf,
-					Size:    wgpu.WholeSize,
-				},
-				{
-					Binding: 1,
-					Buffer:  data.colour_buf,
-					Size:    wgpu.WholeSize,
-				},
-			},
-		}); err != nil {
-			println("Can't create solid bind group.")
+		if err = data.create_solid_bind_group(b); err != nil {
+			b.free_elem(e)
+			return
+		}
+	} else if e.do_frost() {
+		if err = data.create_frost(b, w, h); err != nil {
+			b.free_elem(e)
+			return
+		}
+
+		if err = data.create_frost_bind_group(b); err != nil {
 			b.free_elem(e)
 			return
 		}
 	} else {
-		if data.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-			Layout: b.texture_pipeline.bind_group_layout,
-			Entries: []wgpu.BindGroupEntry{
-				{
-					Binding: 0,
-					Buffer:  data.mvp_buf,
-					Size:    wgpu.WholeSize,
-				},
-				{
-					Binding:     1,
-					TextureView: data.tex.view,
-				},
-				{
-					Binding: 2,
-					Sampler: data.tex.sampler,
-				},
-			},
-		}); err != nil {
-			fmt.Printf("Can't create texture bind group: %s\n", err)
+		if err = data.create_texture_bind_group(b); err != nil {
 			b.free_elem(e)
 			return
 		}

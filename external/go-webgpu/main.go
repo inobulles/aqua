@@ -98,6 +98,17 @@ func (v *TextureView) ToRaw() unsafe.Pointer {
 	return unsafe.Pointer(v.ref)
 }
 
+func (d *Device) TextureFromRaw(tex_raw unsafe.Pointer) Texture {
+	return Texture{
+		deviceRef: d.ref,
+		ref:       (C.WGPUTexture)(tex_raw),
+	}
+}
+
+func (t *Texture) ToRaw() unsafe.Pointer {
+	return unsafe.Pointer(t.ref)
+}
+
 func (d *Device) TextureFromVkImage(
 	raw_image unsafe.Pointer,
 	usage TextureUsage,
@@ -141,7 +152,7 @@ func (d *Device) UiInit(ui *aqua.Ui, format TextureFormat) {
 	)
 }
 
-func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *TextureView, x_res, y_res uint32) {
+func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *Texture, x_res, y_res uint32) {
 	C.ui_wgpu_render(
 		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
 		frame.ref, e.ref,

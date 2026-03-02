@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
@@ -22,6 +22,11 @@ type WgpuBackend struct {
 	queue  *wgpu.Queue
 	format wgpu.TextureFormat
 
+	cmd_enc         wgpu.CommandEncoder
+	render_buf      *WgpuTexture
+	prev_render_buf *WgpuTexture
+	render_pass     *wgpu.RenderPassEncoder
+
 	x_res, y_res uint32
 
 	title_font     *Font
@@ -30,6 +35,9 @@ type WgpuBackend struct {
 	regular_pipeline *TextPipeline
 	solid_pipeline   *SolidPipeline
 	texture_pipeline *TexturePipeline
+	frost_pipeline   *FrostPipeline
+
+	frost WgpuBackendFrost
 }
 
 type IWgpuBackendData interface {
@@ -56,7 +64,7 @@ func (b *WgpuBackend) get_font(e *Text) *Font {
 	}
 }
 
-func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
+func (b *WgpuBackend) render(elem IElem) {
 	// Create MVP matrix.
 
 	base := elem.ElemBase()
@@ -89,11 +97,11 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 		}
 
 		data := e.backend_data.(WgpuBackendTextData)
-		b.regular_pipeline.Set(render_pass, data.bind_group)
+		b.regular_pipeline.Set(b.render_pass, data.bind_group)
 
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 
-		data.model.draw(render_pass)
+		data.model.draw(b.render_pass)
 	case *Div:
 		if e.backend_data == nil {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
@@ -102,10 +110,21 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 			data.model.gen_pane(b, float32(e.flow_w), float32(e.flow_h), 10)
 		}
 
+		if e.do_frost() {
+			data := e.backend_data.(WgpuBackendDivData)
+
+			if err := data.create_frost_bind_group(b); err != nil {
+				b.free_elem(e)
+				return
+			}
+
+			b.encounter_frost(e)
+		}
+
 		data := e.backend_data.(WgpuBackendDivData)
 
 		if data.tex == nil {
-			b.solid_pipeline.Set(render_pass, data.bind_group)
+			b.solid_pipeline.Set(b.render_pass, data.bind_group)
 
 			colour := [4]float32{0, 0, 0, 0}
 
@@ -122,14 +141,16 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 				colour[3] = a.(float32)
 			}
 
-			b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
 			b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
+		} else if e.do_frost() {
+			b.frost_pipeline.Set(b.render_pass, data.bind_group)
 		} else {
-			b.texture_pipeline.Set(render_pass, data.bind_group)
-			b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+			b.texture_pipeline.Set(b.render_pass, data.bind_group)
 		}
 
-		data.model.draw(render_pass)
+		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+
+		data.model.draw(b.render_pass)
 
 		// Render children.
 
@@ -148,7 +169,7 @@ func (b *WgpuBackend) render(elem IElem, render_pass *wgpu.RenderPassEncoder) {
 
 			// Actually render child.
 
-			b.render(child, render_pass)
+			b.render(child)
 		}
 	default:
 		panic("Unknown element kind.")
@@ -188,27 +209,37 @@ func GoUiBackendWgpuInit(
 	var err error
 
 	if backend.title_font, err = NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Black.ttf", 70); err != nil {
-		println("Failed to load title font.")
+		println("Failed to load title font.", err)
 		return
 	}
 
 	if backend.paragraph_font, err = NewFontFromFile("/home/obiwac/.local/share/fonts/Montserrat/Montserrat-Regular.ttf", 20); err != nil {
-		println("Failed to load title font.")
+		println("Failed to load title font.", err)
 		return
 	}
 
 	if backend.regular_pipeline, err = backend.NewTextPipeline(); err != nil {
-		println("Failed to create regular pipeline.")
+		println("Failed to create regular pipeline.", err)
 		return
 	}
 
 	if backend.solid_pipeline, err = backend.NewSolidPipeline(); err != nil {
-		println("Failed to create solid pipeline.")
+		println("Failed to create solid pipeline.", err)
 		return
 	}
 
 	if backend.texture_pipeline, err = backend.NewTexturePipeline(); err != nil {
-		println("Failed to create texture pipeline.")
+		println("Failed to create texture pipeline.", err)
+		return
+	}
+
+	if backend.frost_pipeline, err = backend.NewFrostPipeline(); err != nil {
+		println("Failed to create frost pipeline.", err)
+		return
+	}
+
+	if err = backend.create_frost_pipelines(); err != nil {
+		println("Failed to create frost pipelines.", err)
 		return
 	}
 
@@ -235,25 +266,52 @@ func GoUiBackendWgpuRender(
 	x_res, y_res uint32,
 ) {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
-	backend := ui.backend.(*WgpuBackend)
+	b := ui.backend.(*WgpuBackend)
 
-	if x_res != ui.root.flow_w || y_res != ui.root.flow_h { // Make UI dirty on resize.
+	// Make UI dirty on resize.
+	// Also, recreate the render buffers.
+
+	if x_res != ui.root.flow_w || y_res != ui.root.flow_h {
 		ui.dirty = true
+
+		b.x_res, b.y_res = x_res, y_res
+
+		if b.prev_render_buf != nil {
+			b.prev_render_buf.Release()
+		}
+
+		if b.render_buf != nil {
+			b.render_buf.Release()
+		}
+
+		var err error
+
+		if b.prev_render_buf, err = b.NewRenderBuf("Render buffer (A)", x_res, y_res, b.format); err != nil {
+			panic(err)
+		}
+
+		if b.render_buf, err = b.NewRenderBuf("Render buffer (B)", x_res, y_res, b.format); err != nil {
+			panic(err)
+		}
 	}
+
+	// Do reflow if UI is dirty.
 
 	if ui.dirty {
 		ui.reflow(x_res, y_res)
 		ui.dirty = false
 	}
 
-	cmd_enc := backend.dev.CommandEncoderFromRaw(cmd_enc_raw)
-	frame := wgpu.TextureViewFromRaw(frame_raw)
+	// Create initial render pass.
+	// All passes should use LoadOpLoad except for the first.
 
-	render_pass_descr := wgpu.RenderPassDescriptor{
-		Label: "render_pass",
+	b.cmd_enc = b.dev.CommandEncoderFromRaw(cmd_enc_raw)
+
+	b.render_pass = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
+		Label: "Initial render pass",
 		ColorAttachments: []wgpu.RenderPassColorAttachment{
 			{
-				View:    &frame,
+				View:    b.render_buf.view,
 				LoadOp:  wgpu.LoadOpClear,
 				StoreOp: wgpu.StoreOpStore,
 				ClearValue: wgpu.Color{
@@ -264,15 +322,27 @@ func GoUiBackendWgpuRender(
 				},
 			},
 		},
-	}
+	})
 
-	render_pass := cmd_enc.BeginRenderPass(&render_pass_descr)
-	defer render_pass.Release()
+	// Actually render UI.
 
-	backend.x_res = x_res
-	backend.y_res = y_res
+	b.render(&ui.root)
 
-	backend.render(&ui.root, render_pass)
+	// End last render pass.
 
-	render_pass.End()
+	b.render_pass.End()
+	b.render_pass.Release()
+
+	// Write last render buffer texture to the final texture view.
+	// This is kind of inefficient for the last render, because we are doing one extra copy for no reason.
+	// I guess a solution would be to look forward to see if there are any other frost elements, and just use the swapchain buffer as the new render buffer if there are none left.
+	// Also, we could fold frost elements together by checking if they are overlapping or not - if not, we render them all in the same render pass.
+
+	final_tex := b.dev.TextureFromRaw(frame_raw)
+
+	b.cmd_enc.CopyTextureToTexture(b.render_buf.tex.AsImageCopy(), final_tex.AsImageCopy(), &wgpu.Extent3D{
+		Width:              x_res,
+		Height:             y_res,
+		DepthOrArrayLayers: 1,
+	})
 }

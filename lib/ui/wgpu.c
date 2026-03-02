@@ -48,7 +48,7 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device, WGPUTex
 	return 0;
 }
 
-int ui_wgpu_render(ui_t ui, WGPUTextureView frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res) {
+int ui_wgpu_render(ui_t ui, WGPUTexture frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res) {
 	assert(ui != NULL);
 	ui_ctx_t const ctx = ui->ctx;
 
@@ -310,15 +310,6 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 	assert(surf_tex.texture != NULL);
 	int rv = -1;
 
-	LOG_V(cls, "Creating texture view from surface texture.");
-
-	WGPUTextureView const frame = aqua_wgpuTextureCreateView(state->wgpu_ctx, surf_tex.texture, NULL);
-
-	if (frame == NULL) {
-		LOG_E(cls, "Failed to create texture view.");
-		goto err_create_view;
-	}
-
 	LOG_V(cls, "Creating command encoder.");
 
 	WGPUCommandEncoderDescriptor const encoder_descr = {
@@ -334,7 +325,7 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 
 	LOG_V(cls, "Rendering UI itself.");
 
-	if (ui_wgpu_render(state->ui, frame, encoder, state->x_res, state->y_res) < 0) {
+	if (ui_wgpu_render(state->ui, surf_tex.texture, encoder, state->x_res, state->y_res) < 0) {
 		LOG_E(cls, "Failed to render UI.");
 		goto err_render_ui;
 	}
@@ -370,10 +361,6 @@ err_render_ui:
 	aqua_wgpuCommandEncoderRelease(state->wgpu_ctx, encoder);
 
 err_create_encoder:
-
-	aqua_wgpuTextureViewRelease(state->wgpu_ctx, frame);
-
-err_create_view:
 
 	aqua_wgpuTextureRelease(state->wgpu_ctx, surf_tex.texture);
 
