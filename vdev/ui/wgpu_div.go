@@ -21,7 +21,7 @@ type WgpuBackendDivData struct {
 	bind_group *wgpu.BindGroup
 
 	model *Model
-	frost WgpuBackendDivDataFrost
+	frost *WgpuBackendDivDataFrost
 }
 
 func (d *WgpuBackendDivData) release() {
@@ -39,6 +39,9 @@ func (d *WgpuBackendDivData) release() {
 	}
 	if d.model != nil {
 		d.model.release()
+	}
+	if d.frost != nil {
+		d.frost.Release()
 	}
 }
 

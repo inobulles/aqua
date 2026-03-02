@@ -104,6 +104,10 @@ func (b *WgpuBackend) NewRenderBuf(name string, w, h uint32, format wgpu.Texture
 }
 
 func (t *WgpuTexture) Release() {
+	if t == nil {
+		return
+	}
+
 	t.tex.Release()
 	t.view.Release()
 	t.sampler.Release()

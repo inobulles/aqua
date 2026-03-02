@@ -21,10 +21,10 @@ type WgpuBackendFrost struct {
 
 type WgpuBackendDivDataFrost struct {
 	render_bufs [WGPU_FROST_DOWNSAMPLE_STEPS]*WgpuTexture
-	last        *WgpuTexture
+	last        *WgpuTexture // Reference to one of the textures in 'render_bufs'.
 
 	frost_param_bufs      [WGPU_FROST_DOWNSAMPLE_STEPS]*wgpu.Buffer
-	final_frost_param_buf *wgpu.Buffer
+	final_frost_param_buf *wgpu.Buffer // Reference to one of the buffers in 'frost_param_bufs'.
 	res_x, res_y          [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
 }
 
@@ -84,8 +84,20 @@ func (b *WgpuBackend) create_frost_pipelines() error {
 	return nil
 }
 
+func (f *WgpuBackendDivDataFrost) Release() {
+	for _, r := range f.render_bufs {
+		r.Release()
+	}
+
+	for _, b := range f.frost_param_bufs {
+		if b != nil {
+			b.Release()
+		}
+	}
+}
+
 func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
-	f := &d.frost
+	f := WgpuBackendDivDataFrost{}
 	var err error
 
 	// Prepare render buffers.
@@ -106,6 +118,7 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 		f.res_x[i], f.res_y[i] = cur_w, cur_h
 
 		if f.render_bufs[i], err = b.NewRenderBuf("Frost", cur_w, cur_h, b.format); err != nil {
+			f.Release()
 			return err
 		}
 
@@ -115,6 +128,7 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 			Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 		}); err != nil {
 			println("Can't create frost params vector buffer.", err)
+			f.Release()
 			return err
 		}
 	}
@@ -128,6 +142,7 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 	}); err != nil {
 		println("Can't create final frost params vector buffer.", err)
+		f.Release()
 		return err
 	}
 
@@ -139,6 +154,8 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 	// XXX Set last to something as a hack, but ideally we should've rendered the frost before even tried to access it (in WgpuBackendDivData.create_from_bind_group()).
 
 	f.last = f.render_bufs[1]
+	d.frost = &f
+
 	return nil
 }
 
