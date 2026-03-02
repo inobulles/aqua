@@ -39,20 +39,27 @@ var s: sampler;
 @group(0) @binding(2)
 var<uniform> frost_params: FrostParams;
 
+fn sample(centre: vec2f, off: vec2f) -> vec3f {
+	let colour = textureSample(t, s, centre + off);
+	return colour.rgb * colour.rgb; // Gamma correction (approximating with ^2).
+}
+
 @fragment
 fn frag_main(vert: VertOut) -> FragOut {
-	var centre: vec2f = vert.pos.xy * frost_params.size + frost_params.pos;
-	var inv_res: vec2f = 1 / frost_params.res;
-	var o: vec2f = inv_res / 2 * frost_params.off;
+	let centre = vert.pos.xy * frost_params.size + frost_params.pos;
+	let inv_res = 1 / frost_params.res;
+	let o = inv_res / 2 * frost_params.off;
+
+	var colour = 4 * sample(centre, vec2f(0., 0.));
+
+	colour += sample(centre, vec2f( o.x,  o.y));
+	colour += sample(centre, vec2f(-o.x,  o.y));
+	colour += sample(centre, vec2f( o.x, -o.y));
+	colour += sample(centre, vec2f(-o.x, -o.y));
+
+	colour = sqrt(colour / 8);
 
 	var out: FragOut;
-	out.colour = 4 * textureSample(t, s, centre);
-
-	out.colour += textureSample(t, s, centre + vec2f( o.x,  o.y));
-	out.colour += textureSample(t, s, centre + vec2f(-o.x,  o.y));
-	out.colour += textureSample(t, s, centre + vec2f( o.x, -o.y));
-	out.colour += textureSample(t, s, centre + vec2f(-o.x, -o.y));
-
-	out.colour /= 8;
+	out.colour = vec4f(colour, 1.);
 	return out;
 }
