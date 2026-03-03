@@ -159,6 +159,35 @@ func (d *WgpuBackendDivData) create_frost(b *WgpuBackend, w, h uint32) error {
 	return nil
 }
 
+// Find the last frost div to be rendered.
+// This is needed so we ping-pong to the final output render buffer instead of one of the intermediate render buffers once the last frost element is encountered.
+func (b *WgpuBackend) find_last_frost(d *Div) *Div {
+	// Check if any of our children (which are gonna be in front of us so last to be rendered) are frosted.
+	// This is a DFS that goes front to back.
+
+	for i := len(d.children) - 1; i >= 0; i-- {
+		child := d.children[i]
+
+		if child.ElemBase().kind == ElemKindDiv {
+			frost := b.find_last_frost(child.(*Div))
+
+			if frost != nil {
+				return frost
+			}
+		}
+	}
+
+	// See if we are frosted ourselves.
+
+	if d.do_frost() {
+		return d
+	}
+
+	// Otherwise, we have nothing to do with frost.
+
+	return nil
+}
+
 func (b *WgpuBackend) encounter_frost(d *Div) {
 	f := b.frost
 

@@ -37,7 +37,8 @@ type WgpuBackend struct {
 	texture_pipeline *TexturePipeline
 	frost_pipeline   *FrostPipeline
 
-	frost WgpuBackendFrost
+	last_frost *Div
+	frost      WgpuBackendFrost
 }
 
 type IWgpuBackendData interface {
@@ -251,7 +252,7 @@ func GoUiBackendWgpuInit(
 //export GoUiBackendWgpuRender
 func GoUiBackendWgpuRender(
 	ui_raw C.uintptr_t,
-	frame_raw unsafe.Pointer,
+	frame_raw unsafe.Pointer, // XXX This cannot have wgpu.TextureUsageCopyDst on it!
 	cmd_enc_raw unsafe.Pointer,
 	x_res, y_res uint32,
 ) {
@@ -292,8 +293,27 @@ func GoUiBackendWgpuRender(
 		ui.dirty = false
 	}
 
+	// Get view for our frame (swapchain texture).
+
+	frame_tex := b.dev.TextureFromRaw(frame_raw)
+	frame_view, err := frame_tex.CreateView(nil)
+	if err != nil {
+		panic(err)
+	}
+	defer frame_view.Release()
+
+	// Find last frost element.
+
+	b.last_frost = b.find_last_frost(&ui.root)
+
 	// Create initial render pass.
 	// All passes should use LoadOpLoad except for the first.
+	// If there are no frost elements, we can render to the swapchain texture directly.
+
+	initial_view := frame_view
+	if b.last_frost != nil {
+		initial_view = b.render_buf.view
+	}
 
 	b.cmd_enc = b.dev.CommandEncoderFromRaw(cmd_enc_raw)
 
@@ -301,15 +321,10 @@ func GoUiBackendWgpuRender(
 		Label: "Initial render pass",
 		ColorAttachments: []wgpu.RenderPassColorAttachment{
 			{
-				View:    b.render_buf.view,
-				LoadOp:  wgpu.LoadOpClear,
-				StoreOp: wgpu.StoreOpStore,
-				ClearValue: wgpu.Color{
-					R: 0.0,
-					G: 0.0,
-					B: 0.0,
-					A: 0.5,
-				},
+				View:       initial_view,
+				LoadOp:     wgpu.LoadOpClear,
+				StoreOp:    wgpu.StoreOpStore,
+				ClearValue: wgpu.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.5},
 			},
 		},
 	})
@@ -322,17 +337,4 @@ func GoUiBackendWgpuRender(
 
 	b.render_pass.End()
 	b.render_pass.Release()
-
-	// Write last render buffer texture to the final texture view.
-	// This is kind of inefficient for the last render, because we are doing one extra copy for no reason.
-	// I guess a solution would be to look forward to see if there are any other frost elements, and just use the swapchain buffer as the new render buffer if there are none left.
-	// Also, we could fold frost elements together by checking if they are overlapping or not - if not, we render them all in the same render pass.
-
-	final_tex := b.dev.TextureFromRaw(frame_raw)
-
-	b.cmd_enc.CopyTextureToTexture(b.render_buf.tex.AsImageCopy(), final_tex.AsImageCopy(), &wgpu.Extent3D{
-		Width:              x_res,
-		Height:             y_res,
-		DepthOrArrayLayers: 1,
-	})
 }
