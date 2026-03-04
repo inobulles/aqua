@@ -60,6 +60,8 @@ typedef struct __attribute__((packed)) {
 	uint64_t raw_vk_image;
 	uint64_t raw_vk_cmd_pool;
 	uint64_t raw_vk_cmd_buf;
+	uint32_t x_res;
+	uint32_t y_res;
 } redraw_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -272,9 +274,14 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	LOG_V(cls, "Take care of rendering.");
 
+	// XXX AAAAAAAAAAAAAAAAAAAAAAAAAA
+	wlr_render_pass_submit(wlr_renderer_begin_buffer_pass(wm->wlr_renderer, buf, NULL));
+
 	redraw_intr_t intr = {
 		.intr = INTR_REDRAW,
 		.raw_vk_image = (uintptr_t) attribs.image,
+		.x_res = output->output->width,
+		.y_res = output->output->height,
 	};
 
 	interrupt(wm, sizeof intr, &intr);

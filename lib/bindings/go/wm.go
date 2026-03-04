@@ -8,7 +8,15 @@ package aqua
 
 #include <aqua/wm.h>
 
-extern void go_lib_bindings_wm_redraw_cb(wm_t wm, void* raw_vk_image, void* raw_vk_cmd_pool, void* raw_vk_cmd_buf, void* data);
+extern void go_lib_bindings_wm_redraw_cb(
+	wm_t wm,
+	void* raw_vk_image,
+	void* raw_vk_cmd_pool,
+	void* raw_vk_cmd_buf,
+	uint32_t x_res,
+	uint32_t y_res,
+	void* data
+);
 extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
 extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
@@ -122,7 +130,7 @@ func (w *Wm) WinNotifyMouseButton(win WmWin, time uint32, pressed bool, button u
 	C.wm_win_notify_mouse_button(w.wm, C.wm_win_t(win), C.uint32_t(time), C.bool(pressed), C.uint32_t(button))
 }
 
-type WmRedrawCb func(raw_vk_image unsafe.Pointer, raw_vk_cmd_pool unsafe.Pointer, raw_vk_cmd_buf unsafe.Pointer)
+type WmRedrawCb func(raw_vk_image unsafe.Pointer, raw_vk_cmd_pool unsafe.Pointer, raw_vk_cmd_buf unsafe.Pointer, x_res, y_res uint32)
 
 //export go_lib_bindings_wm_redraw_cb
 func go_lib_bindings_wm_redraw_cb(
@@ -130,12 +138,13 @@ func go_lib_bindings_wm_redraw_cb(
 	raw_vk_image unsafe.Pointer,
 	raw_vk_cmd_pool unsafe.Pointer,
 	raw_vk_cmd_buf unsafe.Pointer,
+	x_res, y_res C.uint32_t,
 	data unsafe.Pointer,
 ) {
 	handle := (cgo.Handle)(data)
 
 	if cb, ok := handle.Value().(WmRedrawCb); ok {
-		cb(raw_vk_image, raw_vk_cmd_pool, raw_vk_cmd_buf)
+		cb(raw_vk_image, raw_vk_cmd_pool, raw_vk_cmd_buf, uint32(x_res), uint32(y_res))
 	}
 }
 
