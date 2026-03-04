@@ -86,12 +86,12 @@ static void new_win(wm_t wm, wm_win_t win, char const* app_id, void* data) {
 
 float x = 0;
 
-static void redraw(wm_t wm, void* raw_image, void* data) {
+static void redraw(wm_t wm, void* raw_image, uint32_t x_res, uint32_t y_res, void* data) {
 	(void) wm;
 
 	state_t* const s = data;
 
-	WGPUTexture const tex = aqua_wgpuRenderTextureFromVkImage(s->wgpu_ctx, s->device, raw_image, WGPUTextureFormat_RGBA8Snorm, 1280, 720);
+	WGPUTexture const tex = aqua_wgpuRenderTextureFromVkImage(s->wgpu_ctx, s->device, raw_image, WGPUTextureFormat_RGBA8Snorm, x_res, y_res);
 	WGPUTextureView const view = aqua_wgpuTextureCreateView(s->wgpu_ctx, tex, NULL);
 
 	WGPUQueue const queue = aqua_wgpuDeviceGetQueue(s->wgpu_ctx, s->device);
