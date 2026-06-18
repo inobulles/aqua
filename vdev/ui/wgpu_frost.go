@@ -17,6 +17,7 @@ const WGPU_FROST_SAMPLE_OFF = 5
 type WgpuBackendFrost struct {
 	kawase_down_pipeline *Pipeline
 	kawase_up_pipeline   *Pipeline
+	blit_pipeline        *Pipeline
 }
 
 type WgpuBackendDivDataFrost struct {
@@ -33,6 +34,9 @@ var kawase_down_shader_src string
 
 //go:embed shaders/frost/kawase_up.wgsl
 var kawase_up_shader_src string
+
+//go:embed shaders/frost/blit.wgsl
+var blit_shader_src string
 
 func (b *WgpuBackend) create_frost_pipelines() error {
 	f := &b.frost
@@ -78,6 +82,33 @@ func (b *WgpuBackend) create_frost_pipelines() error {
 
 	if f.kawase_up_pipeline, err = b.NewPipeline("Frost (dual Kawase upsampling)", kawase_up_shader_src,
 		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
+		return err
+	}
+
+	// Create blit pipeline.
+	// This is used to copy the previous render buffer to the swapchain texture, which can't be a CopyTextureToTexture destination.
+
+	blit_bind_group_layout := []wgpu.BindGroupLayoutEntry{
+		{ // Source texture.
+			Binding:    0,
+			Visibility: wgpu.ShaderStageFragment,
+			Texture: wgpu.TextureBindingLayout{
+				Multisampled:  false,
+				ViewDimension: wgpu.TextureViewDimension2D,
+				SampleType:    wgpu.TextureSampleTypeFloat,
+			},
+		},
+		{ // Source texture sampler.
+			Binding:    1,
+			Visibility: wgpu.ShaderStageFragment,
+			Sampler: wgpu.SamplerBindingLayout{
+				Type: wgpu.SamplerBindingTypeFiltering,
+			},
+		},
+	}
+
+	if f.blit_pipeline, err = b.NewPipeline("Frost (blit)", blit_shader_src,
+		blit_bind_group_layout, []wgpu.VertexBufferLayout{}, nil); err != nil {
 		return err
 	}
 
@@ -203,12 +234,49 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 	b.prev_render_buf = tmp
 
 	// Then, copy over the contents of the previous render buffer into the new one.
+	// For intermediate flips, CopyTextureToTexture is a plain GPU DMA copy with no shader overhead, which I *think* would be quicker, but I have not benchmarked this.
+	// For the last flip, the destination is the swapchain texture which doesn't always support TextureUsageCopyDst, so we use a fullscreen quad blit render pass instead.
 
-	b.cmd_enc.CopyTextureToTexture(b.prev_render_buf.tex.AsImageCopy(), b.render_buf.tex.AsImageCopy(), &wgpu.Extent3D{
-		Width:              b.x_res,
-		Height:             b.y_res,
-		DepthOrArrayLayers: 1,
-	})
+	if d != b.last_frost {
+		b.cmd_enc.CopyTextureToTexture(b.prev_render_buf.tex.AsImageCopy(), b.render_buf.tex.AsImageCopy(), &wgpu.Extent3D{
+			Width:              b.x_res,
+			Height:             b.y_res,
+			DepthOrArrayLayers: 1,
+		})
+	} else {
+		blit_pass := b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
+			Label: "Frost blit to swapchain render pass",
+			ColorAttachments: []wgpu.RenderPassColorAttachment{
+				{
+					View:    b.swapchain_view,
+					LoadOp:  wgpu.LoadOpClear,
+					StoreOp: wgpu.StoreOpStore,
+				},
+			},
+		})
+
+		blit_bind_group, err := b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
+			Layout: b.frost.blit_pipeline.bind_group_layout,
+			Entries: []wgpu.BindGroupEntry{
+				{
+					Binding:     0,
+					TextureView: b.prev_render_buf.view,
+				},
+				{
+					Binding: 1,
+					Sampler: b.prev_render_buf.sampler,
+				},
+			},
+		})
+		if err != nil {
+			println(err)
+		}
+
+		b.frost.blit_pipeline.Set(blit_pass, blit_bind_group)
+		blit_pass.Draw(6, 1, 0, 0)
+		blit_pass.End()
+		blit_pass.Release()
+	}
 
 	// Now, we move on to rendering the frost.
 	// The first downsample buffer samples straight from prev_render_buf.
@@ -360,12 +428,18 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 	}
 
 	// Finally, now that our frost is ready, start a new render pass with our new render buffer for the rest of UI rendering.
+	// If we're rendering the last frost element, render straight to the swapchain texture.
+
+	next_view := b.render_buf.view
+	if d == b.last_frost {
+		next_view = b.swapchain_view
+	}
 
 	b.render_pass = b.cmd_enc.BeginRenderPass(&wgpu.RenderPassDescriptor{
 		Label: "Intermediate render pass",
 		ColorAttachments: []wgpu.RenderPassColorAttachment{
 			{
-				View:    b.render_buf.view,
+				View:    next_view,
 				LoadOp:  wgpu.LoadOpLoad,
 				StoreOp: wgpu.StoreOpStore,
 			},
