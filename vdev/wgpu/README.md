@@ -19,6 +19,18 @@ python gen.py
 
 This will generate a new `main.c` device source file from the `webgpu.h` header, provided it is placed in the default location for the Bob temporary prefix.
 
+## Making modifications to `wgpu-native`
+
+The Meson build for `wgpu-native` doesn't actually run Cargo again to rebuild when modifications are made.
+To trigger a rebuild, generally the easiest option is to just delete the `.bob` directory:
+
+```sh
+rm -rf .bob
+```
+
+This will cause Meson to have to reconfigure, but it won't actually delete the Cargo build cache as that is held separately in `target/`.
+Then, to make the .wgpu VDEV actually use the newly built library, you have to rebuild it too (this is a bug in Bob, see [bob#110](https://github.com/inobulles/bob/issues/110)), which you can just trigger by touching `main.c` or something.
+
 ## Extensions
 
 To facilitate the use of .wgpu in the .wm VDEV, a couple AQUA-specific unofficial extensions have been added on top of the WebGPU API.
