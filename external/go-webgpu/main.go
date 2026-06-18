@@ -12,9 +12,11 @@ package wgpu
 wgpu_ctx_t gowebgpu_ctx;
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
 
-import "obiw.ac/aqua"
+	"obiw.ac/aqua"
+)
 
 type WgpuCtx struct {
 	ctx C.wgpu_ctx_t
@@ -82,6 +84,8 @@ func (i *Instance) DeviceFromWm(wm *aqua.Wm) Device {
 }
 
 func (d *Device) CommandEncoderFromRaw(cmd_enc_raw unsafe.Pointer) CommandEncoder {
+	C.aqua_wgpuDeviceAddRef(global_ctx.ctx, d.ref)
+
 	return CommandEncoder{
 		deviceRef: d.ref,
 		ref:       (C.WGPUCommandEncoder)(cmd_enc_raw),
@@ -99,6 +103,8 @@ func (v *TextureView) ToRaw() unsafe.Pointer {
 }
 
 func (d *Device) TextureFromRaw(tex_raw unsafe.Pointer) Texture {
+	C.aqua_wgpuDeviceAddRef(global_ctx.ctx, d.ref)
+
 	return Texture{
 		deviceRef: d.ref,
 		ref:       (C.WGPUTexture)(tex_raw),
@@ -115,6 +121,8 @@ func (d *Device) TextureFromVkImage(
 	format TextureFormat,
 	w, h uint32,
 ) Texture {
+	C.aqua_wgpuDeviceAddRef(global_ctx.ctx, d.ref)
+
 	return Texture{
 		deviceRef: d.ref,
 		ref: C.aqua_wgpuTextureFromVkImage(
@@ -131,6 +139,8 @@ func (d *Device) CommandEncoderFromVk(
 	raw_cmd_pool unsafe.Pointer,
 	raw_cmd_buf unsafe.Pointer,
 ) CommandEncoder {
+	C.aqua_wgpuDeviceAddRef(global_ctx.ctx, d.ref)
+
 	return CommandEncoder{
 		deviceRef: d.ref,
 		ref: C.aqua_wgpuCommandEncoderFromVk(
@@ -143,6 +153,8 @@ func (d *Device) CommandEncoderFromVk(
 }
 
 func (d *Device) UiInit(ui *aqua.Ui, format TextureFormat) {
+	// TODO Probably should reference device here, but we need to free it later then.
+
 	C.ui_wgpu_init(
 		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
 		C.wgpu_get_hid(global_ctx.ctx),
