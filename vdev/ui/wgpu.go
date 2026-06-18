@@ -37,8 +37,9 @@ type WgpuBackend struct {
 	texture_pipeline *TexturePipeline
 	frost_pipeline   *FrostPipeline
 
-	last_frost *Div
-	frost      WgpuBackendFrost
+	swapchain_view *wgpu.TextureView
+	last_frost     *Div
+	frost          WgpuBackendFrost
 }
 
 type IWgpuBackendData interface {
@@ -304,6 +305,7 @@ func GoUiBackendWgpuRender(
 
 	// Find last frost element.
 
+	b.swapchain_view = frame_view
 	b.last_frost = b.find_last_frost(&ui.root)
 
 	// Create initial render pass.
