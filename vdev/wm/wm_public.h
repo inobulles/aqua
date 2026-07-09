@@ -11,5 +11,6 @@ typedef struct {
 	void* vk_instance;
 	void* vk_phys_dev;
 	void* vk_dev;
+	void* vk_queue;
 	uint32_t vk_queue_family;
 } aqua_wm_t;
