@@ -100,7 +100,7 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		conn->alive = true;
 		conn->fn_count = notif->conn.fn_count;
 
-		// notif->conn.fns may not live after this callback returns (see what .win does e.g.), so we must copy it.
+		// Per kos_notif_cb_t, notif is only valid for the duration of this callback, so copy fns.
 
 		conn->fns = notif->conn.fns;
 		conn->fns = malloc(conn->fn_count * sizeof *conn->fns);
