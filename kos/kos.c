@@ -99,7 +99,12 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 
 		conn->alive = true;
 		conn->fn_count = notif->conn.fn_count;
+
+		// notif->conn.fns may not live after this callback returns (see what .win does e.g.), so we must copy it.
+
 		conn->fns = notif->conn.fns;
+		conn->fns = malloc(conn->fn_count * sizeof *conn->fns);
+		memcpy((void*) conn->fns, notif->conn.fns, conn->fn_count * sizeof *conn->fns);
 
 		break;
 	default:
@@ -607,6 +612,10 @@ void kos_vdev_disconn(uint64_t conn_id) {
 
 	if (conns[conn_id].type == CONN_TYPE_GV) {
 		close(conns[conn_id].sock);
+
+		// Need to free this, as we had to malloc it previously.
+
+		free((void*) conns[conn_id].fns);
 	}
 
 	conns[conn_id].alive = false;
