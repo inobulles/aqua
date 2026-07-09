@@ -297,8 +297,6 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 		},
 	};
 
-	// TODO Where the hell do we free all of this?
-
 	// Deserialize the rest of the CONN_VDEV_RES packet.
 
 	notif.conn.consts = malloc(conn_vdev_res->const_count * sizeof *notif.conn.consts);
@@ -332,6 +330,9 @@ static void conn_gv(kos_cookie_t cookie, action_t* action, bool sync) {
 
 	free(conn_vdev_res);
 	client_notif_cb(&notif, client_notif_data);
+
+	free((void*) notif.conn.consts);
+	free((void*) notif.conn.fns);
 
 	return;
 
