@@ -79,10 +79,12 @@ static void notif_cb(kos_notif_t const* notif, void* data) {
 		a->conn_id = notif->conn_id;
 
 		// Keep track of functions for future calls.
-		// TODO We need to copy this memory, as notif->conn.fns gets freed. But first check where its actually being freed because we might not have to free it here.
+		// notif->conn.fns may not live after this callback returns (see what .win does e.g.), so we must copy it.
 
 		a->fn_count = notif->conn.fn_count;
-		a->fns = notif->conn.fns;
+		a->fns = malloc(a->fn_count * sizeof *a->fns);
+		assert(a->fns != NULL);
+		memcpy((void*) a->fns, notif->conn.fns, a->fn_count * sizeof *a->fns);
 
 		// Prepare packet.
 
@@ -359,6 +361,7 @@ void gv_agent_destroy(gv_agent_t* a) {
 
 	kos_vdev_disconn(a->conn_id);
 
+	free((void*) a->fns);
 	free((void*) a->cls);
 	free(a);
 }
