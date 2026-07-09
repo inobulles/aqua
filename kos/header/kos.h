@@ -642,6 +642,15 @@ typedef struct {
 	};
 } kos_notif_t;
 
+/**
+ * Callback type for KOS notifications.
+ *
+ * The {@link kos_notif_t} struct pointed to by `notif` is only valid for the duration of the callback.
+ * Any data needed beyond that must be copied before returning, and may be freed after the callback is returned.
+ *
+ * @param notif The notification received from the KOS.
+ * @param data User-defined data passed to {@link kos_sub_to_notif}.
+ */
 typedef void (*kos_notif_cb_t)(kos_notif_t const* notif, void* data);
 
 /**
@@ -657,8 +666,16 @@ typedef void (*kos_notif_cb_t)(kos_notif_t const* notif, void* data);
  */
 kos_api_vers_t kos_hello(kos_api_vers_t min, kos_api_vers_t max, kos_descr_v4_t* descr);
 
-// Subscribe to notifications about the creation and destruction of VDEVs by registering a callback.
-// Note that `kos_req_vdev` needs to be called after this one for the client to let the KOS know which VDEV specs it requires.
+/**
+ * Subscribe to KOS notifications by registering a callback.
+ *
+ * The callback will be invoked for all KOS events (VDEV attachment/detachment, connection results, call returns, etc.).
+ * Only one callback can be registered at a time; calling this again replaces the previous one.
+ * Note that {@link kos_req_vdev} must be called after this for the KOS to know which VDEV specs the client requires.
+ *
+ * @param cb The callback to invoke on each notification.
+ * @param data User-defined data passed through to `cb` on each invocation.
+ */
 void kos_sub_to_notif(kos_notif_cb_t cb, void* data);
 void kos_flush(bool sync);
 
