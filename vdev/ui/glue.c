@@ -17,7 +17,7 @@ static umber_class_t const* cls = NULL;
 static vid_t only_vid;
 
 static void init(void) {
-	cls = umber_class_new(SPEC, UMBER_LVL_WARN, "aqua.black.ui UI VDRIVER.");
+	cls = umber_class_new(SPEC, UMBER_LVL_WARN, "aquabsd.black.ui UI VDRIVER.");
 	assert(cls != NULL);
 }
 
