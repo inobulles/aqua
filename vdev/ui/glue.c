@@ -17,7 +17,7 @@ static umber_class_t const* cls = NULL;
 static vid_t only_vid;
 
 static void init(void) {
-	cls = umber_class_new(SPEC, UMBER_LVL_WARN, "aqua.black.ui UI VDRIVER.");
+	cls = umber_class_new(SPEC, UMBER_LVL_WARN, "aquabsd.black.ui UI VDRIVER.");
 	assert(cls != NULL);
 }
 
@@ -54,6 +54,11 @@ static kos_const_t const CONSTS[] = {
 		.name = "ELEM_KIND_TEXT",
 		.type = KOS_TYPE_U32,
 		.val.u32 = 1,
+	},
+	{
+		.name = "ELEM_KIND_BUTTON",
+		.type = KOS_TYPE_U32,
+		.val.u32 = 2,
 	},
 };
 
@@ -189,6 +194,16 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_BUF, "data"},
 		},
 	},
+	{
+		.name = "add_button",
+		.ret_type = KOS_TYPE_OPAQUE_PTR,
+		.param_count = 3,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "parent"},
+			{KOS_TYPE_BUF, "semantics"},
+			{KOS_TYPE_BUF, "text"},
+		},
+	},
 	// WebGPU backend specific stuff.
 	{
 		.name = "backend_wgpu_init",
@@ -249,6 +264,7 @@ extern void GoUiDestroy(uintptr_t ui);
 extern uintptr_t GoUiGetRoot(uintptr_t ui);
 extern uintptr_t GoUiAddDiv(uintptr_t parent, char const* semantics, size_t semantics_len);
 extern uintptr_t GoUiAddText(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
+extern uintptr_t GoUiAddButton(uintptr_t parent, char const* semantics, size_t semantics_len, char const* text, size_t text_len);
 extern void GoUiRemElem(uintptr_t elem);
 extern void GoUiMoveElem(uintptr_t elem, uintptr_t new_parent, bool beginning);
 extern bool GoUiSetAttrStr(uintptr_t elem, char const* key, size_t key_len, char const* val, size_t val_len);
@@ -453,12 +469,30 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		}
 
 		break;
-	// WebGPU backend specific stuff.
 	case 14:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
-			LOG_E(cls, "'destroy' called with non-local or NULL UI.");
+			LOG_E(cls, "'add_button' called with non-local or NULL parent.");
+			break;
+		}
+
+		void* const button = (void*) GoUiAddButton(
+			(uintptr_t) ui,
+			(char const*) args[1].buf.ptr,
+			args[1].buf.size,
+			(char const*) args[2].buf.ptr,
+			args[2].buf.size
+		);
+
+		notif.call_ret.ret.opaque_ptr = vdriver_make_opaque_ptr(button);
+		break;
+	// WebGPU backend specific stuff.
+	case 15:
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'backend_wgpu_init' called with non-local or NULL UI.");
 			break;
 		}
 
@@ -473,7 +507,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 
 		GoUiBackendWgpuInit((uintptr_t) ui, args[1].u64, args[2].u64, device, format);
 		break;
-	case 15:
+	case 16:
 		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (ui == NULL) {
