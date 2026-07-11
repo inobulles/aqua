@@ -163,6 +163,41 @@ func (b *WgpuBackend) render(elem IElem) {
 
 			b.render(child)
 		}
+	case *Button:
+		if e.backend_data == nil {
+			b.gen_button_backend_data(e)
+		} else {
+			data := e.backend_data.(*WgpuBackendButtonData)
+			data.bg_model.gen_pane(b, float32(e.flow_w), float32(e.flow_h), 8)
+		}
+
+		data := e.backend_data.(*WgpuBackendButtonData)
+
+		b.solid_pipeline.Set(b.render_pass, data.bg_bind_group)
+
+		colour := [4]float32{0.2, 0.2, 0.8, 1.0}
+
+		if r := e.get_attr("bg.r"); r != nil {
+			colour[0] = r.(float32)
+		}
+		if g := e.get_attr("bg.g"); g != nil {
+			colour[1] = g.(float32)
+		}
+		if bc := e.get_attr("bg.b"); bc != nil {
+			colour[2] = bc.(float32)
+		}
+		if a := e.get_attr("bg.a"); a != nil {
+			colour[3] = a.(float32)
+		}
+
+		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
+		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+		data.bg_model.draw(b.render_pass)
+
+		if data.label_model != nil {
+			b.regular_pipeline.Set(b.render_pass, data.label_bind_group)
+			data.label_model.draw(b.render_pass)
+		}
 	default:
 		panic("Unknown element kind.")
 	}
@@ -172,6 +207,17 @@ func (b *WgpuBackend) calculate_size(elem IElem, max_w, max_h uint32) (w, h uint
 	switch e := elem.(type) {
 	case *Text:
 		return b.get_font(e).Measure(e.text, int(max_w))
+	case *Button:
+		const padding_x uint32 = 24
+		const padding_y uint32 = 12
+
+		if e.text != "" {
+			tw, th := b.paragraph_font.Measure(e.text, 0)
+			return tw + padding_x*2, th + padding_y*2
+		}
+
+		_, fh := b.paragraph_font.Measure("A", 0)
+		return 120, fh + padding_y*2
 	case *Div:
 		panic("Shouldn't be asking backend to calculate size of Div.")
 	default:

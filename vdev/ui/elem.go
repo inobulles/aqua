@@ -18,6 +18,7 @@ type ElemKind int
 const (
 	ElemKindDiv ElemKind = iota
 	ElemKindText
+	ElemKindButton
 )
 
 type IElem interface {
@@ -287,5 +288,18 @@ func (e *Elem) dimension_to_px_y(d Dimension) int32 {
 	panic("Unknown dimension kind.")
 }
 
-func (d *Div) ElemBase() *Elem  { return &d.Elem }
-func (t *Text) ElemBase() *Elem { return &t.Elem }
+type Button struct {
+	Elem
+	text string
+}
+
+func (b Button) construct(ui *Ui, parent IElem, semantic_str string, text string) *Button {
+	return &Button{
+		Elem: construct_elem(ElemKindButton, ui, parent, semantic_str),
+		text: text,
+	}
+}
+
+func (d *Div) ElemBase() *Elem    { return &d.Elem }
+func (t *Text) ElemBase() *Elem   { return &t.Elem }
+func (b *Button) ElemBase() *Elem { return &b.Elem }

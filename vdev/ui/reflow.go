@@ -81,6 +81,11 @@ func (e *Text) reflow(max_w, max_h uint32) {
 	e.flow_w, e.flow_h = ui.backend.calculate_size(e, max_w, max_h)
 }
 
+func (e *Button) reflow(max_w, max_h uint32) {
+	ui := e.ui
+	e.flow_w, e.flow_h = ui.backend.calculate_size(e, max_w, max_h)
+}
+
 func (ui *Ui) reflow(x_res, y_res uint32) {
 	// We only reflow if the UI is dirty (i.e. needs a reflow).
 

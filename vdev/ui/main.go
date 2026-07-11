@@ -55,7 +55,7 @@ func GoUiGetRoot(ui_raw C.uintptr_t) C.uintptr_t {
 	return C.uintptr_t(root_handle)
 }
 
-// TODO A lot of the code in GoUiAddDiv and GoUiAddText can be factored out.
+// TODO A lot of the code in GoUiAddDiv, GoUiAddText, and GoUiAddButton can be factored out.
 
 //export GoUiAddDiv
 func GoUiAddDiv(
@@ -95,6 +95,30 @@ func GoUiAddText(
 	}
 
 	elem := Text{}.construct(ui, parent, C.GoString(text), C.GoString(semantics))
+
+	parent.children = append(parent.children, elem)
+	ui.dirty = true
+
+	handle := cgo.NewHandle(elem)
+	return C.uintptr_t(handle)
+}
+
+//export GoUiAddButton
+func GoUiAddButton(
+	parent_raw C.uintptr_t,
+	semantics *C.char,
+	semantics_len C.size_t,
+	text *C.char,
+	text_len C.size_t,
+) C.uintptr_t {
+	parent := elem_from_raw(parent_raw).(*Div)
+	ui := parent.ui
+
+	if parent.kind != ElemKindDiv {
+		panic("GoUiAddButton: parent is not a div")
+	}
+
+	elem := Button{}.construct(ui, parent, C.GoString(semantics), C.GoString(text))
 
 	parent.children = append(parent.children, elem)
 	ui.dirty = true
