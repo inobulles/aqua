@@ -60,6 +60,8 @@ typedef struct __attribute__((packed)) {
 	uint64_t raw_vk_image;
 	uint64_t raw_vk_cmd_pool;
 	uint64_t raw_vk_cmd_buf;
+	uint32_t x_res;
+	uint32_t y_res;
 } redraw_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -272,9 +274,14 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	LOG_V(cls, "Take care of rendering.");
 
+	// XXX AAAAAAAAAAAAAAAAAAAAAAAAAA
+	wlr_render_pass_submit(wlr_renderer_begin_buffer_pass(wm->wlr_renderer, buf, NULL));
+
 	redraw_intr_t intr = {
 		.intr = INTR_REDRAW,
 		.raw_vk_image = (uintptr_t) attribs.image,
+		.x_res = output->output->width,
+		.y_res = output->output->height,
 	};
 
 	interrupt(wm, sizeof intr, &intr);
@@ -315,6 +322,8 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 		interrupt(toplevel->wm, sizeof intr, &intr);
 	}
 
+	// XXX Destroying currently causes a GPU hang. Why?
+	// Ah, maybe because ownership is passed to WebGPU instead? Hmm... we probably don't want that.
 	// wlr_vk_dummy_cb_destroy_textures(wm->cur_dummy_cmd_buf);
 }
 
@@ -437,6 +446,8 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 	interrupt(wm, sizeof intr, &intr);
 }
 
+#include <unistd.h>
+
 static void toplevel_unmap(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, unmap);
 	wm_t* const wm = toplevel->wm;
@@ -456,6 +467,8 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 
 	interrupt(wm, sizeof intr, &intr);
 }
+
+#include <sys/mman.h>
 
 static void toplevel_commit(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
@@ -477,6 +490,14 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	struct wlr_surface* const surf = target_surf(xdg_toplevel);
 	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
 
+	if (tex == NULL) {
+		return;
+	}
+
+	// wlr_vk_texture_wait_dmabuf_fence(tex);
+	// wlr_vk_texture_acquire_foreign(tex);
+
+#if true
 	int width = surf->current.width;
 	int height = surf->current.height;
 
@@ -500,10 +521,24 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 		return;
 	}
 
+	/*
+	for (size_t i = 0; i < (size_t) (width * height); i++) {
+		uint32_t const pixel = ((uint32_t*) tmp)[i];
+
+		if (pixel != 0xf2e2e2e2) {
+			printf("pixel is different! %x\n", pixel);
+		}
+	}
+	*/
+
 	free(tmp);
+#else
+	// wlr_vk_renderer_flush_staging(wm->wlr_renderer);
+#endif
 
 	struct wlr_vk_image_attribs attribs;
 	wlr_vk_texture_get_image_attribs(tex, &attribs);
+	LOG_V(cls, "Commit %s: VkImage=%p", xdg_toplevel->app_id, (void*) attribs.image);
 
 	// TODO We need to figure out a way to not free the VkImage (in vulkan_texture_destroy) before the scene has had a chance to render, i.e. before INTR_REDRAW returns.
 	// We could create some kind of dummy command buffer on wlr_texture.last_used_cb, so that when vulkan_texture_destroy is called, we can just add stuff there and then extract it and destroy the textures ourselves when INTR_REDRAW returns control back to us.
@@ -523,6 +558,11 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	};
 
 	interrupt(wm, sizeof intr, &intr);
+
+	// XXX Wait for the GPU to finish reading the texture before returning.
+	// Without this, the client may receive wl_buffer.release on the next commit
+	// and start writing to the buffer while our GPU work is still in flight.
+	// vkDeviceWaitIdle(wm->public.vk_dev);
 }
 
 static void toplevel_destroy(struct wl_listener* listener, void* data) {
@@ -968,6 +1008,7 @@ wm_t* wm_vdev_create(void) {
 	wm->public.vk_instance = wlr_vk_renderer_get_instance(wm->wlr_renderer);
 	wm->public.vk_phys_dev = wlr_vk_renderer_get_physical_device(wm->wlr_renderer);
 	wm->public.vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
+	wm->public.vk_queue = wlr_vk_renderer_get_queue(wm->wlr_renderer);
 	wm->public.vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
 
 	wm->cur_dummy_cmd_buf = wlr_vk_create_dummy_cb();
