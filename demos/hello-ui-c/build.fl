@@ -5,6 +5,7 @@ import bob
 
 deps = [
 	Dep.local("../../vdev/ui"),
+	Dep.local("../../vdev/win"),
 	Dep.local("../../kos"),
 ]
 
