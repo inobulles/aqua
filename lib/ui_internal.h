@@ -30,6 +30,7 @@ struct ui_ctx_t {
 	struct {
 		uint32_t ELEM_KIND_DIV;
 		uint32_t ELEM_KIND_TEXT;
+		uint32_t ELEM_KIND_BUTTON;
 	} consts;
 
 	struct {
@@ -38,6 +39,7 @@ struct ui_ctx_t {
 		uint32_t get_root;
 		uint32_t add_div;
 		uint32_t add_text;
+		uint32_t add_button;
 		uint32_t rem_elem;
 		uint32_t move_elem;
 		uint32_t set_attr_str;
