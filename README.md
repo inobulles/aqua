@@ -67,6 +67,39 @@ Here is a list of the components and their respective subdirectories held within
 
 More detailed information may be found in the READMEs of each subdirectory respectively.
 
+## Dependencies
+
+### FreeBSD
+
+On FreeBSD, install dependencies with:
+
+```console
+pkg install meson go127 pkgconf ninja
+rustup default stable
+```
+
+(This list may be incomplete at the moment.)
+
+### Ubuntu
+
+On Ubuntu (24.04 or newer), install dependencies with:
+
+```console
+sudo apt install build-essential pkg-config pipx ninja-build golang-go rustup libclang-dev libasound2-dev libexpat1-dev libxml2-dev libinput-dev libvulkan-dev glslang-tools
+pipx install meson
+pipx ensurepath
+rustup default stable
+```
+
+Meson is installed with pipx rather than apt because the version Ubuntu 24.04 ships (1.3) is too old for some of wlroots' dependencies.
+Make sure `~/.local/bin` comes before `/usr/bin` in your `PATH` (which is what `pipx ensurepath` does), so that this version of Meson is used.
+
+If using X11, also do:
+
+```console
+sudo apt install libxcb-dri3-dev libxcb-present-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-xinput-dev
+```
+
 ## Older versions
 
 At some point in the future, I'd also like to clean up all previous versions of AQUA and bring their history into this repo.
