@@ -81,7 +81,7 @@ func (b *WgpuBackend) NewTexture(name string, w, h uint32, data []byte) (*WgpuTe
 		return nil, err
 	}
 
-	if err = b.dev.GetQueue().WriteTexture(
+	if err = b.queue.WriteTexture(
 		tex.tex.AsImageCopy(),
 		data,
 		&wgpu.TexelCopyBufferLayout{
