@@ -1097,10 +1097,8 @@ wm_t* wm_vdev_create(void) {
 }
 
 void wm_vdev_destroy(wm_t* wm) {
-	wl_display_destroy_clients(wm->display);
-
 	if (wm->display != NULL) {
-		wl_display_destroy(wm->display);
+		wl_display_destroy_clients(wm->display);
 	}
 
 	if (wm->backend != NULL) {
@@ -1113,6 +1111,10 @@ void wm_vdev_destroy(wm_t* wm) {
 
 	if (wm->cur_dummy_cmd_buf) {
 		wlr_vk_destroy_dummy_cb(wm->cur_dummy_cmd_buf);
+	}
+
+	if (wm->display != NULL) {
+		wl_display_destroy(wm->display);
 	}
 
 	LOG_F(cls, "TODO alles die hier nog niet gefree'd zijn");
