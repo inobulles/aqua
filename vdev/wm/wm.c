@@ -592,7 +592,7 @@ static void surf_config(struct wl_listener* listener, void* data) {
 
 	(void) data;
 
-	LOG_V(cls, "Configure XDG surface (%ux%u+%u+%u) for toplevel %p.", geom.width, geom.height, geom.x, geom.y, surf->xdg_surface->toplevel);
+	LOG_V(cls, "Configure XDG surface (%dx%d+%d+%d) for toplevel %p.", geom.width, geom.height, geom.x, geom.y, surf->xdg_surface->toplevel);
 }
 
 static void surf_destroy(struct wl_listener* listener, void* data) {
