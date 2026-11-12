@@ -221,3 +221,19 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 
 	e.backend_data = data
 }
+
+func (e *Div) bg_tex_view_changed() bool {
+	bg := e.get_attr("bg.wgpu_tex_view")
+
+	if bg == nil {
+		return false
+	}
+
+	data := e.backend_data.(WgpuBackendDivData)
+
+	if data.tex == nil || data.tex.view == nil {
+		return true
+	}
+
+	return data.tex.view.ToRaw() != bg.(unsafe.Pointer)
+}
