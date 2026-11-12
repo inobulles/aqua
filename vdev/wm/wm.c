@@ -11,6 +11,7 @@
 
 #include <umber.h>
 
+#include <wlr/render/drm_syncobj.h>
 #include <wlr/render/interface.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
@@ -26,6 +27,9 @@ typedef struct {
 
 	wm_t* wm;
 	struct wlr_output* output;
+
+	struct wlr_drm_syncobj_timeline* timeline;
+	uint64_t timeline_point;
 
 	struct wl_listener frame;
 	struct wl_listener destroy;
@@ -145,6 +149,10 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 	wl_list_remove(&output->frame.link);
 	wl_list_remove(&output->destroy.link);
 
+	if (output->timeline != NULL) {
+		wlr_drm_syncobj_timeline_unref(output->timeline);
+	}
+
 	free(output);
 }
 
@@ -169,63 +177,6 @@ static struct wlr_surface* target_surf(struct wlr_xdg_toplevel* toplevel) {
 	return toplevel->base->surface; // Fallback, always guaranteed to exist.
 }
 
-typedef struct {
-	wm_t* wm;
-	struct wlr_vk_image_attribs attribs;
-} render_pass_state_t;
-
-static bool begin_buffer_pass(void* data, struct wlr_buffer* buf) {
-	render_pass_state_t* const s = data;
-	wlr_vk_buffer_get_image_attribs(s->wm->wlr_renderer, buf, &s->attribs);
-
-	return true;
-}
-
-static bool submit_render_pass(void* data) {
-	render_pass_state_t* const s = data;
-
-	LOG_V(cls, "Take care of rendering.");
-
-	redraw_intr_t intr = {
-		.intr = INTR_REDRAW,
-		.raw_vk_image = (uintptr_t) s->attribs.image,
-		.raw_vk_cmd_pool = (uintptr_t) NULL,
-		.raw_vk_cmd_buf = (uintptr_t) NULL,
-	};
-
-	interrupt(s->wm, sizeof intr, &intr);
-
-	return true;
-}
-
-static void render(void* wm, struct wlr_render_pass* render_pass) {
-	LOG_V(cls, "Take care of rendering.");
-
-	VkImage image;
-	VkCommandPool cmd_pool;
-	VkCommandBuffer cmd_buf;
-
-	wlr_vk_render_pass_get_info(render_pass, &image, &cmd_pool, &cmd_buf);
-
-	redraw_intr_t intr = {
-		.intr = INTR_REDRAW,
-		.raw_vk_image = (uintptr_t) image,
-		.raw_vk_cmd_pool = (uintptr_t) cmd_pool,
-		.raw_vk_cmd_buf = (uintptr_t) cmd_buf,
-	};
-
-	interrupt(wm, sizeof intr, &intr);
-}
-
-// XXX This is only for debugging until I don't have a preferred solution:
-// - WE_HANDLE: We handle swapchain acquisition and do all the rendering ourselves.
-// - WLR_OVERRIDE: We set hooks in the regular wlroots render path for render pass creation/submission in wlr_scene_output_build_state.
-//                 If just overriding the render function, we even let wlroots handle the command buffer creation and import that into WebGPU.
-
-#define WE_HANDLE
-
-// #define WLR_OVERRIDE
-
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
@@ -240,7 +191,6 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct wlr_output_state state;
 	wlr_output_state_init(&state);
 
-#ifdef WE_HANDLE
 	LOG_V(cls, "Acquire swapchain image.");
 
 	if (!wlr_output_configure_primary_swapchain(wlr_output, &state, &wlr_output->swapchain)) {
@@ -254,28 +204,19 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 		LOG_E(cls, "Failed to acquire swapchain image.");
 		return;
 	}
-#endif
-
-	render_pass_state_t render_pass = {.wm = wm};
-
-	(void) render_pass, (void) begin_buffer_pass, (void) submit_render_pass, (void) render;
-
-#ifdef WLR_OVERRIDE
-	wlr_scene_override_begin_buffer_pass(scene_output, begin_buffer_pass, &render_pass);
-	wlr_scene_override_submit_render_pass(scene_output, submit_render_pass, &render_pass);
-	// wlr_scene_override_render(scene_output, render, wm);
-
-	wlr_scene_output_build_state(scene_output, &state, NULL);
-#endif
-
-#ifdef WE_HANDLE
-	struct wlr_vk_image_attribs attribs;
-	wlr_vk_buffer_get_image_attribs(wm->wlr_renderer, buf, &attribs);
 
 	LOG_V(cls, "Take care of rendering.");
 
-	// XXX AAAAAAAAAAAAAAAAAAAAAAAAAA
-	wlr_render_pass_submit(wlr_renderer_begin_buffer_pass(wm->wlr_renderer, buf, NULL));
+	struct wlr_vk_image_attribs attribs;
+
+	if (!wlr_vk_buffer_begin_external(wm->wlr_renderer, buf, &attribs)) {
+		LOG_E(cls, "Failed to hand swapchain image over to custom renderer.");
+
+		wlr_buffer_unlock(buf);
+		wlr_output_state_finish(&state);
+
+		return;
+	}
 
 	// Hand over window textures to custom renderer for this frame.
 	// This submits any pending uploads to them, and makes sure wlroots doesn't destroy them until our drawing code is done with them.
@@ -305,15 +246,24 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	interrupt(wm, sizeof intr, &intr);
 
-	if (!wlr_vk_renderer_end_external(wm->wlr_renderer)) {
-		LOG_E(cls, "Failed to take textures back from custom renderer.");
+	output->timeline_point++;
+	bool const ended = wlr_vk_renderer_end_external(wm->wlr_renderer, output->timeline, output->timeline_point);
+
+	if (!ended) {
+		LOG_E(cls, "Failed to take swapchain image and textures back from custom renderer.");
 	}
 
 	LOG_V(cls, "Set swapchain image to output and release it.");
 
 	wlr_output_state_set_buffer(&state, buf);
+
+	// If ending fails, the timeline point will never be signalled, so don't wait.
+
+	if (ended && output->timeline != NULL) {
+		wlr_output_state_set_wait_timeline(&state, output->timeline, output->timeline_point);
+	}
+
 	wlr_buffer_unlock(buf);
-#endif
 
 	LOG_V(cls, "Commit output state.");
 
@@ -381,6 +331,17 @@ static void new_output(struct wl_listener* listener, void* data) {
 
 	output->wm = wm;
 	output->output = wlr_output;
+
+	int const drm_fd = wlr_backend_get_drm_fd(wlr_output->backend);
+
+	if (drm_fd >= 0 && wlr_output->backend->features.timeline && wm->wlr_renderer->features.timeline) {
+		LOG_V(cls, "Output supports explicit sync, create timeline.");
+		output->timeline = wlr_drm_syncobj_timeline_create(drm_fd);
+
+		if (output->timeline == NULL) {
+			LOG_W(cls, "Failed to create timeline, falling back to implicit sync.");
+		}
+	}
 
 	LOG_V(cls, "Set up listeners (frame, destroy) for output.");
 
