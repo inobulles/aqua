@@ -108,7 +108,10 @@ func (t *WgpuTexture) Release() {
 		return
 	}
 
-	t.tex.Release()
+	if t.tex != nil { // Could be nil if we only have a view.
+		t.tex.Release()
+	}
+
 	t.view.Release()
 	t.sampler.Release()
 }
