@@ -48,7 +48,9 @@ type IWgpuBackendData interface {
 
 func (b *WgpuBackend) free_elem(elem IElem) {
 	switch e := elem.ElemBase().backend_data.(type) {
-	case IWgpuBackendData:
+	case WgpuBackendDivData:
+		e.release()
+	case WgpuBackendTextData:
 		e.release()
 	}
 
