@@ -277,6 +277,25 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	// XXX AAAAAAAAAAAAAAAAAAAAAAAAAA
 	wlr_render_pass_submit(wlr_renderer_begin_buffer_pass(wm->wlr_renderer, buf, NULL));
 
+	// Hand over window textures to custom renderer for this frame.
+	// This submits any pending uploads to them, and makes sure wlroots doesn't destroy them until our drawing code is done with them.
+
+	toplevel_t* win;
+
+	wl_list_for_each(win, &wm->toplevels, link) {
+		struct wlr_texture* const tex = wlr_surface_get_texture(target_surf(win->xdg_toplevel));
+
+		if (tex == NULL) { // TODO When can this happen?
+			continue;
+		}
+
+		struct wlr_vk_image_attribs tex_attribs;
+
+		if (!wlr_vk_texture_begin_external(tex, &tex_attribs)) {
+			LOG_E(cls, "Failed to hand over texture of %s to custom renderer.", win->xdg_toplevel->app_id);
+		}
+	}
+
 	redraw_intr_t intr = {
 		.intr = INTR_REDRAW,
 		.raw_vk_image = (uintptr_t) attribs.image,
@@ -285,6 +304,10 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	};
 
 	interrupt(wm, sizeof intr, &intr);
+
+	if (!wlr_vk_renderer_end_external(wm->wlr_renderer)) {
+		LOG_E(cls, "Failed to take textures back from custom renderer.");
+	}
 
 	LOG_V(cls, "Set swapchain image to output and release it.");
 
@@ -321,8 +344,6 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 		interrupt(toplevel->wm, sizeof intr, &intr);
 	}
-
-	// wlr_vk_dummy_cb_destroy_textures(wm->cur_dummy_cmd_buf);
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
@@ -484,40 +505,13 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	struct wlr_surface* const surf = target_surf(xdg_toplevel);
 	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
 
-	int width = surf->current.width;
-	int height = surf->current.height;
-
-	// XXX Bit of a crazy workaround for allowing us to import wl_shm-only VkImages.
-	// The image contents are never updated if we don't do this (see #32 for more details).
-
-	int stride = width * 4;
-	uint8_t* tmp = calloc(1, stride * height);
-
-	struct wlr_texture_read_pixels_options opts = {
-		.data = tmp,
-		.dst_x = 0,
-		.dst_y = 0,
-		.stride = stride,
-		.format = wlr_texture_preferred_read_format(tex),
-		.src_box = {.width = -1},
-	};
-
-	if (!wlr_texture_read_pixels(tex, &opts)) {
-		free(tmp);
+	if (tex == NULL) {
 		return;
 	}
 
-	free(tmp);
-
 	struct wlr_vk_image_attribs attribs;
 	wlr_vk_texture_get_image_attribs(tex, &attribs);
-
-	// TODO We need to figure out a way to not free the VkImage (in vulkan_texture_destroy) before the scene has had a chance to render, i.e. before INTR_REDRAW returns.
-	// We could create some kind of dummy command buffer on wlr_texture.last_used_cb, so that when vulkan_texture_destroy is called, we can just add stuff there and then extract it and destroy the textures ourselves when INTR_REDRAW returns control back to us.
-	// We'll have to make it mega clear either way then that window textures are only valid until the next redraw.
-	// Or maybe the client program should be responsible for freeing this?
-
-	wlr_vk_texture_attach_dummy_last_used_cb(tex, wm->cur_dummy_cmd_buf);
+	LOG_V(cls, "Commit %s: VkImage=%p", xdg_toplevel->app_id, (void*) attribs.image);
 
 	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
 
@@ -977,11 +971,11 @@ wm_t* wm_vdev_create(void) {
 	wm->public.vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
 	wm->public.vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
 
-	wm->cur_dummy_cmd_buf = wlr_vk_create_dummy_cb();
-
 	LOG_V(cls, "Initialize buffer factory protocols.");
 
-	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
+	// TODO To use DMA-BUF and not just SHM, call wlr_renderer_init_wl_display() here instead.
+
+	if (wlr_renderer_init_wl_shm(wm->wlr_renderer, wm->display) == false) {
 		FAIL("Failed to initialize buffer factory protocols.");
 	}
 
@@ -1107,10 +1101,6 @@ void wm_vdev_destroy(wm_t* wm) {
 
 	if (wm->allocator != NULL) {
 		wlr_allocator_destroy(wm->allocator);
-	}
-
-	if (wm->cur_dummy_cmd_buf) {
-		wlr_vk_destroy_dummy_cb(wm->cur_dummy_cmd_buf);
 	}
 
 	if (wm->display != NULL) {

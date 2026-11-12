@@ -89,10 +89,6 @@ typedef struct {
 
 	struct wlr_seat* seat;
 	uint32_t seat_caps;
-
-	// Backend stuff.
-
-	void* cur_dummy_cmd_buf;
 } wm_t;
 
 typedef struct {
