@@ -19,6 +19,7 @@ extern void go_lib_bindings_wm_redraw_cb(
 );
 extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
 extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
+extern void go_lib_bindings_wm_destroy_image_cb(wm_t wm, void* raw_image, void* data);
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
 extern void go_lib_bindings_wm_mouse_motion_cb(
 	wm_t wm,
@@ -52,12 +53,13 @@ type Wm struct {
 	ctx *WmCtx
 	wm  C.wm_t
 
-	redraw_cb_handle       cgo.Handle
-	new_win_cb_handle      cgo.Handle
-	redraw_win_cb_handle   cgo.Handle
-	destroy_win_cb_handle  cgo.Handle
-	mouse_motion_cb_handle cgo.Handle
-	mouse_button_cb_handle cgo.Handle
+	redraw_cb_handle        cgo.Handle
+	new_win_cb_handle       cgo.Handle
+	redraw_win_cb_handle    cgo.Handle
+	destroy_image_cb_handle cgo.Handle
+	destroy_win_cb_handle   cgo.Handle
+	mouse_motion_cb_handle  cgo.Handle
+	mouse_button_cb_handle  cgo.Handle
 }
 
 type WmWin uint64
@@ -117,6 +119,9 @@ func (w *Wm) Destroy() {
 	if w.redraw_win_cb_handle != 0 {
 		w.redraw_win_cb_handle.Delete()
 	}
+	if w.destroy_image_cb_handle != 0 {
+		w.destroy_image_cb_handle.Delete()
+	}
 	if w.destroy_win_cb_handle != 0 {
 		w.destroy_win_cb_handle.Delete()
 	}
@@ -159,6 +164,35 @@ func (w *Wm) RegisterRedrawCb(cb WmRedrawCb) {
 		w.wm,
 		C.wm_redraw_cb_t(C.go_lib_bindings_wm_redraw_cb),
 		unsafe.Pointer(w.redraw_cb_handle),
+	)
+}
+
+type WmDestroyImageCb func(raw_image unsafe.Pointer)
+
+//export go_lib_bindings_wm_destroy_image_cb
+func go_lib_bindings_wm_destroy_image_cb(
+	_ C.wm_t,
+	raw_image unsafe.Pointer,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmDestroyImageCb); ok {
+		cb(raw_image)
+	}
+}
+
+func (w *Wm) RegisterDestroyImageCb(cb WmDestroyImageCb) {
+	if w.destroy_image_cb_handle != 0 {
+		w.destroy_image_cb_handle.Delete()
+	}
+
+	w.destroy_image_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_destroy_image_cb(
+		w.wm,
+		C.wm_destroy_image_cb_t(C.go_lib_bindings_wm_destroy_image_cb),
+		unsafe.Pointer(w.destroy_image_cb_handle),
 	)
 }
 
