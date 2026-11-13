@@ -20,6 +20,9 @@ type Backend interface {
 	// For example, the element in question could be text, in which case if it must wrap to fit within max_w, it might very well have to extend beyond max_h.
 	calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32)
 
+	// Backend-specific attribute setting function.
+	set_attr(elem *Elem, key string, val any)
+
 	// Release the backend data of an element.
 	// This is regenerate dthe next time the element is rendered.
 	free_elem(elem IElem)
