@@ -815,6 +815,7 @@ static void mouse_motion_abs(struct wl_listener* listener, void* data) {
 
 	mouse_motion_intr_t intr = {
 		.intr = INTR_MOUSE_MOTION,
+		.time = event->time_msec,
 		.is_abs = true,
 		.x = event->x,
 		.y = event->y,
