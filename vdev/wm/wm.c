@@ -16,6 +16,13 @@
 #include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
 
+#include <wlr/config.h>
+
+#if WLR_HAS_LIBINPUT_BACKEND
+#include <libinput.h>
+#include <wlr/backend/libinput.h>
+#endif
+
 #include <webgpu/webgpu.h>
 #include <webgpu/wgpu.h>
 
@@ -860,6 +867,42 @@ static void mouse_destroy(struct wl_listener* listener, void* data) {
 	free(mouse);
 }
 
+static void config_mouse(struct wlr_input_device* dev) {
+#if WLR_HAS_LIBINPUT_BACKEND
+	// Only devices from the libinput backend (i.e. when running under DRM) can be configured.
+	// When running nested, the parent compositor is the one which is meant to deal with this.
+
+	if (!wlr_input_device_is_libinput(dev)) {
+		return;
+	}
+
+	struct libinput_device* const ldev = wlr_libinput_get_device_handle(dev);
+
+	// TODO These are hardcoded for now (taken from my Sway config), but should eventually be configurable.
+
+	if (libinput_device_config_accel_is_available(ldev)) {
+		libinput_device_config_accel_set_profile(ldev, LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE);
+		libinput_device_config_accel_set_speed(ldev, 0.3);
+	}
+
+	if (libinput_device_config_tap_get_finger_count(ldev) > 0) {
+		libinput_device_config_tap_set_enabled(ldev, LIBINPUT_CONFIG_TAP_ENABLED);
+		libinput_device_config_tap_set_drag_enabled(ldev, LIBINPUT_CONFIG_DRAG_ENABLED);
+		libinput_device_config_tap_set_drag_lock_enabled(ldev, LIBINPUT_CONFIG_DRAG_LOCK_DISABLED);
+	}
+
+	if (libinput_device_config_dwt_is_available(ldev)) {
+		libinput_device_config_dwt_set_enabled(ldev, LIBINPUT_CONFIG_DWT_DISABLED);
+	}
+
+	if (libinput_device_config_scroll_has_natural_scroll(ldev)) {
+		libinput_device_config_scroll_set_natural_scroll_enabled(ldev, true);
+	}
+#else
+	(void) dev;
+#endif
+}
+
 static void new_mouse(wm_t* wm, struct wlr_input_device* dev) {
 	struct wlr_pointer* const wlr_pointer = wlr_pointer_from_input_device(dev);
 
@@ -869,7 +912,7 @@ static void new_mouse(wm_t* wm, struct wlr_input_device* dev) {
 	mouse->wm = wm;
 	mouse->pointer = wlr_pointer;
 
-	// TODO This is where we'll want to set stuff like accel profiles etc.
+	config_mouse(dev);
 
 	mouse->motion.notify = mouse_motion;
 	wl_signal_add(&wlr_pointer->events.motion, &mouse->motion);

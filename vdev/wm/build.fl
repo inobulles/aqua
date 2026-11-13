@@ -18,17 +18,22 @@ deps = [
 let wlroots_cflags = PkgConfig.cflags("wlroots-0.21")
 let wlroots_libs = PkgConfig.libs("wlroots-0.21")
 
+let libinput_cflags = PkgConfig.cflags("libinput")
+let libinput_libs = PkgConfig.libs("libinput")
+
 let obj = Cc([
 	"-std=c11", "-g", "-fPIC",
 	"-I/usr/local/include",
 	"-Wall", "-Wextra", "-Werror",
 	wlroots_cflags,
+	libinput_cflags,
 ]).compile(["main.c", "wm.c"])
 
 let vdriver = Linker([
 	"-shared",
 	"-lumber", "-lvdriver",
 	wlroots_libs,
+	libinput_libs,
 ]).link(obj)
 
 install = {
