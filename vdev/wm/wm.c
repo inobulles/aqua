@@ -59,6 +59,16 @@ typedef struct {
 	struct wl_listener destroy;
 } mouse_t;
 
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
+	struct wlr_buffer* buf;
+	VkImage image;
+
+	struct wl_listener destroy;
+} image_t;
+
 typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t raw_vk_image;
@@ -89,6 +99,11 @@ typedef struct __attribute__((packed)) {
 	uint32_t y_res;
 	uint64_t raw_image;
 } redraw_win_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint64_t raw_image;
+} destroy_image_intr_t;
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
@@ -138,6 +153,52 @@ static void interrupt(wm_t* wm, size_t data_size, void const* data) {
 	};
 
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
+}
+
+static void image_free(image_t* image) {
+	wl_list_remove(&image->link);
+	wl_list_remove(&image->destroy.link);
+
+	free(image);
+}
+
+static void image_destroy(struct wl_listener* listener, void* data) {
+	image_t* const image = wl_container_of(listener, image, destroy);
+
+	(void) data;
+
+	LOG_V(cls, "Image %p is about to be destroyed.", (void*) image->image);
+
+	destroy_image_intr_t const intr = {
+		.intr = INTR_DESTROY_IMAGE,
+		.raw_image = (uintptr_t) image->image,
+	};
+
+	interrupt(image->wm, sizeof intr, &intr);
+	image_free(image);
+}
+
+static void track_image(wm_t* wm, struct wlr_buffer* buf, VkImage vk_image) {
+	image_t* image;
+
+	wl_list_for_each(image, &wm->images, link) {
+		if (image->buf == buf) {
+			assert(image->image == vk_image);
+			return;
+		}
+	}
+
+	image = calloc(1, sizeof *image);
+	assert(image != NULL);
+
+	image->wm = wm;
+	image->buf = buf;
+	image->image = vk_image;
+
+	image->destroy.notify = image_destroy;
+	wl_signal_add(&buf->events.destroy, &image->destroy);
+
+	wl_list_insert(&wm->images, &image->link);
 }
 
 static void output_remove_notify(struct wl_listener* listener, void* data) {
@@ -217,6 +278,8 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 		return;
 	}
+
+	track_image(wm, buf, attribs.image);
 
 	// Hand over window textures to custom renderer for this frame.
 	// This submits any pending uploads to them, and makes sure wlroots doesn't destroy them until our drawing code is done with them.
@@ -446,33 +509,21 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 	interrupt(wm, sizeof intr, &intr);
 }
 
-static void toplevel_commit(struct wl_listener* listener, void* data) {
-	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
+static void redraw_win(toplevel_t* toplevel) {
 	wm_t* const wm = toplevel->wm;
-	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
-
-	(void) data;
-
-	LOG_V(cls, "Commit %s.", xdg_toplevel->app_id);
-
-	if (toplevel->xdg_toplevel->base->initial_commit) {
-		LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
-		wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
-		return;
-	}
-
-	// Send interrupt.
-
+	struct wlr_xdg_toplevel* const xdg_toplevel = toplevel->xdg_toplevel;
 	struct wlr_surface* const surf = target_surf(xdg_toplevel);
 	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
 
-	if (tex == NULL) {
+	if (tex == NULL || surf->buffer == NULL) {
 		return;
 	}
 
 	struct wlr_vk_image_attribs attribs;
 	wlr_vk_texture_get_image_attribs(tex, &attribs);
-	LOG_V(cls, "Commit %s: VkImage=%p", xdg_toplevel->app_id, (void*) attribs.image);
+	LOG_V(cls, "Redraw %s: VkImage=%p", xdg_toplevel->app_id, (void*) attribs.image);
+
+	track_image(toplevel->wm, &surf->buffer->base, attribs.image);
 
 	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
 
@@ -485,6 +536,23 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	};
 
 	interrupt(wm, sizeof intr, &intr);
+}
+
+static void toplevel_commit(struct wl_listener* listener, void* data) {
+	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
+	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
+
+	(void) data;
+
+	LOG_V(cls, "Commit %s.", xdg_toplevel->app_id);
+
+	if (toplevel->xdg_toplevel->base->initial_commit) {
+		LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
+		wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
+		return;
+	}
+
+	redraw_win(toplevel);
 }
 
 static void toplevel_destroy(struct wl_listener* listener, void* data) {
@@ -936,7 +1004,7 @@ wm_t* wm_vdev_create(void) {
 
 	// TODO To use DMA-BUF and not just SHM, call wlr_renderer_init_wl_display() here instead.
 
-	if (wlr_renderer_init_wl_shm(wm->wlr_renderer, wm->display) == false) {
+	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
 		FAIL("Failed to initialize buffer factory protocols.");
 	}
 
@@ -1004,6 +1072,7 @@ wm_t* wm_vdev_create(void) {
 	LOG_V(cls, "Set up XDG-shell (version 3).");
 
 	wl_list_init(&wm->toplevels);
+	wl_list_init(&wm->images);
 	wm->xdg_shell = wlr_xdg_shell_create(wm->display, 3);
 
 	if (wm->xdg_shell == NULL) {
@@ -1052,6 +1121,12 @@ wm_t* wm_vdev_create(void) {
 }
 
 void wm_vdev_destroy(wm_t* wm) {
+	image_t* image, *image_tmp;
+
+	wl_list_for_each_safe(image, image_tmp, &wm->images, link) {
+		image_free(image); // No point using image_destroy() and alerting client.
+	}
+
 	if (wm->display != NULL) {
 		wl_display_destroy_clients(wm->display);
 	}

@@ -73,6 +73,11 @@ static kos_const_t const CONSTS[] = {
 		.val = {.u8 = INTR_REDRAW_WIN},
 	},
 	{
+		.name = "INTR_DESTROY_IMAGE",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_DESTROY_IMAGE},
+	},
+	{
 		.name = "INTR_MOUSE_MOTION",
 		.type = KOS_TYPE_U8,
 		.val = {.u8 = INTR_MOUSE_MOTION},

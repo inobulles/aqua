@@ -89,6 +89,10 @@ typedef struct {
 
 	struct wlr_seat* seat;
 	uint32_t seat_caps;
+
+	// Tracking stuff.
+
+	struct wl_list images;
 } wm_t;
 
 typedef struct {
@@ -119,6 +123,7 @@ typedef enum : uint8_t {
 	INTR_NEW_WIN,
 	INTR_DESTROY_WIN,
 	INTR_REDRAW_WIN,
+	INTR_DESTROY_IMAGE,
 	INTR_MOUSE_MOTION,
 	INTR_MOUSE_BUTTON,
 } intr_t;
