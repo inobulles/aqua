@@ -75,9 +75,18 @@ typedef void (*wm_destroy_win_cb_t)(wm_t wm, wm_win_t win, void* data);
  * @param x_res The new X resolution of the window (can change between calls).
  * @param y_res The new Y resolution of the window (can change between calls).
  * @param raw_image Raw image containing the window contents.
- * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_new_win_cb}.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_redraw_win_cb}.
  */
 typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
+
+/**
+ * WM image destroy event callback.
+ *
+ * @param wm The WM object.
+ * @param raw_image Raw image whcih is about to be destroyed.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_destroy_image_cb}.
+ */
+typedef void (*wm_destroy_image_cb_t)(wm_t wm, void* raw_image, void* data);
 
 /**
  * WM mouse motion event callback.
@@ -202,13 +211,24 @@ void wm_register_destroy_win_cb(wm_t wm, wm_destroy_win_cb_t cb, void* data);
 /**
  * Register a window redraw callback.
  *
- * These will be called when a window needs to be redrawn..
+ * These will be called when a window needs to be redrawn.
  *
  * @param wm The WM to register the callback for.
  * @param cb The callback to register.
  * @param data User-defined data passed to the callback.
  */
 void wm_register_redraw_win_cb(wm_t wm, wm_redraw_win_cb_t cb, void* data);
+
+/**
+ * Register an image destruction callback.
+ *
+ * These will be called when an image is about to be destroyed, alerting us we shouldn't be referencing this image anymore.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_destroy_image_cb(wm_t wm, wm_destroy_image_cb_t cb, void* data);
 
 /**
  * Register a mouse motion callback.

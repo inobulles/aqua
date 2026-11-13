@@ -31,6 +31,7 @@ struct wm_ctx_t {
 		uint32_t INTR_NEW_WIN;
 		uint32_t INTR_DESTROY_WIN;
 		uint32_t INTR_REDRAW_WIN;
+		uint32_t INTR_DESTROY_IMAGE;
 		uint32_t INTR_MOUSE_MOTION;
 		uint32_t INTR_MOUSE_BUTTON;
 	} consts;
@@ -143,6 +144,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (strcmp(name, "INTR_REDRAW_WIN") == 0) {
 			ctx->consts.INTR_REDRAW_WIN = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_DESTROY_IMAGE") == 0) {
+			ctx->consts.INTR_DESTROY_IMAGE = c->val.u8;
 		}
 
 		if (strcmp(name, "INTR_MOUSE_MOTION") == 0) {
@@ -360,6 +365,11 @@ void wm_register_redraw_cb(wm_t wm, wm_redraw_cb_t cb, void* data) {
 	wm->redraw_data = data;
 }
 
+void wm_register_destroy_image_cb(wm_t wm, wm_destroy_image_cb_t cb, void* data) {
+	wm->destroy_image = cb;
+	wm->destroy_image_data = data;
+}
+
 void wm_register_new_win_cb(wm_t wm, wm_new_win_cb_t cb, void* data) {
 	wm->new_win = cb;
 	wm->new_win_data = data;
@@ -490,6 +500,11 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
+	uint64_t raw_image;
+} intr_destroy_image_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
 	uint32_t time;
 	uint8_t is_abs;
 
@@ -588,6 +603,19 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 
 		if (wm->redraw_win != NULL) {
 			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, (void*) (uintptr_t) redraw_win->raw_image, wm->redraw_win_data);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_DESTROY_IMAGE) {
+		intr_destroy_image_t const* const destroy_image = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *destroy_image) {
+			LOG_E(cls, "TODO Error message.");
+			return;
+		}
+
+		if (wm->destroy_image != NULL) {
+			wm->destroy_image(wm, (void*) (uintptr_t) destroy_image->raw_image, wm->destroy_image_data);
 		}
 	}
 
