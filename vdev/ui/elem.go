@@ -45,7 +45,6 @@ type AbsPos struct {
 }
 
 type Elem struct {
-	IElem
 	kind         ElemKind // TODO Necessary?
 	semantic_str string
 
