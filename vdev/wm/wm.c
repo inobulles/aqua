@@ -506,6 +506,19 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 
 	wl_list_remove(&toplevel->link);
 
+	// If this toplevel had focus, give it to the next one.
+
+	struct wlr_surface* const surf = toplevel->xdg_toplevel->base->surface;
+
+	if (wm->seat->keyboard_state.focused_surface == surf) {
+		wlr_seat_keyboard_notify_clear_focus(wm->seat);
+
+		if (!wl_list_empty(&wm->toplevels)) {
+			toplevel_t* const next = wl_container_of(wm->toplevels.next, next, link);
+			focus_toplevel(next);
+		}
+	}
+
 	// Send interrupt.
 
 	destroy_win_intr_t const intr = {
