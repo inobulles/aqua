@@ -121,15 +121,6 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
-		.name = "get_win_fb",
-		.ret_type = KOS_TYPE_VOID,
-		.param_count = 2,
-		.params = (kos_param_t[]) {
-			{KOS_TYPE_OPAQUE_PTR, "win"},
-			{KOS_TYPE_PTR, "buf"},
-		},
-	},
-	{
 		.name = "win_notify_mouse_motion",
 		.ret_type = KOS_TYPE_VOID,
 		.param_count = 4,
@@ -236,21 +227,7 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 
 		break;
 	}
-	case 4: { // get_win_fb
-		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
-
-		if (toplevel == NULL) {
-			LOG_E(cls, "Tried to get FB of bad window.");
-			notif.kind = KOS_NOTIF_CALL_FAIL;
-			break;
-		}
-
-		void* const buf = (void*) args[1].ptr.ptr; // TODO BAD! BAD!
-		wm_vdev_get_fb(toplevel, buf);
-
-		break;
-	}
-	case 5: { // win_notify_mouse_motion
+	case 4: { // win_notify_mouse_motion
 		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
 
 		if (toplevel == NULL) {
@@ -263,7 +240,7 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 
 		break;
 	}
-	case 6: { // win_notify_mouse_button
+	case 5: { // win_notify_mouse_button
 		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
 
 		if (toplevel == NULL) {

@@ -262,18 +262,6 @@ void wm_register_mouse_button_cb(wm_t wm, wm_mouse_button_cb_t cb, void* data);
 void wm_loop(wm_t wm);
 
 /**
- * Copy window contents to buffer.
- *
- * The output buffer must have the last resolution reported by the window redraw callback.
- * WARNING This API is very much subject to change and will probably disappear in favour of something better!
- *
- * @param wm The WM object which owns the window.
- * @param win Window handle to copy the contents of.
- * @param buf Buffer to copy the window contents to.
- */
-void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf);
-
-/**
  * Notify WM window of a mouse motion event.
  *
  * @param wm The WM object which owns the window.
