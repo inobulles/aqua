@@ -26,6 +26,9 @@ struct wm_t {
 	void* redraw_win_data;
 	wm_redraw_win_cb_t redraw_win;
 
+	void* destroy_image_data;
+	wm_destroy_image_cb_t destroy_image;
+
 	void* mouse_motion_data;
 	wm_mouse_motion_cb_t mouse_motion;
 

@@ -45,7 +45,6 @@ type AbsPos struct {
 }
 
 type Elem struct {
-	IElem
 	kind         ElemKind // TODO Necessary?
 	semantic_str string
 
@@ -210,6 +209,12 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 }
 
 func (e *Elem) set_attr(key string, val any) {
+	ui := e.ui
+
+	if ui.backend != nil { // TODO Why is it possible for ui.backend == nil here?
+		ui.backend.set_attr(e, key, val)
+	}
+
 	switch key {
 	case "abs":
 		e.is_abs = val.(bool)

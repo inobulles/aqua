@@ -118,6 +118,7 @@ func (p *RenderBundle) Release()    { C.aqua_wgpuRenderBundleRelease(global_ctx.
 func (p *Sampler) Release()         { C.aqua_wgpuSamplerRelease(global_ctx.ctx, p.ref) }
 func (p *ShaderModule) Release()    { C.aqua_wgpuShaderModuleRelease(global_ctx.ctx, p.ref) }
 func (p *TextureView) Release()     { C.aqua_wgpuTextureViewRelease(global_ctx.ctx, p.ref) }
+func (p *TextureView) AddRef()      { C.aqua_wgpuTextureViewAddRef(global_ctx.ctx, p.ref) }
 
 // cBool converts the given Go bool to a C.WGPUBool.
 func cBool(b bool) C.WGPUBool {

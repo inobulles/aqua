@@ -31,6 +31,7 @@ struct wm_ctx_t {
 		uint32_t INTR_NEW_WIN;
 		uint32_t INTR_DESTROY_WIN;
 		uint32_t INTR_REDRAW_WIN;
+		uint32_t INTR_DESTROY_IMAGE;
 		uint32_t INTR_MOUSE_MOTION;
 		uint32_t INTR_MOUSE_BUTTON;
 	} consts;
@@ -40,7 +41,6 @@ struct wm_ctx_t {
 		uint32_t destroy;
 		uint32_t register_interrupt;
 		uint32_t loop;
-		uint32_t get_win_fb;
 		uint32_t win_notify_mouse_motion;
 		uint32_t win_notify_mouse_button;
 	} fns;
@@ -145,6 +145,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			ctx->consts.INTR_REDRAW_WIN = c->val.u8;
 		}
 
+		if (strcmp(name, "INTR_DESTROY_IMAGE") == 0) {
+			ctx->consts.INTR_DESTROY_IMAGE = c->val.u8;
+		}
+
 		if (strcmp(name, "INTR_MOUSE_MOTION") == 0) {
 			ctx->consts.INTR_MOUSE_MOTION = c->val.u8;
 		}
@@ -210,18 +214,6 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[0].name, "wm") == 0
 		) {
 			ctx->fns.loop = i;
-		}
-
-		if (
-			strcmp(name, "get_win_fb") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
-			fn->param_count == 2 &&
-			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
-			strcmp((char*) fn->params[0].name, "win") == 0 &&
-			fn->params[1].type == KOS_TYPE_PTR &&
-			strcmp((char*) fn->params[1].name, "buf") == 0
-		) {
-			ctx->fns.get_win_fb = i;
 		}
 
 		if (
@@ -360,6 +352,11 @@ void wm_register_redraw_cb(wm_t wm, wm_redraw_cb_t cb, void* data) {
 	wm->redraw_data = data;
 }
 
+void wm_register_destroy_image_cb(wm_t wm, wm_destroy_image_cb_t cb, void* data) {
+	wm->destroy_image = cb;
+	wm->destroy_image_data = data;
+}
+
 void wm_register_new_win_cb(wm_t wm, wm_new_win_cb_t cb, void* data) {
 	wm->new_win = cb;
 	wm->new_win_data = data;
@@ -398,23 +395,6 @@ void wm_loop(wm_t wm) {
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.loop, args);
-	kos_flush(true);
-}
-
-void wm_get_win_fb(wm_t wm, wm_win_t win, void* buf) {
-	wm_ctx_t const ctx = wm->ctx;
-
-	if (ctx == NULL || !ctx->is_conn) {
-		LOG_E(cls, "No context or not connected.");
-		return;
-	}
-
-	kos_val_t const args[] = {
-		{.opaque_ptr = {0, win}},
-		{.ptr = {0, (uint64_t) (uintptr_t) buf}},
-	};
-
-	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_win_fb, args);
 	kos_flush(true);
 }
 
@@ -463,8 +443,8 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
 	uint64_t raw_vk_image;
-	uint64_t raw_vk_cmd_pool;
-	uint64_t raw_vk_cmd_buf;
+	uint32_t x_res;
+	uint32_t y_res;
 } intr_redraw_t;
 
 typedef struct __attribute__((packed)) {
@@ -479,12 +459,24 @@ typedef struct __attribute__((packed)) {
 } intr_destroy_win_t;
 
 typedef struct __attribute__((packed)) {
+	int32_t x, y;
+	uint32_t x_res, y_res;
+	uint64_t raw_image;
+} intr_redraw_win_surf_t;
+
+typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
 	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
-	uint64_t raw_image;
+	uint32_t surf_count;
+	intr_redraw_win_surf_t surfs[];
 } intr_redraw_win_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint64_t raw_image;
+} intr_destroy_image_t;
 
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
@@ -541,8 +533,8 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 			wm->redraw(
 				wm,
 				(void*) (uintptr_t) redraw->raw_vk_image,
-				(void*) (uintptr_t) redraw->raw_vk_cmd_pool,
-				(void*) (uintptr_t) redraw->raw_vk_cmd_buf,
+				redraw->x_res,
+				redraw->y_res,
 				wm->redraw_data
 			);
 		}
@@ -577,13 +569,52 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 	else if (intr->type == ctx->consts.INTR_REDRAW_WIN) {
 		intr_redraw_win_t const* const redraw_win = notif->interrupt.data;
 
-		if (notif->interrupt.data_size < sizeof *redraw_win) {
+		if (
+			notif->interrupt.data_size < sizeof *redraw_win ||
+			notif->interrupt.data_size < sizeof *redraw_win + redraw_win->surf_count * sizeof *redraw_win->surfs
+		) {
 			LOG_E(cls, "TODO Error message.");
 			return;
 		}
 
-		if (wm->redraw_win != NULL) {
-			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, (void*) (uintptr_t) redraw_win->raw_image, wm->redraw_win_data);
+		if (wm->redraw_win == NULL) {
+			return;
+		}
+
+		size_t const surf_count = redraw_win->surf_count;
+		wm_surf_t* const surfs = calloc(surf_count, sizeof *surfs);
+
+		if (surfs == NULL) {
+			LOG_E(cls, "Failed to allocate surfaces.");
+			return;
+		}
+
+		for (size_t i = 0; i < surf_count; i++) {
+			intr_redraw_win_surf_t const* const surf = &redraw_win->surfs[i];
+
+			surfs[i] = (wm_surf_t) {
+				.x = surf->x,
+				.y = surf->y,
+				.x_res = surf->x_res,
+				.y_res = surf->y_res,
+				.raw_image = (void*) (uintptr_t) surf->raw_image,
+			};
+		}
+
+		wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, surf_count, surfs, wm->redraw_win_data);
+		free(surfs);
+	}
+
+	else if (intr->type == ctx->consts.INTR_DESTROY_IMAGE) {
+		intr_destroy_image_t const* const destroy_image = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *destroy_image) {
+			LOG_E(cls, "TODO Error message.");
+			return;
+		}
+
+		if (wm->destroy_image != NULL) {
+			wm->destroy_image(wm, (void*) (uintptr_t) destroy_image->raw_image, wm->destroy_image_data);
 		}
 	}
 

@@ -81,7 +81,7 @@ func (b *WgpuBackend) NewTexture(name string, w, h uint32, data []byte) (*WgpuTe
 		return nil, err
 	}
 
-	if err = b.dev.GetQueue().WriteTexture(
+	if err = b.queue.WriteTexture(
 		tex.tex.AsImageCopy(),
 		data,
 		&wgpu.TexelCopyBufferLayout{
@@ -108,7 +108,10 @@ func (t *WgpuTexture) Release() {
 		return
 	}
 
-	t.tex.Release()
+	if t.tex != nil { // Could be nil if we only have a view.
+		t.tex.Release()
+	}
+
 	t.view.Release()
 	t.sampler.Release()
 }

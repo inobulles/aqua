@@ -181,7 +181,11 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 	// If we have a WebGPU background attribute, get it.
 
 	if bg := e.get_attr("bg.wgpu_tex_view"); bg != nil {
+		// Take own reference to the view, as whoever passed it to us might release theirs while we still need it.
+
 		view := wgpu.TextureViewFromRaw(bg.(unsafe.Pointer))
+		view.AddRef()
+
 		data.tex = &WgpuTexture{view: &view}
 		data.tex.CreateSampler(b)
 	}
@@ -216,4 +220,20 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 	data.model.gen_pane(b, float32(w), float32(h), 10)
 
 	e.backend_data = data
+}
+
+func (e *Div) bg_tex_view_changed() bool {
+	bg := e.get_attr("bg.wgpu_tex_view")
+
+	if bg == nil {
+		return false
+	}
+
+	data := e.backend_data.(WgpuBackendDivData)
+
+	if data.tex == nil || data.tex.view == nil {
+		return true
+	}
+
+	return data.tex.view.ToRaw() != bg.(unsafe.Pointer)
 }

@@ -411,8 +411,8 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		case 11:;
 			void* const ptr = vdriver_unwrap_local_opaque_ptr(args[2].opaque_ptr);
 
-			if (ptr == NULL) {
-				LOG_E(cls, "'set_attr_opaque_ptr' called with non-local or NULL opaque pointer.");
+			if (ptr == NULL && args[2].opaque_ptr.ptr != 0) {
+				LOG_E(cls, "'set_attr_opaque_ptr' called with non-local opaque pointer.");
 				break;
 			}
 

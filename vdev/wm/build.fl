@@ -5,27 +5,36 @@ import bob
 import bob.pkg_config
 
 deps = [
-	# Dep.git("https://gitlab.freedesktop.org/wlroots/wlroots", "0.19.2"),
+	# Dep.git("https://gitlab.freedesktop.org/wlroots/wlroots", "0.20.2"),
+	Dep.local("/home/obiwac/aqua/wlroots")
+		.conf("wrap_mode", "nopromote")
+		.conf("werror", "false")
+		.conf("renderers", "vulkan"),
 	Dep.git("https://github.com/inobulles/umber", "v0.3.3"),
 	Dep.local("../../external/webgpu-headers"),
 	Dep.local("../../kos"),
 ]
 
-# TODO https://github.com/inobulles/bob/issues/114
+let wlroots_cflags = PkgConfig.cflags("wlroots-0.21")
+let wlroots_libs = PkgConfig.libs("wlroots-0.21")
 
-let wlroots_cflags = PkgConfig.cflags("wlroots-0.20")
-let wlroots_libs = PkgConfig.libs("wlroots-0.20")
+let libinput_cflags = PkgConfig.cflags("libinput")
+let libinput_libs = PkgConfig.libs("libinput")
 
 let obj = Cc([
 	"-std=c11", "-g", "-fPIC",
 	"-I/usr/local/include",
 	"-Wall", "-Wextra", "-Werror",
-] + wlroots_cflags).compile(["main.c", "wm.c"])
+	wlroots_cflags,
+	libinput_cflags,
+]).compile(["main.c", "wm.c"])
 
 let vdriver = Linker([
 	"-shared",
 	"-lumber", "-lvdriver",
-] + wlroots_libs).link(obj)
+	wlroots_libs,
+	libinput_libs,
+]).link(obj)
 
 install = {
 	vdriver: "lib/vdriver/aquabsd.black.wm.vdriver",

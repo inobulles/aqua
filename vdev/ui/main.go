@@ -19,6 +19,24 @@ type Backend interface {
 	// The backend will try to fit it within the maximum width and height supplied, but it may not be able to.
 	// For example, the element in question could be text, in which case if it must wrap to fit within max_w, it might very well have to extend beyond max_h.
 	calculate_size(elem IElem, max_w, max_h uint32) (w, h uint32)
+
+	// Backend-specific attribute setting function.
+	set_attr(elem *Elem, key string, val any)
+
+	// Release the backend data of an element.
+	// This is regenerate dthe next time the element is rendered.
+	free_elem(elem IElem)
+}
+
+// Release the backend data of an element and all its children.
+func (ui *Ui) free_elem_tree(elem IElem) {
+	if div, ok := elem.(*Div); ok {
+		for _, child := range div.children {
+			ui.free_elem_tree(child)
+		}
+	}
+
+	ui.backend.free_elem(elem)
 }
 
 type Ui struct {
@@ -106,6 +124,7 @@ func GoUiAddText(
 //export GoUiRemElem
 func GoUiRemElem(elem_raw C.uintptr_t) {
 	elem := elem_from_raw(elem_raw).(IElem)
+	ui := elem.ElemBase().ui
 	parent := elem.ElemBase().parent
 
 	if parent.ElemBase().kind != ElemKindDiv {
@@ -117,6 +136,7 @@ func GoUiRemElem(elem_raw C.uintptr_t) {
 	for i, child := range div.children {
 		if child == elem {
 			div.children = append(div.children[:i], div.children[i+1:]...)
+			ui.free_elem_tree(elem)
 			return
 		}
 	}

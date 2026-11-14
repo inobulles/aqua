@@ -276,6 +276,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 		blit_pass.Draw(6, 1, 0, 0)
 		blit_pass.End()
 		blit_pass.Release()
+		blit_bind_group.Release()
 	}
 
 	// Now, we move on to rendering the frost.
@@ -330,6 +331,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 
 	r.End()
 	r.Release()
+	bind_group.Release()
 
 	// Then, the next ones.
 
@@ -376,6 +378,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 
 		r.End()
 		r.Release()
+		bind_group.Release()
 	}
 
 	// Now we move on to the upsample chain.
@@ -425,6 +428,7 @@ func (b *WgpuBackend) encounter_frost(d *Div) {
 
 		r.End()
 		r.Release()
+		bind_group.Release()
 	}
 
 	// Finally, now that our frost is ready, start a new render pass with our new render buffer for the rest of UI rendering.

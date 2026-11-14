@@ -46,13 +46,36 @@ type IWgpuBackendData interface {
 	release()
 }
 
+func (b *WgpuBackend) set_attr(elem *Elem, key string, val any) {
+	switch key {
+	// If we change the background texture view, the previous backend data is invalid and must be regenerated.
+	case "bg.wgpu_tex_view":
+		prev, _ := elem.get_attr(key).(unsafe.Pointer)
+		cur, _ := val.(unsafe.Pointer)
+
+		if prev != nil && prev != cur {
+			b.free_backend_data(elem)
+		}
+
+		if cur == nil {
+			elem.rem_attr(key)
+		}
+	}
+}
+
 func (b *WgpuBackend) free_elem(elem IElem) {
-	switch e := elem.ElemBase().backend_data.(type) {
-	case IWgpuBackendData:
+	b.free_backend_data(elem.ElemBase())
+}
+
+func (b *WgpuBackend) free_backend_data(elem *Elem) {
+	switch e := elem.backend_data.(type) {
+	case WgpuBackendDivData:
+		e.release()
+	case WgpuBackendTextData:
 		e.release()
 	}
 
-	elem.ElemBase().backend_data = nil
+	elem.backend_data = nil
 }
 
 func (b *WgpuBackend) get_font(e *Text) *Font {
@@ -105,7 +128,7 @@ func (b *WgpuBackend) render(elem IElem) {
 
 		data.model.draw(b.render_pass)
 	case *Div:
-		if e.backend_data == nil {
+		if e.backend_data == nil || e.bg_tex_view_changed() {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
 		} else {
 			data := e.backend_data.(WgpuBackendDivData)

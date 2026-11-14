@@ -11,9 +11,17 @@
 
 #include <umber.h>
 
+#include <wlr/render/drm_syncobj.h>
 #include <wlr/render/interface.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
+
+#include <wlr/config.h>
+
+#if WLR_HAS_LIBINPUT_BACKEND
+# include <libinput.h>
+# include <wlr/backend/libinput.h>
+#endif
 
 #include <webgpu/webgpu.h>
 #include <webgpu/wgpu.h>
@@ -26,6 +34,9 @@ typedef struct {
 
 	wm_t* wm;
 	struct wlr_output* output;
+
+	struct wlr_drm_syncobj_timeline* timeline;
+	uint64_t timeline_point;
 
 	struct wl_listener frame;
 	struct wl_listener destroy;
@@ -55,11 +66,29 @@ typedef struct {
 	struct wl_listener destroy;
 } mouse_t;
 
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
+	struct wlr_buffer* buf;
+	VkImage image;
+
+	struct wl_listener destroy;
+} image_t;
+
+typedef struct {
+	wm_t* wm;
+	struct wlr_surface* surf;
+
+	struct wl_listener commit;
+	struct wl_listener destroy;
+} surf_t;
+
 typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t raw_vk_image;
-	uint64_t raw_vk_cmd_pool;
-	uint64_t raw_vk_cmd_buf;
+	uint32_t x_res;
+	uint32_t y_res;
 } redraw_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -77,12 +106,24 @@ typedef struct __attribute__((packed)) {
 } destroy_win_intr_t;
 
 typedef struct __attribute__((packed)) {
+	int32_t x, y;
+	uint32_t x_res, y_res;
+	uint64_t raw_image;
+} redraw_win_surf_t;
+
+typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
-	uint64_t raw_image;
+	uint32_t surf_count;
+	redraw_win_surf_t surfs[];
 } redraw_win_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint64_t raw_image;
+} destroy_image_intr_t;
 
 typedef struct __attribute__((packed)) {
 	intr_t intr;
@@ -134,6 +175,52 @@ static void interrupt(wm_t* wm, size_t data_size, void const* data) {
 	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
 }
 
+static void image_free(image_t* image) {
+	wl_list_remove(&image->link);
+	wl_list_remove(&image->destroy.link);
+
+	free(image);
+}
+
+static void image_destroy(struct wl_listener* listener, void* data) {
+	image_t* const image = wl_container_of(listener, image, destroy);
+
+	(void) data;
+
+	LOG_V(cls, "Image %p is about to be destroyed.", (void*) image->image);
+
+	destroy_image_intr_t const intr = {
+		.intr = INTR_DESTROY_IMAGE,
+		.raw_image = (uintptr_t) image->image,
+	};
+
+	interrupt(image->wm, sizeof intr, &intr);
+	image_free(image);
+}
+
+static void track_image(wm_t* wm, struct wlr_buffer* buf, VkImage vk_image) {
+	image_t* image;
+
+	wl_list_for_each(image, &wm->images, link) {
+		if (image->buf == buf) {
+			assert(image->image == vk_image);
+			return;
+		}
+	}
+
+	image = calloc(1, sizeof *image);
+	assert(image != NULL);
+
+	image->wm = wm;
+	image->buf = buf;
+	image->image = vk_image;
+
+	image->destroy.notify = image_destroy;
+	wl_signal_add(&buf->events.destroy, &image->destroy);
+
+	wl_list_insert(&wm->images, &image->link);
+}
+
 static void output_remove_notify(struct wl_listener* listener, void* data) {
 	(void) listener;
 	(void) data;
@@ -143,86 +230,29 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 	wl_list_remove(&output->frame.link);
 	wl_list_remove(&output->destroy.link);
 
+	if (output->timeline != NULL) {
+		wlr_drm_syncobj_timeline_unref(output->timeline);
+	}
+
 	free(output);
 }
 
-static struct wlr_surface* target_surf(struct wlr_xdg_toplevel* toplevel) {
-	if (toplevel->app_id == NULL || strcmp(toplevel->app_id, "firefox") != 0) {
-		return toplevel->base->surface;
+static void begin_external_iter(struct wlr_surface* surf, int sx, int sy, void* data) {
+	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
+
+	(void) sx, (void) sy;
+	(void) data;
+
+	if (tex == NULL) {
+		return;
 	}
 
-	// XXX For Firefox, get the non-container surface.
-	// This container does ugly CSD stuff like a shadow and I can't for the life of me get it to rely on SSD.
+	struct wlr_vk_image_attribs tex_attribs;
 
-	struct wlr_subsurface* subsurface;
-
-	wl_list_for_each(subsurface, &toplevel->base->surface->current.subsurfaces_above, current.link) {
-		if (!subsurface->surface->mapped) {
-			continue;
-		}
-
-		return subsurface->surface;
+	if (!wlr_vk_texture_begin_external(tex, &tex_attribs)) {
+		LOG_E(cls, "Failed to hand over surface texture to custom renderer.");
 	}
-
-	return toplevel->base->surface; // Fallback, always guaranteed to exist.
 }
-
-typedef struct {
-	wm_t* wm;
-	struct wlr_vk_image_attribs attribs;
-} render_pass_state_t;
-
-static bool begin_buffer_pass(void* data, struct wlr_buffer* buf) {
-	render_pass_state_t* const s = data;
-	wlr_vk_buffer_get_image_attribs(s->wm->wlr_renderer, buf, &s->attribs);
-
-	return true;
-}
-
-static bool submit_render_pass(void* data) {
-	render_pass_state_t* const s = data;
-
-	LOG_V(cls, "Take care of rendering.");
-
-	redraw_intr_t intr = {
-		.intr = INTR_REDRAW,
-		.raw_vk_image = (uintptr_t) s->attribs.image,
-		.raw_vk_cmd_pool = (uintptr_t) NULL,
-		.raw_vk_cmd_buf = (uintptr_t) NULL,
-	};
-
-	interrupt(s->wm, sizeof intr, &intr);
-
-	return true;
-}
-
-static void render(void* wm, struct wlr_render_pass* render_pass) {
-	LOG_V(cls, "Take care of rendering.");
-
-	VkImage image;
-	VkCommandPool cmd_pool;
-	VkCommandBuffer cmd_buf;
-
-	wlr_vk_render_pass_get_info(render_pass, &image, &cmd_pool, &cmd_buf);
-
-	redraw_intr_t intr = {
-		.intr = INTR_REDRAW,
-		.raw_vk_image = (uintptr_t) image,
-		.raw_vk_cmd_pool = (uintptr_t) cmd_pool,
-		.raw_vk_cmd_buf = (uintptr_t) cmd_buf,
-	};
-
-	interrupt(wm, sizeof intr, &intr);
-}
-
-// XXX This is only for debugging until I don't have a preferred solution:
-// - WE_HANDLE: We handle swapchain acquisition and do all the rendering ourselves.
-// - WLR_OVERRIDE: We set hooks in the regular wlroots render path for render pass creation/submission in wlr_scene_output_build_state.
-//                 If just overriding the render function, we even let wlroots handle the command buffer creation and import that into WebGPU.
-
-#define WE_HANDLE
-
-// #define WLR_OVERRIDE
 
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
@@ -238,7 +268,6 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct wlr_output_state state;
 	wlr_output_state_init(&state);
 
-#ifdef WE_HANDLE
 	LOG_V(cls, "Acquire swapchain image.");
 
 	if (!wlr_output_configure_primary_swapchain(wlr_output, &state, &wlr_output->swapchain)) {
@@ -252,38 +281,58 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 		LOG_E(cls, "Failed to acquire swapchain image.");
 		return;
 	}
-#endif
-
-	render_pass_state_t render_pass = {.wm = wm};
-
-	(void) render_pass, (void) begin_buffer_pass, (void) submit_render_pass, (void) render;
-
-#ifdef WLR_OVERRIDE
-	wlr_scene_override_begin_buffer_pass(scene_output, begin_buffer_pass, &render_pass);
-	wlr_scene_override_submit_render_pass(scene_output, submit_render_pass, &render_pass);
-	// wlr_scene_override_render(scene_output, render, wm);
-
-	wlr_scene_output_build_state(scene_output, &state, NULL);
-#endif
-
-#ifdef WE_HANDLE
-	struct wlr_vk_image_attribs attribs;
-	wlr_vk_buffer_get_image_attribs(wm->wlr_renderer, buf, &attribs);
 
 	LOG_V(cls, "Take care of rendering.");
+
+	struct wlr_vk_image_attribs attribs;
+
+	if (!wlr_vk_buffer_begin_external(wm->wlr_renderer, buf, &attribs)) {
+		LOG_E(cls, "Failed to hand swapchain image over to custom renderer.");
+
+		wlr_buffer_unlock(buf);
+		wlr_output_state_finish(&state);
+
+		return;
+	}
+
+	track_image(wm, buf, attribs.image);
+
+	// Hand over window textures to custom renderer for this frame.
+	// This submits any pending uploads to them, and makes sure wlroots doesn't destroy them until our drawing code is done with them.
+
+	toplevel_t* win;
+
+	wl_list_for_each(win, &wm->toplevels, link) {
+		wlr_surface_for_each_surface(win->xdg_toplevel->base->surface, begin_external_iter, NULL);
+	}
 
 	redraw_intr_t intr = {
 		.intr = INTR_REDRAW,
 		.raw_vk_image = (uintptr_t) attribs.image,
+		.x_res = output->output->width,
+		.y_res = output->output->height,
 	};
 
 	interrupt(wm, sizeof intr, &intr);
 
+	output->timeline_point++;
+	bool const ended = wlr_vk_renderer_end_external(wm->wlr_renderer, output->timeline, output->timeline_point);
+
+	if (!ended) {
+		LOG_E(cls, "Failed to take swapchain image and textures back from custom renderer.");
+	}
+
 	LOG_V(cls, "Set swapchain image to output and release it.");
 
 	wlr_output_state_set_buffer(&state, buf);
+
+	// If ending fails, the timeline point will never be signalled, so don't wait.
+
+	if (ended && output->timeline != NULL) {
+		wlr_output_state_set_wait_timeline(&state, output->timeline, output->timeline_point);
+	}
+
 	wlr_buffer_unlock(buf);
-#endif
 
 	LOG_V(cls, "Commit output state.");
 
@@ -293,29 +342,6 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	wlr_scene_output_send_frame_done(scene_output, &now);
-
-	// If we have a Firefox window, redraw it too.
-
-	toplevel_t* toplevel;
-
-	wl_list_for_each(toplevel, &wm->toplevels, link) {
-		if (toplevel->xdg_toplevel->app_id == NULL || strcmp(toplevel->xdg_toplevel->app_id, "firefox") != 0) {
-			continue;
-		}
-
-		struct wlr_texture* const tex = wlr_surface_get_texture(target_surf(toplevel->xdg_toplevel));
-
-		redraw_win_intr_t const intr = {
-			.intr = INTR_REDRAW_WIN,
-			.win = (uint64_t) toplevel,
-			.x_res = tex->width,
-			.y_res = tex->height,
-		};
-
-		interrupt(toplevel->wm, sizeof intr, &intr);
-	}
-
-	// wlr_vk_dummy_cb_destroy_textures(wm->cur_dummy_cmd_buf);
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
@@ -353,6 +379,17 @@ static void new_output(struct wl_listener* listener, void* data) {
 
 	output->wm = wm;
 	output->output = wlr_output;
+
+	int const drm_fd = wlr_backend_get_drm_fd(wlr_output->backend);
+
+	if (drm_fd >= 0 && wlr_output->backend->features.timeline && wm->wlr_renderer->features.timeline) {
+		LOG_V(cls, "Output supports explicit sync, create timeline.");
+		output->timeline = wlr_drm_syncobj_timeline_create(drm_fd);
+
+		if (output->timeline == NULL) {
+			LOG_W(cls, "Failed to create timeline, falling back to implicit sync.");
+		}
+	}
 
 	LOG_V(cls, "Set up listeners (frame, destroy) for output.");
 
@@ -424,8 +461,6 @@ static void toplevel_map(struct wl_listener* listener, void* data) {
 	wl_list_insert(&wm->toplevels, &toplevel->link);
 	focus_toplevel(toplevel);
 
-	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 1280, 768);
-
 	// Send interrupt.
 
 	new_win_intr_t const intr = {
@@ -447,6 +482,19 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 
 	wl_list_remove(&toplevel->link);
 
+	// If this toplevel had focus, give it to the next one.
+
+	struct wlr_surface* const surf = toplevel->xdg_toplevel->base->surface;
+
+	if (wm->seat->keyboard_state.focused_surface == surf) {
+		wlr_seat_keyboard_notify_clear_focus(wm->seat);
+
+		if (!wl_list_empty(&wm->toplevels)) {
+			toplevel_t* const next = wl_container_of(wm->toplevels.next, next, link);
+			focus_toplevel(next);
+		}
+	}
+
 	// Send interrupt.
 
 	destroy_win_intr_t const intr = {
@@ -457,9 +505,114 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 	interrupt(wm, sizeof intr, &intr);
 }
 
+typedef struct {
+	toplevel_t* toplevel;
+	struct wlr_box geom;
+	redraw_win_intr_t* intr;
+} redraw_win_ctx_t;
+
+static void redraw_win_iter(struct wlr_surface* surf, int sx, int sy, void* data) {
+	redraw_win_ctx_t* const ctx = data;
+	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
+
+	if (tex == NULL || surf->buffer == NULL) {
+		return;
+	}
+
+	struct wlr_vk_image_attribs attribs;
+	wlr_vk_texture_get_image_attribs(tex, &attribs);
+
+	track_image(ctx->toplevel->wm, &surf->buffer->base, attribs.image);
+
+	ctx->intr = realloc(ctx->intr, sizeof *ctx->intr + (ctx->intr->surf_count + 1) * sizeof *ctx->intr->surfs);
+	assert(ctx->intr != NULL);
+
+	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
+
+	ctx->intr->surfs[ctx->intr->surf_count++] = (redraw_win_surf_t) {
+		.x = sx - ctx->geom.x,
+		.y = sy - ctx->geom.y,
+		.x_res = tex->width,
+		.y_res = tex->height,
+		.raw_image = (uintptr_t) attribs.image,
+	};
+}
+
+static void redraw_win(toplevel_t* toplevel) {
+	wm_t* const wm = toplevel->wm;
+	struct wlr_xdg_surface* const base = toplevel->xdg_toplevel->base;
+
+	redraw_win_ctx_t ctx = {
+		.toplevel = toplevel,
+		.geom = base->geometry,
+		.intr = calloc(1, sizeof *ctx.intr),
+	};
+
+	assert(ctx.intr != NULL);
+
+	// Surfaces are iterated back to front, and positions are relative to the window geometry.
+
+	wlr_surface_for_each_surface(base->surface, redraw_win_iter, &ctx);
+
+	LOG_V(cls, "Redraw %s: %u surfaces.", toplevel->xdg_toplevel->app_id, ctx.intr->surf_count);
+
+	if (ctx.intr->surf_count > 0) {
+		ctx.intr->intr = INTR_REDRAW_WIN;
+		ctx.intr->win = (uintptr_t) toplevel;
+		ctx.intr->x_res = ctx.geom.width;
+		ctx.intr->y_res = ctx.geom.height;
+
+		interrupt(wm, sizeof *ctx.intr + ctx.intr->surf_count * sizeof *ctx.intr->surfs, ctx.intr);
+	}
+
+	free(ctx.intr);
+}
+
+static void surf_commit(struct wl_listener* listener, void* data) {
+	surf_t* const surf = wl_container_of(listener, surf, commit);
+
+	(void) data;
+
+	struct wlr_surface* const root = wlr_surface_get_root_surface(surf->surf);
+	struct wlr_xdg_toplevel* const xdg_toplevel = wlr_xdg_toplevel_try_from_wlr_surface(root);
+
+	if (xdg_toplevel == NULL || !root->mapped) {
+		return;
+	}
+
+	redraw_win(xdg_toplevel->base->data);
+}
+
+static void surf_destroy(struct wl_listener* listener, void* data) {
+	surf_t* const surf = wl_container_of(listener, surf, destroy);
+
+	(void) data;
+
+	wl_list_remove(&surf->commit.link);
+	wl_list_remove(&surf->destroy.link);
+
+	free(surf);
+}
+
+static void new_surf(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, new_surf);
+	struct wlr_surface* const wlr_surf = data;
+
+	surf_t* const surf = calloc(1, sizeof *surf);
+	assert(surf != NULL);
+
+	surf->wm = wm;
+	surf->surf = wlr_surf;
+
+	surf->commit.notify = surf_commit;
+	wl_signal_add(&wlr_surf->events.commit, &surf->commit);
+
+	surf->destroy.notify = surf_destroy;
+	wl_signal_add(&wlr_surf->events.destroy, &surf->destroy);
+}
+
 static void toplevel_commit(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
-	wm_t* const wm = toplevel->wm;
 	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
 
 	(void) data;
@@ -469,60 +622,7 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	if (toplevel->xdg_toplevel->base->initial_commit) {
 		LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
 		wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
-		return;
 	}
-
-	// Send interrupt.
-
-	struct wlr_surface* const surf = target_surf(xdg_toplevel);
-	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
-
-	int width = surf->current.width;
-	int height = surf->current.height;
-
-	// XXX Bit of a crazy workaround for allowing us to import wl_shm-only VkImages.
-	// The image contents are never updated if we don't do this (see #32 for more details).
-
-	int stride = width * 4;
-	uint8_t* tmp = calloc(1, stride * height);
-
-	struct wlr_texture_read_pixels_options opts = {
-		.data = tmp,
-		.dst_x = 0,
-		.dst_y = 0,
-		.stride = stride,
-		.format = wlr_texture_preferred_read_format(tex),
-		.src_box = {.width = -1},
-	};
-
-	if (!wlr_texture_read_pixels(tex, &opts)) {
-		free(tmp);
-		return;
-	}
-
-	free(tmp);
-
-	struct wlr_vk_image_attribs attribs;
-	wlr_vk_texture_get_image_attribs(tex, &attribs);
-
-	// TODO We need to figure out a way to not free the VkImage (in vulkan_texture_destroy) before the scene has had a chance to render, i.e. before INTR_REDRAW returns.
-	// We could create some kind of dummy command buffer on wlr_texture.last_used_cb, so that when vulkan_texture_destroy is called, we can just add stuff there and then extract it and destroy the textures ourselves when INTR_REDRAW returns control back to us.
-	// We'll have to make it mega clear either way then that window textures are only valid until the next redraw.
-	// Or maybe the client program should be responsible for freeing this?
-
-	wlr_vk_texture_attach_dummy_last_used_cb(tex, wm->cur_dummy_cmd_buf);
-
-	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
-
-	redraw_win_intr_t const intr = {
-		.intr = INTR_REDRAW_WIN,
-		.win = (uintptr_t) toplevel,
-		.x_res = tex->width,
-		.y_res = tex->height,
-		.raw_image = (uintptr_t) attribs.image,
-	};
-
-	interrupt(wm, sizeof intr, &intr);
 }
 
 static void toplevel_destroy(struct wl_listener* listener, void* data) {
@@ -555,7 +655,7 @@ static void new_xdg_toplevel(struct wl_listener* listener, void* data) {
 	LOG_V(cls, "Add node for this XDG toplevel's surface to scene graph.");
 
 	toplevel->scene_tree = wlr_scene_xdg_surface_create(&wm->scene->tree, xdg_toplevel->base);
-	xdg_toplevel->base->data = toplevel->scene_tree;
+	xdg_toplevel->base->data = toplevel;
 
 	LOG_V(cls, "Listen to XDG toplevel events.");
 
@@ -577,47 +677,6 @@ static void new_popup(struct wl_listener* listener, void* data) {
 	(void) data;
 
 	LOG_F(cls, "TODO: %s", __func__);
-}
-
-static void surf_config(struct wl_listener* listener, void* data) {
-	surf_t* const surf = wl_container_of(listener, surf, config);
-	struct wlr_box const geom = surf->xdg_surface->geometry;
-
-	(void) data;
-
-	LOG_V(cls, "Configure XDG surface (%ux%u+%u+%u) for toplevel %p.", geom.width, geom.height, geom.x, geom.y, surf->xdg_surface->toplevel);
-}
-
-static void surf_destroy(struct wl_listener* listener, void* data) {
-	surf_t* const surf = wl_container_of(listener, surf, destroy);
-
-	(void) data;
-
-	LOG_V(cls, "Destroying XDG surface.");
-
-	wl_list_remove(&surf->config.link);
-	wl_list_remove(&surf->destroy.link);
-
-	free(surf);
-}
-
-static void new_xdg_surface(struct wl_listener* listener, void* data) {
-	wm_t* const wm = wl_container_of(listener, wm, new_xdg_toplevel);
-	struct wlr_xdg_surface* const xdg_surface = data;
-
-	LOG_V(cls, "New XDG surface.");
-
-	surf_t* const surf = calloc(1, sizeof *surf);
-	assert(surf != NULL);
-
-	surf->wm = wm;
-	surf->xdg_surface = xdg_surface;
-
-	surf->config.notify = surf_config;
-	wl_signal_add(&xdg_surface->events.configure, &surf->config);
-
-	surf->destroy.notify = surf_destroy;
-	wl_signal_add(&xdg_surface->events.destroy, &surf->destroy);
 }
 
 static void keyborp_mod(struct wl_listener* listener, void* data) {
@@ -778,6 +837,7 @@ static void mouse_motion_abs(struct wl_listener* listener, void* data) {
 
 	mouse_motion_intr_t intr = {
 		.intr = INTR_MOUSE_MOTION,
+		.time = event->time_msec,
 		.is_abs = true,
 		.x = event->x,
 		.y = event->y,
@@ -830,6 +890,42 @@ static void mouse_destroy(struct wl_listener* listener, void* data) {
 	free(mouse);
 }
 
+static void config_mouse(struct wlr_input_device* dev) {
+#if WLR_HAS_LIBINPUT_BACKEND
+	// Only devices from the libinput backend (i.e. when running under DRM) can be configured.
+	// When running nested, the parent compositor is the one which is meant to deal with this.
+
+	if (!wlr_input_device_is_libinput(dev)) {
+		return;
+	}
+
+	struct libinput_device* const ldev = wlr_libinput_get_device_handle(dev);
+
+	// TODO These are hardcoded for now (taken from my Sway config), but should eventually be configurable.
+
+	if (libinput_device_config_accel_is_available(ldev)) {
+		libinput_device_config_accel_set_profile(ldev, LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE);
+		libinput_device_config_accel_set_speed(ldev, 0.3);
+	}
+
+	if (libinput_device_config_tap_get_finger_count(ldev) > 0) {
+		libinput_device_config_tap_set_enabled(ldev, LIBINPUT_CONFIG_TAP_ENABLED);
+		libinput_device_config_tap_set_drag_enabled(ldev, LIBINPUT_CONFIG_DRAG_ENABLED);
+		libinput_device_config_tap_set_drag_lock_enabled(ldev, LIBINPUT_CONFIG_DRAG_LOCK_DISABLED);
+	}
+
+	if (libinput_device_config_dwt_is_available(ldev)) {
+		libinput_device_config_dwt_set_enabled(ldev, LIBINPUT_CONFIG_DWT_DISABLED);
+	}
+
+	if (libinput_device_config_scroll_has_natural_scroll(ldev)) {
+		libinput_device_config_scroll_set_natural_scroll_enabled(ldev, true);
+	}
+#else
+	(void) dev;
+#endif
+}
+
 static void new_mouse(wm_t* wm, struct wlr_input_device* dev) {
 	struct wlr_pointer* const wlr_pointer = wlr_pointer_from_input_device(dev);
 
@@ -839,7 +935,7 @@ static void new_mouse(wm_t* wm, struct wlr_input_device* dev) {
 	mouse->wm = wm;
 	mouse->pointer = wlr_pointer;
 
-	// TODO This is where we'll want to set stuff like accel profiles etc.
+	config_mouse(dev);
 
 	mouse->motion.notify = mouse_motion;
 	wl_signal_add(&wlr_pointer->events.motion, &mouse->motion);
@@ -970,9 +1066,9 @@ wm_t* wm_vdev_create(void) {
 	wm->public.vk_dev = wlr_vk_renderer_get_device(wm->wlr_renderer);
 	wm->public.vk_queue_family = wlr_vk_renderer_get_queue_family(wm->wlr_renderer);
 
-	wm->cur_dummy_cmd_buf = wlr_vk_create_dummy_cb();
-
 	LOG_V(cls, "Initialize buffer factory protocols.");
+
+	// TODO To use DMA-BUF and not just SHM, call wlr_renderer_init_wl_display() here instead.
 
 	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
 		FAIL("Failed to initialize buffer factory protocols.");
@@ -1005,6 +1101,9 @@ wm_t* wm_vdev_create(void) {
 	if (compositor == NULL) {
 		FAIL("Failed to create compositor.");
 	}
+
+	wm->new_surf.notify = new_surf;
+	wl_signal_add(&compositor->events.new_surface, &wm->new_surf);
 
 	LOG_V(cls, "Creating subcompositor.");
 
@@ -1042,6 +1141,7 @@ wm_t* wm_vdev_create(void) {
 	LOG_V(cls, "Set up XDG-shell (version 3).");
 
 	wl_list_init(&wm->toplevels);
+	wl_list_init(&wm->images);
 	wm->xdg_shell = wlr_xdg_shell_create(wm->display, 3);
 
 	if (wm->xdg_shell == NULL) {
@@ -1055,9 +1155,6 @@ wm_t* wm_vdev_create(void) {
 
 	wm->new_xdg_popup.notify = new_popup;
 	wl_signal_add(&wm->xdg_shell->events.new_popup, &wm->new_xdg_popup);
-
-	wm->new_xdg_surface.notify = new_xdg_surface;
-	wl_signal_add(&wm->xdg_shell->events.new_surface, &wm->new_xdg_surface);
 
 	LOG_V(cls, "Create new seat.");
 	wm->seat = wlr_seat_create(wm->display, "seat0");
@@ -1090,10 +1187,15 @@ wm_t* wm_vdev_create(void) {
 }
 
 void wm_vdev_destroy(wm_t* wm) {
-	wl_display_destroy_clients(wm->display);
+	image_t* image;
+	image_t* image_tmp;
+
+	wl_list_for_each_safe(image, image_tmp, &wm->images, link) {
+		image_free(image); // No point using image_destroy() and alerting client.
+	}
 
 	if (wm->display != NULL) {
-		wl_display_destroy(wm->display);
+		wl_display_destroy_clients(wm->display);
 	}
 
 	if (wm->backend != NULL) {
@@ -1104,8 +1206,8 @@ void wm_vdev_destroy(wm_t* wm) {
 		wlr_allocator_destroy(wm->allocator);
 	}
 
-	if (wm->cur_dummy_cmd_buf) {
-		wlr_vk_destroy_dummy_cb(wm->cur_dummy_cmd_buf);
+	if (wm->display != NULL) {
+		wl_display_destroy(wm->display);
 	}
 
 	LOG_F(cls, "TODO alles die hier nog niet gefree'd zijn");
@@ -1115,72 +1217,4 @@ void wm_vdev_destroy(wm_t* wm) {
 void wm_vdev_loop(wm_t* wm) {
 	LOG_V(cls, "Starting WM loop.");
 	wl_display_run(wm->display);
-}
-
-static void read_surface_pixels(struct wlr_surface* surface, int sx, int sy, void* data) {
-	struct {
-		uint8_t* buf;
-		int stride;
-		int origin_x, origin_y;
-	}* ctx = data;
-
-	struct wlr_texture* tex = wlr_surface_get_texture(surface);
-
-	if (!tex) {
-		return;
-	}
-
-	int width = surface->current.width;
-	int height = surface->current.height;
-	int dst_x = ctx->origin_x + sx;
-	int dst_y = ctx->origin_y + sy;
-
-	int stride = width * 4;
-	uint8_t* tmp = calloc(1, stride * height);
-
-	struct wlr_texture_read_pixels_options opts = {
-		.data = tmp,
-		.dst_x = 0,
-		.dst_y = 0,
-		.stride = stride,
-		.format = wlr_texture_preferred_read_format(tex),
-		.src_box = {.width = -1},
-	};
-
-	if (!wlr_texture_read_pixels(tex, &opts)) {
-		free(tmp);
-		return;
-	}
-
-	for (int y = 0; y < height; y++) {
-		uint32_t* src_row = (uint32_t*) (tmp + y * stride);
-		uint32_t* dst_row = (uint32_t*) (ctx->buf + (dst_y + y) * ctx->stride + dst_x * 4);
-
-		// XXX This is technically incorrect as we are overwriting pixels instead of compositing them.
-		// But, then again, nothing here is correct so like whatever.
-
-		memcpy(dst_row, src_row, stride);
-	}
-
-	free(tmp);
-}
-
-void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
-	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
-	struct wlr_surface* base = target_surf(xdg_toplevel);
-
-	memset(buf, 0, base->current.width * base->current.height * 4);
-
-	struct {
-		uint8_t* buf;
-		int stride;
-		int origin_x, origin_y;
-	} ctx = {
-		.buf = buf,
-		.stride = base->current.width * 4,
-		.origin_x = 0,
-		.origin_y = 0,
-	};
-
-	wlr_surface_for_each_surface(base, read_surface_pixels, &ctx);
 }

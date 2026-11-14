@@ -90,9 +90,9 @@ typedef struct {
 	struct wlr_seat* seat;
 	uint32_t seat_caps;
 
-	// Backend stuff.
+	// Tracking stuff.
 
-	void* cur_dummy_cmd_buf;
+	struct wl_list images;
 } wm_t;
 
 typedef struct {
@@ -108,21 +108,12 @@ typedef struct {
 	struct wl_listener destroy;
 } toplevel_t;
 
-typedef struct {
-	struct wl_list link;
-
-	wm_t* wm;
-	struct wlr_xdg_surface* xdg_surface;
-
-	struct wl_listener config;
-	struct wl_listener destroy;
-} surf_t;
-
 typedef enum : uint8_t {
 	INTR_REDRAW,
 	INTR_NEW_WIN,
 	INTR_DESTROY_WIN,
 	INTR_REDRAW_WIN,
+	INTR_DESTROY_IMAGE,
 	INTR_MOUSE_MOTION,
 	INTR_MOUSE_BUTTON,
 } intr_t;
@@ -133,7 +124,6 @@ wm_t* wm_vdev_create(void);
 void wm_vdev_destroy(wm_t* wm);
 
 void wm_vdev_loop(wm_t* wm);
-void wm_vdev_get_fb(toplevel_t* toplevel, void* buf);
 
 void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y);
 void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button);
