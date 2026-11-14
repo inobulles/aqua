@@ -224,27 +224,6 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 	free(output);
 }
 
-static struct wlr_surface* target_surf(struct wlr_xdg_toplevel* toplevel) {
-	if (toplevel->app_id == NULL || strcmp(toplevel->app_id, "firefox") != 0) {
-		return toplevel->base->surface;
-	}
-
-	// XXX For Firefox, get the non-container surface.
-	// This container does ugly CSD stuff like a shadow and I can't for the life of me get it to rely on SSD.
-
-	struct wlr_subsurface* subsurface;
-
-	wl_list_for_each(subsurface, &toplevel->base->surface->current.subsurfaces_above, current.link) {
-		if (!subsurface->surface->mapped) {
-			continue;
-		}
-
-		return subsurface->surface;
-	}
-
-	return toplevel->base->surface; // Fallback, always guaranteed to exist.
-}
-
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
@@ -294,7 +273,7 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	toplevel_t* win;
 
 	wl_list_for_each(win, &wm->toplevels, link) {
-		struct wlr_texture* const tex = wlr_surface_get_texture(target_surf(win->xdg_toplevel));
+		struct wlr_texture* const tex = wlr_surface_get_texture(win->xdg_toplevel->base->surface);
 
 		if (tex == NULL) { // TODO When can this happen?
 			continue;
@@ -343,27 +322,6 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	wlr_scene_output_send_frame_done(scene_output, &now);
-
-	// If we have a Firefox window, redraw it too.
-
-	toplevel_t* toplevel;
-
-	wl_list_for_each(toplevel, &wm->toplevels, link) {
-		if (toplevel->xdg_toplevel->app_id == NULL || strcmp(toplevel->xdg_toplevel->app_id, "firefox") != 0) {
-			continue;
-		}
-
-		struct wlr_texture* const tex = wlr_surface_get_texture(target_surf(toplevel->xdg_toplevel));
-
-		redraw_win_intr_t const intr = {
-			.intr = INTR_REDRAW_WIN,
-			.win = (uint64_t) toplevel,
-			.x_res = tex->width,
-			.y_res = tex->height,
-		};
-
-		interrupt(toplevel->wm, sizeof intr, &intr);
-	}
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
@@ -532,7 +490,7 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 static void redraw_win(toplevel_t* toplevel) {
 	wm_t* const wm = toplevel->wm;
 	struct wlr_xdg_toplevel* const xdg_toplevel = toplevel->xdg_toplevel;
-	struct wlr_surface* const surf = target_surf(xdg_toplevel);
+	struct wlr_surface* const surf = xdg_toplevel->base->surface;
 	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
 
 	if (tex == NULL || surf->buffer == NULL) {
@@ -1259,7 +1217,7 @@ static void read_surface_pixels(struct wlr_surface* surface, int sx, int sy, voi
 
 void wm_vdev_get_fb(toplevel_t* toplevel, void* buf) {
 	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
-	struct wlr_surface* base = target_surf(xdg_toplevel);
+	struct wlr_surface* base = xdg_toplevel->base->surface;
 
 	memset(buf, 0, base->current.width * base->current.height * 4);
 
