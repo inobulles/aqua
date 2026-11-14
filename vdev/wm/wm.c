@@ -11,6 +11,7 @@
 
 #include <umber.h>
 
+#include <wlr/backend/wayland.h>
 #include <wlr/render/drm_syncobj.h>
 #include <wlr/render/interface.h>
 #include <wlr/render/swapchain.h>
@@ -232,6 +233,12 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 
 	if (output->timeline != NULL) {
 		wlr_drm_syncobj_timeline_unref(output->timeline);
+	}
+
+	// When running nested, the output is destroyed when its window is closed.
+
+	if (wlr_output_is_wl(output->output)) {
+		wl_display_terminate(output->wm->display);
 	}
 
 	free(output);
