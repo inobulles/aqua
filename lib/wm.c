@@ -443,8 +443,6 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
 	uint64_t raw_vk_image;
-	uint64_t raw_vk_cmd_pool;
-	uint64_t raw_vk_cmd_buf;
 	uint32_t x_res;
 	uint32_t y_res;
 } intr_redraw_t;
@@ -528,8 +526,6 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 			wm->redraw(
 				wm,
 				(void*) (uintptr_t) redraw->raw_vk_image,
-				(void*) (uintptr_t) redraw->raw_vk_cmd_pool,
-				(void*) (uintptr_t) redraw->raw_vk_cmd_buf,
 				redraw->x_res,
 				redraw->y_res,
 				wm->redraw_data

@@ -79,8 +79,6 @@ typedef struct {
 typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t raw_vk_image;
-	uint64_t raw_vk_cmd_pool;
-	uint64_t raw_vk_cmd_buf;
 	uint32_t x_res;
 	uint32_t y_res;
 } redraw_intr_t;
