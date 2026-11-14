@@ -19,8 +19,8 @@
 #include <wlr/config.h>
 
 #if WLR_HAS_LIBINPUT_BACKEND
-#include <libinput.h>
-#include <wlr/backend/libinput.h>
+# include <libinput.h>
+# include <wlr/backend/libinput.h>
 #endif
 
 #include <webgpu/webgpu.h>
@@ -76,6 +76,14 @@ typedef struct {
 	struct wl_listener destroy;
 } image_t;
 
+typedef struct {
+	wm_t* wm;
+	struct wlr_surface* surf;
+
+	struct wl_listener commit;
+	struct wl_listener destroy;
+} surf_t;
+
 typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t raw_vk_image;
@@ -98,11 +106,18 @@ typedef struct __attribute__((packed)) {
 } destroy_win_intr_t;
 
 typedef struct __attribute__((packed)) {
+	int32_t x, y;
+	uint32_t x_res, y_res;
+	uint64_t raw_image;
+} redraw_win_surf_t;
+
+typedef struct __attribute__((packed)) {
 	intr_t intr;
 	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
-	uint64_t raw_image;
+	uint32_t surf_count;
+	redraw_win_surf_t surfs[];
 } redraw_win_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -222,6 +237,23 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 	free(output);
 }
 
+static void begin_external_iter(struct wlr_surface* surf, int sx, int sy, void* data) {
+	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
+
+	(void) sx, (void) sy;
+	(void) data;
+
+	if (tex == NULL) {
+		return;
+	}
+
+	struct wlr_vk_image_attribs tex_attribs;
+
+	if (!wlr_vk_texture_begin_external(tex, &tex_attribs)) {
+		LOG_E(cls, "Failed to hand over surface texture to custom renderer.");
+	}
+}
+
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
@@ -271,17 +303,7 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	toplevel_t* win;
 
 	wl_list_for_each(win, &wm->toplevels, link) {
-		struct wlr_texture* const tex = wlr_surface_get_texture(win->xdg_toplevel->base->surface);
-
-		if (tex == NULL) { // TODO When can this happen?
-			continue;
-		}
-
-		struct wlr_vk_image_attribs tex_attribs;
-
-		if (!wlr_vk_texture_begin_external(tex, &tex_attribs)) {
-			LOG_E(cls, "Failed to hand over texture of %s to custom renderer.", win->xdg_toplevel->app_id);
-		}
+		wlr_surface_for_each_surface(win->xdg_toplevel->base->surface, begin_external_iter, NULL);
 	}
 
 	redraw_intr_t intr = {
@@ -485,10 +507,14 @@ static void toplevel_unmap(struct wl_listener* listener, void* data) {
 	interrupt(wm, sizeof intr, &intr);
 }
 
-static void redraw_win(toplevel_t* toplevel) {
-	wm_t* const wm = toplevel->wm;
-	struct wlr_xdg_toplevel* const xdg_toplevel = toplevel->xdg_toplevel;
-	struct wlr_surface* const surf = xdg_toplevel->base->surface;
+typedef struct {
+	toplevel_t* toplevel;
+	struct wlr_box geom;
+	redraw_win_intr_t* intr;
+} redraw_win_ctx_t;
+
+static void redraw_win_iter(struct wlr_surface* surf, int sx, int sy, void* data) {
+	redraw_win_ctx_t* const ctx = data;
 	struct wlr_texture* const tex = wlr_surface_get_texture(surf);
 
 	if (tex == NULL || surf->buffer == NULL) {
@@ -497,21 +523,94 @@ static void redraw_win(toplevel_t* toplevel) {
 
 	struct wlr_vk_image_attribs attribs;
 	wlr_vk_texture_get_image_attribs(tex, &attribs);
-	LOG_V(cls, "Redraw %s: VkImage=%p", xdg_toplevel->app_id, (void*) attribs.image);
 
-	track_image(toplevel->wm, &surf->buffer->base, attribs.image);
+	track_image(ctx->toplevel->wm, &surf->buffer->base, attribs.image);
+
+	ctx->intr = realloc(ctx->intr, sizeof *ctx->intr + (ctx->intr->surf_count + 1) * sizeof *ctx->intr->surfs);
+	assert(ctx->intr != NULL);
 
 	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
 
-	redraw_win_intr_t const intr = {
-		.intr = INTR_REDRAW_WIN,
-		.win = (uintptr_t) toplevel,
+	ctx->intr->surfs[ctx->intr->surf_count++] = (redraw_win_surf_t) {
+		.x = sx - ctx->geom.x,
+		.y = sy - ctx->geom.y,
 		.x_res = tex->width,
 		.y_res = tex->height,
 		.raw_image = (uintptr_t) attribs.image,
 	};
+}
 
-	interrupt(wm, sizeof intr, &intr);
+static void redraw_win(toplevel_t* toplevel) {
+	wm_t* const wm = toplevel->wm;
+	struct wlr_xdg_surface* const base = toplevel->xdg_toplevel->base;
+
+	redraw_win_ctx_t ctx = {
+		.toplevel = toplevel,
+		.geom = base->geometry,
+		.intr = calloc(1, sizeof *ctx.intr),
+	};
+
+	assert(ctx.intr != NULL);
+
+	// Surfaces are iterated back to front, and positions are relative to the window geometry.
+
+	wlr_surface_for_each_surface(base->surface, redraw_win_iter, &ctx);
+
+	LOG_V(cls, "Redraw %s: %u surfaces.", toplevel->xdg_toplevel->app_id, ctx.intr->surf_count);
+
+	if (ctx.intr->surf_count > 0) {
+		ctx.intr->intr = INTR_REDRAW_WIN;
+		ctx.intr->win = (uintptr_t) toplevel;
+		ctx.intr->x_res = ctx.geom.width;
+		ctx.intr->y_res = ctx.geom.height;
+
+		interrupt(wm, sizeof *ctx.intr + ctx.intr->surf_count * sizeof *ctx.intr->surfs, ctx.intr);
+	}
+
+	free(ctx.intr);
+}
+
+static void surf_commit(struct wl_listener* listener, void* data) {
+	surf_t* const surf = wl_container_of(listener, surf, commit);
+
+	(void) data;
+
+	struct wlr_surface* const root = wlr_surface_get_root_surface(surf->surf);
+	struct wlr_xdg_toplevel* const xdg_toplevel = wlr_xdg_toplevel_try_from_wlr_surface(root);
+
+	if (xdg_toplevel == NULL || !root->mapped) {
+		return;
+	}
+
+	redraw_win(xdg_toplevel->base->data);
+}
+
+static void surf_destroy(struct wl_listener* listener, void* data) {
+	surf_t* const surf = wl_container_of(listener, surf, destroy);
+
+	(void) data;
+
+	wl_list_remove(&surf->commit.link);
+	wl_list_remove(&surf->destroy.link);
+
+	free(surf);
+}
+
+static void new_surf(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, new_surf);
+	struct wlr_surface* const wlr_surf = data;
+
+	surf_t* const surf = calloc(1, sizeof *surf);
+	assert(surf != NULL);
+
+	surf->wm = wm;
+	surf->surf = wlr_surf;
+
+	surf->commit.notify = surf_commit;
+	wl_signal_add(&wlr_surf->events.commit, &surf->commit);
+
+	surf->destroy.notify = surf_destroy;
+	wl_signal_add(&wlr_surf->events.destroy, &surf->destroy);
 }
 
 static void toplevel_commit(struct wl_listener* listener, void* data) {
@@ -525,10 +624,7 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	if (toplevel->xdg_toplevel->base->initial_commit) {
 		LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
 		wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
-		return;
 	}
-
-	redraw_win(toplevel);
 }
 
 static void toplevel_destroy(struct wl_listener* listener, void* data) {
@@ -561,7 +657,7 @@ static void new_xdg_toplevel(struct wl_listener* listener, void* data) {
 	LOG_V(cls, "Add node for this XDG toplevel's surface to scene graph.");
 
 	toplevel->scene_tree = wlr_scene_xdg_surface_create(&wm->scene->tree, xdg_toplevel->base);
-	xdg_toplevel->base->data = toplevel->scene_tree;
+	xdg_toplevel->base->data = toplevel;
 
 	LOG_V(cls, "Listen to XDG toplevel events.");
 
@@ -583,47 +679,6 @@ static void new_popup(struct wl_listener* listener, void* data) {
 	(void) data;
 
 	LOG_F(cls, "TODO: %s", __func__);
-}
-
-static void surf_config(struct wl_listener* listener, void* data) {
-	surf_t* const surf = wl_container_of(listener, surf, config);
-	struct wlr_box const geom = surf->xdg_surface->geometry;
-
-	(void) data;
-
-	LOG_V(cls, "Configure XDG surface (%dx%d+%d+%d) for toplevel %p.", geom.width, geom.height, geom.x, geom.y, surf->xdg_surface->toplevel);
-}
-
-static void surf_destroy(struct wl_listener* listener, void* data) {
-	surf_t* const surf = wl_container_of(listener, surf, destroy);
-
-	(void) data;
-
-	LOG_V(cls, "Destroying XDG surface.");
-
-	wl_list_remove(&surf->config.link);
-	wl_list_remove(&surf->destroy.link);
-
-	free(surf);
-}
-
-static void new_xdg_surface(struct wl_listener* listener, void* data) {
-	wm_t* const wm = wl_container_of(listener, wm, new_xdg_toplevel);
-	struct wlr_xdg_surface* const xdg_surface = data;
-
-	LOG_V(cls, "New XDG surface.");
-
-	surf_t* const surf = calloc(1, sizeof *surf);
-	assert(surf != NULL);
-
-	surf->wm = wm;
-	surf->xdg_surface = xdg_surface;
-
-	surf->config.notify = surf_config;
-	wl_signal_add(&xdg_surface->events.configure, &surf->config);
-
-	surf->destroy.notify = surf_destroy;
-	wl_signal_add(&xdg_surface->events.destroy, &surf->destroy);
 }
 
 static void keyborp_mod(struct wl_listener* listener, void* data) {
@@ -1049,6 +1104,9 @@ wm_t* wm_vdev_create(void) {
 		FAIL("Failed to create compositor.");
 	}
 
+	wm->new_surf.notify = new_surf;
+	wl_signal_add(&compositor->events.new_surface, &wm->new_surf);
+
 	LOG_V(cls, "Creating subcompositor.");
 
 	if (wlr_subcompositor_create(wm->display) == NULL) {
@@ -1100,9 +1158,6 @@ wm_t* wm_vdev_create(void) {
 	wm->new_xdg_popup.notify = new_popup;
 	wl_signal_add(&wm->xdg_shell->events.new_popup, &wm->new_xdg_popup);
 
-	wm->new_xdg_surface.notify = new_xdg_surface;
-	wl_signal_add(&wm->xdg_shell->events.new_surface, &wm->new_xdg_surface);
-
 	LOG_V(cls, "Create new seat.");
 	wm->seat = wlr_seat_create(wm->display, "seat0");
 
@@ -1134,7 +1189,8 @@ wm_t* wm_vdev_create(void) {
 }
 
 void wm_vdev_destroy(wm_t* wm) {
-	image_t* image, *image_tmp;
+	image_t* image;
+	image_t* image_tmp;
 
 	wl_list_for_each_safe(image, image_tmp, &wm->images, link) {
 		image_free(image); // No point using image_destroy() and alerting client.

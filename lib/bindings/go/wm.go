@@ -16,7 +16,15 @@ extern void go_lib_bindings_wm_redraw_cb(
 	void* data
 );
 extern void go_lib_bindings_wm_new_win_cb(wm_t wm, wm_win_t win, char* app_id, void* data);
-extern void go_lib_bindings_wm_redraw_win_cb(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
+extern void go_lib_bindings_wm_redraw_win_cb(
+	wm_t wm,
+	wm_win_t win,
+	uint32_t x_res,
+	uint32_t y_res,
+	size_t surf_count,
+	wm_surf_t* surfs,
+	void* data
+);
 extern void go_lib_bindings_wm_destroy_image_cb(wm_t wm, void* raw_image, void* data);
 extern void go_lib_bindings_wm_destroy_win_cb(wm_t wm, wm_win_t win, void* data);
 extern void go_lib_bindings_wm_mouse_motion_cb(
@@ -222,21 +230,44 @@ func (w *Wm) RegisterNewWinCb(cb WmNewWinCb) {
 	)
 }
 
-type WmRedrawWinCb func(win WmWin, x_res, y_res uint32, raw_image unsafe.Pointer)
+type WmSurf struct {
+	X, Y       int32
+	XRes, YRes uint32
+	RawImage   unsafe.Pointer
+}
+
+type WmRedrawWinCb func(win WmWin, x_res, y_res uint32, surfs []WmSurf)
 
 //export go_lib_bindings_wm_redraw_win_cb
 func go_lib_bindings_wm_redraw_win_cb(
 	_ C.wm_t,
 	win C.wm_win_t,
 	x_res, y_res C.uint32_t,
-	raw_image unsafe.Pointer,
+	surf_count C.size_t,
+	c_surfs *C.wm_surf_t,
 	data unsafe.Pointer,
 ) {
 	handle := (cgo.Handle)(data)
 
-	if cb, ok := handle.Value().(WmRedrawWinCb); ok {
-		cb(WmWin(win), uint32(x_res), uint32(y_res), raw_image)
+	cb, ok := handle.Value().(WmRedrawWinCb)
+
+	if !ok {
+		return
 	}
+
+	surfs := make([]WmSurf, surf_count)
+
+	for i, c_surf := range unsafe.Slice(c_surfs, surf_count) {
+		surfs[i] = WmSurf{
+			X:        int32(c_surf.x),
+			Y:        int32(c_surf.y),
+			XRes:     uint32(c_surf.x_res),
+			YRes:     uint32(c_surf.y_res),
+			RawImage: c_surf.raw_image,
+		}
+	}
+
+	cb(WmWin(win), uint32(x_res), uint32(y_res), surfs)
 }
 
 func (w *Wm) RegisterRedrawWinCb(cb WmRedrawWinCb) {

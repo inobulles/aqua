@@ -108,16 +108,6 @@ typedef struct {
 	struct wl_listener destroy;
 } toplevel_t;
 
-typedef struct {
-	struct wl_list link;
-
-	wm_t* wm;
-	struct wlr_xdg_surface* xdg_surface;
-
-	struct wl_listener config;
-	struct wl_listener destroy;
-} surf_t;
-
 typedef enum : uint8_t {
 	INTR_REDRAW,
 	INTR_NEW_WIN,

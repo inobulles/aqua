@@ -64,16 +64,57 @@ typedef void (*wm_new_win_cb_t)(wm_t wm, wm_win_t win, char const* app_id, void*
 typedef void (*wm_destroy_win_cb_t)(wm_t wm, wm_win_t win, void* data);
 
 /**
+ * WM window surface.
+ *
+ * A window is made up of one or more of these, which must be drawn back to front.
+ */
+typedef struct {
+	/**
+        * X position of the surface relative to the window's geometry (can be negative, e.g. for CSD shadows).
+        */
+	int32_t x;
+
+	/**
+        * Y position of the surface relative to the window's geometry (can be negative, e.g. for CSD shadows).
+        */
+	int32_t y;
+
+	/**
+        * X resolution of the surface's image.
+        */
+	uint32_t x_res;
+
+	/**
+        * Y resolution of the surface's image.
+        */
+	uint32_t y_res;
+
+	/**
+        * Raw image containing the surface contents.
+        */
+	void* raw_image;
+} wm_surf_t;
+
+/**
  * WM window redraw event callback.
  *
  * @param wm The WM object.
  * @param win The WM window handle.
  * @param x_res The new X resolution of the window (can change between calls).
  * @param y_res The new Y resolution of the window (can change between calls).
- * @param raw_image Raw image containing the window contents.
+ * @param surf_count Number of surfaces in {@link surfs}.
+ * @param surfs Surfaces making up the window, ordered back to front. Only valid for the duration of the callback.
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_redraw_win_cb}.
  */
-typedef void (*wm_redraw_win_cb_t)(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res, void* raw_image, void* data);
+typedef void (*wm_redraw_win_cb_t)(
+	wm_t wm,
+	wm_win_t win,
+	uint32_t x_res,
+	uint32_t y_res,
+	size_t surf_count,
+	wm_surf_t const* surfs,
+	void* data
+);
 
 /**
  * WM image destroy event callback.

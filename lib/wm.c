@@ -459,11 +459,18 @@ typedef struct __attribute__((packed)) {
 } intr_destroy_win_t;
 
 typedef struct __attribute__((packed)) {
+	int32_t x, y;
+	uint32_t x_res, y_res;
+	uint64_t raw_image;
+} intr_redraw_win_surf_t;
+
+typedef struct __attribute__((packed)) {
 	intr_generic_t generic;
 	uint64_t win;
 	uint32_t x_res;
 	uint32_t y_res;
-	uint64_t raw_image;
+	uint32_t surf_count;
+	intr_redraw_win_surf_t surfs[];
 } intr_redraw_win_t;
 
 typedef struct __attribute__((packed)) {
@@ -562,14 +569,40 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 	else if (intr->type == ctx->consts.INTR_REDRAW_WIN) {
 		intr_redraw_win_t const* const redraw_win = notif->interrupt.data;
 
-		if (notif->interrupt.data_size < sizeof *redraw_win) {
+		if (
+			notif->interrupt.data_size < sizeof *redraw_win ||
+			notif->interrupt.data_size < sizeof *redraw_win + redraw_win->surf_count * sizeof *redraw_win->surfs
+		) {
 			LOG_E(cls, "TODO Error message.");
 			return;
 		}
 
-		if (wm->redraw_win != NULL) {
-			wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, (void*) (uintptr_t) redraw_win->raw_image, wm->redraw_win_data);
+		if (wm->redraw_win == NULL) {
+			return;
 		}
+
+		size_t const surf_count = redraw_win->surf_count;
+		wm_surf_t* const surfs = calloc(surf_count, sizeof *surfs);
+
+		if (surfs == NULL) {
+			LOG_E(cls, "Failed to allocate surfaces.");
+			return;
+		}
+
+		for (size_t i = 0; i < surf_count; i++) {
+			intr_redraw_win_surf_t const* const surf = &redraw_win->surfs[i];
+
+			surfs[i] = (wm_surf_t) {
+				.x = surf->x,
+				.y = surf->y,
+				.x_res = surf->x_res,
+				.y_res = surf->y_res,
+				.raw_image = (void*) (uintptr_t) surf->raw_image,
+			};
+		}
+
+		wm->redraw_win(wm, redraw_win->win, redraw_win->x_res, redraw_win->y_res, surf_count, surfs, wm->redraw_win_data);
+		free(surfs);
 	}
 
 	else if (intr->type == ctx->consts.INTR_DESTROY_IMAGE) {
