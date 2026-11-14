@@ -611,6 +611,16 @@ static void new_surf(struct wl_listener* listener, void* data) {
 	wl_signal_add(&wlr_surf->events.destroy, &surf->destroy);
 }
 
+static void set_ssd(toplevel_t* toplevel) {
+	struct wlr_xdg_toplevel_decoration_v1* deco;
+
+	wl_list_for_each(deco, &toplevel->wm->xdg_deco_mgr->decorations, link) {
+		if (deco->toplevel == toplevel->xdg_toplevel) {
+			wlr_xdg_toplevel_decoration_v1_set_mode(deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+		}
+	}
+}
+
 static void toplevel_commit(struct wl_listener* listener, void* data) {
 	toplevel_t* const toplevel = wl_container_of(listener, toplevel, commit);
 	struct wlr_xdg_toplevel* xdg_toplevel = toplevel->xdg_toplevel;
@@ -622,6 +632,7 @@ static void toplevel_commit(struct wl_listener* listener, void* data) {
 	if (toplevel->xdg_toplevel->base->initial_commit) {
 		LOG_V(cls, "Initial commit for %s; setting size to (0, 0) so client can pick size.", xdg_toplevel->app_id);
 		wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, 0, 0);
+		set_ssd(toplevel);
 	}
 }
 
@@ -670,6 +681,16 @@ static void new_xdg_toplevel(struct wl_listener* listener, void* data) {
 
 	toplevel->destroy.notify = toplevel_destroy;
 	wl_signal_add(&xdg_toplevel->events.destroy, &toplevel->destroy);
+}
+
+static void new_xdg_deco(struct wl_listener* listener, void* data) {
+	struct wlr_xdg_toplevel_decoration_v1* const deco = data;
+
+	(void) listener;
+
+	if (deco->toplevel->base->initialized) {
+		wlr_xdg_toplevel_decoration_v1_set_mode(deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+	}
 }
 
 static void new_popup(struct wl_listener* listener, void* data) {
@@ -1155,6 +1176,24 @@ wm_t* wm_vdev_create(void) {
 
 	wm->new_xdg_popup.notify = new_popup;
 	wl_signal_add(&wm->xdg_shell->events.new_popup, &wm->new_xdg_popup);
+
+	LOG_V(cls, "Tell clients we draw decorations ourselves (KDE protocol for GTK, xdg-decoration for everyone else).");
+
+	struct wlr_server_decoration_manager* const kde_deco_mgr = wlr_server_decoration_manager_create(wm->display);
+
+	if (kde_deco_mgr == NULL) {
+		FAIL("Failed to create KDE server decoration manager.");
+	}
+
+	wlr_server_decoration_manager_set_default_mode(kde_deco_mgr, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+	wm->xdg_deco_mgr = wlr_xdg_decoration_manager_v1_create(wm->display, 1);
+
+	if (wm->xdg_deco_mgr == NULL) {
+		FAIL("Failed to create XDG decoration manager.");
+	}
+
+	wm->new_xdg_deco.notify = new_xdg_deco;
+	wl_signal_add(&wm->xdg_deco_mgr->events.new_toplevel_decoration, &wm->new_xdg_deco);
 
 	LOG_V(cls, "Create new seat.");
 	wm->seat = wlr_seat_create(wm->display, "seat0");

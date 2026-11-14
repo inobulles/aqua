@@ -20,7 +20,9 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
@@ -75,6 +77,11 @@ typedef struct {
 	struct wl_listener new_xdg_popup;
 	struct wl_listener new_xdg_surface;
 	struct wl_list toplevels;
+
+	// Decoration stuff.
+
+	struct wlr_xdg_decoration_manager_v1* xdg_deco_mgr;
+	struct wl_listener new_xdg_deco;
 
 	// Cursor stuff.
 
