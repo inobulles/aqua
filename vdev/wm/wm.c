@@ -140,6 +140,7 @@ typedef struct __attribute__((packed)) {
 	};
 
 	double unaccel_dx, unaccel_dy;
+	uint32_t mods;
 } mouse_motion_intr_t;
 
 typedef struct __attribute__((packed)) {
@@ -147,6 +148,7 @@ typedef struct __attribute__((packed)) {
 	uint32_t time;
 	uint8_t pressed;
 	uint32_t button;
+	uint32_t mods;
 } mouse_button_intr_t;
 
 static umber_class_t const* cls = NULL;
@@ -840,6 +842,16 @@ void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, b
 	focus_toplevel(toplevel);
 }
 
+static uint32_t get_mods(wm_t* wm) {
+	struct wlr_keyboard* const kbd = wlr_seat_get_keyboard(wm->seat);
+
+	if (kbd == NULL) {
+		return 0;
+	}
+
+	return wlr_keyboard_get_modifiers(kbd);
+}
+
 static void mouse_motion(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, motion);
 	wm_t* const wm = mouse->wm;
@@ -853,6 +865,7 @@ static void mouse_motion(struct wl_listener* listener, void* data) {
 		.dy = event->delta_y,
 		.unaccel_dx = event->unaccel_dx,
 		.unaccel_dy = event->unaccel_dy,
+		.mods = get_mods(wm),
 	};
 
 	interrupt(wm, sizeof intr, &intr);
@@ -869,6 +882,7 @@ static void mouse_motion_abs(struct wl_listener* listener, void* data) {
 		.is_abs = true,
 		.x = event->x,
 		.y = event->y,
+		.mods = get_mods(wm),
 	};
 
 	interrupt(wm, sizeof intr, &intr);
@@ -889,6 +903,7 @@ static void mouse_button(struct wl_listener* listener, void* data) {
 		.time = event->time_msec,
 		.pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED,
 		.button = event->button,
+		.mods = get_mods(wm),
 	};
 
 	interrupt(wm, sizeof intr, &intr);

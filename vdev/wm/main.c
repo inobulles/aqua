@@ -87,6 +87,50 @@ static kos_const_t const CONSTS[] = {
 		.type = KOS_TYPE_U8,
 		.val = {.u8 = INTR_MOUSE_BUTTON},
 	},
+	// clang-format off
+// CONSTS:BEGIN
+	{
+		.name = "MOD_SHIFT",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_SHIFT},
+	},
+	{
+		.name = "MOD_CAPS",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_CAPS},
+	},
+	{
+		.name = "MOD_CTRL",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_CTRL},
+	},
+	{
+		.name = "MOD_ALT",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_ALT},
+	},
+	{
+		.name = "MOD_MOD2",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_MOD2},
+	},
+	{
+		.name = "MOD_MOD3",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_MOD3},
+	},
+	{
+		.name = "MOD_META",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_LOGO},
+	},
+	{
+		.name = "MOD_MOD5",
+		.type = KOS_TYPE_U32,
+		.val = {.u32 = WLR_MODIFIER_MOD5},
+	},
+// CONSTS:END
+	// clang-format on
 };
 
 static kos_fn_t const FNS[] = {

@@ -126,6 +126,27 @@ typedef void (*wm_redraw_win_cb_t)(
 typedef void (*wm_destroy_image_cb_t)(wm_t wm, void* raw_image, void* data);
 
 /**
+ * Modifier key bitmask.
+ *
+ * Passed to input event callbacks to indicate which modifiers were held when the event happened.
+ * These are AQUA constants and don't depend on the backend the WM VDEV happens to use.
+ */
+typedef enum {
+	// clang-format off
+// MODS:BEGIN
+	WM_MOD_SHIFT = 1 << 0,
+	WM_MOD_CAPS = 1 << 1,
+	WM_MOD_CTRL = 1 << 2,
+	WM_MOD_ALT = 1 << 3,
+	WM_MOD_MOD2 = 1 << 4,
+	WM_MOD_MOD3 = 1 << 5,
+	WM_MOD_META = 1 << 6,
+	WM_MOD_MOD5 = 1 << 7,
+// MODS:END
+	// clang-format on
+} wm_mod_t;
+
+/**
  * WM mouse motion event callback.
  *
  * This is called whenever the pointer moves.
@@ -142,6 +163,7 @@ typedef void (*wm_destroy_image_cb_t)(wm_t wm, void* raw_image, void* data);
  * @param y Absolute Y coordinate (valid if is_abs is non-zero).
  * @param unaccel_dx Unaccelerated relative X motion (valid if is_abs is non-zero).
  * @param unaccel_dy Unaccelerated relative Y motion (valid if is_abs is non-zero).
+ * @param mods Modifiers held when the event happened (see {@link wm_mod_t}).
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_mouse_motion_cb}.
  */
 typedef void (*wm_mouse_motion_cb_t)(
@@ -154,6 +176,7 @@ typedef void (*wm_mouse_motion_cb_t)(
 	double y,
 	double unaccel_dx,
 	double unaccel_dy,
+	uint32_t mods,
 	void* data
 );
 
@@ -166,9 +189,10 @@ typedef void (*wm_mouse_motion_cb_t)(
  * @param time Time at which event happened. Should only really be used when passing event on with {@link wm_toplevel_notify_mouse_button}.
  * @param pressed True if the button was pressed, false if it was released.
  * @param button The button identifier.
+ * @param mods Modifiers held when the event happened (see {@link wm_mod_t}).
  * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_mouse_button_cb}.
  */
-typedef void (*wm_mouse_button_cb_t)(wm_t wm, uint32_t time, bool pressed, uint32_t button, void* data);
+typedef void (*wm_mouse_button_cb_t)(wm_t wm, uint32_t time, bool pressed, uint32_t button, uint32_t mods, void* data);
 
 /**
  * Initialize the WM library component.

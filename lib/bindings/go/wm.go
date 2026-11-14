@@ -37,9 +37,10 @@ extern void go_lib_bindings_wm_mouse_motion_cb(
 	double y,
 	double unaccel_dx,
 	double unaccel_dy,
+	uint32_t mods,
 	void* data
 );
-extern void go_lib_bindings_wm_mouse_button_cb(wm_t wm, uint32_t time, uint8_t pressed, uint32_t button, void* data);
+extern void go_lib_bindings_wm_mouse_button_cb(wm_t wm, uint32_t time, uint8_t pressed, uint32_t button, uint32_t mods, void* data);
 */
 import "C"
 import (
@@ -69,6 +70,22 @@ type Wm struct {
 }
 
 type WmWin uint64
+
+// Modifier key bitmask (see wm_mod_t).
+type WmMod uint32
+
+const (
+	// MODS:BEGIN
+	WM_MOD_SHIFT WmMod = C.WM_MOD_SHIFT
+	WM_MOD_CAPS  WmMod = C.WM_MOD_CAPS
+	WM_MOD_CTRL  WmMod = C.WM_MOD_CTRL
+	WM_MOD_ALT   WmMod = C.WM_MOD_ALT
+	WM_MOD_MOD2  WmMod = C.WM_MOD_MOD2
+	WM_MOD_MOD3  WmMod = C.WM_MOD_MOD3
+	WM_MOD_META  WmMod = C.WM_MOD_META
+	WM_MOD_MOD5  WmMod = C.WM_MOD_MOD5
+	// MODS:END
+)
 
 func (c *Context) WmInit() *WmComponent {
 	comp := C.wm_init(c.internal)
@@ -319,6 +336,7 @@ type WmMouseMotionCb func(
 	dx, dy float64,
 	x, y float64,
 	unaccelDx, unaccelDy float64,
+	mods WmMod,
 )
 
 //export go_lib_bindings_wm_mouse_motion_cb
@@ -332,6 +350,7 @@ func go_lib_bindings_wm_mouse_motion_cb(
 	y C.double,
 	unaccel_dx C.double,
 	unaccel_dy C.double,
+	mods C.uint32_t,
 	data unsafe.Pointer,
 ) {
 	handle := (cgo.Handle)(data)
@@ -346,6 +365,7 @@ func go_lib_bindings_wm_mouse_motion_cb(
 			float64(y),
 			float64(unaccel_dx),
 			float64(unaccel_dy),
+			WmMod(mods),
 		)
 	}
 }
@@ -368,6 +388,7 @@ type WmMouseButtonCb func(
 	time uint32,
 	pressed bool,
 	button uint32,
+	mods WmMod,
 )
 
 //export go_lib_bindings_wm_mouse_button_cb
@@ -376,12 +397,13 @@ func go_lib_bindings_wm_mouse_button_cb(
 	time C.uint32_t,
 	pressed C.uint8_t,
 	button C.uint32_t,
+	mods C.uint32_t,
 	data unsafe.Pointer,
 ) {
 	handle := (cgo.Handle)(data)
 
 	if cb, ok := handle.Value().(WmMouseButtonCb); ok {
-		cb(uint32(time), pressed != 0, uint32(button))
+		cb(uint32(time), pressed != 0, uint32(button), WmMod(mods))
 	}
 }
 

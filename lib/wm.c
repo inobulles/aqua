@@ -34,6 +34,18 @@ struct wm_ctx_t {
 		uint32_t INTR_DESTROY_IMAGE;
 		uint32_t INTR_MOUSE_MOTION;
 		uint32_t INTR_MOUSE_BUTTON;
+		// clang-format off
+// CONST_FIELDS:BEGIN
+		uint32_t MOD_SHIFT;
+		uint32_t MOD_CAPS;
+		uint32_t MOD_CTRL;
+		uint32_t MOD_ALT;
+		uint32_t MOD_MOD2;
+		uint32_t MOD_MOD3;
+		uint32_t MOD_META;
+		uint32_t MOD_MOD5;
+// CONST_FIELDS:END
+		// clang-format on
 	} consts;
 
 	struct {
@@ -156,6 +168,42 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		if (strcmp(name, "INTR_MOUSE_BUTTON") == 0) {
 			ctx->consts.INTR_MOUSE_BUTTON = c->val.u8;
 		}
+
+		// clang-format off
+// CONST_READS:BEGIN
+		if (strcmp(name, "MOD_SHIFT") == 0) {
+			ctx->consts.MOD_SHIFT = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_CAPS") == 0) {
+			ctx->consts.MOD_CAPS = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_CTRL") == 0) {
+			ctx->consts.MOD_CTRL = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_ALT") == 0) {
+			ctx->consts.MOD_ALT = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_MOD2") == 0) {
+			ctx->consts.MOD_MOD2 = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_MOD3") == 0) {
+			ctx->consts.MOD_MOD3 = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_META") == 0) {
+			ctx->consts.MOD_META = c->val.u32;
+		}
+
+		if (strcmp(name, "MOD_MOD5") == 0) {
+			ctx->consts.MOD_MOD5 = c->val.u32;
+		}
+// CONST_READS:END
+		// clang-format on
 	}
 
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
@@ -492,6 +540,7 @@ typedef struct __attribute__((packed)) {
 	};
 
 	double unaccel_dx, unaccel_dy;
+	uint32_t mods;
 } intr_mouse_motion_t;
 
 typedef struct __attribute__((packed)) {
@@ -499,7 +548,52 @@ typedef struct __attribute__((packed)) {
 	uint32_t time;
 	uint8_t pressed;
 	uint32_t button;
+	uint32_t mods;
 } intr_mouse_button_t;
+
+// Translate the VDEV's modifier bitmask into a wm_mod_t one.
+
+static uint32_t conv_mods(wm_ctx_t ctx, uint32_t vdev_mods) {
+	uint32_t mods = 0;
+
+	// clang-format off
+// CONV_MODS:BEGIN
+	if (vdev_mods & ctx->consts.MOD_SHIFT) {
+		mods |= WM_MOD_SHIFT;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_CAPS) {
+		mods |= WM_MOD_CAPS;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_CTRL) {
+		mods |= WM_MOD_CTRL;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_ALT) {
+		mods |= WM_MOD_ALT;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_MOD2) {
+		mods |= WM_MOD_MOD2;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_MOD3) {
+		mods |= WM_MOD_MOD3;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_META) {
+		mods |= WM_MOD_META;
+	}
+
+	if (vdev_mods & ctx->consts.MOD_MOD5) {
+		mods |= WM_MOD_MOD5;
+	}
+// CONV_MODS:END
+	// clang-format on
+
+	return mods;
+}
 
 static void interrupt(kos_notif_t const* notif, void* data) {
 	assert(notif->kind == KOS_NOTIF_INTERRUPT);
@@ -637,6 +731,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 				motion->y,
 				motion->unaccel_dx,
 				motion->unaccel_dy,
+				conv_mods(ctx, motion->mods),
 				wm->mouse_motion_data
 			);
 		}
@@ -651,7 +746,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 		}
 
 		if (wm->mouse_button != NULL) {
-			wm->mouse_button(wm, button->time, button->pressed, button->button, wm->mouse_button_data);
+			wm->mouse_button(wm, button->time, button->pressed, button->button, conv_mods(ctx, button->mods), wm->mouse_button_data);
 		}
 	}
 }
