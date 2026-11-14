@@ -246,11 +246,16 @@ func (e *Elem) get_attr(key string) any {
 func (d *Div) do_frost() bool {
 	frost_attr := d.get_attr("frost")
 
-	if frost_attr == nil {
+	if frost_attr == nil || !frost_attr.(bool) {
 		return false
 	}
 
-	return frost_attr.(bool)
+	// Frost is only applied behind a textured background.
+	// This must match what the backend does, otherwise it will wait for a frost element which never gets rendered as such.
+	// TODO I want this to be able to be applied to any background again, as before.
+
+	_, has_raster := d.get_attr("bg").(Raster)
+	return has_raster || d.get_attr("bg.wgpu_tex_view") != nil
 }
 
 func elem_from_raw(raw C.uintptr_t) any {
