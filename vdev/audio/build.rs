@@ -30,6 +30,11 @@ fn main() {
 	let bindings = bindgen::Builder::default()
 		.header(vdriver_header)
 		.clang_arg(inc_path)
+		// Otherwise, clang's builtin declarations of e.g. malloc lose the size_t typedef, so bindgen generates c_ulong instead of usize.
+		// This trips the suspicious_runtime_symbol_definitions lint.
+		// We then need function attribute detection so noreturn functions like exit still get '-> !' (the lint checks those too).
+		.clang_arg("-fno-builtin")
+		.enable_function_attribute_detection()
 		.blocklist_item("VDRIVER")
 		.generate_comments(true)
 		.generate()

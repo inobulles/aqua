@@ -194,7 +194,7 @@ static FNS: [Fn; 3] = [
 			// We need to allocate this memory in C because the KOS is responsible for freeing this memory.
 
 			let bytes = out.len() * std::mem::size_of::<StreamConfig>();
-			let ptr = unsafe { malloc(bytes as u64) } as *mut u8;
+			let ptr = unsafe { malloc(bytes) } as *mut u8;
 			assert!(!ptr.is_null(), "Failed to allocate.");
 
 			unsafe {
