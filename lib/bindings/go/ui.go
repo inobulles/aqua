@@ -148,6 +148,19 @@ func (u *Ui) GetRoot() *UiElem {
 	}
 }
 
+func (e *UiElem) AddButton(semantics, text string) *UiElem {
+	c_semantics := C.CString(semantics)
+	defer C.free(unsafe.Pointer(c_semantics))
+
+	c_text := C.CString(text)
+	defer C.free(unsafe.Pointer(c_text))
+
+	return &UiElem{
+		ui:   e.ui,
+		elem: C.ui_add_button(e.elem, c_semantics, c_text),
+	}
+}
+
 func (e *UiElem) AddText(semantics, text string) *UiElem {
 	c_semantics := C.CString(semantics)
 	defer C.free(unsafe.Pointer(c_semantics))

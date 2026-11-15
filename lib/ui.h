@@ -35,6 +35,7 @@ typedef struct ui_elem_t* ui_elem_t;
 typedef enum {
 	UI_ELEM_KIND_DIV,
 	UI_ELEM_KIND_TEXT,
+	UI_ELEM_KIND_BUTTON,
 } ui_elem_kind_t;
 
 /**
@@ -146,6 +147,15 @@ ui_elem_t ui_get_root(ui_t ui);
  * @return The new element or `NULL` if something went wrong. This is allocated on the heap and must be freed with {@link free}.
  */
 ui_elem_t ui_add_div(ui_elem_t parent, char const* semantics);
+
+/**
+ * Add a button element to the UI.
+ *
+ * @param parent The parent element to add the new element under. This must be a div element.
+ * @param semantics The semantic string of the new element.
+ * @return The new element or `NULL` if something went wrong. This is allocated on the heap and must be freed with {@link free}.
+ */
+ui_elem_t ui_add_button(ui_elem_t parent, char const* semantics, char const* text);
 
 /**
  * Add a text element to the UI.
