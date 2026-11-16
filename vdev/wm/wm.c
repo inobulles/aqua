@@ -831,6 +831,7 @@ void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, u
 
 	wlr_seat_pointer_notify_enter(seat, surf, x, y);
 	wlr_seat_pointer_notify_motion(seat, time, x, y);
+	wlr_seat_pointer_notify_frame(seat);
 }
 
 void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button) {
@@ -839,6 +840,8 @@ void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, b
 		pressed ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED;
 
 	wlr_seat_pointer_notify_button(seat, time, button, state);
+	wlr_seat_pointer_notify_frame(seat);
+
 	focus_toplevel(toplevel);
 }
 
