@@ -70,40 +70,40 @@ typedef void (*wm_destroy_win_cb_t)(wm_t wm, wm_win_t win, void* data);
  */
 typedef struct {
 	/**
-        * X position of the surface relative to the window's geometry (can be negative, e.g. for CSD shadows).
-        */
+	 * X position of the surface relative to the window's geometry (can be negative, e.g. for CSD shadows).
+	 */
 	int32_t x;
 
 	/**
-        * Y position of the surface relative to the window's geometry (can be negative, e.g. for CSD shadows).
-        */
+	 * Y position of the surface relative to the window's geometry (can be negative, e.g. for CSD shadows).
+	 */
 	int32_t y;
 
 	/**
-        * X resolution of the surface's image.
-        */
+	 * X resolution of the surface's image.
+	 */
 	uint32_t x_res;
 
 	/**
-        * Y resolution of the surface's image.
-        */
+	 * Y resolution of the surface's image.
+	 */
 	uint32_t y_res;
 
 	/**
-        * Raw image containing the surface contents.
-        */
+	 * Raw image containing the surface contents.
+	 */
 	void* raw_image;
 
 	/**
-        * WebGPU texture format (WGPUTextureFormat) the image should be imported as.
-        */
+	 * WebGPU texture format (WGPUTextureFormat) the image should be imported as.
+	 */
 	uint32_t format;
 
 	/**
-        * Whether the image's alpha channel should be ignored, i.e. the surface is fully opaque.
-        *
-        * This is the case for formats with padding instead of an alpha channel (e.g. XRGB8888), which share their WebGPU format with their alpha counterparts.
-        */
+	 * Whether the image's alpha channel should be ignored, i.e. the surface is fully opaque.
+	 *
+	 * This is the case for formats with padding instead of an alpha channel (e.g. XRGB8888), which share their WebGPU format with their alpha counterparts.
+	 */
 	bool opaque;
 } wm_surf_t;
 
