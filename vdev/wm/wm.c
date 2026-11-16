@@ -112,6 +112,7 @@ typedef struct __attribute__((packed)) {
 	uint32_t x_res, y_res;
 	uint64_t raw_image;
 	uint32_t format; // WGPUTextureFormat
+	uint8_t opaque;  // Necessary for X* formats, where the alpha channel is just padding and shouldn't be displayed transparently.
 } redraw_win_surf_t;
 
 typedef struct __attribute__((packed)) {
@@ -554,6 +555,7 @@ static void redraw_win_iter(struct wlr_surface* surf, int sx, int sy, void* data
 		.y_res = tex->height,
 		.raw_image = (uintptr_t) attribs.image,
 		.format = format,
+		.opaque = !wlr_vk_texture_has_alpha(tex),
 	};
 }
 

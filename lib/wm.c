@@ -574,6 +574,7 @@ typedef struct __attribute__((packed)) {
 	uint32_t x_res, y_res;
 	uint64_t raw_image;
 	uint32_t format;
+	uint8_t opaque;
 } intr_redraw_win_surf_t;
 
 typedef struct __attribute__((packed)) {
@@ -757,6 +758,7 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 				.y_res = surf->y_res,
 				.raw_image = (void*) (uintptr_t) surf->raw_image,
 				.format = surf->format,
+				.opaque = surf->opaque,
 			};
 		}
 

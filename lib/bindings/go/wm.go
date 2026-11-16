@@ -262,6 +262,9 @@ type WmSurf struct {
 
 	// WebGPU texture format (wgpu.TextureFormat) the image should be imported as.
 	Format uint32
+
+	// Whether the image's alpha channel should be ignored (e.g. for XRGB8888).
+	Opaque bool
 }
 
 type WmRedrawWinCb func(win WmWin, x_res, y_res uint32, surfs []WmSurf)
@@ -293,6 +296,7 @@ func go_lib_bindings_wm_redraw_win_cb(
 			YRes:     uint32(c_surf.y_res),
 			RawImage: c_surf.raw_image,
 			Format:   uint32(c_surf.format),
+			Opaque:   bool(c_surf.opaque),
 		}
 	}
 

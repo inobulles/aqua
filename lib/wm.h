@@ -98,6 +98,13 @@ typedef struct {
         * WebGPU texture format (WGPUTextureFormat) the image should be imported as.
         */
 	uint32_t format;
+
+	/**
+        * Whether the image's alpha channel should be ignored, i.e. the surface is fully opaque.
+        *
+        * This is the case for formats with padding instead of an alpha channel (e.g. XRGB8888), which share their WebGPU format with their alpha counterparts.
+        */
+	bool opaque;
 } wm_surf_t;
 
 /**
