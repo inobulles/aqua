@@ -196,6 +196,15 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_U32, "y_res"},
 		},
 	},
+	{
+		.name = "win_set_resizing",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+			{KOS_TYPE_BOOL, "resizing"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -317,6 +326,19 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 		}
 
 		wm_vdev_toplevel_set_size(toplevel, args[1].u32, args[2].u32);
+
+		break;
+	}
+	case 7: { // win_set_resizing
+		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
+
+		if (toplevel == NULL) {
+			LOG_E(cls, "Tried to set resizing state of bad window.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm_vdev_toplevel_set_resizing(toplevel, args[1].b);
 
 		break;
 	}

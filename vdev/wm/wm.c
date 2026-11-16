@@ -850,6 +850,12 @@ void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_
 	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, x_res, y_res);
 }
 
+void wm_vdev_toplevel_set_resizing(toplevel_t* toplevel, bool resizing) {
+	// Lets the client know it's being interactively resized, so it can e.g. avoid doing expensive work on each resize.
+
+	wlr_xdg_toplevel_set_resizing(toplevel->xdg_toplevel, resizing);
+}
+
 static uint32_t get_mods(wm_t* wm) {
 	struct wlr_keyboard* const kbd = wlr_seat_get_keyboard(wm->seat);
 
