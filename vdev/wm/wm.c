@@ -845,6 +845,11 @@ void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, b
 	focus_toplevel(toplevel);
 }
 
+void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_res) {
+	LOG_V(cls, "Set size of %s to %ux%u.", toplevel->xdg_toplevel->app_id, x_res, y_res);
+	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, x_res, y_res);
+}
+
 static uint32_t get_mods(wm_t* wm) {
 	struct wlr_keyboard* const kbd = wlr_seat_get_keyboard(wm->seat);
 
