@@ -6,6 +6,7 @@
 // https://gitlab.freedesktop.org/wlroots/wlroots/-/blob/master/examples/simple.c
 
 #include "wm.h"
+#include "buf_fmt.h"
 
 #include <aqua/vdriver.h>
 
@@ -1125,9 +1126,7 @@ wm_t* wm_vdev_create(void) {
 
 	LOG_V(cls, "Initialize buffer factory protocols.");
 
-	// TODO To use DMA-BUF and not just SHM, call wlr_renderer_init_wl_display() here instead.
-
-	if (wlr_renderer_init_wl_display(wm->wlr_renderer, wm->display) == false) {
+	if (wm_vdev_init_buf_protocols(cls, wm->display, wm->wlr_renderer) < 0) {
 		FAIL("Failed to initialize buffer factory protocols.");
 	}
 
