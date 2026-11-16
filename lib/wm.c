@@ -56,6 +56,7 @@ struct wm_ctx_t {
 		uint32_t win_notify_mouse_motion;
 		uint32_t win_notify_mouse_button;
 		uint32_t win_set_size;
+		uint32_t win_set_resizing;
 	} fns;
 
 	bool last_success;
@@ -310,6 +311,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.win_set_size = i;
 		}
+
+		if (
+			strcmp(name, "win_set_resizing") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_BOOL &&
+			strcmp((char*) fn->params[1].name, "resizing") == 0
+		) {
+			ctx->fns.win_set_resizing = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -514,6 +527,23 @@ void wm_win_set_size(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res) {
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_set_size, args);
+	kos_flush(true);
+}
+
+void wm_win_set_resizing(wm_t wm, wm_win_t win, bool resizing) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = {0, win}},
+		{.b = resizing},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_set_resizing, args);
 	kos_flush(true);
 }
 

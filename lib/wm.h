@@ -356,3 +356,15 @@ void wm_win_notify_mouse_button(wm_t wm, wm_win_t win, uint32_t time, bool press
  * @param y_res Requested height of the window's geometry.
  */
 void wm_win_set_size(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res);
+
+/**
+ * Tell a WM window whether it is being interactively resized.
+ *
+ * This should be set while the user is dragging to resize the window, and unset when they're done.
+ * Windows may use this information to avoid doing expensive work on each resize.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle.
+ * @param resizing Whether the window is being interactively resized.
+ */
+void wm_win_set_resizing(wm_t wm, wm_win_t win, bool resizing);
