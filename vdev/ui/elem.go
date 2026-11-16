@@ -226,6 +226,12 @@ func (e *Elem) set_attr(key string, val any) {
 		e.abs.anchor_x = val.(float32)
 	case "abs.anchor_y":
 		e.abs.anchor_y = val.(float32)
+	case "min_w", "min_h":
+		if prev, ok := e.attrs[key]; !ok || prev != val {
+			ui.dirty = true
+		}
+
+		e.attrs[key] = val
 	default:
 		e.attrs[key] = val
 	}
