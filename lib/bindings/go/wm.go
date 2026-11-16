@@ -162,6 +162,10 @@ func (w *Wm) WinSetSize(win WmWin, x_res, y_res uint32) {
 	C.wm_win_set_size(w.wm, C.wm_win_t(win), C.uint32_t(x_res), C.uint32_t(y_res))
 }
 
+func (w *Wm) WinSetResizing(win WmWin, resizing bool) {
+	C.wm_win_set_resizing(w.wm, C.wm_win_t(win), C.bool(resizing))
+}
+
 type WmRedrawCb func(raw_vk_image unsafe.Pointer, x_res, y_res uint32)
 
 //export go_lib_bindings_wm_redraw_cb
