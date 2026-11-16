@@ -111,6 +111,7 @@ typedef struct __attribute__((packed)) {
 	int32_t x, y;
 	uint32_t x_res, y_res;
 	uint64_t raw_image;
+	uint32_t format; // WGPUTextureFormat
 } redraw_win_surf_t;
 
 typedef struct __attribute__((packed)) {
@@ -532,12 +533,19 @@ static void redraw_win_iter(struct wlr_surface* surf, int sx, int sy, void* data
 	struct wlr_vk_image_attribs attribs;
 	wlr_vk_texture_get_image_attribs(tex, &attribs);
 
+	// We only advertise formats we can import, so this shouldn't happen.
+
+	WGPUTextureFormat const format = wm_vdev_buf_fmt_vk_to_wgpu(attribs.format);
+
+	if (format == WGPUTextureFormat_Undefined) {
+		LOG_E(cls, "Surface image has unsupported VkFormat %d; not drawing it.", attribs.format);
+		return;
+	}
+
 	track_image(ctx->toplevel->wm, &surf->buffer->base, attribs.image);
 
 	ctx->intr = realloc(ctx->intr, sizeof *ctx->intr + (ctx->intr->surf_count + 1) * sizeof *ctx->intr->surfs);
 	assert(ctx->intr != NULL);
-
-	// TODO Send format (now assuming its VK_FORMAT_B8G8R8A8_UNORM).
 
 	ctx->intr->surfs[ctx->intr->surf_count++] = (redraw_win_surf_t) {
 		.x = sx - ctx->geom.x,
@@ -545,6 +553,7 @@ static void redraw_win_iter(struct wlr_surface* surf, int sx, int sy, void* data
 		.x_res = tex->width,
 		.y_res = tex->height,
 		.raw_image = (uintptr_t) attribs.image,
+		.format = format,
 	};
 }
 

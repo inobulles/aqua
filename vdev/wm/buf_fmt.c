@@ -8,14 +8,25 @@
 
 #include <drm_fourcc.h>
 
-// Formats clients may use for their buffers.
-// Client images are imported into WebGPU as BGRA8Unorm (VK_FORMAT_B8G8R8A8_UNORM) for now, so only advertise the DRM formats which correspond to that.
-// Otherwise, clients might pick e.g. a 10-bit format (Blender does with ARGB2101010), which then gets interpreted as BGRA8 and has completely wrong colours.
-// TODO In the future, we want to support all the formats that can be imported into WebGPU, and communicate what format each surface wants to the renderer.
+typedef struct {
+	uint32_t drm;           // DRM fourcc, which is what's advertised to clients.
+	VkFormat vk;            // Vulkan format wlroots' Vulkan renderer creates images of this DRM format with.
+	WGPUTextureFormat wgpu; // WebGPU format the WM should import those images as.
+} buf_fmt_t;
 
-static uint32_t const BUF_FMTS[] = {
-	DRM_FORMAT_ARGB8888,
-	DRM_FORMAT_XRGB8888,
+// Formats clients may use for their buffers.
+// See render/vulkan/pixel_format.c in wlroots for its DRM to Vulkan mapping.
+
+static buf_fmt_t const BUF_FMTS[] = {
+	{DRM_FORMAT_ARGB8888, VK_FORMAT_B8G8R8A8_UNORM, WGPUTextureFormat_BGRA8Unorm},
+	{DRM_FORMAT_XRGB8888, VK_FORMAT_B8G8R8A8_UNORM, WGPUTextureFormat_BGRA8Unorm},
+	{DRM_FORMAT_ABGR8888, VK_FORMAT_R8G8B8A8_UNORM, WGPUTextureFormat_RGBA8Unorm},
+	{DRM_FORMAT_XBGR8888, VK_FORMAT_R8G8B8A8_UNORM, WGPUTextureFormat_RGBA8Unorm},
+	{DRM_FORMAT_ABGR2101010, VK_FORMAT_A2B10G10R10_UNORM_PACK32, WGPUTextureFormat_RGB10A2Unorm},
+	{DRM_FORMAT_XBGR2101010, VK_FORMAT_A2B10G10R10_UNORM_PACK32, WGPUTextureFormat_RGB10A2Unorm},
+	{DRM_FORMAT_ABGR16161616F, VK_FORMAT_R16G16B16A16_SFLOAT, WGPUTextureFormat_RGBA16Float},
+	{DRM_FORMAT_XBGR16161616F, VK_FORMAT_R16G16B16A16_SFLOAT, WGPUTextureFormat_RGBA16Float},
+	// WebGPU does not support ARGB2101010/XRGB2101010.
 };
 
 #define BUF_FMT_COUNT (sizeof BUF_FMTS / sizeof *BUF_FMTS)
@@ -24,7 +35,7 @@ static int restrict_fmts(struct wlr_drm_format_set* set) {
 	struct wlr_drm_format_set restricted = {0};
 
 	for (size_t i = 0; i < BUF_FMT_COUNT; i++) {
-		struct wlr_drm_format const* const fmt = wlr_drm_format_set_get(set, BUF_FMTS[i]);
+		struct wlr_drm_format const* const fmt = wlr_drm_format_set_get(set, BUF_FMTS[i].drm);
 
 		if (fmt == NULL) {
 			continue;
@@ -47,7 +58,13 @@ static int restrict_fmts(struct wlr_drm_format_set* set) {
 int wm_vdev_init_buf_protocols(umber_class_t const* cls, struct wl_display* display, struct wlr_renderer* renderer) {
 	// SHM.
 
-	if (wlr_shm_create(display, 2, BUF_FMTS, BUF_FMT_COUNT) == NULL) {
+	uint32_t shm_fmts[BUF_FMT_COUNT];
+
+	for (size_t i = 0; i < BUF_FMT_COUNT; i++) {
+		shm_fmts[i] = BUF_FMTS[i].drm;
+	}
+
+	if (wlr_shm_create(display, 2, shm_fmts, BUF_FMT_COUNT) == NULL) {
 		LOG_E(cls, "Failed to create SHM global.");
 		return -1;
 	}
@@ -88,4 +105,14 @@ int wm_vdev_init_buf_protocols(umber_class_t const* cls, struct wl_display* disp
 
 	wlr_linux_dmabuf_feedback_v1_finish(&feedback);
 	return rv;
+}
+
+WGPUTextureFormat wm_vdev_buf_fmt_vk_to_wgpu(VkFormat vk) {
+	for (size_t i = 0; i < BUF_FMT_COUNT; i++) {
+		if (BUF_FMTS[i].vk == vk) {
+			return BUF_FMTS[i].wgpu;
+		}
+	}
+
+	return WGPUTextureFormat_Undefined;
 }

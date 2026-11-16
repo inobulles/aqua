@@ -259,6 +259,9 @@ type WmSurf struct {
 	X, Y       int32
 	XRes, YRes uint32
 	RawImage   unsafe.Pointer
+
+	// WebGPU texture format (wgpu.TextureFormat) the image should be imported as.
+	Format uint32
 }
 
 type WmRedrawWinCb func(win WmWin, x_res, y_res uint32, surfs []WmSurf)
@@ -289,6 +292,7 @@ func go_lib_bindings_wm_redraw_win_cb(
 			XRes:     uint32(c_surf.x_res),
 			YRes:     uint32(c_surf.y_res),
 			RawImage: c_surf.raw_image,
+			Format:   uint32(c_surf.format),
 		}
 	}
 

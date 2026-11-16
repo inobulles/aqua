@@ -93,6 +93,11 @@ typedef struct {
         * Raw image containing the surface contents.
         */
 	void* raw_image;
+
+	/**
+        * WebGPU texture format (WGPUTextureFormat) the image should be imported as.
+        */
+	uint32_t format;
 } wm_surf_t;
 
 /**
