@@ -343,3 +343,16 @@ void wm_win_notify_mouse_motion(wm_t wm, wm_win_t win, uint32_t time, uint32_t x
  * @param button The button identifier.
  */
 void wm_win_notify_mouse_button(wm_t wm, wm_win_t win, uint32_t time, bool pressed, uint32_t button);
+
+/**
+ * Ask a WM window to resize itself.
+ *
+ * This is only a request: the window is free to pick a different size (e.g. to respect its minimum size).
+ * Its actual size is only known once it is redrawn, through {@link wm_redraw_win_cb_t}.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle to resize.
+ * @param x_res Requested width of the window's geometry.
+ * @param y_res Requested height of the window's geometry.
+ */
+void wm_win_set_size(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res);
