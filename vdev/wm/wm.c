@@ -269,6 +269,15 @@ static void begin_external_iter(struct wlr_surface* surf, int sx, int sy, void* 
 	}
 }
 
+static void send_frame_done_iter(struct wlr_surface* surf, int sx, int sy, void* data) {
+	struct timespec const* const now = data;
+
+	(void) sx;
+	(void) sy;
+
+	wlr_surface_send_frame_done(surf, now);
+}
+
 static void output_frame_notify(struct wl_listener* listener, void* data) {
 	(void) data;
 
@@ -276,7 +285,6 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	wm_t* const wm = output->wm;
 	struct wlr_output* const wlr_output = output->output;
-	struct wlr_scene_output* scene_output = wlr_scene_get_scene_output(wm->scene, wlr_output);
 
 	LOG_V(cls, "Initialize output state.");
 
@@ -354,9 +362,16 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	wlr_output_commit_state(wlr_output, &state);
 	wlr_output_state_finish(&state);
 
+	// Let clients know they can draw their next frame.
+	// We don't use wlr_scene_output_send_frame_done() for this as that depends on the scene graph, which the app doesn't update (so all windows would be at (0, 0) on top of eachother).
+	// TODO We should really only be doing this for the surfaces that are visible. Those completely obscured should not be updated, and we should have an API for this from the app.
+
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	wlr_scene_output_send_frame_done(scene_output, &now);
+
+	wl_list_for_each(win, &wm->toplevels, link) {
+		wlr_surface_for_each_surface(win->xdg_toplevel->base->surface, send_frame_done_iter, &now);
+	}
 }
 
 static void new_output(struct wl_listener* listener, void* data) {
