@@ -34,4 +34,7 @@ struct wm_t {
 
 	void* mouse_button_data;
 	wm_mouse_button_cb_t mouse_button;
+
+	void* mouse_axis_data;
+	wm_mouse_axis_cb_t mouse_axis;
 };

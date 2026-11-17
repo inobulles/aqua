@@ -207,6 +207,65 @@ typedef void (*wm_mouse_motion_cb_t)(
 typedef void (*wm_mouse_button_cb_t)(wm_t wm, uint32_t time, bool pressed, uint32_t button, uint32_t mods, void* data);
 
 /**
+ * Source of a mouse axis (scroll) event.
+ *
+ * Clients behave differently depending on the source, e.g. only finger (touchpad) scrolling gets kinetic scrolling and swipe-to-navigate.
+ */
+typedef enum {
+	WM_AXIS_SOURCE_WHEEL = 0,
+	WM_AXIS_SOURCE_FINGER = 1,
+	WM_AXIS_SOURCE_CONTINUOUS = 2,
+	WM_AXIS_SOURCE_WHEEL_TILT = 3,
+} wm_axis_source_t;
+
+/**
+ * Orientation of a mouse axis (scroll) event.
+ */
+typedef enum {
+	WM_AXIS_ORIENTATION_VERTICAL = 0,
+	WM_AXIS_ORIENTATION_HORIZONTAL = 1,
+} wm_axis_orientation_t;
+
+/**
+ * Relative direction of a mouse axis (scroll) event to the physical motion.
+ *
+ * This is {@link WM_AXIS_DIRECTION_INVERTED} when natural scrolling is enabled.
+ */
+typedef enum {
+	WM_AXIS_DIRECTION_IDENTICAL = 0,
+	WM_AXIS_DIRECTION_INVERTED = 1,
+} wm_axis_direction_t;
+
+/**
+ * WM mouse axis (scroll) event callback.
+ *
+ * This is called whenever a scroll wheel is turned or the user scrolls on a touchpad.
+ * When the user lifts their fingers off the touchpad, an event with a {@link delta} of zero is sent with source {@link WM_AXIS_SOURCE_FINGER}.
+ * It's important to pass this on too, as clients use it to start kinetic scrolling.
+ *
+ * @param wm The WM object.
+ * @param time Time at which event happened. Should only really be used when passing event on with {@link wm_win_notify_mouse_axis}.
+ * @param source Source of the scroll event (see {@link wm_axis_source_t}).
+ * @param orientation Whether this is a vertical or horizontal scroll (see {@link wm_axis_orientation_t}).
+ * @param direction Relative direction of the scroll compared to the physical motion (see {@link wm_axis_direction_t}).
+ * @param delta Scroll distance, in the same coordinate space as mouse motion.
+ * @param delta_discrete Scroll distance in fractions of 120 wheel clicks (zero for non-wheel sources).
+ * @param mods Modifiers held when the event happened (see {@link wm_mod_t}).
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_mouse_axis_cb}.
+ */
+typedef void (*wm_mouse_axis_cb_t)(
+	wm_t wm,
+	uint32_t time,
+	wm_axis_source_t source,
+	wm_axis_orientation_t orientation,
+	wm_axis_direction_t direction,
+	double delta,
+	int32_t delta_discrete,
+	uint32_t mods,
+	void* data
+);
+
+/**
  * Initialize the WM library component.
  *
  * @param ctx The AQUA library context.
@@ -324,6 +383,17 @@ void wm_register_mouse_motion_cb(wm_t wm, wm_mouse_motion_cb_t cb, void* data);
  * @param data User-defined data passed to the callback.
  */
 void wm_register_mouse_button_cb(wm_t wm, wm_mouse_button_cb_t cb, void* data);
+
+/**
+ * Register a mouse axis (scroll) callback.
+ *
+ * These will be called whenever a scroll wheel is turned or the user scrolls on a touchpad.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_mouse_axis_cb(wm_t wm, wm_mouse_axis_cb_t cb, void* data);
 
 /**
  * Enter the WM event loop.
