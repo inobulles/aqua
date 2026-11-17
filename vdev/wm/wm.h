@@ -151,6 +151,14 @@ void wm_vdev_destroy(wm_t* wm);
 
 void wm_vdev_loop(wm_t* wm);
 
+void wm_vdev_interrupt(wm_t* wm, size_t data_size, void const* data);
+void wm_vdev_focus_toplevel(toplevel_t* toplevel);
+
+// Input stuff (input.c).
+
+void wm_vdev_input_init(umber_class_t const* cls);
+void wm_vdev_new_input(struct wl_listener* listener, void* data);
+
 void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y);
 void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button);
 void wm_vdev_toplevel_notify_mouse_axis(
