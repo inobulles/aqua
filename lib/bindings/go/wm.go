@@ -41,6 +41,17 @@ extern void go_lib_bindings_wm_mouse_motion_cb(
 	void* data
 );
 extern void go_lib_bindings_wm_mouse_button_cb(wm_t wm, uint32_t time, uint8_t pressed, uint32_t button, uint32_t mods, void* data);
+extern void go_lib_bindings_wm_mouse_axis_cb(
+	wm_t wm,
+	uint32_t time,
+	wm_axis_source_t source,
+	wm_axis_orientation_t orientation,
+	wm_axis_direction_t direction,
+	double delta,
+	int32_t delta_discrete,
+	uint32_t mods,
+	void* data
+);
 */
 import "C"
 import (
@@ -67,6 +78,7 @@ type Wm struct {
 	destroy_win_cb_handle   cgo.Handle
 	mouse_motion_cb_handle  cgo.Handle
 	mouse_button_cb_handle  cgo.Handle
+	mouse_axis_cb_handle    cgo.Handle
 }
 
 type WmWin uint64
@@ -85,6 +97,32 @@ const (
 	WM_MOD_META  WmMod = C.WM_MOD_META
 	WM_MOD_MOD5  WmMod = C.WM_MOD_MOD5
 	// MODS:END
+)
+
+// Source of a mouse axis (scroll) event (see wm_axis_source_t).
+type WmAxisSource uint8
+
+const (
+	WM_AXIS_SOURCE_WHEEL      WmAxisSource = C.WM_AXIS_SOURCE_WHEEL
+	WM_AXIS_SOURCE_FINGER     WmAxisSource = C.WM_AXIS_SOURCE_FINGER
+	WM_AXIS_SOURCE_CONTINUOUS WmAxisSource = C.WM_AXIS_SOURCE_CONTINUOUS
+	WM_AXIS_SOURCE_WHEEL_TILT WmAxisSource = C.WM_AXIS_SOURCE_WHEEL_TILT
+)
+
+// Orientation of a mouse axis (scroll) event (see wm_axis_orientation_t).
+type WmAxisOrientation uint8
+
+const (
+	WM_AXIS_ORIENTATION_VERTICAL   WmAxisOrientation = C.WM_AXIS_ORIENTATION_VERTICAL
+	WM_AXIS_ORIENTATION_HORIZONTAL WmAxisOrientation = C.WM_AXIS_ORIENTATION_HORIZONTAL
+)
+
+// Relative direction of a mouse axis (scroll) event (see wm_axis_direction_t).
+type WmAxisDirection uint8
+
+const (
+	WM_AXIS_DIRECTION_IDENTICAL WmAxisDirection = C.WM_AXIS_DIRECTION_IDENTICAL
+	WM_AXIS_DIRECTION_INVERTED  WmAxisDirection = C.WM_AXIS_DIRECTION_INVERTED
 )
 
 func (c *Context) WmInit() *WmComponent {
@@ -147,6 +185,9 @@ func (w *Wm) Destroy() {
 	}
 	if w.destroy_win_cb_handle != 0 {
 		w.destroy_win_cb_handle.Delete()
+	}
+	if w.mouse_axis_cb_handle != 0 {
+		w.mouse_axis_cb_handle.Delete()
 	}
 }
 
@@ -434,6 +475,57 @@ func (w *Wm) RegisterMouseButtonCb(cb WmMouseButtonCb) {
 		w.wm,
 		C.wm_mouse_button_cb_t(C.go_lib_bindings_wm_mouse_button_cb),
 		unsafe.Pointer(w.mouse_button_cb_handle),
+	)
+}
+
+type WmMouseAxisCb func(
+	time uint32,
+	source WmAxisSource,
+	orientation WmAxisOrientation,
+	direction WmAxisDirection,
+	delta float64,
+	deltaDiscrete int32,
+	mods WmMod,
+)
+
+//export go_lib_bindings_wm_mouse_axis_cb
+func go_lib_bindings_wm_mouse_axis_cb(
+	_ C.wm_t,
+	time C.uint32_t,
+	source C.wm_axis_source_t,
+	orientation C.wm_axis_orientation_t,
+	direction C.wm_axis_direction_t,
+	delta C.double,
+	delta_discrete C.int32_t,
+	mods C.uint32_t,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmMouseAxisCb); ok {
+		cb(
+			uint32(time),
+			WmAxisSource(source),
+			WmAxisOrientation(orientation),
+			WmAxisDirection(direction),
+			float64(delta),
+			int32(delta_discrete),
+			WmMod(mods),
+		)
+	}
+}
+
+func (w *Wm) RegisterMouseAxisCb(cb WmMouseAxisCb) {
+	if w.mouse_axis_cb_handle != 0 {
+		w.mouse_axis_cb_handle.Delete()
+	}
+
+	w.mouse_axis_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_mouse_axis_cb(
+		w.wm,
+		C.wm_mouse_axis_cb_t(C.go_lib_bindings_wm_mouse_axis_cb),
+		unsafe.Pointer(w.mouse_axis_cb_handle),
 	)
 }
 
