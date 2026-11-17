@@ -17,6 +17,7 @@
 #include <wlr/render/interface.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/vulkan.h>
+#include <wlr/util/edges.h>
 
 #include <wlr/config.h>
 
@@ -662,6 +663,10 @@ static void set_ssd(toplevel_t* toplevel) {
 			wlr_xdg_toplevel_decoration_v1_set_mode(deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
 		}
 	}
+
+	// This helps convince some more annoying clients (e.g. Firefox) not to draw CSD.
+
+	wlr_xdg_toplevel_set_tiled(toplevel->xdg_toplevel, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
 }
 
 static void toplevel_commit(struct wl_listener* listener, void* data) {
