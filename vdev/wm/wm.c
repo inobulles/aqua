@@ -866,10 +866,21 @@ static void new_keyboard(wm_t* wm, struct wlr_input_device* dev) {
 
 void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y) {
 	struct wlr_seat* const seat = toplevel->wm->seat;
-	struct wlr_surface* const surf = toplevel->xdg_toplevel->base->surface;
+	struct wlr_xdg_surface* const base = toplevel->xdg_toplevel->base;
 
-	wlr_seat_pointer_notify_enter(seat, surf, x, y);
-	wlr_seat_pointer_notify_motion(seat, time, x, y);
+	double const root_x = x + base->geometry.x;
+	double const root_y = y + base->geometry.y;
+
+	double sx, sy;
+	struct wlr_surface* const surf = wlr_xdg_surface_surface_at(base, root_x, root_y, &sx, &sy);
+
+	if (surf == NULL) {
+		wlr_seat_pointer_notify_clear_focus(seat);
+		return;
+	}
+
+	wlr_seat_pointer_notify_enter(seat, surf, sx, sy);
+	wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 	wlr_seat_pointer_notify_frame(seat);
 }
 
