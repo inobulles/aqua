@@ -1122,6 +1122,13 @@ static void new_input(struct wl_listener* listener, void* data) {
 	}
 }
 
+static void request_set_selection(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, request_set_selection);
+	struct wlr_seat_request_set_selection_event* const event = data;
+
+	wlr_seat_set_selection(wm->seat, event->source, event->serial);
+}
+
 static void wlr_log_cb(enum wlr_log_importance importance, char const* fmt, va_list args) {
 	char* msg;
 	vasprintf(&msg, fmt, args);
@@ -1325,6 +1332,9 @@ wm_t* wm_vdev_create(void) {
 	}
 
 	wm->seat_caps = 0;
+
+	wm->request_set_selection.notify = request_set_selection;
+	wl_signal_add(&wm->seat->events.request_set_selection, &wm->request_set_selection);
 
 	LOG_V(cls, "Add UNIX socket to the Wayland display.");
 	char const* const sock = wl_display_add_socket_auto(wm->display);

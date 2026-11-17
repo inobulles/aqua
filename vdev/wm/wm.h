@@ -96,6 +96,7 @@ typedef struct {
 
 	struct wlr_seat* seat;
 	uint32_t seat_caps;
+	struct wl_listener request_set_selection;
 
 	// Tracking stuff.
 
