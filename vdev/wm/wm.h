@@ -153,5 +153,14 @@ void wm_vdev_loop(wm_t* wm);
 
 void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y);
 void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button);
+void wm_vdev_toplevel_notify_mouse_axis(
+	toplevel_t* toplevel,
+	uint32_t time,
+	axis_source_t source,
+	axis_orientation_t orientation,
+	axis_direction_t direction,
+	double delta,
+	int32_t delta_discrete
+);
 void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_res);
 void wm_vdev_toplevel_set_resizing(toplevel_t* toplevel, bool resizing);

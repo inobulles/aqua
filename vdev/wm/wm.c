@@ -906,6 +906,47 @@ void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, b
 	focus_toplevel(toplevel);
 }
 
+void wm_vdev_toplevel_notify_mouse_axis(
+	toplevel_t* toplevel,
+	uint32_t time,
+	axis_source_t source,
+	axis_orientation_t orientation,
+	axis_direction_t direction,
+	double delta,
+	int32_t delta_discrete
+) {
+	struct wlr_seat* const seat = toplevel->wm->seat;
+
+	enum wl_pointer_axis_source wl_source = WL_POINTER_AXIS_SOURCE_WHEEL;
+
+	switch (source) {
+	case AXIS_SOURCE_WHEEL:
+		wl_source = WL_POINTER_AXIS_SOURCE_WHEEL;
+		break;
+	case AXIS_SOURCE_FINGER:
+		wl_source = WL_POINTER_AXIS_SOURCE_FINGER;
+		break;
+	case AXIS_SOURCE_CONTINUOUS:
+		wl_source = WL_POINTER_AXIS_SOURCE_CONTINUOUS;
+		break;
+	case AXIS_SOURCE_WHEEL_TILT:
+		wl_source = WL_POINTER_AXIS_SOURCE_WHEEL_TILT;
+		break;
+	}
+
+	enum wl_pointer_axis const wl_orientation =
+		orientation == AXIS_ORIENTATION_HORIZONTAL ? WL_POINTER_AXIS_HORIZONTAL_SCROLL : WL_POINTER_AXIS_VERTICAL_SCROLL;
+
+	enum wl_pointer_axis_relative_direction const wl_direction =
+		direction == AXIS_DIRECTION_INVERTED ? WL_POINTER_AXIS_RELATIVE_DIRECTION_INVERTED : WL_POINTER_AXIS_RELATIVE_DIRECTION_IDENTICAL;
+
+	// A zero delta from a finger source is sent as an axis_stop event by wlroots.
+	// Clients rely on this to know when to start kinetic scrolling or e.g. to finish swipe-to-navigate in Firefox.
+
+	wlr_seat_pointer_notify_axis(seat, time, wl_orientation, delta, delta_discrete, wl_source, wl_direction);
+	wlr_seat_pointer_notify_frame(seat);
+}
+
 void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_res) {
 	LOG_V(cls, "Set size of %s to %ux%u.", toplevel->xdg_toplevel->app_id, x_res, y_res);
 	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, x_res, y_res);

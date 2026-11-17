@@ -210,6 +210,20 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_BOOL, "resizing"},
 		},
 	},
+	{
+		.name = "win_notify_mouse_axis",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 7,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+			{KOS_TYPE_U32, "time"},
+			{KOS_TYPE_U8, "source"},
+			{KOS_TYPE_U8, "orientation"},
+			{KOS_TYPE_U8, "direction"},
+			{KOS_TYPE_F64, "delta"},
+			{KOS_TYPE_I32, "delta_discrete"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -344,6 +358,25 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 		}
 
 		wm_vdev_toplevel_set_resizing(toplevel, args[1].b);
+
+		break;
+	}
+	case 8: { // win_notify_mouse_axis
+		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
+
+		if (toplevel == NULL) {
+			LOG_E(cls, "Tried to notify bad window of mouse axis.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		if (args[2].u8 > AXIS_SOURCE_WHEEL_TILT || args[3].u8 > AXIS_ORIENTATION_HORIZONTAL || args[4].u8 > AXIS_DIRECTION_INVERTED) {
+			LOG_E(cls, "Invalid mouse axis source, orientation, or direction.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm_vdev_toplevel_notify_mouse_axis(toplevel, args[1].u32, args[2].u8, args[3].u8, args[4].u8, args[5].f64, args[6].i32);
 
 		break;
 	}
