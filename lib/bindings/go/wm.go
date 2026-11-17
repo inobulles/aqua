@@ -199,6 +199,27 @@ func (w *Wm) WinNotifyMouseButton(win WmWin, time uint32, pressed bool, button u
 	C.wm_win_notify_mouse_button(w.wm, C.wm_win_t(win), C.uint32_t(time), C.bool(pressed), C.uint32_t(button))
 }
 
+func (w *Wm) WinNotifyMouseAxis(
+	win WmWin,
+	time uint32,
+	source WmAxisSource,
+	orientation WmAxisOrientation,
+	direction WmAxisDirection,
+	delta float64,
+	deltaDiscrete int32,
+) {
+	C.wm_win_notify_mouse_axis(
+		w.wm,
+		C.wm_win_t(win),
+		C.uint32_t(time),
+		C.wm_axis_source_t(source),
+		C.wm_axis_orientation_t(orientation),
+		C.wm_axis_direction_t(direction),
+		C.double(delta),
+		C.int32_t(deltaDiscrete),
+	)
+}
+
 func (w *Wm) WinSetSize(win WmWin, x_res, y_res uint32) {
 	C.wm_win_set_size(w.wm, C.wm_win_t(win), C.uint32_t(x_res), C.uint32_t(y_res))
 }
