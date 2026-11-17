@@ -31,6 +31,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define NESTED_X_RES 1920
+#define NESTED_Y_RES 1080
+
 typedef struct {
 	struct wl_list link;
 
@@ -377,6 +380,10 @@ static void new_output(struct wl_listener* listener, void* data) {
 
 	if (mode != NULL) {
 		wlr_output_state_set_mode(&state, mode);
+	}
+
+	else if (wlr_output_is_wl(wlr_output)) {
+		wlr_output_state_set_custom_mode(&state, NESTED_X_RES, NESTED_Y_RES, 0);
 	}
 
 	LOG_V(cls, "Apply new output state atomically.");
