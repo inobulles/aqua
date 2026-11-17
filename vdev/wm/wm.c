@@ -158,6 +158,17 @@ typedef struct __attribute__((packed)) {
 	uint32_t mods;
 } mouse_button_intr_t;
 
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint32_t time;
+	axis_source_t source;
+	axis_orientation_t orientation;
+	axis_direction_t direction;
+	double delta;
+	int32_t delta_discrete;
+	uint32_t mods;
+} mouse_axis_intr_t;
+
 static umber_class_t const* cls = NULL;
 static umber_class_t const* cls_wlr = NULL;
 
@@ -975,11 +986,38 @@ static void mouse_button(struct wl_listener* listener, void* data) {
 
 static void mouse_axis(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, axis);
+	wm_t* const wm = mouse->wm;
 	struct wlr_pointer_axis_event* const event = data;
 
-	(void) event;
+	axis_source_t source = AXIS_SOURCE_WHEEL;
 
-	LOG_F(cls, "TODO: %s", __func__);
+	switch (event->source) {
+	case WL_POINTER_AXIS_SOURCE_WHEEL:
+		source = AXIS_SOURCE_WHEEL;
+		break;
+	case WL_POINTER_AXIS_SOURCE_FINGER:
+		source = AXIS_SOURCE_FINGER;
+		break;
+	case WL_POINTER_AXIS_SOURCE_CONTINUOUS:
+		source = AXIS_SOURCE_CONTINUOUS;
+		break;
+	case WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
+		source = AXIS_SOURCE_WHEEL_TILT;
+		break;
+	}
+
+	mouse_axis_intr_t intr = {
+		.intr = INTR_MOUSE_AXIS,
+		.time = event->time_msec,
+		.source = source,
+		.orientation = event->orientation == WL_POINTER_AXIS_HORIZONTAL_SCROLL ? AXIS_ORIENTATION_HORIZONTAL : AXIS_ORIENTATION_VERTICAL,
+		.direction = event->relative_direction == WL_POINTER_AXIS_RELATIVE_DIRECTION_INVERTED ? AXIS_DIRECTION_INVERTED : AXIS_DIRECTION_IDENTICAL,
+		.delta = event->delta,
+		.delta_discrete = event->delta_discrete,
+		.mods = get_mods(wm),
+	};
+
+	interrupt(wm, sizeof intr, &intr);
 }
 
 static void mouse_destroy(struct wl_listener* listener, void* data) {

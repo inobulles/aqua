@@ -87,6 +87,11 @@ static kos_const_t const CONSTS[] = {
 		.type = KOS_TYPE_U8,
 		.val = {.u8 = INTR_MOUSE_BUTTON},
 	},
+	{
+		.name = "INTR_MOUSE_AXIS",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_MOUSE_AXIS},
+	},
 	// clang-format off
 // CONSTS:BEGIN
 	{

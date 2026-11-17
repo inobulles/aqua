@@ -123,7 +123,25 @@ typedef enum : uint8_t {
 	INTR_DESTROY_IMAGE,
 	INTR_MOUSE_MOTION,
 	INTR_MOUSE_BUTTON,
+	INTR_MOUSE_AXIS,
 } intr_t;
+
+typedef enum : uint8_t {
+	AXIS_SOURCE_WHEEL,
+	AXIS_SOURCE_FINGER,
+	AXIS_SOURCE_CONTINUOUS,
+	AXIS_SOURCE_WHEEL_TILT,
+} axis_source_t;
+
+typedef enum : uint8_t {
+	AXIS_ORIENTATION_VERTICAL,
+	AXIS_ORIENTATION_HORIZONTAL,
+} axis_orientation_t;
+
+typedef enum : uint8_t {
+	AXIS_DIRECTION_IDENTICAL,
+	AXIS_DIRECTION_INVERTED,
+} axis_direction_t;
 
 void wm_vdev_init(umber_class_t const* cls, umber_class_t const* cls_wlr);
 
