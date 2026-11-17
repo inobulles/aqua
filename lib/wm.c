@@ -58,6 +58,7 @@ struct wm_ctx_t {
 		uint32_t win_notify_mouse_button;
 		uint32_t win_set_size;
 		uint32_t win_set_resizing;
+		uint32_t win_notify_mouse_axis;
 	} fns;
 
 	bool last_success;
@@ -328,6 +329,28 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.win_set_resizing = i;
 		}
+
+		if (
+			strcmp(name, "win_notify_mouse_axis") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 7 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "time") == 0 &&
+			fn->params[2].type == KOS_TYPE_U8 &&
+			strcmp((char*) fn->params[2].name, "source") == 0 &&
+			fn->params[3].type == KOS_TYPE_U8 &&
+			strcmp((char*) fn->params[3].name, "orientation") == 0 &&
+			fn->params[4].type == KOS_TYPE_U8 &&
+			strcmp((char*) fn->params[4].name, "direction") == 0 &&
+			fn->params[5].type == KOS_TYPE_F64 &&
+			strcmp((char*) fn->params[5].name, "delta") == 0 &&
+			fn->params[6].type == KOS_TYPE_I32 &&
+			strcmp((char*) fn->params[6].name, "delta_discrete") == 0
+		) {
+			ctx->fns.win_notify_mouse_axis = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -519,6 +542,37 @@ void wm_win_notify_mouse_button(wm_t wm, wm_win_t win, uint32_t time, bool press
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_notify_mouse_button, args);
+	kos_flush(true);
+}
+
+void wm_win_notify_mouse_axis(
+	wm_t wm,
+	wm_win_t win,
+	uint32_t time,
+	wm_axis_source_t source,
+	wm_axis_orientation_t orientation,
+	wm_axis_direction_t direction,
+	double delta,
+	int32_t delta_discrete
+) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = {0, win}},
+		{.u32 = time},
+		{.u8 = source},
+		{.u8 = orientation},
+		{.u8 = direction},
+		{.f64 = delta},
+		{.i32 = delta_discrete},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_notify_mouse_axis, args);
 	kos_flush(true);
 }
 

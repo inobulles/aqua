@@ -266,6 +266,60 @@ typedef void (*wm_mouse_axis_cb_t)(
 );
 
 /**
+ * Kind of touchpad gesture.
+ */
+typedef enum {
+	WM_GESTURE_SWIPE = 0,
+	WM_GESTURE_PINCH = 1,
+	WM_GESTURE_HOLD = 2,
+} wm_gesture_kind_t;
+
+/**
+ * Phase of a touchpad gesture.
+ *
+ * Every gesture starts with a begin and ends with an end phase.
+ * Swipe and pinch gestures have any number of update phases in between; hold gestures have none.
+ */
+typedef enum {
+	WM_GESTURE_PHASE_BEGIN = 0,
+	WM_GESTURE_PHASE_UPDATE = 1,
+	WM_GESTURE_PHASE_END = 2,
+} wm_gesture_phase_t;
+
+/**
+ * WM touchpad gesture event callback.
+ *
+ * This is called on each phase of a touchpad gesture.
+ *
+ * @param wm The WM object.
+ * @param time Time at which event happened. Should only really be used when passing event on with {@link wm_win_notify_gesture}.
+ * @param kind Kind of gesture (see {@link wm_gesture_kind_t}).
+ * @param phase Phase of gesture (see {@link wm_gesture_phase_t}).
+ * @param fingers Number of fingers (valid for begin phase).
+ * @param dx Relative X motion of the gesture's center since the last event (valid for update phase).
+ * @param dy Relative Y motion of the gesture's center since the last event (valid for update phase).
+ * @param scale Absolute scale compared to the begin phase (valid for update phase of pinch gestures).
+ * @param rotation Relative clockwise rotation in degrees since the last event (valid for update phase of pinch gestures).
+ * @param cancelled Whether the gesture was cancelled (valid for end phase).
+ * @param mods Modifiers held when the event happened (see {@link wm_mod_t}).
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_gesture_cb}.
+ */
+typedef void (*wm_gesture_cb_t)(
+	wm_t wm,
+	uint32_t time,
+	wm_gesture_kind_t kind,
+	wm_gesture_phase_t phase,
+	uint32_t fingers,
+	double dx,
+	double dy,
+	double scale,
+	double rotation,
+	bool cancelled,
+	uint32_t mods,
+	void* data
+);
+
+/**
  * Initialize the WM library component.
  *
  * @param ctx The AQUA library context.
@@ -425,6 +479,31 @@ void wm_win_notify_mouse_motion(wm_t wm, wm_win_t win, uint32_t time, uint32_t x
  * @param button The button identifier.
  */
 void wm_win_notify_mouse_button(wm_t wm, wm_win_t win, uint32_t time, bool pressed, uint32_t button);
+
+/**
+ * Notify WM window of a mouse axis (scroll) event.
+ *
+ * The window must already have pointer focus, i.e. it must be the last one {@link wm_win_notify_mouse_motion} was called on.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle to send the notification to.
+ * @param time The time at which the notification occurred. This should've been gotten from {@link wm_mouse_axis_cb_t}.
+ * @param source Source of the scroll event.
+ * @param orientation Whether this is a vertical or horizontal scroll.
+ * @param direction Relative direction of the scroll compared to the physical motion.
+ * @param delta Scroll distance.
+ * @param delta_discrete Scroll distance in fractions of 120 wheel clicks.
+ */
+void wm_win_notify_mouse_axis(
+	wm_t wm,
+	wm_win_t win,
+	uint32_t time,
+	wm_axis_source_t source,
+	wm_axis_orientation_t orientation,
+	wm_axis_direction_t direction,
+	double delta,
+	int32_t delta_discrete
+);
 
 /**
  * Ask a WM window to resize itself.
