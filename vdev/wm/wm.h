@@ -19,6 +19,7 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_subcompositor.h>
@@ -64,6 +65,10 @@ typedef struct {
 	struct wl_listener new_input;
 	struct wl_list keyboards;
 	struct wl_list mice;
+
+	// Touchpad gestures, which have their own protocol (pointer-gestures-unstable-v1).
+
+	struct wlr_pointer_gestures_v1* pointer_gestures;
 
 	// Scene graph.
 
@@ -125,6 +130,7 @@ typedef enum : uint8_t {
 	INTR_MOUSE_MOTION,
 	INTR_MOUSE_BUTTON,
 	INTR_MOUSE_AXIS,
+	INTR_GESTURE,
 } intr_t;
 
 typedef enum : uint8_t {
@@ -143,6 +149,18 @@ typedef enum : uint8_t {
 	AXIS_DIRECTION_IDENTICAL,
 	AXIS_DIRECTION_INVERTED,
 } axis_direction_t;
+
+typedef enum : uint8_t {
+	GESTURE_SWIPE,
+	GESTURE_PINCH,
+	GESTURE_HOLD,
+} gesture_kind_t;
+
+typedef enum : uint8_t {
+	GESTURE_PHASE_BEGIN,
+	GESTURE_PHASE_UPDATE,
+	GESTURE_PHASE_END,
+} gesture_phase_t;
 
 void wm_vdev_init(umber_class_t const* cls, umber_class_t const* cls_wlr);
 

@@ -92,6 +92,11 @@ static kos_const_t const CONSTS[] = {
 		.type = KOS_TYPE_U8,
 		.val = {.u8 = INTR_MOUSE_AXIS},
 	},
+	{
+		.name = "INTR_GESTURE",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = INTR_GESTURE},
+	},
 	// clang-format off
 // CONSTS:BEGIN
 	{

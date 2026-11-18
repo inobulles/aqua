@@ -916,6 +916,13 @@ wm_t* wm_vdev_create(void) {
 
 	wm->seat_caps = 0;
 
+	LOG_V(cls, "Create pointer gestures manager.");
+	wm->pointer_gestures = wlr_pointer_gestures_v1_create(wm->display);
+
+	if (wm->pointer_gestures == NULL) {
+		FAIL("Failed to create pointer gestures manager.");
+	}
+
 	wm->request_set_selection.notify = request_set_selection;
 	wl_signal_add(&wm->seat->events.request_set_selection, &wm->request_set_selection);
 

@@ -36,6 +36,14 @@ typedef struct {
 	struct wl_listener motion_abs;
 	struct wl_listener button;
 	struct wl_listener axis;
+	struct wl_listener swipe_begin;
+	struct wl_listener swipe_update;
+	struct wl_listener swipe_end;
+	struct wl_listener pinch_begin;
+	struct wl_listener pinch_update;
+	struct wl_listener pinch_end;
+	struct wl_listener hold_begin;
+	struct wl_listener hold_end;
 	struct wl_listener destroy;
 } mouse_t;
 
@@ -74,6 +82,19 @@ typedef struct __attribute__((packed)) {
 	int32_t delta_discrete;
 	uint32_t mods;
 } mouse_axis_intr_t;
+
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint32_t time;
+	gesture_kind_t kind;
+	gesture_phase_t phase;
+	uint32_t fingers;  // Only valid for begin phase.
+	double dx, dy;     // Only valid for update phase.
+	double scale;      // Only valid for update phase of pinch gestures.
+	double rotation;   // Only valid for update phase of pinch gestures.
+	uint8_t cancelled; // Only valid for end phase.
+	uint32_t mods;
+} gesture_intr_t;
 
 static umber_class_t const* cls = NULL;
 
@@ -372,6 +393,131 @@ static void mouse_axis(struct wl_listener* listener, void* data) {
 	wm_vdev_interrupt(wm, sizeof intr, &intr);
 }
 
+static void gesture_intr(wm_t* wm, gesture_intr_t* intr) {
+	intr->intr = INTR_GESTURE;
+	intr->mods = get_mods(wm);
+
+	wm_vdev_interrupt(wm, sizeof *intr, intr);
+}
+
+static void swipe_begin(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, swipe_begin);
+	struct wlr_pointer_swipe_begin_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_SWIPE,
+		.phase = GESTURE_PHASE_BEGIN,
+		.fingers = event->fingers,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void swipe_update(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, swipe_update);
+	struct wlr_pointer_swipe_update_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_SWIPE,
+		.phase = GESTURE_PHASE_UPDATE,
+		.fingers = event->fingers,
+		.dx = event->dx,
+		.dy = event->dy,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void swipe_end(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, swipe_end);
+	struct wlr_pointer_swipe_end_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_SWIPE,
+		.phase = GESTURE_PHASE_END,
+		.cancelled = event->cancelled,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void pinch_begin(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, pinch_begin);
+	struct wlr_pointer_pinch_begin_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_PINCH,
+		.phase = GESTURE_PHASE_BEGIN,
+		.fingers = event->fingers,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void pinch_update(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, pinch_update);
+	struct wlr_pointer_pinch_update_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_PINCH,
+		.phase = GESTURE_PHASE_UPDATE,
+		.fingers = event->fingers,
+		.dx = event->dx,
+		.dy = event->dy,
+		.scale = event->scale,
+		.rotation = event->rotation,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void pinch_end(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, pinch_end);
+	struct wlr_pointer_pinch_end_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_PINCH,
+		.phase = GESTURE_PHASE_END,
+		.cancelled = event->cancelled,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void hold_begin(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, hold_begin);
+	struct wlr_pointer_hold_begin_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_HOLD,
+		.phase = GESTURE_PHASE_BEGIN,
+		.fingers = event->fingers,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
+static void hold_end(struct wl_listener* listener, void* data) {
+	mouse_t* const mouse = wl_container_of(listener, mouse, hold_end);
+	struct wlr_pointer_hold_end_event* const event = data;
+
+	gesture_intr_t intr = {
+		.time = event->time_msec,
+		.kind = GESTURE_HOLD,
+		.phase = GESTURE_PHASE_END,
+		.cancelled = event->cancelled,
+	};
+
+	gesture_intr(mouse->wm, &intr);
+}
+
 static void mouse_destroy(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, destroy);
 
@@ -381,6 +527,14 @@ static void mouse_destroy(struct wl_listener* listener, void* data) {
 	wl_list_remove(&mouse->motion_abs.link);
 	wl_list_remove(&mouse->button.link);
 	wl_list_remove(&mouse->axis.link);
+	wl_list_remove(&mouse->swipe_begin.link);
+	wl_list_remove(&mouse->swipe_update.link);
+	wl_list_remove(&mouse->swipe_end.link);
+	wl_list_remove(&mouse->pinch_begin.link);
+	wl_list_remove(&mouse->pinch_update.link);
+	wl_list_remove(&mouse->pinch_end.link);
+	wl_list_remove(&mouse->hold_begin.link);
+	wl_list_remove(&mouse->hold_end.link);
 	wl_list_remove(&mouse->destroy.link);
 	wl_list_remove(&mouse->link);
 
@@ -445,6 +599,30 @@ static void new_mouse(wm_t* wm, struct wlr_input_device* dev) {
 
 	mouse->axis.notify = mouse_axis;
 	wl_signal_add(&wlr_pointer->events.axis, &mouse->axis);
+
+	mouse->swipe_begin.notify = swipe_begin;
+	wl_signal_add(&wlr_pointer->events.swipe_begin, &mouse->swipe_begin);
+
+	mouse->swipe_update.notify = swipe_update;
+	wl_signal_add(&wlr_pointer->events.swipe_update, &mouse->swipe_update);
+
+	mouse->swipe_end.notify = swipe_end;
+	wl_signal_add(&wlr_pointer->events.swipe_end, &mouse->swipe_end);
+
+	mouse->pinch_begin.notify = pinch_begin;
+	wl_signal_add(&wlr_pointer->events.pinch_begin, &mouse->pinch_begin);
+
+	mouse->pinch_update.notify = pinch_update;
+	wl_signal_add(&wlr_pointer->events.pinch_update, &mouse->pinch_update);
+
+	mouse->pinch_end.notify = pinch_end;
+	wl_signal_add(&wlr_pointer->events.pinch_end, &mouse->pinch_end);
+
+	mouse->hold_begin.notify = hold_begin;
+	wl_signal_add(&wlr_pointer->events.hold_begin, &mouse->hold_begin);
+
+	mouse->hold_end.notify = hold_end;
+	wl_signal_add(&wlr_pointer->events.hold_end, &mouse->hold_end);
 
 	mouse->destroy.notify = mouse_destroy;
 	wl_signal_add(&dev->events.destroy, &mouse->destroy);
