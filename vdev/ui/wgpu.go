@@ -310,6 +310,10 @@ func GoUiBackendWgpuRender(
 		}
 	}
 
+	// Advance animations.
+
+	ui.animate()
+
 	// Do reflow if UI is dirty.
 
 	if ui.dirty {
