@@ -256,6 +256,31 @@ func (w *Wm) WinNotifyMouseAxis(
 	)
 }
 
+func (w *Wm) WinNotifyGesture(
+	win WmWin,
+	time uint32,
+	kind WmGestureKind,
+	phase WmGesturePhase,
+	fingers uint32,
+	dx, dy float64,
+	scale, rotation float64,
+	cancelled bool,
+) {
+	C.wm_win_notify_gesture(
+		w.wm,
+		C.wm_win_t(win),
+		C.uint32_t(time),
+		C.wm_gesture_kind_t(kind),
+		C.wm_gesture_phase_t(phase),
+		C.uint32_t(fingers),
+		C.double(dx),
+		C.double(dy),
+		C.double(scale),
+		C.double(rotation),
+		C.bool(cancelled),
+	)
+}
+
 func (w *Wm) WinSetSize(win WmWin, x_res, y_res uint32) {
 	C.wm_win_set_size(w.wm, C.wm_win_t(win), C.uint32_t(x_res), C.uint32_t(y_res))
 }
