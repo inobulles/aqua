@@ -229,6 +229,23 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_I32, "delta_discrete"},
 		},
 	},
+	{
+		.name = "win_notify_gesture",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 10,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+			{KOS_TYPE_U32, "time"},
+			{KOS_TYPE_U8, "kind"},
+			{KOS_TYPE_U8, "phase"},
+			{KOS_TYPE_U32, "fingers"},
+			{KOS_TYPE_F64, "dx"},
+			{KOS_TYPE_F64, "dy"},
+			{KOS_TYPE_F64, "scale"},
+			{KOS_TYPE_F64, "rotation"},
+			{KOS_TYPE_BOOL, "cancelled"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -382,6 +399,36 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 		}
 
 		wm_vdev_toplevel_notify_mouse_axis(toplevel, args[1].u32, args[2].u8, args[3].u8, args[4].u8, args[5].f64, args[6].i32);
+
+		break;
+	}
+	case 9: { // win_notify_gesture
+		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
+
+		if (toplevel == NULL) {
+			LOG_E(cls, "Tried to notify bad window of gesture.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		if (args[2].u8 > GESTURE_HOLD || args[3].u8 > GESTURE_PHASE_END) {
+			LOG_E(cls, "Invalid gesture kind or phase.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm_vdev_toplevel_notify_gesture(
+			toplevel,
+			args[1].u32,
+			args[2].u8,
+			args[3].u8,
+			args[4].u32,
+			args[5].f64,
+			args[6].f64,
+			args[7].f64,
+			args[8].f64,
+			args[9].b
+		);
 
 		break;
 	}

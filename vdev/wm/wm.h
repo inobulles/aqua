@@ -188,5 +188,17 @@ void wm_vdev_toplevel_notify_mouse_axis(
 	double delta,
 	int32_t delta_discrete
 );
+void wm_vdev_toplevel_notify_gesture(
+	toplevel_t* toplevel,
+	uint32_t time,
+	gesture_kind_t kind,
+	gesture_phase_t phase,
+	uint32_t fingers,
+	double dx,
+	double dy,
+	double scale,
+	double rotation,
+	bool cancelled
+);
 void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_res);
 void wm_vdev_toplevel_set_resizing(toplevel_t* toplevel, bool resizing);

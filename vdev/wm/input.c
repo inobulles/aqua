@@ -290,6 +290,67 @@ void wm_vdev_toplevel_notify_mouse_axis(
 	wlr_seat_pointer_notify_frame(seat);
 }
 
+void wm_vdev_toplevel_notify_gesture(
+	toplevel_t* toplevel,
+	uint32_t time,
+	gesture_kind_t kind,
+	gesture_phase_t phase,
+	uint32_t fingers,
+	double dx,
+	double dy,
+	double scale,
+	double rotation,
+	bool cancelled
+) {
+	wm_t* const wm = toplevel->wm;
+	struct wlr_pointer_gestures_v1* const gestures = wm->pointer_gestures;
+	struct wlr_seat* const seat = wm->seat;
+
+	switch (kind) {
+	case GESTURE_SWIPE:
+		switch (phase) {
+		case GESTURE_PHASE_BEGIN:
+			wlr_pointer_gestures_v1_send_swipe_begin(gestures, seat, time, fingers);
+			break;
+		case GESTURE_PHASE_UPDATE:
+			wlr_pointer_gestures_v1_send_swipe_update(gestures, seat, time, dx, dy);
+			break;
+		case GESTURE_PHASE_END:
+			wlr_pointer_gestures_v1_send_swipe_end(gestures, seat, time, cancelled);
+			break;
+		}
+
+		break;
+	case GESTURE_PINCH:
+		switch (phase) {
+		case GESTURE_PHASE_BEGIN:
+			wlr_pointer_gestures_v1_send_pinch_begin(gestures, seat, time, fingers);
+			break;
+		case GESTURE_PHASE_UPDATE:
+			wlr_pointer_gestures_v1_send_pinch_update(gestures, seat, time, dx, dy, scale, rotation);
+			break;
+		case GESTURE_PHASE_END:
+			wlr_pointer_gestures_v1_send_pinch_end(gestures, seat, time, cancelled);
+			break;
+		}
+
+		break;
+	case GESTURE_HOLD:
+		switch (phase) {
+		case GESTURE_PHASE_BEGIN:
+			wlr_pointer_gestures_v1_send_hold_begin(gestures, seat, time, fingers);
+			break;
+		case GESTURE_PHASE_UPDATE:
+			break; // Hold gestures don't have updates.
+		case GESTURE_PHASE_END:
+			wlr_pointer_gestures_v1_send_hold_end(gestures, seat, time, cancelled);
+			break;
+		}
+
+		break;
+	}
+}
+
 static uint32_t get_mods(wm_t* wm) {
 	struct wlr_keyboard* const kbd = wlr_seat_get_keyboard(wm->seat);
 
