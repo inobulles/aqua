@@ -60,6 +60,7 @@ struct wm_ctx_t {
 		uint32_t win_set_size;
 		uint32_t win_set_resizing;
 		uint32_t win_notify_mouse_axis;
+		uint32_t win_notify_gesture;
 	} fns;
 
 	bool last_success;
@@ -356,6 +357,34 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.win_notify_mouse_axis = i;
 		}
+
+		if (
+			strcmp(name, "win_notify_gesture") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 10 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "time") == 0 &&
+			fn->params[2].type == KOS_TYPE_U8 &&
+			strcmp((char*) fn->params[2].name, "kind") == 0 &&
+			fn->params[3].type == KOS_TYPE_U8 &&
+			strcmp((char*) fn->params[3].name, "phase") == 0 &&
+			fn->params[4].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[4].name, "fingers") == 0 &&
+			fn->params[5].type == KOS_TYPE_F64 &&
+			strcmp((char*) fn->params[5].name, "dx") == 0 &&
+			fn->params[6].type == KOS_TYPE_F64 &&
+			strcmp((char*) fn->params[6].name, "dy") == 0 &&
+			fn->params[7].type == KOS_TYPE_F64 &&
+			strcmp((char*) fn->params[7].name, "scale") == 0 &&
+			fn->params[8].type == KOS_TYPE_F64 &&
+			strcmp((char*) fn->params[8].name, "rotation") == 0 &&
+			fn->params[9].type == KOS_TYPE_BOOL &&
+			strcmp((char*) fn->params[9].name, "cancelled") == 0
+		) {
+			ctx->fns.win_notify_gesture = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -583,6 +612,43 @@ void wm_win_notify_mouse_axis(
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_notify_mouse_axis, args);
+	kos_flush(true);
+}
+
+void wm_win_notify_gesture(
+	wm_t wm,
+	wm_win_t win,
+	uint32_t time,
+	wm_gesture_kind_t kind,
+	wm_gesture_phase_t phase,
+	uint32_t fingers,
+	double dx,
+	double dy,
+	double scale,
+	double rotation,
+	bool cancelled
+) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = {0, win}},
+		{.u32 = time},
+		{.u8 = kind},
+		{.u8 = phase},
+		{.u32 = fingers},
+		{.f64 = dx},
+		{.f64 = dy},
+		{.f64 = scale},
+		{.f64 = rotation},
+		{.b = cancelled},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_notify_gesture, args);
 	kos_flush(true);
 }
 

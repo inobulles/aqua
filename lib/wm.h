@@ -517,6 +517,38 @@ void wm_win_notify_mouse_axis(
 );
 
 /**
+ * Notify WM window of a touchpad gesture event.
+ *
+ * The window must already have pointer focus, i.e. it must be the last one {@link wm_win_notify_mouse_motion} was called on.
+ * All phases of a gesture should be sent to the same window.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle to send the notification to.
+ * @param time The time at which the notification occurred. This should've been gotten from {@link wm_gesture_cb_t}.
+ * @param kind Kind of gesture.
+ * @param phase Phase of gesture.
+ * @param fingers Number of fingers.
+ * @param dx Relative X motion of the gesture's center.
+ * @param dy Relative Y motion of the gesture's center.
+ * @param scale Absolute scale compared to the begin phase.
+ * @param rotation Relative clockwise rotation in degrees.
+ * @param cancelled Whether the gesture was cancelled.
+ */
+void wm_win_notify_gesture(
+	wm_t wm,
+	wm_win_t win,
+	uint32_t time,
+	wm_gesture_kind_t kind,
+	wm_gesture_phase_t phase,
+	uint32_t fingers,
+	double dx,
+	double dy,
+	double scale,
+	double rotation,
+	bool cancelled
+);
+
+/**
  * Ask a WM window to resize itself.
  *
  * This is only a request: the window is free to pick a different size (e.g. to respect its minimum size).
