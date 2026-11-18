@@ -35,6 +35,7 @@ struct wm_ctx_t {
 		uint32_t INTR_MOUSE_MOTION;
 		uint32_t INTR_MOUSE_BUTTON;
 		uint32_t INTR_MOUSE_AXIS;
+		uint32_t INTR_GESTURE;
 		// clang-format off
 // CONST_FIELDS:BEGIN
 		uint32_t MOD_SHIFT;
@@ -175,6 +176,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (strcmp(name, "INTR_MOUSE_AXIS") == 0) {
 			ctx->consts.INTR_MOUSE_AXIS = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_GESTURE") == 0) {
+			ctx->consts.INTR_GESTURE = c->val.u8;
 		}
 
 		// clang-format off
@@ -491,6 +496,11 @@ void wm_register_mouse_axis_cb(wm_t wm, wm_mouse_axis_cb_t cb, void* data) {
 	wm->mouse_axis_data = data;
 }
 
+void wm_register_gesture_cb(wm_t wm, wm_gesture_cb_t cb, void* data) {
+	wm->gesture = cb;
+	wm->gesture_data = data;
+}
+
 void wm_loop(wm_t wm) {
 	wm_ctx_t const ctx = wm->ctx;
 
@@ -690,6 +700,19 @@ typedef struct __attribute__((packed)) {
 	int32_t delta_discrete;
 	uint32_t mods;
 } intr_mouse_axis_t;
+
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint32_t time;
+	uint8_t kind;
+	uint8_t phase;
+	uint32_t fingers;
+	double dx, dy;
+	double scale;
+	double rotation;
+	uint8_t cancelled;
+	uint32_t mods;
+} intr_gesture_t;
 
 // Translate the VDEV's modifier bitmask into a wm_mod_t one.
 
@@ -911,6 +934,32 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 				axis->delta_discrete,
 				conv_mods(ctx, axis->mods),
 				wm->mouse_axis_data
+			);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_GESTURE) {
+		intr_gesture_t const* const gesture = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *gesture) {
+			LOG_E(cls, "TODO Error message.");
+			return;
+		}
+
+		if (wm->gesture != NULL) {
+			wm->gesture(
+				wm,
+				gesture->time,
+				gesture->kind,
+				gesture->phase,
+				gesture->fingers,
+				gesture->dx,
+				gesture->dy,
+				gesture->scale,
+				gesture->rotation,
+				gesture->cancelled,
+				conv_mods(ctx, gesture->mods),
+				wm->gesture_data
 			);
 		}
 	}

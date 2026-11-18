@@ -450,6 +450,17 @@ void wm_register_mouse_button_cb(wm_t wm, wm_mouse_button_cb_t cb, void* data);
 void wm_register_mouse_axis_cb(wm_t wm, wm_mouse_axis_cb_t cb, void* data);
 
 /**
+ * Register a touchpad gesture callback.
+ *
+ * These will be called on each phase of a touchpad swipe, pinch, or hold gesture.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_gesture_cb(wm_t wm, wm_gesture_cb_t cb, void* data);
+
+/**
  * Enter the WM event loop.
  *
  * This will block until the WM is closed.

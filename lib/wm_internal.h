@@ -37,4 +37,7 @@ struct wm_t {
 
 	void* mouse_axis_data;
 	wm_mouse_axis_cb_t mouse_axis;
+
+	void* gesture_data;
+	wm_gesture_cb_t gesture;
 };
