@@ -219,6 +219,12 @@ func (w *Wm) Destroy() {
 	if w.destroy_win_cb_handle != 0 {
 		w.destroy_win_cb_handle.Delete()
 	}
+	if w.mouse_motion_cb_handle != 0 {
+		w.mouse_motion_cb_handle.Delete()
+	}
+	if w.mouse_button_cb_handle != 0 {
+		w.mouse_button_cb_handle.Delete()
+	}
 	if w.mouse_axis_cb_handle != 0 {
 		w.mouse_axis_cb_handle.Delete()
 	}
