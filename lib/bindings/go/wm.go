@@ -52,6 +52,20 @@ extern void go_lib_bindings_wm_mouse_axis_cb(
 	uint32_t mods,
 	void* data
 );
+extern void go_lib_bindings_wm_gesture_cb(
+	wm_t wm,
+	uint32_t time,
+	wm_gesture_kind_t kind,
+	wm_gesture_phase_t phase,
+	uint32_t fingers,
+	double dx,
+	double dy,
+	double scale,
+	double rotation,
+	uint8_t cancelled,
+	uint32_t mods,
+	void* data
+);
 */
 import "C"
 import (
@@ -79,6 +93,7 @@ type Wm struct {
 	mouse_motion_cb_handle  cgo.Handle
 	mouse_button_cb_handle  cgo.Handle
 	mouse_axis_cb_handle    cgo.Handle
+	gesture_cb_handle       cgo.Handle
 }
 
 type WmWin uint64
@@ -123,6 +138,24 @@ type WmAxisDirection uint8
 const (
 	WM_AXIS_DIRECTION_IDENTICAL WmAxisDirection = C.WM_AXIS_DIRECTION_IDENTICAL
 	WM_AXIS_DIRECTION_INVERTED  WmAxisDirection = C.WM_AXIS_DIRECTION_INVERTED
+)
+
+// Kind of touchpad gesture (see wm_gesture_kind_t).
+type WmGestureKind uint8
+
+const (
+	WM_GESTURE_SWIPE WmGestureKind = C.WM_GESTURE_SWIPE
+	WM_GESTURE_PINCH WmGestureKind = C.WM_GESTURE_PINCH
+	WM_GESTURE_HOLD  WmGestureKind = C.WM_GESTURE_HOLD
+)
+
+// Phase of a touchpad gesture (see wm_gesture_phase_t).
+type WmGesturePhase uint8
+
+const (
+	WM_GESTURE_PHASE_BEGIN  WmGesturePhase = C.WM_GESTURE_PHASE_BEGIN
+	WM_GESTURE_PHASE_UPDATE WmGesturePhase = C.WM_GESTURE_PHASE_UPDATE
+	WM_GESTURE_PHASE_END    WmGesturePhase = C.WM_GESTURE_PHASE_END
 )
 
 func (c *Context) WmInit() *WmComponent {
@@ -188,6 +221,9 @@ func (w *Wm) Destroy() {
 	}
 	if w.mouse_axis_cb_handle != 0 {
 		w.mouse_axis_cb_handle.Delete()
+	}
+	if w.gesture_cb_handle != 0 {
+		w.gesture_cb_handle.Delete()
 	}
 }
 
@@ -547,6 +583,64 @@ func (w *Wm) RegisterMouseAxisCb(cb WmMouseAxisCb) {
 		w.wm,
 		C.wm_mouse_axis_cb_t(C.go_lib_bindings_wm_mouse_axis_cb),
 		unsafe.Pointer(w.mouse_axis_cb_handle),
+	)
+}
+
+type WmGestureCb func(
+	time uint32,
+	kind WmGestureKind,
+	phase WmGesturePhase,
+	fingers uint32,
+	dx, dy float64,
+	scale, rotation float64,
+	cancelled bool,
+	mods WmMod,
+)
+
+//export go_lib_bindings_wm_gesture_cb
+func go_lib_bindings_wm_gesture_cb(
+	_ C.wm_t,
+	time C.uint32_t,
+	kind C.wm_gesture_kind_t,
+	phase C.wm_gesture_phase_t,
+	fingers C.uint32_t,
+	dx C.double,
+	dy C.double,
+	scale C.double,
+	rotation C.double,
+	cancelled C.uint8_t,
+	mods C.uint32_t,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmGestureCb); ok {
+		cb(
+			uint32(time),
+			WmGestureKind(kind),
+			WmGesturePhase(phase),
+			uint32(fingers),
+			float64(dx),
+			float64(dy),
+			float64(scale),
+			float64(rotation),
+			cancelled != 0,
+			WmMod(mods),
+		)
+	}
+}
+
+func (w *Wm) RegisterGestureCb(cb WmGestureCb) {
+	if w.gesture_cb_handle != 0 {
+		w.gesture_cb_handle.Delete()
+	}
+
+	w.gesture_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_gesture_cb(
+		w.wm,
+		C.wm_gesture_cb_t(C.go_lib_bindings_wm_gesture_cb),
+		unsafe.Pointer(w.gesture_cb_handle),
 	)
 }
 
