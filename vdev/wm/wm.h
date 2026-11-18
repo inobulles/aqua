@@ -19,7 +19,9 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_pointer_gestures_v1.h>
+#include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_subcompositor.h>
@@ -69,6 +71,16 @@ typedef struct {
 	// Touchpad gestures, which have their own protocol (pointer-gestures-unstable-v1).
 
 	struct wlr_pointer_gestures_v1* pointer_gestures;
+
+	// Relative pointer motion and pointer constraints (relative-pointer-unstable-v1 and pointer-constraints-unstable-v1).
+	// Only locks are supported for now; confines are never activated.
+
+	struct wlr_relative_pointer_manager_v1* relative_pointer_mgr;
+	struct wlr_pointer_constraints_v1* pointer_constraints;
+	struct wl_listener new_pointer_constraint;
+
+	struct wlr_pointer_constraint_v1* active_constraint;
+	struct wl_listener active_constraint_destroy;
 
 	// Scene graph.
 
@@ -176,6 +188,9 @@ void wm_vdev_focus_toplevel(toplevel_t* toplevel);
 
 void wm_vdev_input_init(umber_class_t const* cls);
 void wm_vdev_new_input(struct wl_listener* listener, void* data);
+
+void wm_vdev_new_pointer_constraint(struct wl_listener* listener, void* data);
+void wm_vdev_update_pointer_constraint(wm_t* wm);
 
 void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, uint32_t x, uint32_t y);
 void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button);

@@ -429,6 +429,8 @@ void wm_vdev_focus_toplevel(toplevel_t* toplevel) {
 	if (kbd != NULL) {
 		wlr_seat_keyboard_notify_enter(wm->seat, surf, kbd->keycodes, kbd->num_keycodes, &kbd->modifiers);
 	}
+
+	wm_vdev_update_pointer_constraint(wm);
 }
 
 static void toplevel_map(struct wl_listener* listener, void* data) {
@@ -922,6 +924,24 @@ wm_t* wm_vdev_create(void) {
 	if (wm->pointer_gestures == NULL) {
 		FAIL("Failed to create pointer gestures manager.");
 	}
+
+	LOG_V(cls, "Create relative pointer manager.");
+	wm->relative_pointer_mgr = wlr_relative_pointer_manager_v1_create(wm->display);
+
+	if (wm->relative_pointer_mgr == NULL) {
+		FAIL("Failed to create relative pointer manager.");
+	}
+
+	LOG_V(cls, "Create pointer constraints.");
+	wm->pointer_constraints = wlr_pointer_constraints_v1_create(wm->display);
+
+	if (wm->pointer_constraints == NULL) {
+		FAIL("Failed to create pointer constraints.");
+	}
+
+	wm->active_constraint = NULL;
+	wm->new_pointer_constraint.notify = wm_vdev_new_pointer_constraint;
+	wl_signal_add(&wm->pointer_constraints->events.new_constraint, &wm->new_pointer_constraint);
 
 	wm->request_set_selection.notify = request_set_selection;
 	wl_signal_add(&wm->seat->events.request_set_selection, &wm->request_set_selection);

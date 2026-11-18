@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h>
 
 typedef struct {
 	struct wl_list link;
@@ -230,12 +231,21 @@ void wm_vdev_toplevel_notify_mouse_motion(toplevel_t* toplevel, uint32_t time, u
 
 	if (surf == NULL) {
 		wlr_seat_pointer_notify_clear_focus(seat);
-		return;
+		goto out;
 	}
 
 	wlr_seat_pointer_notify_enter(seat, surf, sx, sy);
-	wlr_seat_pointer_notify_motion(seat, time, sx, sy);
-	wlr_seat_pointer_notify_frame(seat);
+
+	// While the pointer is locked, clients must not receive any absolute pointer motion events.
+
+	if (toplevel->wm->active_constraint == NULL) {
+		wlr_seat_pointer_notify_motion(seat, time, sx, sy);
+		wlr_seat_pointer_notify_frame(seat);
+	}
+
+out:
+
+	wm_vdev_update_pointer_constraint(toplevel->wm);
 }
 
 void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t button) {
@@ -361,6 +371,98 @@ static uint32_t get_mods(wm_t* wm) {
 	return wlr_keyboard_get_modifiers(kbd);
 }
 
+static void deactivate_pointer_constraint(wm_t* wm) {
+	struct wlr_pointer_constraint_v1* const constraint = wm->active_constraint;
+
+	if (constraint == NULL) {
+		return;
+	}
+
+	wm->active_constraint = NULL;
+	wl_list_remove(&wm->active_constraint_destroy.link);
+
+	wlr_pointer_constraint_v1_send_deactivated(constraint); // This destroys oneshot constraints.
+}
+
+static void active_constraint_destroy(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, active_constraint_destroy);
+	struct wlr_pointer_constraint_v1* const constraint = wm->active_constraint;
+
+	(void) data;
+
+	wm->active_constraint = NULL;
+	wl_list_remove(&wm->active_constraint_destroy.link);
+
+	// The client released the lock itself (e.g. Blender finishing a grab).
+	// If it set a cursor position hint, move the WM's cursor there by sending it a synthetic relative motion.
+
+	if (!constraint->current.cursor_hint.enabled) {
+		return;
+	}
+
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+
+	double const dx = constraint->current.cursor_hint.x - wm->seat->pointer_state.sx;
+	double const dy = constraint->current.cursor_hint.y - wm->seat->pointer_state.sy;
+
+	mouse_motion_intr_t intr = {
+		.intr = INTR_MOUSE_MOTION,
+		.time = now.tv_sec * 1000 + now.tv_nsec / 1000000,
+		.is_abs = false,
+		.dx = dx,
+		.dy = dy,
+		.unaccel_dx = dx,
+		.unaccel_dy = dy,
+		.mods = get_mods(wm),
+	};
+
+	wm_vdev_interrupt(wm, sizeof intr, &intr);
+}
+
+void wm_vdev_update_pointer_constraint(wm_t* wm) {
+	struct wlr_seat* const seat = wm->seat;
+	struct wlr_surface* const surf = seat->pointer_state.focused_surface;
+	struct wlr_pointer_constraint_v1* constraint = NULL;
+
+	// Keyboard focus is on the toplevel's surface, whereas pointer focus may be on one of its subsurfaces (e.g. Firefox's content surface).
+
+	if (surf != NULL && wlr_surface_get_root_surface(surf) == seat->keyboard_state.focused_surface) {
+		constraint = wlr_pointer_constraints_v1_constraint_for_surface(wm->pointer_constraints, surf, seat);
+	}
+
+	if (constraint == wm->active_constraint) {
+		return;
+	}
+
+	deactivate_pointer_constraint(wm);
+
+	if (constraint == NULL || constraint->type != WLR_POINTER_CONSTRAINT_V1_LOCKED) {
+		return;
+	}
+
+	int const sx = seat->pointer_state.sx;
+	int const sy = seat->pointer_state.sy;
+
+	if (!pixman_region32_contains_point(&constraint->region, sx, sy, NULL)) {
+		return;
+	}
+
+	wm->active_constraint = constraint;
+	wm->active_constraint_destroy.notify = active_constraint_destroy;
+	wl_signal_add(&constraint->events.destroy, &wm->active_constraint_destroy);
+
+	wlr_pointer_constraint_v1_send_activated(constraint);
+}
+
+void wm_vdev_new_pointer_constraint(struct wl_listener* listener, void* data) {
+	wm_t* const wm = wl_container_of(listener, wm, new_pointer_constraint);
+
+	(void) data;
+
+	wm_vdev_update_pointer_constraint(wm);
+}
+
 static void mouse_motion(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, motion);
 	wm_t* const wm = mouse->wm;
@@ -377,6 +479,21 @@ static void mouse_motion(struct wl_listener* listener, void* data) {
 		.mods = get_mods(wm),
 	};
 
+	wlr_relative_pointer_manager_v1_send_relative_motion(
+		wm->relative_pointer_mgr,
+		wm->seat,
+		(uint64_t) event->time_msec * 1000,
+		event->delta_x,
+		event->delta_y,
+		event->unaccel_dx,
+		event->unaccel_dy
+	);
+
+	if (wm->active_constraint != NULL) {
+		intr.dx = intr.dy = 0;
+		intr.unaccel_dx = intr.unaccel_dy = 0;
+	}
+
 	wm_vdev_interrupt(wm, sizeof intr, &intr);
 }
 
@@ -384,6 +501,12 @@ static void mouse_motion_abs(struct wl_listener* listener, void* data) {
 	mouse_t* const mouse = wl_container_of(listener, mouse, motion_abs);
 	wm_t* const wm = mouse->wm;
 	struct wlr_pointer_motion_absolute_event* const event = data;
+
+	// Absolute pointing devices can't be locked.
+
+	if (wm->active_constraint != NULL) {
+		return;
+	}
 
 	mouse_motion_intr_t intr = {
 		.intr = INTR_MOUSE_MOTION,
