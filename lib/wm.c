@@ -46,6 +46,10 @@ struct wm_ctx_t {
 		uint32_t MOD_MOD3;
 		uint32_t MOD_META;
 		uint32_t MOD_MOD5;
+		uint32_t BACKEND_DRM;
+		uint32_t BACKEND_WAYLAND;
+		uint32_t BACKEND_X11;
+		uint32_t BACKEND_HEADLESS;
 // CONST_FIELDS:END
 		// clang-format on
 	} consts;
@@ -61,6 +65,7 @@ struct wm_ctx_t {
 		uint32_t win_set_resizing;
 		uint32_t win_notify_mouse_axis;
 		uint32_t win_notify_gesture;
+		uint32_t get_backend;
 	} fns;
 
 	bool last_success;
@@ -215,6 +220,22 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (strcmp(name, "MOD_MOD5") == 0) {
 			ctx->consts.MOD_MOD5 = c->val.u32;
+		}
+
+		if (strcmp(name, "BACKEND_DRM") == 0) {
+			ctx->consts.BACKEND_DRM = c->val.u8;
+		}
+
+		if (strcmp(name, "BACKEND_WAYLAND") == 0) {
+			ctx->consts.BACKEND_WAYLAND = c->val.u8;
+		}
+
+		if (strcmp(name, "BACKEND_X11") == 0) {
+			ctx->consts.BACKEND_X11 = c->val.u8;
+		}
+
+		if (strcmp(name, "BACKEND_HEADLESS") == 0) {
+			ctx->consts.BACKEND_HEADLESS = c->val.u8;
 		}
 // CONST_READS:END
 		// clang-format on
@@ -384,6 +405,16 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[9].name, "cancelled") == 0
 		) {
 			ctx->fns.win_notify_gesture = i;
+		}
+
+		if (
+			strcmp(name, "get_backend") == 0 &&
+			fn->ret_type == KOS_TYPE_U8 &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "wm") == 0
+		) {
+			ctx->fns.get_backend = i;
 		}
 	}
 
@@ -685,6 +716,55 @@ void wm_win_set_resizing(wm_t wm, wm_win_t win, bool resizing) {
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_set_resizing, args);
 	kos_flush(true);
+}
+
+// Translate the VDEV's backend into a wm_backend_t.
+
+static wm_backend_t conv_backend(wm_ctx_t ctx, uint32_t vdev_backend) {
+	// clang-format off
+// CONV_BACKEND:BEGIN
+	if (vdev_backend == ctx->consts.BACKEND_DRM) {
+		return WM_BACKEND_DRM;
+	}
+
+	if (vdev_backend == ctx->consts.BACKEND_WAYLAND) {
+		return WM_BACKEND_WAYLAND;
+	}
+
+	if (vdev_backend == ctx->consts.BACKEND_X11) {
+		return WM_BACKEND_X11;
+	}
+
+	if (vdev_backend == ctx->consts.BACKEND_HEADLESS) {
+		return WM_BACKEND_HEADLESS;
+	}
+// CONV_BACKEND:END
+	// clang-format on
+
+	return WM_BACKEND_UNKNOWN;
+}
+
+wm_backend_t wm_get_backend(wm_t wm) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return WM_BACKEND_UNKNOWN;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = wm->opaque_ptr},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.get_backend, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		return WM_BACKEND_UNKNOWN;
+	}
+
+	return conv_backend(ctx, ctx->last_ret.u8);
 }
 
 typedef struct __attribute__((packed)) {

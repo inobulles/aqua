@@ -141,7 +141,6 @@ typedef void (*wm_destroy_image_cb_t)(wm_t wm, void* raw_image, void* data);
  * Modifier key bitmask.
  *
  * Passed to input event callbacks to indicate which modifiers were held when the event happened.
- * These are AQUA constants and don't depend on the backend the WM VDEV happens to use.
  */
 typedef enum {
 	// clang-format off
@@ -157,6 +156,24 @@ typedef enum {
 // MODS:END
 	// clang-format on
 } wm_mod_t;
+
+/**
+ * WM backend.
+ *
+ * This is the kind of backend the WM VDEV is running on.
+ * {@link WM_BACKEND_WAYLAND} and {@link WM_BACKEND_X11} mean the WM is nested within another compositor or X server.
+ */
+typedef enum {
+	// clang-format off
+// BACKENDS:BEGIN
+	WM_BACKEND_DRM,
+	WM_BACKEND_WAYLAND,
+	WM_BACKEND_X11,
+	WM_BACKEND_HEADLESS,
+// BACKENDS:END
+	// clang-format on
+	WM_BACKEND_UNKNOWN,
+} wm_backend_t;
 
 /**
  * WM mouse motion event callback.
@@ -468,6 +485,16 @@ void wm_register_gesture_cb(wm_t wm, wm_gesture_cb_t cb, void* data);
  * @param wm The WM object to run the loop on.
  */
 void wm_loop(wm_t wm);
+
+/**
+ * Get the backend the WM is running on.
+ *
+ * This is known as soon as the WM is created and doesn't change over its lifetime.
+ *
+ * @param wm The WM object.
+ * @return The WM's backend, or {@link WM_BACKEND_UNKNOWN} if the call failed or the VDEV returned a backend we don't know about.
+ */
+wm_backend_t wm_get_backend(wm_t wm);
 
 /**
  * Notify WM window of a mouse motion event.
