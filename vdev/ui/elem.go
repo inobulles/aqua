@@ -257,6 +257,13 @@ func (e *Elem) rem_attr(key string) {
 }
 
 func (e *Elem) get_attr(key string) any {
+	switch key {
+	case "scale":
+		return float32(e.scale.pos)
+	case "rot":
+		return float32(e.rot.pos)
+	}
+
 	if v, ok := e.attrs[key]; ok {
 		return v
 	}
