@@ -4,7 +4,9 @@
 package main
 
 import (
+	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 )
@@ -227,6 +229,12 @@ func animate_elem(elem IElem, dt float64) bool {
 	return running
 }
 
+func (a *Anim) set_curve(curve AnimCurve) {
+	a.curve = curve
+	a.from = a.pos
+	a.elapsed = 0
+}
+
 func (a *Anim) process_attrs(prop string, key string, val any) bool {
 	rest, ok := strings.CutPrefix(key, prop)
 	if !ok {
@@ -238,6 +246,30 @@ func (a *Anim) process_attrs(prop string, key string, val any) bool {
 		a.set(float64(val.(float32)))
 	case ".anim":
 		a.set_target(float64(val.(float32)))
+	case ".anim.curve":
+		switch val.(string) {
+		case "linear":
+			a.set_curve(AnimCurveLinear)
+		case "elastic":
+			a.set_curve(AnimCurveElastic)
+		default:
+			fmt.Fprintf(os.Stderr, "Unknown animation curve '%s' for '%s' (must be 'linear' or 'elastic').\n", val, key)
+		}
+	case ".anim.duration":
+		a.time = float64(val.(float32))
+	case ".anim.stiffness", ".anim.damping":
+		v := float64(val.(float32))
+
+		if v < 0 {
+			fmt.Fprintf(os.Stderr, "'%s' can't be negative (got %g).\n", key, v)
+			break
+		}
+
+		if rest == ".anim.stiffness" {
+			a.stiffness = v
+		} else {
+			a.damping = v
+		}
 	default:
 		return false
 	}
