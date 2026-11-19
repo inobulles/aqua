@@ -382,6 +382,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		if (strcmp(name, "ELEM_KIND_TEXT") == 0) {
 			ctx->consts.ELEM_KIND_TEXT = c->val.u8;
 		}
+
+		if (strcmp(name, "RENDER_FLAG_NEEDS_FRAME") == 0) {
+			ctx->consts.RENDER_FLAG_NEEDS_FRAME = c->val.u32;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
@@ -578,7 +582,7 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (
 			strcmp(name, "backend_wgpu_render") == 0 &&
-			fn->ret_type == KOS_TYPE_VOID &&
+			fn->ret_type == KOS_TYPE_U32 &&
 			fn->param_count == 5 &&
 			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
 			strcmp((char*) fn->params[0].name, "ui") == 0 &&

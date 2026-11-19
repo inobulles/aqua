@@ -31,9 +31,10 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t vid, WGPUDevice device, WGPUTex
  * @param command_encoder The WebGPU command encoder to use for rendering.
  * @param x_res The X resolution of the surface we're rendering to.
  * @param y_res The Y resolution of the surface we're rendering to.
+ * @param flags Where to write the {@link ui_render_flags_t} for this frame. May be NULL.
  * @return 0 on success, or a negative error code on failure.
  */
-int ui_wgpu_render(ui_t ui, WGPUTexture frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res);
+int ui_wgpu_render(ui_t ui, WGPUTexture frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res, ui_render_flags_t* flags);
 
 /**
  * Easy setup WebGPU UI backend state.
@@ -119,9 +120,10 @@ int ui_wgpu_ez_setup(ui_wgpu_ez_state_t* state, ui_t ui, win_t win, wgpu_ctx_t w
  * You can also write the rendering code manually, which is useful if you're rendering more than just the UI to the screen.
  *
  * @param state The state object to use for the WebGPU backend.
+ * @param flags Where to write the {@link ui_render_flags_t} for this frame. May be NULL.
  * @return 0 on success, or a negative error code on failure.
  */
-int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state);
+int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state, ui_render_flags_t* flags);
 
 /**
  * Resize the WebGPU backend.

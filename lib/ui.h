@@ -46,6 +46,18 @@ typedef enum {
 } ui_supported_backends_t;
 
 /**
+ * Flags returned when rendering the UI.
+ */
+typedef enum {
+	/**
+	 * The UI needs another frame to be rendered, e.g. because an animation is still running.
+	 *
+	 * If this isn't set, the app may stop rendering until something changes.
+	 */
+	UI_RENDER_FLAG_NEEDS_FRAME = 1 << 0,
+} ui_render_flags_t;
+
+/**
  * Dimension unit kinds.
  */
 typedef enum {

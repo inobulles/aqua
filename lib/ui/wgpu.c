@@ -48,9 +48,13 @@ int ui_wgpu_init(ui_t ui, uint64_t hid, uint64_t cid, WGPUDevice device, WGPUTex
 	return 0;
 }
 
-int ui_wgpu_render(ui_t ui, WGPUTexture frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res) {
+int ui_wgpu_render(ui_t ui, WGPUTexture frame, WGPUCommandEncoder command_encoder, uint32_t x_res, uint32_t y_res, ui_render_flags_t* flags) {
 	assert(ui != NULL);
 	ui_ctx_t const ctx = ui->ctx;
+
+	if (flags != NULL) {
+		*flags = 0;
+	}
 
 	kos_val_t const args[] = {
 		{.opaque_ptr = ui->opaque_ptr},
@@ -67,6 +71,14 @@ int ui_wgpu_render(ui_t ui, WGPUTexture frame, WGPUCommandEncoder command_encode
 	if (!ctx->last_success) {
 		LOG_E(cls, "Failed to render WebGPU backend.");
 		return -1;
+	}
+
+	// Translate the VDRIVER's flags to our own.
+
+	uint32_t const vdriver_flags = ctx->last_ret.u32;
+
+	if (flags != NULL && (vdriver_flags & ctx->consts.RENDER_FLAG_NEEDS_FRAME)) {
+		*flags |= UI_RENDER_FLAG_NEEDS_FRAME;
 	}
 
 	LOG_V(cls, "Rendered UI with WebGPU backend.");
@@ -261,7 +273,11 @@ err_create_surface:
 	return -1;
 }
 
-int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
+int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state, ui_render_flags_t* flags) {
+	if (flags != NULL) {
+		*flags = 0;
+	}
+
 	// If not yet set up, setup surface.
 
 	if (state->surface == NULL) {
@@ -299,6 +315,13 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 		LOG_W(cls, "Surface texture lost, reconfiguring surface.");
 
 		aqua_wgpuSurfaceConfigure(state->wgpu_ctx, state->surface, &state->config);
+
+		// We didn't get to render anything this time, so try again next frame.
+
+		if (flags != NULL) {
+			*flags |= UI_RENDER_FLAG_NEEDS_FRAME;
+		}
+
 		return 0;
 	case WGPUSurfaceGetCurrentTextureStatus_OutOfMemory:
 	case WGPUSurfaceGetCurrentTextureStatus_DeviceLost:
@@ -325,7 +348,7 @@ int ui_wgpu_ez_render(ui_wgpu_ez_state_t* state) {
 
 	LOG_V(cls, "Rendering UI itself.");
 
-	if (ui_wgpu_render(state->ui, surf_tex.texture, encoder, state->x_res, state->y_res) < 0) {
+	if (ui_wgpu_render(state->ui, surf_tex.texture, encoder, state->x_res, state->y_res, flags) < 0) {
 		LOG_E(cls, "Failed to render UI.");
 		goto err_render_ui;
 	}

@@ -164,10 +164,15 @@ func (d *Device) UiInit(ui *aqua.Ui, format TextureFormat) {
 	)
 }
 
-func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *Texture, x_res, y_res uint32) {
+func (e *CommandEncoder) UiRender(ui *aqua.Ui, frame *Texture, x_res, y_res uint32) aqua.UiRenderFlags {
+	var flags C.ui_render_flags_t
+
 	C.ui_wgpu_render(
 		C.ui_t(ui.GetInternalYesIKnowWhatImDoing()),
 		frame.ref, e.ref,
 		C.uint32_t(x_res), C.uint32_t(y_res),
+		&flags,
 	)
+
+	return aqua.UiRenderFlags(flags)
 }

@@ -41,6 +41,12 @@ const (
 	UI_BACKEND_WGPU UiSupportedBackends = C.UI_BACKEND_WGPU
 )
 
+type UiRenderFlags int
+
+const (
+	UI_RENDER_FLAG_NEEDS_FRAME UiRenderFlags = C.UI_RENDER_FLAG_NEEDS_FRAME
+)
+
 type UiDimUnits int
 
 const (
@@ -252,12 +258,14 @@ func (s *UiWgpuEzState) RawDevice() unsafe.Pointer {
 	return unsafe.Pointer(s.internal.device)
 }
 
-func (s *UiWgpuEzState) Render() error {
-	if C.ui_wgpu_ez_render(&s.internal) != 0 {
-		return errors.New("ui_wgpu_ez_render failed")
+func (s *UiWgpuEzState) Render() (UiRenderFlags, error) {
+	var flags C.ui_render_flags_t
+
+	if C.ui_wgpu_ez_render(&s.internal, &flags) != 0 {
+		return 0, errors.New("ui_wgpu_ez_render failed")
 	}
 
-	return nil
+	return UiRenderFlags(flags), nil
 }
 
 func (s *UiWgpuEzState) Resize(x_res, y_res uint32) {

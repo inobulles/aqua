@@ -30,6 +30,7 @@ struct ui_ctx_t {
 	struct {
 		uint32_t ELEM_KIND_DIV;
 		uint32_t ELEM_KIND_TEXT;
+		uint32_t RENDER_FLAG_NEEDS_FRAME;
 	} consts;
 
 	struct {

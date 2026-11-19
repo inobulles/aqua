@@ -4,6 +4,8 @@
 package main
 
 /*
+#include "glue.h"
+
 #include <aqua/vdriver.h>
 */
 import "C"
@@ -293,7 +295,7 @@ func GoUiBackendWgpuRender(
 	frame_raw unsafe.Pointer, // XXX This cannot have wgpu.TextureUsageCopyDst on it!
 	cmd_enc_raw unsafe.Pointer,
 	x_res, y_res uint32,
-) {
+) C.render_flags_t {
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	b := ui.backend.(*WgpuBackend)
 
@@ -326,7 +328,7 @@ func GoUiBackendWgpuRender(
 
 	// Advance animations.
 
-	ui.animate()
+	needs_frame := ui.animate()
 
 	// Do reflow if UI is dirty.
 
@@ -380,4 +382,12 @@ func GoUiBackendWgpuRender(
 
 	b.render_pass.End()
 	b.render_pass.Release()
+
+	var flags C.render_flags_t
+
+	if needs_frame {
+		flags |= C.RENDER_FLAG_NEEDS_FRAME
+	}
+
+	return flags
 }

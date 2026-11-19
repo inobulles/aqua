@@ -1,5 +1,7 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
+
+#include "glue.h"
 
 #include <aqua/vdriver.h>
 #include <umber.h>
@@ -54,6 +56,11 @@ static kos_const_t const CONSTS[] = {
 		.name = "ELEM_KIND_TEXT",
 		.type = KOS_TYPE_U32,
 		.val.u32 = 1,
+	},
+	{
+		.name = "RENDER_FLAG_NEEDS_FRAME",
+		.type = KOS_TYPE_U32,
+		.val.u32 = RENDER_FLAG_NEEDS_FRAME,
 	},
 };
 
@@ -204,7 +211,7 @@ static kos_fn_t const FNS[] = {
 	},
 	{
 		.name = "backend_wgpu_render",
-		.ret_type = KOS_TYPE_VOID,
+		.ret_type = KOS_TYPE_U32,
 		.param_count = 5,
 		.params = (kos_param_t[]) {
 			{KOS_TYPE_OPAQUE_PTR, "ui"},
@@ -260,7 +267,7 @@ extern bool GoUiSetAttrDim(uintptr_t elem, char const* key, size_t key_len, uint
 extern bool GoUiSetAttrRaster(uintptr_t elem, char const* key, size_t key_len, uint32_t x_res, uint32_t y_res, void const* data);
 
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device, uint32_t format);
-extern void GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder, uint32_t x_res, uint32_t y_res);
+extern render_flags_t GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder, uint32_t x_res, uint32_t y_res);
 
 static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	(void) vdev_id;
@@ -492,7 +499,7 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		uint32_t const x_res = args[3].u32;
 		uint32_t const y_res = args[4].u32;
 
-		GoUiBackendWgpuRender((uintptr_t) ui, frame_encoder, command_encoder, x_res, y_res);
+		notif.call_ret.ret.u32 = GoUiBackendWgpuRender((uintptr_t) ui, frame_encoder, command_encoder, x_res, y_res);
 		break;
 	default:
 		assert(false); // TODO This should probably return CALL_FAIL or something.
