@@ -114,6 +114,19 @@ const (
 	// MODS:END
 )
 
+// Backend the WM is running on (see wm_backend_t).
+type WmBackend uint32
+
+const (
+	// BACKENDS:BEGIN
+	WM_BACKEND_DRM      WmBackend = C.WM_BACKEND_DRM
+	WM_BACKEND_WAYLAND  WmBackend = C.WM_BACKEND_WAYLAND
+	WM_BACKEND_X11      WmBackend = C.WM_BACKEND_X11
+	WM_BACKEND_HEADLESS WmBackend = C.WM_BACKEND_HEADLESS
+	// BACKENDS:END
+	WM_BACKEND_UNKNOWN WmBackend = C.WM_BACKEND_UNKNOWN
+)
+
 // Source of a mouse axis (scroll) event (see wm_axis_source_t).
 type WmAxisSource uint8
 
@@ -293,6 +306,10 @@ func (w *Wm) WinSetSize(win WmWin, x_res, y_res uint32) {
 
 func (w *Wm) WinSetResizing(win WmWin, resizing bool) {
 	C.wm_win_set_resizing(w.wm, C.wm_win_t(win), C.bool(resizing))
+}
+
+func (w *Wm) GetBackend() WmBackend {
+	return WmBackend(C.wm_get_backend(w.wm))
 }
 
 type WmRedrawCb func(raw_vk_image unsafe.Pointer, x_res, y_res uint32)
