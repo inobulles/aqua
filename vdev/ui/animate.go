@@ -5,6 +5,7 @@ package main
 
 import (
 	"math"
+	"strings"
 	"time"
 )
 
@@ -224,4 +225,22 @@ func animate_elem(elem IElem, dt float64) bool {
 	}
 
 	return running
+}
+
+func (a *Anim) process_attrs(prop string, key string, val any) bool {
+	rest, ok := strings.CutPrefix(key, prop)
+	if !ok {
+		return false
+	}
+
+	switch rest {
+	case "":
+		a.set(float64(val.(float32)))
+	case ".anim":
+		a.set_target(float64(val.(float32)))
+	default:
+		return false
+	}
+
+	return true
 }

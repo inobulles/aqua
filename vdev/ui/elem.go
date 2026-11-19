@@ -70,6 +70,11 @@ type Elem struct {
 	is_abs bool
 	abs    AbsPos
 
+	// Transformation.
+
+	scale Anim
+	rot   Anim
+
 	backend_data any
 }
 
@@ -138,6 +143,8 @@ func construct_elem(kind ElemKind, ui *Ui, parent IElem, semantic_str string) El
 			anchor_x: .5,
 			anchor_y: .5,
 		},
+		scale: new_anim(1, AnimCurveElastic),
+		rot:   new_anim(0, AnimCurveElastic),
 	}
 }
 
@@ -213,6 +220,14 @@ func (e *Elem) set_attr(key string, val any) {
 
 	if ui.backend != nil { // TODO Why is it possible for ui.backend == nil here?
 		ui.backend.set_attr(e, key, val)
+	}
+
+	if e.scale.process_attrs("scale", key, val) {
+		return
+	}
+
+	if e.rot.process_attrs("rot", key, val) {
+		return
 	}
 
 	switch key {
