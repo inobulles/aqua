@@ -139,8 +139,29 @@ static kos_const_t const CONSTS[] = {
 		.type = KOS_TYPE_U32,
 		.val = {.u32 = WLR_MODIFIER_MOD5},
 	},
+	{
+		.name = "BACKEND_DRM",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = BACKEND_DRM},
+	},
+	{
+		.name = "BACKEND_WAYLAND",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = BACKEND_WAYLAND},
+	},
+	{
+		.name = "BACKEND_X11",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = BACKEND_X11},
+	},
+	{
+		.name = "BACKEND_HEADLESS",
+		.type = KOS_TYPE_U8,
+		.val = {.u8 = BACKEND_HEADLESS},
+	},
 // CONSTS:END
 	// clang-format on
+	// TODO We should really add constants for axis_source_t, axis_orientation_t, axis_direction_t, gesture_kind_t, and gesture_phase_t here too. Or think of a better solution?
 };
 
 static kos_fn_t const FNS[] = {
@@ -244,6 +265,14 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_F64, "scale"},
 			{KOS_TYPE_F64, "rotation"},
 			{KOS_TYPE_BOOL, "cancelled"},
+		},
+	},
+	{
+		.name = "get_backend",
+		.ret_type = KOS_TYPE_U8,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
 		},
 	},
 };
@@ -430,6 +459,18 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 			args[9].b
 		);
 
+		break;
+	}
+	case 10: { // get_backend
+		wm_t* const wm = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (wm == NULL) {
+			LOG_E(cls, "Tried to get backend of non-local or NULL WM.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		notif.call_ret.ret.u8 = wm_vdev_get_backend(wm);
 		break;
 	}
 	default:

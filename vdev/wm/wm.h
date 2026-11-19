@@ -32,6 +32,13 @@
 #include <webgpu/webgpu.h>
 #include <webgpu/wgpu.h>
 
+typedef enum : uint8_t {
+	BACKEND_DRM,
+	BACKEND_WAYLAND,
+	BACKEND_X11,
+	BACKEND_HEADLESS,
+} backend_t;
+
 typedef struct {
 	aqua_wm_t public;
 
@@ -53,6 +60,7 @@ typedef struct {
 	// wlroots stuff.
 
 	struct wlr_backend* backend;
+	backend_t backend_kind;
 	struct wlr_renderer* wlr_renderer;
 	struct wlr_allocator* allocator;
 
@@ -180,6 +188,7 @@ wm_t* wm_vdev_create(void);
 void wm_vdev_destroy(wm_t* wm);
 
 void wm_vdev_loop(wm_t* wm);
+backend_t wm_vdev_get_backend(wm_t* wm);
 
 void wm_vdev_interrupt(wm_t* wm, size_t data_size, void const* data);
 void wm_vdev_focus_toplevel(toplevel_t* toplevel);

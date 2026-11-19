@@ -19,19 +19,29 @@ MODS = (
 	("MOD5", "WLR_MODIFIER_MOD5"),
 )
 
-# All constants exported by the VDEV, as (KOS name, VDEV value) tuples.
+# Backends, as (AQUA name, VDEV value) tuples.
 
-CONSTS = [(f"MOD_{name}", val) for name, val in MODS]
+BACKENDS = (
+	("DRM", "BACKEND_DRM"),
+	("WAYLAND", "BACKEND_WAYLAND"),
+	("X11", "BACKEND_X11"),
+	("HEADLESS", "BACKEND_HEADLESS"),
+)
+
+# All constants exported by the VDEV, as (KOS name, VDEV value, KOS type) tuples.
+
+CONSTS = [(f"MOD_{name}", val, "U32") for name, val in MODS]
+CONSTS += [(f"BACKEND_{name}", val, "U8") for name, val in BACKENDS]
 
 # VDEV constants.
 
 vdev_consts = ""
 
-for name, val in CONSTS:
+for name, val, kos_type in CONSTS:
 	vdev_consts += f"""\t{{
 		.name = "{name}",
-		.type = KOS_TYPE_U32,
-		.val = {{.u32 = {val}}},
+		.type = KOS_TYPE_{kos_type},
+		.val = {{.{kos_type.lower()} = {val}}},
 	}},
 """
 
@@ -40,11 +50,11 @@ for name, val in CONSTS:
 lib_const_fields = ""
 lib_const_reads = ""
 
-for name, _ in CONSTS:
+for name, _, kos_type in CONSTS:
 	lib_const_fields += f"\t\tuint32_t {name};\n"
 	lib_const_reads += f"""
 		if (strcmp(name, "{name}") == 0) {{
-			ctx->consts.{name} = c->val.u32;
+			ctx->consts.{name} = c->val.{kos_type.lower()};
 		}}
 """
 
@@ -62,6 +72,21 @@ for i, (name, _) in enumerate(MODS):
 	}}
 """
 	go_mods += f"\tWM_MOD_{name} WmMod = C.WM_MOD_{name}\n"
+
+# Library backend enum & conversion.
+
+lib_backends = ""
+lib_conv_backend = ""
+go_backends = ""
+
+for name, _ in BACKENDS:
+	lib_backends += f"\tWM_BACKEND_{name},\n"
+	lib_conv_backend += f"""
+	if (vdev_backend == ctx->consts.BACKEND_{name}) {{
+		return WM_BACKEND_{name};
+	}}
+"""
+	go_backends += f"\tWM_BACKEND_{name} WmBackend = C.WM_BACKEND_{name}\n"
 
 
 def inject_src(path: str, tag: str, payload: str):
@@ -88,6 +113,9 @@ inject_src("../../lib/wm.h", "MODS", lib_mods)
 inject_src("../../lib/wm.c", "CONST_FIELDS", lib_const_fields)
 inject_src("../../lib/wm.c", "CONST_READS", lib_const_reads)
 inject_src("../../lib/wm.c", "CONV_MODS", lib_conv_mods)
+inject_src("../../lib/wm.h", "BACKENDS", lib_backends)
+inject_src("../../lib/wm.c", "CONV_BACKEND", lib_conv_backend)
 
 inject_src("../../lib/bindings/go/wm.go", "MODS", go_mods)
+inject_src("../../lib/bindings/go/wm.go", "BACKENDS", go_backends)
 os.system("gofmt -w ../../lib/bindings/go/wm.go")

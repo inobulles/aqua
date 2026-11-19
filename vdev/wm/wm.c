@@ -12,7 +12,10 @@
 
 #include <umber.h>
 
+#include <wlr/backend/drm.h>
+#include <wlr/backend/multi.h>
 #include <wlr/backend/wayland.h>
+#include <wlr/backend/x11.h>
 #include <wlr/render/drm_syncobj.h>
 #include <wlr/render/interface.h>
 #include <wlr/render/swapchain.h>
@@ -755,6 +758,25 @@ static void setup_logging(void) {
 	wlr_logging_set_up = true;
 }
 
+// Nested backends (Wayland/X11) take precedence over DRM, which takes precedence over headless.
+// In practice, autocreate will never give us e.g. both Wayland and DRM, but it might add a headless backend to anything.
+
+static void classify_backend(struct wlr_backend* backend, void* data) {
+	wm_t* const wm = data;
+
+	if (wlr_backend_is_wl(backend)) {
+		wm->backend_kind = BACKEND_WAYLAND;
+	}
+
+	else if (wlr_backend_is_x11(backend)) {
+		wm->backend_kind = BACKEND_X11;
+	}
+
+	else if (wlr_backend_is_drm(backend) && wm->backend_kind == BACKEND_HEADLESS) {
+		wm->backend_kind = BACKEND_DRM;
+	}
+}
+
 wm_t* wm_vdev_create(void) {
 	LOG_V(cls, "Creating WM.");
 
@@ -787,6 +809,17 @@ wm_t* wm_vdev_create(void) {
 
 	if (wm->backend == NULL) {
 		FAIL("Failed to create backend.");
+	}
+
+	LOG_V(cls, "Classifying backend.");
+	wm->backend_kind = BACKEND_HEADLESS;
+
+	if (wlr_backend_is_multi(wm->backend)) {
+		wlr_multi_for_each_backend(wm->backend, classify_backend, wm);
+	}
+
+	else {
+		classify_backend(wm->backend, wm);
 	}
 
 	LOG_V(cls, "Creating Vulkan renderer.");
@@ -998,4 +1031,8 @@ void wm_vdev_destroy(wm_t* wm) {
 void wm_vdev_loop(wm_t* wm) {
 	LOG_V(cls, "Starting WM loop.");
 	wl_display_run(wm->display);
+}
+
+backend_t wm_vdev_get_backend(wm_t* wm) {
+	return wm->backend_kind;
 }
