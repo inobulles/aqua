@@ -31,6 +31,7 @@ struct ui_ctx_t {
 		uint32_t ELEM_KIND_DIV;
 		uint32_t ELEM_KIND_TEXT;
 		uint32_t RENDER_FLAG_NEEDS_FRAME;
+		uint32_t INTR_NEEDS_FRAME;
 	} consts;
 
 	struct {
@@ -48,6 +49,7 @@ struct ui_ctx_t {
 		uint32_t set_attr_opaque_ptr;
 		uint32_t set_attr_dim;
 		uint32_t set_attr_raster;
+		uint32_t register_interrupt;
 	} fns;
 
 	// Backend-specific functions.
@@ -59,6 +61,10 @@ struct ui_ctx_t {
 struct ui_t {
 	ui_ctx_t ctx;
 	kos_opaque_ptr_t opaque_ptr;
+	kos_ino_t ino;
+
+	void* needs_frame_data;
+	ui_needs_frame_cb_t needs_frame;
 };
 
 struct ui_elem_t {

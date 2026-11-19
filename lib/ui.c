@@ -107,6 +107,26 @@ ui_t ui_create(ui_ctx_t ctx) {
 
 	ui->ctx = ctx;
 	ui->opaque_ptr = ctx->last_ret.opaque_ptr;
+	ui->ino = kos_gen_ino();
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = ui->opaque_ptr},
+		{.u32 = ui->ino},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.register_interrupt, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	// If the interrupt registration was successful, add it to our interrupt vector.
+	// Otherwise, we can still use the UI, but the needs frame callback will never be called.
+
+	if (!ctx->last_success) {
+		LOG_W(cls, "Failed to register UI interrupt.");
+		return ui;
+	}
+
+	aqua_add_interrupt(comp.ctx, ui->ino, &comp, ui);
 
 	return ui;
 }
@@ -122,6 +142,11 @@ void ui_destroy(ui_t ui) {
 	kos_flush(true);
 
 	free(ui);
+}
+
+void ui_register_needs_frame_cb(ui_t ui, ui_needs_frame_cb_t cb, void* data) {
+	ui->needs_frame = cb;
+	ui->needs_frame_data = data;
 }
 
 ui_elem_t ui_get_root(ui_t ui) {
@@ -386,6 +411,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		if (strcmp(name, "RENDER_FLAG_NEEDS_FRAME") == 0) {
 			ctx->consts.RENDER_FLAG_NEEDS_FRAME = c->val.u32;
 		}
+
+		if (strcmp(name, "INTR_NEEDS_FRAME") == 0) {
+			ctx->consts.INTR_NEEDS_FRAME = c->val.u8;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->consts / sizeof(uint32_t); i++) {
@@ -541,6 +570,18 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.set_attr_raster = i;
 		}
+
+		if (
+			strcmp(name, "register_interrupt") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 2 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "ui") == 0 &&
+			fn->params[1].type == KOS_TYPE_U32 &&
+			strcmp((char*) fn->params[1].name, "ino") == 0
+		) {
+			ctx->fns.register_interrupt = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -615,13 +656,41 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 	}
 }
 
+typedef struct __attribute__((packed)) {
+	uint8_t type;
+} intr_generic_t;
+
+static void interrupt(kos_notif_t const* notif, void* data) {
+	assert(notif->kind == KOS_NOTIF_INTERRUPT);
+
+	ui_t const ui = data;
+	ui_ctx_t const ctx = ui->ctx;
+
+	if (ui->ino != notif->interrupt.ino || !ctx->is_conn) {
+		return;
+	}
+
+	intr_generic_t const* const intr = notif->interrupt.data;
+
+	if (notif->interrupt.data_size < sizeof *intr) {
+		LOG_W(cls, "Interrupt data too small (%u bytes).", notif->interrupt.data_size);
+		return;
+	}
+
+	if (intr->type == ctx->consts.INTR_NEEDS_FRAME) {
+		if (ui->needs_frame != NULL) {
+			ui->needs_frame(ui, ui->needs_frame_data);
+		}
+	}
+}
+
 static component_t comp = {
 	.probe = probe,
 	.notif_conn = notif_conn,
 	.notif_conn_fail = NULL,
 	.notif_call_ret = notif_call_ret,
 	.notif_call_fail = NULL,
-	.interrupt = NULL,
+	.interrupt = interrupt,
 	.vdev_count = 0,
 	.vdevs = NULL,
 };

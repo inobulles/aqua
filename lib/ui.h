@@ -53,9 +53,22 @@ typedef enum {
 	 * The UI needs another frame to be rendered, e.g. because an animation is still running.
 	 *
 	 * If this isn't set, the app may stop rendering until something changes.
+	 * When it does, the needs frame callback is called (see {@link ui_register_needs_frame_cb}).
 	 */
 	UI_RENDER_FLAG_NEEDS_FRAME = 1 << 0,
 } ui_render_flags_t;
+
+/**
+ * Needs frame callback.
+ *
+ * Called when the UI needs a new frame to be rendered after a render which didn't return {@link UI_RENDER_FLAG_NEEDS_FRAME}, i.e. when the app may have stopped rendering.
+ *
+ * This can be called from within other UI functions (e.g. {@link ui_set_attr_f32}), so the callback should only schedule a new frame (e.g. by requesting a redraw from the window) and not render it itself.
+ *
+ * @param ui The UI which needs a new frame.
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link ui_register_needs_frame_cb}.
+ */
+typedef void (*ui_needs_frame_cb_t)(ui_t ui, void* data);
 
 /**
  * Dimension unit kinds.
@@ -135,6 +148,17 @@ ui_t ui_create(ui_ctx_t ctx);
  * Destroy a UI.
  */
 void ui_destroy(ui_t ui);
+
+/**
+ * Register a needs frame callback.
+ *
+ * See {@link ui_needs_frame_cb_t} for when this is called.
+ *
+ * @param ui The UI to register the callback on.
+ * @param cb The callback, or `NULL` to unregister it.
+ * @param data User-defined data to pass to the callback.
+ */
+void ui_register_needs_frame_cb(ui_t ui, ui_needs_frame_cb_t cb, void* data);
 
 /**
  * Get root element.
