@@ -8,11 +8,14 @@ package aqua
 
 #include <aqua/ui.h>
 #include <aqua/ui/wgpu.h>
+
+extern void go_lib_bindings_ui_needs_frame_cb(ui_t ui, void* data);
 */
 import "C"
 import (
 	"errors"
 	"fmt"
+	"runtime/cgo"
 	"unsafe"
 )
 
@@ -27,6 +30,8 @@ type UiCtx struct {
 type Ui struct {
 	ctx *UiCtx
 	ui  C.ui_t
+
+	needs_frame_cb_handle cgo.Handle
 }
 
 type UiElem struct {
@@ -145,6 +150,37 @@ func (c *UiCtx) Create() *Ui {
 
 func (u *Ui) Destroy() {
 	C.ui_destroy(u.ui)
+
+	if u.needs_frame_cb_handle != 0 {
+		u.needs_frame_cb_handle.Delete()
+	}
+}
+
+// Called when the UI needs a new frame after a render which didn't return UI_RENDER_FLAG_NEEDS_FRAME.
+// This can be called from within other UI methods, so it should only schedule a new frame, not render it.
+type UiNeedsFrameCb func()
+
+//export go_lib_bindings_ui_needs_frame_cb
+func go_lib_bindings_ui_needs_frame_cb(_ C.ui_t, data unsafe.Pointer) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(UiNeedsFrameCb); ok {
+		cb()
+	}
+}
+
+func (u *Ui) RegisterNeedsFrameCb(cb UiNeedsFrameCb) {
+	if u.needs_frame_cb_handle != 0 {
+		u.needs_frame_cb_handle.Delete()
+	}
+
+	u.needs_frame_cb_handle = cgo.NewHandle(cb)
+
+	C.ui_register_needs_frame_cb(
+		u.ui,
+		C.ui_needs_frame_cb_t(C.go_lib_bindings_ui_needs_frame_cb),
+		unsafe.Pointer(u.needs_frame_cb_handle),
+	)
 }
 
 func (u *Ui) GetRoot() *UiElem {
