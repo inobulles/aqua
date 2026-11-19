@@ -6,6 +6,8 @@ package main
 /*
 #cgo LDFLAGS: -laqua -lvdriver -lumber
 
+#include "glue.h"
+
 #include <aqua/vdriver.h>
 */
 import "C"
@@ -50,6 +52,34 @@ type Ui struct {
 
 	// Time of the last animation update (see Ui.animate).
 	last_anim time.Time
+
+	// Interrupts.
+
+	has_ino bool
+	ino     uint32
+
+	// Set when the last render told the app it didn't need another frame.
+	// The next change must then send an interrupt to get it rendering again.
+	idle bool
+}
+
+// Signal that something changed which needs a new frame to be rendered.
+// If the app may have stopped rendering, this sends it an interrupt.
+func (ui *Ui) request_frame() {
+	if !ui.idle || !ui.has_ino {
+		return
+	}
+
+	ui.idle = false
+	C.send_intr_needs_frame(C.uint32_t(ui.ino))
+}
+
+//export GoUiRegisterInterrupt
+func GoUiRegisterInterrupt(ui_raw C.uintptr_t, ino C.uint32_t) {
+	ui := cgo.Handle(ui_raw).Value().(*Ui)
+
+	ui.has_ino = true
+	ui.ino = uint32(ino)
 }
 
 //export GoUiCreate
@@ -96,6 +126,7 @@ func GoUiAddDiv(
 
 	parent.children = append(parent.children, elem)
 	ui.dirty = true
+	ui.request_frame()
 
 	handle := cgo.NewHandle(elem)
 	return C.uintptr_t(handle)
@@ -120,6 +151,7 @@ func GoUiAddText(
 
 	parent.children = append(parent.children, elem)
 	ui.dirty = true
+	ui.request_frame()
 
 	handle := cgo.NewHandle(elem)
 	return C.uintptr_t(handle)
@@ -141,6 +173,7 @@ func GoUiRemElem(elem_raw C.uintptr_t) {
 		if child == elem {
 			div.children = append(div.children[:i], div.children[i+1:]...)
 			ui.free_elem_tree(elem)
+			ui.request_frame()
 			return
 		}
 	}
@@ -191,6 +224,8 @@ func GoUiMoveElem(elem_raw C.uintptr_t, new_parent_raw C.uintptr_t, beginning C.
 	} else {
 		div.children = append(div.children, elem)
 	}
+
+	elem.ElemBase().ui.request_frame()
 }
 
 // TODO We should return true if attribute actually exists.

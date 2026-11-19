@@ -389,5 +389,7 @@ func GoUiBackendWgpuRender(
 		flags |= C.RENDER_FLAG_NEEDS_FRAME
 	}
 
+	ui.idle = !needs_frame
+
 	return flags
 }

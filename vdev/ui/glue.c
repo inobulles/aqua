@@ -62,6 +62,11 @@ static kos_const_t const CONSTS[] = {
 		.type = KOS_TYPE_U32,
 		.val.u32 = RENDER_FLAG_NEEDS_FRAME,
 	},
+	{
+		.name = "INTR_NEEDS_FRAME",
+		.type = KOS_TYPE_U8,
+		.val.u8 = INTR_NEEDS_FRAME,
+	},
 };
 
 static kos_fn_t const FNS[] = {
@@ -221,6 +226,15 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_U32, "y_res"},
 		},
 	},
+	{
+		.name = "register_interrupt",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 2,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "ui"},
+			{KOS_TYPE_U32, "ino"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -268,6 +282,29 @@ extern bool GoUiSetAttrRaster(uintptr_t elem, char const* key, size_t key_len, u
 
 extern void GoUiBackendWgpuInit(uintptr_t ui, uint64_t hid, uint64_t cid, void* device, uint32_t format);
 extern render_flags_t GoUiBackendWgpuRender(uintptr_t ui, void* frame, void* command_encoder, uint32_t x_res, uint32_t y_res);
+
+extern void GoUiRegisterInterrupt(uintptr_t ui, uint32_t ino);
+
+typedef struct __attribute__((packed)) {
+	intr_t type;
+} intr_generic_t;
+
+void send_intr_needs_frame(uint32_t ino) {
+	intr_generic_t const intr = {
+		.type = INTR_NEEDS_FRAME,
+	};
+
+	kos_notif_t const notif = {
+		.kind = KOS_NOTIF_INTERRUPT,
+		.interrupt = {
+			.ino = ino,
+			.data_size = sizeof intr,
+			.data = &intr,
+		},
+	};
+
+	VDRIVER.notif_cb(&notif, VDRIVER.notif_data);
+}
 
 static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t fn_id, kos_val_t const* args) {
 	(void) vdev_id;
@@ -500,6 +537,16 @@ static void call(kos_cookie_t cookie, vid_t vdev_id, uint64_t conn_id, uint64_t 
 		uint32_t const y_res = args[4].u32;
 
 		notif.call_ret.ret.u32 = GoUiBackendWgpuRender((uintptr_t) ui, frame_encoder, command_encoder, x_res, y_res);
+		break;
+	case 16:
+		ui = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (ui == NULL) {
+			LOG_E(cls, "'register_interrupt' called with non-local or NULL UI.");
+			break;
+		}
+
+		GoUiRegisterInterrupt((uintptr_t) ui, args[1].u32);
 		break;
 	default:
 		assert(false); // TODO This should probably return CALL_FAIL or something.

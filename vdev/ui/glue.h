@@ -10,3 +10,9 @@
 typedef enum : uint32_t {
 	RENDER_FLAG_NEEDS_FRAME = 1 << 0,
 } render_flags_t;
+
+typedef enum : uint8_t {
+	INTR_NEEDS_FRAME,
+} intr_t;
+
+void send_intr_needs_frame(uint32_t ino);

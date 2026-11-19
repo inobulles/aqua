@@ -217,6 +217,7 @@ func (t Text) construct(ui *Ui, parent IElem, text string, semantic_str string) 
 
 func (e *Elem) set_attr(key string, val any) {
 	ui := e.ui
+	ui.request_frame()
 
 	if ui.backend != nil { // TODO Why is it possible for ui.backend == nil here?
 		ui.backend.set_attr(e, key, val)
