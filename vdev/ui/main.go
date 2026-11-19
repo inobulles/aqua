@@ -46,9 +46,9 @@ type Ui struct {
 	backend Backend
 	root    Div
 
-	// This must be set if anything which will affect the flow of the UI is changed.
+	// Set if anything which will affect the flow of the UI is changed (see Ui.invalidate_layout).
 	// This will trigger a reflow upon the next render (see the Ui.reflow function).
-	dirty bool
+	layout_dirty bool
 
 	// Time of the last animation update (see Ui.animate).
 	last_anim time.Time
@@ -72,6 +72,12 @@ func (ui *Ui) request_frame() {
 
 	ui.idle = false
 	C.send_intr_needs_frame(C.uint32_t(ui.ino))
+}
+
+// Signal that something changed which affects the layout of the UI.
+func (ui *Ui) invalidate_layout() {
+	ui.layout_dirty = true
+	ui.request_frame()
 }
 
 //export GoUiRegisterInterrupt
@@ -125,8 +131,7 @@ func GoUiAddDiv(
 	elem := Div{}.construct(ui, parent, C.GoString(semantics))
 
 	parent.children = append(parent.children, elem)
-	ui.dirty = true
-	ui.request_frame()
+	ui.invalidate_layout()
 
 	handle := cgo.NewHandle(elem)
 	return C.uintptr_t(handle)
@@ -150,8 +155,7 @@ func GoUiAddText(
 	elem := Text{}.construct(ui, parent, C.GoString(text), C.GoString(semantics))
 
 	parent.children = append(parent.children, elem)
-	ui.dirty = true
-	ui.request_frame()
+	ui.invalidate_layout()
 
 	handle := cgo.NewHandle(elem)
 	return C.uintptr_t(handle)
@@ -173,7 +177,7 @@ func GoUiRemElem(elem_raw C.uintptr_t) {
 		if child == elem {
 			div.children = append(div.children[:i], div.children[i+1:]...)
 			ui.free_elem_tree(elem)
-			ui.request_frame()
+			ui.invalidate_layout()
 			return
 		}
 	}
@@ -225,7 +229,7 @@ func GoUiMoveElem(elem_raw C.uintptr_t, new_parent_raw C.uintptr_t, beginning C.
 		div.children = append(div.children, elem)
 	}
 
-	elem.ElemBase().ui.request_frame()
+	elem.ElemBase().ui.invalidate_layout()
 }
 
 // TODO We should return true if attribute actually exists.

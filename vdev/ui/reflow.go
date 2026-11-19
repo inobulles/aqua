@@ -82,10 +82,10 @@ func (e *Text) reflow(max_w, max_h uint32) {
 }
 
 func (ui *Ui) reflow(x_res, y_res uint32) {
-	// We only reflow if the UI is dirty (i.e. needs a reflow).
+	// We only reflow if the layout is dirty (i.e. needs a reflow).
 
-	if !ui.dirty {
-		panic("UI should only be reflowed when dirty!")
+	if !ui.layout_dirty {
+		panic("UI should only be reflowed when its layout is dirty!")
 	}
 
 	ui.root.flow_w = x_res

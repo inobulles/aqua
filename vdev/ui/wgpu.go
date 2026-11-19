@@ -299,11 +299,16 @@ func GoUiBackendWgpuRender(
 	ui := cgo.Handle(ui_raw).Value().(*Ui)
 	b := ui.backend.(*WgpuBackend)
 
+	// While we're rendering, we might do operations which ordinarily ask for new frames.
+	// Obivously don't ask for any new frames while we're rendering.
+
+	ui.idle = false
+
 	// Make UI dirty on resize.
 	// Also, recreate the render buffers.
 
 	if x_res != ui.root.flow_w || y_res != ui.root.flow_h {
-		ui.dirty = true
+		ui.invalidate_layout()
 
 		b.x_res, b.y_res = x_res, y_res
 
@@ -330,11 +335,11 @@ func GoUiBackendWgpuRender(
 
 	needs_frame := ui.animate()
 
-	// Do reflow if UI is dirty.
+	// Do reflow if layout is dirty.
 
-	if ui.dirty {
+	if ui.layout_dirty {
 		ui.reflow(x_res, y_res)
-		ui.dirty = false
+		ui.layout_dirty = false
 	}
 
 	// Get view for our frame (swapchain texture).

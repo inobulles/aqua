@@ -244,7 +244,7 @@ func (e *Elem) set_attr(key string, val any) {
 		e.abs.anchor_y = val.(float32)
 	case "min_w", "min_h":
 		if prev, ok := e.attrs[key]; !ok || prev != val {
-			ui.dirty = true
+			ui.invalidate_layout()
 		}
 
 		e.attrs[key] = val
