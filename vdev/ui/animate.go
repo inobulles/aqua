@@ -218,7 +218,10 @@ func (ui *Ui) animate() bool {
 }
 
 func animate_elem(elem IElem, dt float64) bool {
-	running := elem.ElemBase().scale.update(dt)
+	base := elem.ElemBase()
+
+	running := base.scale.update(dt)
+	running = base.rot.update(dt) || running
 
 	if div, ok := elem.(*Div); ok {
 		for _, child := range div.children {
