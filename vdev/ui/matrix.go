@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
@@ -19,6 +19,24 @@ func mul_mat(a [4][4]float32, b [4][4]float32) [4][4]float32 {
 	}
 
 	return res
+}
+
+func identity_mat() [4][4]float32 {
+	return [4][4]float32{
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1},
+	}
+}
+
+func translate_mat(x, y float32) [4][4]float32 {
+	return [4][4]float32{
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{x, y, 0, 1},
+	}
 }
 
 func rot_mat(angle float32) [4][4]float32 {

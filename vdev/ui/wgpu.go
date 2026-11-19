@@ -89,29 +89,43 @@ func (b *WgpuBackend) get_font(e *Text) *Font {
 	}
 }
 
-func (b *WgpuBackend) render(elem IElem) {
+func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 	// Create MVP matrix.
 
 	base := elem.ElemBase()
 
-	mvp := [4][4]float32{
+	// Centre of the element in transform space.
+	// The element's vertices are in pixels relative to this.
+
+	cx := float32(base.flow_x) + float32(base.flow_w)/2
+	cy := -(float32(base.flow_y) + float32(base.flow_h)/2)
+
+	// The element's own transform happens around its centre.
+
+	local := translate_mat(cx, cy)
+
+	if base.rot.pos != 0 {
+		local = mul_mat(local, rot_mat(float32(base.rot.pos)))
+	}
+
+	if base.scale.pos != 1 {
+		local = mul_mat(local, scale_mat(float32(base.scale.pos)))
+	}
+
+	local = mul_mat(local, translate_mat(-cx, -cy))
+
+	// Combine with the parent's transform (this is what gets passed on to our children), and then place the vertices at the element's centre.
+
+	world := mul_mat(parent, local)
+
+	proj := [4][4]float32{
 		{2 / float32(b.x_res), 0, 0, 0},
 		{0, 2 / float32(b.y_res), 0, 0},
 		{0, 0, 1, 0},
-		{
-			-1 + 2*(float32(base.flow_x)+float32(base.flow_w)/2)/float32(b.x_res),
-			1 - 2*(float32(base.flow_y)+float32(base.flow_h)/2)/float32(b.y_res),
-			0, 1,
-		},
+		{-1, 1, 0, 1},
 	}
 
-	if rot := elem.ElemBase().get_attr("rot"); rot != nil {
-		mvp = mul_mat(mvp, rot_mat(rot.(float32)))
-	}
-
-	if scale := elem.ElemBase().get_attr("scale"); scale != nil {
-		mvp = mul_mat(mvp, scale_mat(scale.(float32)))
-	}
+	mvp := mul_mat(proj, mul_mat(world, translate_mat(cx, cy)))
 
 	// Element specific rendering.
 
@@ -184,7 +198,7 @@ func (b *WgpuBackend) render(elem IElem) {
 
 			// Actually render child.
 
-			b.render(child)
+			b.render(child, world)
 		}
 	default:
 		panic("Unknown element kind.")
@@ -360,7 +374,7 @@ func GoUiBackendWgpuRender(
 
 	// Actually render UI.
 
-	b.render(&ui.root)
+	b.render(&ui.root, identity_mat())
 
 	// End last render pass.
 
