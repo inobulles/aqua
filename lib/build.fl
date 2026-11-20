@@ -91,4 +91,8 @@ for lib in libs {
 	install[Linker(flags).link(obj)] = "lib/libaqua_" + lib + ".so"
 }
 
+# Install xkbcommon-keysyms.h.
+
+install["../external/xkbcommon/xkbcommon-keysyms.h"] = "include/aqua/xkbcommon-keysyms.h"
+
 run = none
