@@ -229,3 +229,4 @@ void wm_vdev_toplevel_notify_gesture(
 void wm_vdev_toplevel_notify_key(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t keycode);
 void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_res);
 void wm_vdev_toplevel_set_resizing(toplevel_t* toplevel, bool resizing);
+void wm_vdev_toplevel_close(toplevel_t* toplevel);

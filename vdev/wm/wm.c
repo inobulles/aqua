@@ -748,6 +748,11 @@ void wm_vdev_toplevel_set_resizing(toplevel_t* toplevel, bool resizing) {
 	wlr_xdg_toplevel_set_resizing(toplevel->xdg_toplevel, resizing);
 }
 
+void wm_vdev_toplevel_close(toplevel_t* toplevel) {
+	LOG_V(cls, "Ask %s to close.", toplevel->xdg_toplevel->app_id);
+	wlr_xdg_toplevel_send_close(toplevel->xdg_toplevel);
+}
+
 static void request_set_selection(struct wl_listener* listener, void* data) {
 	wm_t* const wm = wl_container_of(listener, wm, request_set_selection);
 	struct wlr_seat_request_set_selection_event* const event = data;
