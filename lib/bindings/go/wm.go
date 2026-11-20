@@ -259,6 +259,10 @@ func (w *Wm) WinNotifyMouseButton(win WmWin, time uint32, pressed bool, button u
 	C.wm_win_notify_mouse_button(w.wm, C.wm_win_t(win), C.uint32_t(time), C.bool(pressed), C.uint32_t(button))
 }
 
+func (w *Wm) WinNotifyKey(win WmWin, time uint32, pressed bool, keycode uint32) {
+	C.wm_win_notify_key(w.wm, C.wm_win_t(win), C.uint32_t(time), C.bool(pressed), C.uint32_t(keycode))
+}
+
 func (w *Wm) WinNotifyMouseAxis(
 	win WmWin,
 	time uint32,
