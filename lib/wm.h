@@ -224,6 +224,23 @@ typedef void (*wm_mouse_motion_cb_t)(
 typedef void (*wm_mouse_button_cb_t)(wm_t wm, uint32_t time, bool pressed, uint32_t button, uint32_t mods, void* data);
 
 /**
+ * WM keyboard key event callback.
+ *
+ * This is called whenever a key is pressed or released.
+ *
+ * Key events are not passed on to any window automatically; it is up to the WM to do so with {@link wm_win_notify_key}.
+ *
+ * @param wm The WM object.
+ * @param time Time at which event happened. Should only really be used when passing event on with {@link wm_win_notify_key}.
+ * @param pressed True if the key was pressed, false if it was released.
+ * @param keycode Raw keycode of the key. This is what should be passed on with {@link wm_win_notify_key}.
+ * @param keysym XKB keysym of the key, resolved with the current keyboard layout and modifiers (see `XKB_KEY_*` in `<aqua/xkbcommon-keysyms.h>`). This is `XKB_KEY_NoSymbol` (0) if the key doesn't resolve to a single keysym.
+ * @param mods Modifiers held when the event happened (see {@link wm_mod_t}).
+ * @param data User-defined data passed to the callback. This is set when registering the callback with {@link wm_register_key_cb}.
+ */
+typedef void (*wm_key_cb_t)(wm_t wm, uint32_t time, bool pressed, uint32_t keycode, uint32_t keysym, uint32_t mods, void* data);
+
+/**
  * Source of a mouse axis (scroll) event.
  *
  * Clients behave differently depending on the source, e.g. only finger (touchpad) scrolling gets kinetic scrolling and swipe-to-navigate.
@@ -476,6 +493,17 @@ void wm_register_mouse_axis_cb(wm_t wm, wm_mouse_axis_cb_t cb, void* data);
  * @param data User-defined data passed to the callback.
  */
 void wm_register_gesture_cb(wm_t wm, wm_gesture_cb_t cb, void* data);
+
+/**
+ * Register a keyboard key callback.
+ *
+ * These will be called whenever a key is pressed or released.
+ *
+ * @param wm The WM to register the callback for.
+ * @param cb The callback to register.
+ * @param data User-defined data passed to the callback.
+ */
+void wm_register_key_cb(wm_t wm, wm_key_cb_t cb, void* data);
 
 /**
  * Enter the WM event loop.

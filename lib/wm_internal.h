@@ -40,4 +40,7 @@ struct wm_t {
 
 	void* gesture_data;
 	wm_gesture_cb_t gesture;
+
+	void* key_data;
+	wm_key_cb_t key;
 };

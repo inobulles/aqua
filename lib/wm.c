@@ -36,6 +36,7 @@ struct wm_ctx_t {
 		uint32_t INTR_MOUSE_BUTTON;
 		uint32_t INTR_MOUSE_AXIS;
 		uint32_t INTR_GESTURE;
+		uint32_t INTR_KEY;
 		// clang-format off
 // CONST_FIELDS:BEGIN
 		uint32_t MOD_SHIFT;
@@ -186,6 +187,10 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 
 		if (strcmp(name, "INTR_GESTURE") == 0) {
 			ctx->consts.INTR_GESTURE = c->val.u8;
+		}
+
+		if (strcmp(name, "INTR_KEY") == 0) {
+			ctx->consts.INTR_KEY = c->val.u8;
 		}
 
 		// clang-format off
@@ -561,6 +566,11 @@ void wm_register_gesture_cb(wm_t wm, wm_gesture_cb_t cb, void* data) {
 	wm->gesture_data = data;
 }
 
+void wm_register_key_cb(wm_t wm, wm_key_cb_t cb, void* data) {
+	wm->key = cb;
+	wm->key_data = data;
+}
+
 void wm_loop(wm_t wm) {
 	wm_ctx_t const ctx = wm->ctx;
 
@@ -860,6 +870,15 @@ typedef struct __attribute__((packed)) {
 	uint32_t mods;
 } intr_gesture_t;
 
+typedef struct __attribute__((packed)) {
+	intr_generic_t generic;
+	uint32_t time;
+	uint8_t pressed;
+	uint32_t keycode;
+	uint32_t keysym;
+	uint32_t mods;
+} intr_key_t;
+
 // Translate the VDEV's modifier bitmask into a wm_mod_t one.
 
 static uint32_t conv_mods(wm_ctx_t ctx, uint32_t vdev_mods) {
@@ -1107,6 +1126,19 @@ static void interrupt(kos_notif_t const* notif, void* data) {
 				conv_mods(ctx, gesture->mods),
 				wm->gesture_data
 			);
+		}
+	}
+
+	else if (intr->type == ctx->consts.INTR_KEY) {
+		intr_key_t const* const key = notif->interrupt.data;
+
+		if (notif->interrupt.data_size < sizeof *key) {
+			LOG_E(cls, "TODO Error message.");
+			return;
+		}
+
+		if (wm->key != NULL) {
+			wm->key(wm, key->time, key->pressed, key->keycode, key->keysym, conv_mods(ctx, key->mods), wm->key_data);
 		}
 	}
 }
