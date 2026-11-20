@@ -317,6 +317,10 @@ func (w *Wm) WinSetResizing(win WmWin, resizing bool) {
 	C.wm_win_set_resizing(w.wm, C.wm_win_t(win), C.bool(resizing))
 }
 
+func (w *Wm) WinClose(win WmWin) {
+	C.wm_win_close(w.wm, C.wm_win_t(win))
+}
+
 func (w *Wm) GetBackend() WmBackend {
 	return WmBackend(C.wm_get_backend(w.wm))
 }
