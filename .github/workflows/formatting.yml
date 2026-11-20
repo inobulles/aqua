@@ -12,7 +12,7 @@ jobs:
         with:
           clang-format-version: 18
           check-path: .
-          exclude-regex: "external/webgpu-headers"
+          exclude-regex: "(external/webgpu-headers|external/xkbcommon)"
   check_rust_formatting:
     runs-on: ubuntu-latest
     steps:
