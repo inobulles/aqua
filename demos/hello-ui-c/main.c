@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 #include <aqua/ui/wgpu.h>
 #include <aqua/wgpu.h>
@@ -7,7 +7,7 @@
 
 #include <umber.h>
 
-#include <math.h>
+#include <time.h>
 
 static umber_class_t const* init_cls = NULL;
 
@@ -21,16 +21,29 @@ static void resize(win_t win, void* data, uint32_t x_res, uint32_t y_res) {
 }
 
 static ui_elem_t para;
-static float x = 0;
+
+static double now(void) {
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec + ts.tv_nsec / 1e9;
+}
 
 static void redraw(win_t win, void* data) {
 	ui_wgpu_ez_state_t* const state = data;
 	(void) win;
 
-	// ui_set_attr(para, "rot", x);
-	// ui_set_attr(para, "scale", (sin(x) / 2 + .5) / 4 + .75);
-	x += 0.01;
-	ui_wgpu_ez_render(state);
+	static double last_toggle = 0;
+	static bool tilted = false;
+
+	if (now() - last_toggle >= 1) {
+		last_toggle = now();
+		tilted = !tilted;
+
+		ui_set_attr(para, "scale.anim", tilted ? 0.9 : 1.0);
+		ui_set_attr(para, "rot.anim", tilted ? 0.1 : 0.0);
+	}
+
+	ui_wgpu_ez_render(state, NULL);
 }
 
 int main(void) {
