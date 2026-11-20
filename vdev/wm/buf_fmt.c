@@ -42,6 +42,14 @@ static int restrict_fmts(struct wlr_drm_format_set* set) {
 		}
 
 		for (size_t j = 0; j < fmt->len; j++) {
+			uint64_t const mod = fmt->modifiers[j];
+
+			// TODO For some reason AMD DCC-compressed buffers don't work.
+
+			if (IS_AMD_FMT_MOD(mod) && AMD_FMT_MOD_GET(DCC, mod)) {
+				continue;
+			}
+
 			if (!wlr_drm_format_set_add(&restricted, fmt->format, fmt->modifiers[j])) {
 				wlr_drm_format_set_finish(&restricted);
 				return -1;
