@@ -40,7 +40,10 @@ typedef struct {
 	struct wlr_drm_syncobj_timeline* timeline;
 	uint64_t timeline_point;
 
+	bool needs_render;
+
 	struct wl_listener frame;
+	struct wl_listener needs_frame;
 	struct wl_listener destroy;
 } output_t;
 
@@ -186,7 +189,9 @@ static void output_remove_notify(struct wl_listener* listener, void* data) {
 
 	output_t* const output = wl_container_of(listener, output, destroy);
 
+	wl_list_remove(&output->link);
 	wl_list_remove(&output->frame.link);
+	wl_list_remove(&output->needs_frame.link);
 	wl_list_remove(&output->destroy.link);
 
 	if (output->timeline != NULL) {
@@ -235,6 +240,12 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 
 	wm_t* const wm = output->wm;
 	struct wlr_output* const wlr_output = output->output;
+
+	if (!output->needs_render) {
+		return;
+	}
+
+	output->needs_render = false;
 
 	LOG_V(cls, "Initialize output state.");
 
@@ -324,6 +335,26 @@ static void output_frame_notify(struct wl_listener* listener, void* data) {
 	}
 }
 
+static void schedule_output_frame(output_t* output) {
+	output->needs_render = true;
+	wlr_output_schedule_frame(output->output);
+}
+
+void wm_vdev_schedule_frame(wm_t* wm) {
+	output_t* output;
+
+	wl_list_for_each(output, &wm->outputs, link) {
+		schedule_output_frame(output);
+	}
+}
+
+static void output_needs_frame_notify(struct wl_listener* listener, void* data) {
+	(void) data;
+
+	output_t* const output = wl_container_of(listener, output, needs_frame);
+	schedule_output_frame(output);
+}
+
 static void new_output(struct wl_listener* listener, void* data) {
 	struct wlr_output* const wlr_output = data;
 	wm_t* const wm = wl_container_of(listener, wm, new_output);
@@ -375,13 +406,19 @@ static void new_output(struct wl_listener* listener, void* data) {
 		}
 	}
 
-	LOG_V(cls, "Set up listeners (frame, destroy) for output.");
+	LOG_V(cls, "Set up listeners (frame, needs_frame, destroy) for output.");
 
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	output->frame.notify = output_frame_notify;
 
+	wl_signal_add(&wlr_output->events.needs_frame, &output->needs_frame);
+	output->needs_frame.notify = output_needs_frame_notify;
+
 	wl_signal_add(&wlr_output->events.destroy, &output->destroy);
 	output->destroy.notify = output_remove_notify;
+
+	wl_list_insert(&wm->outputs, &output->link);
+	schedule_output_frame(output);
 
 	LOG_V(cls, "Add output to output layout.");
 
@@ -576,6 +613,7 @@ static void surf_commit(struct wl_listener* listener, void* data) {
 	}
 
 	redraw_win(xdg_toplevel->base->data);
+	wm_vdev_schedule_frame(surf->wm);
 }
 
 static void surf_destroy(struct wl_listener* listener, void* data) {

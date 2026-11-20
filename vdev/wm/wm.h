@@ -192,6 +192,7 @@ void wm_vdev_loop(wm_t* wm);
 backend_t wm_vdev_get_backend(wm_t* wm);
 
 void wm_vdev_interrupt(wm_t* wm, size_t data_size, void const* data);
+void wm_vdev_schedule_frame(wm_t* wm);
 void wm_vdev_focus_toplevel(toplevel_t* toplevel);
 
 // Input stuff (input.c).

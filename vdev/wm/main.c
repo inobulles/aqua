@@ -291,6 +291,14 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_OPAQUE_PTR, "wm"},
 		},
 	},
+	{
+		.name = "schedule_frame",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -500,6 +508,18 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 		}
 
 		notif.call_ret.ret.u8 = wm_vdev_get_backend(wm);
+		break;
+	}
+	case 12: { // schedule_frame
+		wm_t* const wm = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (wm == NULL) {
+			LOG_E(cls, "Tried to schedule frame on non-local or NULL WM.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm_vdev_schedule_frame(wm);
 		break;
 	}
 	default:
