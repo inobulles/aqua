@@ -547,6 +547,19 @@ void wm_win_notify_mouse_motion(wm_t wm, wm_win_t win, uint32_t time, uint32_t x
 void wm_win_notify_mouse_button(wm_t wm, wm_win_t win, uint32_t time, bool pressed, uint32_t button);
 
 /**
+ * Notify WM window of a keyboard key press/release event.
+ *
+ * This gives the window keyboard focus if it didn't already have it.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle to send the notification to.
+ * @param time The time at which the notification occurred. This should've been gotten from {@link wm_key_cb_t}.
+ * @param pressed True if the key was pressed, false if it was released.
+ * @param keycode The raw keycode of the key. This should've been gotten from {@link wm_key_cb_t}.
+ */
+void wm_win_notify_key(wm_t wm, wm_win_t win, uint32_t time, bool pressed, uint32_t keycode);
+
+/**
  * Notify WM window of a mouse axis (scroll) event.
  *
  * The window must already have pointer focus, i.e. it must be the last one {@link wm_win_notify_mouse_motion} was called on.
