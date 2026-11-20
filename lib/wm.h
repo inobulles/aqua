@@ -525,6 +525,16 @@ void wm_loop(wm_t wm);
 wm_backend_t wm_get_backend(wm_t wm);
 
 /**
+ * Ask for a new frame to be rendered.
+ *
+ * The WM only redraws when something asks it to or when window contents change, so the redraw callback (see {@link wm_register_redraw_cb}) is only called after this.
+ * This can be called from within the redraw callback (e.g. to keep animating), in which case another frame is rendered after the current one.
+ *
+ * @param wm The WM object.
+ */
+void wm_schedule_frame(wm_t wm);
+
+/**
  * Notify WM window of a mouse motion event.
  *
  * @param wm The WM object which owns the window.

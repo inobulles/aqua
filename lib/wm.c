@@ -68,6 +68,7 @@ struct wm_ctx_t {
 		uint32_t win_notify_gesture;
 		uint32_t win_notify_key;
 		uint32_t get_backend;
+		uint32_t schedule_frame;
 	} fns;
 
 	bool last_success;
@@ -437,6 +438,16 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 			strcmp((char*) fn->params[0].name, "wm") == 0
 		) {
 			ctx->fns.get_backend = i;
+		}
+
+		if (
+			strcmp(name, "schedule_frame") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "wm") == 0
+		) {
+			ctx->fns.schedule_frame = i;
 		}
 	}
 
@@ -811,6 +822,22 @@ wm_backend_t wm_get_backend(wm_t wm) {
 	}
 
 	return conv_backend(ctx, ctx->last_ret.u8);
+}
+
+void wm_schedule_frame(wm_t wm) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = wm->opaque_ptr},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.schedule_frame, args);
+	kos_flush(true);
 }
 
 typedef struct __attribute__((packed)) {
