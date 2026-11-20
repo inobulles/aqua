@@ -1,11 +1,13 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
 import (
 	"fmt"
+	"math"
 	"runtime"
+	"time"
 
 	"obiw.ac/aqua"
 )
@@ -117,7 +119,23 @@ func main() {
 
 	// Start window loop.
 
+	last_toggle := time.Now()
+	big := false
+
 	win.RegisterRedrawCb(func() {
+		if time.Since(last_toggle) >= time.Second {
+			last_toggle = time.Now()
+			big = !big
+
+			if big {
+				div.SetAttr("scale.anim", float32(1.5))
+				div.SetAttr("rot.anim", float32(math.Pi/4))
+			} else {
+				div.SetAttr("scale.anim", float32(1))
+				div.SetAttr("rot.anim", float32(0))
+			}
+		}
+
 		state.Render()
 	})
 
