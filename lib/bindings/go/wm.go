@@ -321,6 +321,10 @@ func (w *Wm) GetBackend() WmBackend {
 	return WmBackend(C.wm_get_backend(w.wm))
 }
 
+func (w *Wm) ScheduleFrame() {
+	C.wm_schedule_frame(w.wm)
+}
+
 type WmRedrawCb func(raw_vk_image unsafe.Pointer, x_res, y_res uint32)
 
 //export go_lib_bindings_wm_redraw_cb
