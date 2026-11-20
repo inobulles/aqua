@@ -650,3 +650,14 @@ void wm_win_set_size(wm_t wm, wm_win_t win, uint32_t x_res, uint32_t y_res);
  * @param resizing Whether the window is being interactively resized.
  */
 void wm_win_set_resizing(wm_t wm, wm_win_t win, bool resizing);
+
+/**
+ * Ask a WM window to close.
+ *
+ * This is only a request: the window may e.g. ask the user to save their work first, or ignore it entirely.
+ * If it does close, the destroy window callback is called as usual.
+ *
+ * @param wm The WM object which owns the window.
+ * @param win Window handle.
+ */
+void wm_win_close(wm_t wm, wm_win_t win);

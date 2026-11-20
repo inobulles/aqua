@@ -69,6 +69,7 @@ struct wm_ctx_t {
 		uint32_t win_notify_key;
 		uint32_t get_backend;
 		uint32_t schedule_frame;
+		uint32_t win_close;
 	} fns;
 
 	bool last_success;
@@ -449,6 +450,16 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.schedule_frame = i;
 		}
+
+		if (
+			strcmp(name, "win_close") == 0 &&
+			fn->ret_type == KOS_TYPE_VOID &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "win") == 0
+		) {
+			ctx->fns.win_close = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -772,6 +783,22 @@ void wm_win_set_resizing(wm_t wm, wm_win_t win, bool resizing) {
 	};
 
 	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_set_resizing, args);
+	kos_flush(true);
+}
+
+void wm_win_close(wm_t wm, wm_win_t win) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return;
+	}
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = {0, win}},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, ctx->fns.win_close, args);
 	kos_flush(true);
 }
 
