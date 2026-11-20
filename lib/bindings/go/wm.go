@@ -41,6 +41,7 @@ extern void go_lib_bindings_wm_mouse_motion_cb(
 	void* data
 );
 extern void go_lib_bindings_wm_mouse_button_cb(wm_t wm, uint32_t time, uint8_t pressed, uint32_t button, uint32_t mods, void* data);
+extern void go_lib_bindings_wm_key_cb(wm_t wm, uint32_t time, uint8_t pressed, uint32_t keycode, uint32_t keysym, uint32_t mods, void* data);
 extern void go_lib_bindings_wm_mouse_axis_cb(
 	wm_t wm,
 	uint32_t time,
@@ -94,6 +95,7 @@ type Wm struct {
 	mouse_button_cb_handle  cgo.Handle
 	mouse_axis_cb_handle    cgo.Handle
 	gesture_cb_handle       cgo.Handle
+	key_cb_handle           cgo.Handle
 }
 
 type WmWin uint64
@@ -243,6 +245,9 @@ func (w *Wm) Destroy() {
 	}
 	if w.gesture_cb_handle != 0 {
 		w.gesture_cb_handle.Delete()
+	}
+	if w.key_cb_handle != 0 {
+		w.key_cb_handle.Delete()
 	}
 }
 
@@ -689,6 +694,46 @@ func (w *Wm) RegisterGestureCb(cb WmGestureCb) {
 		w.wm,
 		C.wm_gesture_cb_t(C.go_lib_bindings_wm_gesture_cb),
 		unsafe.Pointer(w.gesture_cb_handle),
+	)
+}
+
+// keysym is an XKB keysym (see XKB_KEY_* in <aqua/xkbcommon-keysyms.h> (C header)), or 0 if the key doesn't resolve to a single keysym.
+type WmKeyCb func(
+	time uint32,
+	pressed bool,
+	keycode uint32,
+	keysym uint32,
+	mods WmMod,
+)
+
+//export go_lib_bindings_wm_key_cb
+func go_lib_bindings_wm_key_cb(
+	_ C.wm_t,
+	time C.uint32_t,
+	pressed C.uint8_t,
+	keycode C.uint32_t,
+	keysym C.uint32_t,
+	mods C.uint32_t,
+	data unsafe.Pointer,
+) {
+	handle := (cgo.Handle)(data)
+
+	if cb, ok := handle.Value().(WmKeyCb); ok {
+		cb(uint32(time), pressed != 0, uint32(keycode), uint32(keysym), WmMod(mods))
+	}
+}
+
+func (w *Wm) RegisterKeyCb(cb WmKeyCb) {
+	if w.key_cb_handle != 0 {
+		w.key_cb_handle.Delete()
+	}
+
+	w.key_cb_handle = cgo.NewHandle(cb)
+
+	C.wm_register_key_cb(
+		w.wm,
+		C.wm_key_cb_t(C.go_lib_bindings_wm_key_cb),
+		unsafe.Pointer(w.key_cb_handle),
 	)
 }
 
