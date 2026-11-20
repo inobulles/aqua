@@ -13,7 +13,6 @@ package main
 import "C"
 import (
 	"runtime/cgo"
-	"time"
 	"unsafe"
 )
 
@@ -49,9 +48,6 @@ type Ui struct {
 	// Set if anything which will affect the flow of the UI is changed (see Ui.invalidate_layout).
 	// This will trigger a reflow upon the next render (see the Ui.reflow function).
 	layout_dirty bool
-
-	// Time of the last animation update (see Ui.animate).
-	last_anim time.Time
 
 	// Interrupts.
 

@@ -59,8 +59,10 @@ type Anim struct {
 	elapsed float64
 
 	// Scale used for settle thresholds, i.e. the distance travelled on the last retarget.
-
 	scale float64
+
+	// When the animation was last advanced.
+	last_update time.Time
 
 	// For some curves, some of these values don't do anything.
 
@@ -88,6 +90,10 @@ func new_anim(pos float64, curve AnimCurve) Anim {
 func (a *Anim) set_target(target float64) {
 	if target == a.target {
 		return
+	}
+
+	if a.settled() {
+		a.last_update = time.Now()
 	}
 
 	a.target = target
@@ -165,12 +171,15 @@ func (a *Anim) step_elastic(dt float64) {
 	a.vel = v
 }
 
-// Advance the animation by dt seconds.
+// Advance the animation to the given time.
 // Returns true if the animation is still running (i.e. something needs to be redrawn next frame).
-func (a *Anim) update(dt float64) bool {
+func (a *Anim) update(now time.Time) bool {
 	if a.settled() {
 		return false
 	}
+
+	dt := max(now.Sub(a.last_update).Seconds(), 0)
+	a.last_update = now
 
 	switch a.curve {
 	case AnimCurveLinear:
@@ -202,30 +211,22 @@ func (a *Anim) update(dt float64) bool {
 	return true
 }
 
-// Advance all animations in the UI by the time elapsed since the last call.
+// Advance all animations in the UI to the current time.
 // This should be called once per frame, before rendering.
 // Returns true if any animation is still running.
 func (ui *Ui) animate() bool {
-	now := time.Now()
-	dt := 0.
-
-	if !ui.last_anim.IsZero() {
-		dt = now.Sub(ui.last_anim).Seconds()
-	}
-
-	ui.last_anim = now
-	return animate_elem(&ui.root, dt)
+	return animate_elem(&ui.root, time.Now())
 }
 
-func animate_elem(elem IElem, dt float64) bool {
+func animate_elem(elem IElem, now time.Time) bool {
 	base := elem.ElemBase()
 
-	running := base.scale.update(dt)
-	running = base.rot.update(dt) || running
+	running := base.scale.update(now)
+	running = base.rot.update(now) || running
 
 	if div, ok := elem.(*Div); ok {
 		for _, child := range div.children {
-			running = animate_elem(child, dt) || running
+			running = animate_elem(child, now) || running
 		}
 	}
 
