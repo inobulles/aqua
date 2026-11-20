@@ -251,6 +251,17 @@ void wm_vdev_toplevel_notify_mouse_button(toplevel_t* toplevel, uint32_t time, b
 	wm_vdev_focus_toplevel(toplevel);
 }
 
+void wm_vdev_toplevel_notify_key(toplevel_t* toplevel, uint32_t time, bool pressed, uint32_t keycode) {
+	struct wlr_seat* const seat = toplevel->wm->seat;
+	enum wl_keyboard_key_state const state =
+		pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
+
+	// Key events are always sent to the surface with keyboard focus, so make sure that's this toplevel.
+
+	wm_vdev_focus_toplevel(toplevel);
+	wlr_seat_keyboard_notify_key(seat, time, keycode, state);
+}
+
 void wm_vdev_toplevel_notify_mouse_axis(
 	toplevel_t* toplevel,
 	uint32_t time,

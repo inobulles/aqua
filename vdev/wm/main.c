@@ -273,6 +273,17 @@ static kos_fn_t const FNS[] = {
 		},
 	},
 	{
+		.name = "win_notify_key",
+		.ret_type = KOS_TYPE_VOID,
+		.param_count = 4,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "win"},
+			{KOS_TYPE_U32, "time"},
+			{KOS_TYPE_BOOL, "pressed"},
+			{KOS_TYPE_U32, "keycode"},
+		},
+	},
+	{
 		.name = "get_backend",
 		.ret_type = KOS_TYPE_U8,
 		.param_count = 1,
@@ -466,7 +477,20 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 
 		break;
 	}
-	case 10: { // get_backend
+	case 10: { // win_notify_key
+		toplevel_t* const toplevel = (toplevel_t*) (uintptr_t) args[0].opaque_ptr.ptr;
+
+		if (toplevel == NULL) {
+			LOG_E(cls, "Tried to notify bad window of key press/release.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		wm_vdev_toplevel_notify_key(toplevel, args[1].u32, args[2].b, args[3].u32);
+
+		break;
+	}
+	case 11: { // get_backend
 		wm_t* const wm = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
 
 		if (wm == NULL) {
