@@ -25,7 +25,7 @@ typedef struct {
 	struct wl_listener mod;
 	struct wl_listener key;
 	struct wl_listener destroy;
-} keyborp_t;
+} keyborp_t; // keyborp... iykyk
 
 typedef struct {
 	struct wl_list link;
@@ -97,6 +97,15 @@ typedef struct __attribute__((packed)) {
 	uint32_t mods;
 } gesture_intr_t;
 
+typedef struct __attribute__((packed)) {
+	intr_t intr;
+	uint32_t time;
+	uint8_t pressed;
+	uint32_t keycode; // Raw evdev keycode, which is what needs to be passed back to wm_vdev_toplevel_notify_key.
+	uint32_t keysym;  // XKB keysym, resolved with the current keyboard layout and modifiers.
+	uint32_t mods;
+} key_intr_t;
+
 static umber_class_t const* cls = NULL;
 
 void wm_vdev_input_init(umber_class_t const* _cls) {
@@ -120,10 +129,25 @@ static void keyborp_key(struct wl_listener* listener, void* data) {
 	wm_t* const wm = keyborp->wm;
 	struct wlr_keyboard_key_event* const event = data;
 
-	// Pass on keyboard key notification.
+	assert(
+		event->state == WL_KEYBOARD_KEY_STATE_PRESSED ||
+		event->state == WL_KEYBOARD_KEY_STATE_RELEASED
+	);
 
 	wlr_seat_set_keyboard(wm->seat, wlr_keyboard);
-	wlr_seat_keyboard_notify_key(wm->seat, event->time_msec, event->keycode, event->state);
+
+	uint32_t const keycode = event->keycode + 8; // evdev to XKB keycode.
+
+	key_intr_t intr = {
+		.intr = INTR_KEY,
+		.time = event->time_msec,
+		.pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED,
+		.keycode = event->keycode,
+		.keysym = xkb_state_key_get_one_sym(wlr_keyboard->xkb_state, keycode),
+		.mods = wlr_keyboard_get_modifiers(wlr_keyboard),
+	};
+
+	wm_vdev_interrupt(wm, sizeof intr, &intr);
 }
 
 static void keyborp_destroy(struct wl_listener* listener, void* data) {

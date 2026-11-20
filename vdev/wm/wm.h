@@ -151,6 +151,7 @@ typedef enum : uint8_t {
 	INTR_MOUSE_BUTTON,
 	INTR_MOUSE_AXIS,
 	INTR_GESTURE,
+	INTR_KEY,
 } intr_t;
 
 typedef enum : uint8_t {
