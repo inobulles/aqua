@@ -30,6 +30,10 @@ func (e *Div) reflow(max_w, max_h uint32) {
 	flow_x := pl
 	flow_y := pt
 
+	// Largest child along the axis perpendicular to the flow direction.
+
+	max_cross := uint32(0)
+
 	for _, child := range e.children {
 		child.reflow(max_w-uint32(pl+pr), max_h-uint32(pt+pb))
 
@@ -46,6 +50,11 @@ func (e *Div) reflow(max_w, max_h uint32) {
 		case AxisY: // Elements flow from top to bottom.
 			flow_y += int32(ch)
 			flow_y += e.dimension_to_px_y(e.gap_y)
+			max_cross = max(max_cross, cw)
+
+			// TODO Alignment is relative to max_w instead of the div's actual size.
+			// We ideally need two separate passes, one to get the div width, the other to actually do alignment.
+			// Same for AxisX obviously.
 
 			child.ElemBase().flow_x = flow_x + align_off(
 				e.content_align_x,
@@ -55,6 +64,7 @@ func (e *Div) reflow(max_w, max_h uint32) {
 		case AxisX: // Elements flow from left to right.
 			flow_x += int32(cw)
 			flow_x += e.dimension_to_px_x(e.gap_x)
+			max_cross = max(max_cross, ch)
 
 			child.ElemBase().flow_y = flow_y + align_off(
 				e.content_align_y,
@@ -66,7 +76,32 @@ func (e *Div) reflow(max_w, max_h uint32) {
 		}
 	}
 
-	// Make sure div is not smaller than minimum size.
+	// The root div's size is fixed.
+
+	if e.parent == nil {
+		return
+	}
+
+	// Compute final div size.
+
+	switch e.flow_direction {
+	case AxisY:
+		if flow_y > pt {
+			flow_y -= e.dimension_to_px_y(e.gap_y)
+		}
+
+		e.flow_w = uint32(pl) + max_cross + uint32(pr)
+		e.flow_h = uint32(flow_y + pb)
+	case AxisX:
+		if flow_x > pl {
+			flow_x -= e.dimension_to_px_x(e.gap_x)
+		}
+
+		e.flow_w = uint32(flow_x + pr)
+		e.flow_h = uint32(pt) + max_cross + uint32(pb)
+	}
+
+	// Clamp to minimum size.
 
 	if min_w := e.get_attr("min_w"); min_w != nil {
 		e.flow_w = max(e.flow_w, uint32(e.dimension_to_px_x(min_w.(Dimension))))
