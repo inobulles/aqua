@@ -527,6 +527,8 @@ wm_backend_t wm_get_backend(wm_t wm);
 /**
  * Get largest hardware cursor the WM can display.
  *
+ * Hardware cursors may not be supported, so your WM must always be able to "software"-composite the cursor too.
+ *
  * @param wm The WM object.
  * @param x_res Where to put the maximum X resolution of the cursor. This is set to 0 on failure.
  * @param y_res Where to put the maximum Y resolution of the cursor. This is set to 0 on failure.
