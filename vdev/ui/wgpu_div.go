@@ -229,6 +229,14 @@ func (e *Div) size_changed() bool {
 	return data.w != e.flow_w || data.h != e.flow_h
 }
 
+func (e *Div) frost_size_changed() bool {
+	if !e.do_frost() {
+		return false
+	}
+
+	return e.size_changed()
+}
+
 func (e *Div) bg_tex_view_changed() bool {
 	bg := e.get_attr("bg.wgpu_tex_view")
 

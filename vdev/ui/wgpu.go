@@ -140,7 +140,7 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 
 		data.model.draw(b.render_pass)
 	case *Div:
-		if e.backend_data == nil || e.bg_tex_view_changed() {
+		if e.backend_data == nil || e.bg_tex_view_changed() || e.frost_size_changed() {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
 		} else if e.size_changed() {
 			data := e.backend_data.(WgpuBackendDivData)
