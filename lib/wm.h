@@ -525,6 +525,16 @@ void wm_loop(wm_t wm);
 wm_backend_t wm_get_backend(wm_t wm);
 
 /**
+ * Get largest hardware cursor the WM can display.
+ *
+ * @param wm The WM object.
+ * @param x_res Where to put the maximum X resolution of the cursor. This is set to 0 on failure.
+ * @param y_res Where to put the maximum Y resolution of the cursor. This is set to 0 on failure.
+ * @return 0 on success, -1 if hardware cursors aren't supported or if the call failed.
+ */
+int wm_get_hw_cursor_max_size(wm_t wm, uint32_t* x_res, uint32_t* y_res);
+
+/**
  * Ask for a new frame to be rendered.
  *
  * The WM only redraws when something asks it to or when window contents change, so the redraw callback (see {@link wm_register_redraw_cb}) is only called after this.
