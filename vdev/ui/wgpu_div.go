@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
@@ -22,6 +22,8 @@ type WgpuBackendDivData struct {
 
 	model *Model
 	frost *WgpuBackendDivDataFrost
+
+	w, h uint32
 }
 
 func (d *WgpuBackendDivData) release() {
@@ -143,7 +145,7 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		b.free_elem(e)
 	}
 
-	data := WgpuBackendDivData{}
+	data := WgpuBackendDivData{w: w, h: h}
 
 	// Create MVP matrix buffer.
 
@@ -220,6 +222,11 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 	data.model.gen_pane(b, float32(w), float32(h), 10)
 
 	e.backend_data = data
+}
+
+func (e *Div) size_changed() bool {
+	data := e.backend_data.(WgpuBackendDivData)
+	return data.w != e.flow_w || data.h != e.flow_h
 }
 
 func (e *Div) bg_tex_view_changed() bool {

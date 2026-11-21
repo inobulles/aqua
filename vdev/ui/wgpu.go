@@ -142,9 +142,12 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 	case *Div:
 		if e.backend_data == nil || e.bg_tex_view_changed() {
 			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
-		} else {
+		} else if e.size_changed() {
 			data := e.backend_data.(WgpuBackendDivData)
 			data.model.gen_pane(b, float32(e.flow_w), float32(e.flow_h), 10)
+
+			data.w, data.h = e.flow_w, e.flow_h
+			e.backend_data = data
 		}
 
 		data := e.backend_data.(WgpuBackendDivData)
