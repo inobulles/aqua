@@ -41,7 +41,7 @@ func (m *Model) gen_model(b *WgpuBackend, verts []Vertex, tris [][3]uint16, labe
 		if m.vbo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
 			Label:    fmt.Sprintf("VBO (%s)", label),
 			Contents: vert_bytes,
-			Usage:    wgpu.BufferUsageVertex,
+			Usage:    wgpu.BufferUsageVertex | wgpu.BufferUsageCopyDst,
 		}); err != nil {
 			m.release()
 			return err
@@ -54,7 +54,7 @@ func (m *Model) gen_model(b *WgpuBackend, verts []Vertex, tris [][3]uint16, labe
 		if m.ibo, err = b.dev.CreateBufferInit(&wgpu.BufferInitDescriptor{
 			Label:    fmt.Sprintf("IBO (%s)", label),
 			Contents: index_bytes,
-			Usage:    wgpu.BufferUsageIndex,
+			Usage:    wgpu.BufferUsageIndex | wgpu.BufferUsageCopyDst,
 		}); err != nil {
 			m.release()
 			return err
