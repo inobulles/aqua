@@ -325,6 +325,16 @@ func (w *Wm) GetBackend() WmBackend {
 	return WmBackend(C.wm_get_backend(w.wm))
 }
 
+func (w *Wm) GetHwCursorMaxSize() (x_res, y_res uint32, ok bool) {
+	var c_x_res, c_y_res C.uint32_t
+
+	if C.wm_get_hw_cursor_max_size(w.wm, &c_x_res, &c_y_res) < 0 {
+		return 0, 0, false
+	}
+
+	return uint32(c_x_res), uint32(c_y_res), true
+}
+
 func (w *Wm) ScheduleFrame() {
 	C.wm_schedule_frame(w.wm)
 }
