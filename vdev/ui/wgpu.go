@@ -58,10 +58,6 @@ func (b *WgpuBackend) set_attr(elem *Elem, key string, val any) {
 		if prev != nil && prev != cur {
 			b.free_backend_data(elem)
 		}
-
-		if cur == nil {
-			elem.rem_attr(key)
-		}
 	}
 }
 

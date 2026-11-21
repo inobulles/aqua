@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/cgo"
+	"unsafe"
 )
 
 type ElemKind int
@@ -221,6 +222,11 @@ func (e *Elem) set_attr(key string, val any) {
 
 	if ui.backend != nil { // TODO Why is it possible for ui.backend == nil here?
 		ui.backend.set_attr(e, key, val)
+	}
+
+	if ptr, ok := val.(unsafe.Pointer); ok && ptr == nil {
+		e.rem_attr(key)
+		return
 	}
 
 	if e.scale.process_attrs("scale", key, val) {
