@@ -64,6 +64,11 @@ func (b *WgpuBackend) set_attr(elem *Elem, key string, val any) {
 		if prev, _ := elem.get_attr(key).(bool); prev != val.(bool) {
 			b.free_backend_data(elem)
 		}
+	// Same thing if we enable/disable opacity (different pipeline for opaque or non-opaque textures).
+	case "bg.opaque":
+		if prev, _ := elem.get_attr(key).(bool); prev != val.(bool) {
+			b.free_backend_data(elem)
+		}
 	}
 }
 

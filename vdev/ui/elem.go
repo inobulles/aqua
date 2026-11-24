@@ -278,10 +278,19 @@ func (e *Elem) get_attr(key string) any {
 	return nil
 }
 
+func (d *Div) is_opaque() bool {
+	opaque, _ := d.get_attr("bg.opaque").(bool)
+	return opaque
+}
+
 func (d *Div) do_frost() bool {
 	frost_attr := d.get_attr("frost")
 
 	if frost_attr == nil || !frost_attr.(bool) {
+		return false
+	}
+
+	if d.is_opaque() {
 		return false
 	}
 

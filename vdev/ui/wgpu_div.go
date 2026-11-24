@@ -72,10 +72,15 @@ func (d *WgpuBackendDivData) create_solid_bind_group(b *WgpuBackend) error {
 	return err
 }
 
-func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend) error {
+func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend, e *Div) error {
 	var err error
 	d.pipeline = &b.texture_pipeline.Pipeline
 
+	// Opaque textures have their alpha channel ignored.
+
+	if e.is_opaque() {
+		d.pipeline = &b.texture_opaque_pipeline.Pipeline
+	}
 
 	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
 		Layout: d.pipeline.bind_group_layout,
@@ -214,7 +219,7 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 			return
 		}
 	} else {
-		if err = data.create_texture_bind_group(b); err != nil {
+		if err = data.create_texture_bind_group(b, e); err != nil {
 			b.free_elem(e)
 			return
 		}
