@@ -23,7 +23,6 @@ func (b *WgpuBackend) NewPipeline(
 	src string,
 	frag_entry string,
 	bind_group_layout_entries []wgpu.BindGroupLayoutEntry,
-	vbo_layouts []wgpu.VertexBufferLayout,
 	blend *wgpu.BlendState,
 ) (*Pipeline, error) {
 	pipeline := &Pipeline{}
@@ -72,7 +71,6 @@ func (b *WgpuBackend) NewPipeline(
 		Vertex: wgpu.VertexState{
 			Module:     pipeline.shader,
 			EntryPoint: "vert_main",
-			Buffers:    vbo_layouts,
 		},
 		Fragment: &wgpu.FragmentState{
 			Module:     pipeline.shader,

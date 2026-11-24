@@ -40,8 +40,6 @@ type WgpuBackend struct {
 	texture_pipeline        *TexturePipeline
 	texture_opaque_pipeline *TexturePipeline
 
-	unit_quad *Model
-
 	swapchain_view *wgpu.TextureView
 	last_frost     *Div
 	frost          WgpuBackendFrost
@@ -154,7 +152,7 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 		text_mvp := mul_mat(mvp, scale_xy_mat(float32(data.w), float32(data.h)))
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(text_mvp[:]))
 
-		b.unit_quad.draw(b.render_pass)
+		b.render_pass.Draw(6, 1, 0, 0)
 	case *Div:
 		// Only frost depends on the size of the div; everything else just scales the unit quad.
 
@@ -191,7 +189,7 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 
 		data.pipeline.Set(b.render_pass, data.bind_group)
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(div_mvp[:]))
-		b.unit_quad.draw(b.render_pass)
+		b.render_pass.Draw(6, 1, 0, 0)
 
 		// Render children.
 
@@ -286,13 +284,6 @@ func GoUiBackendWgpuInit(
 
 	if err = backend.create_frost_pipelines(); err != nil {
 		println("Failed to create frost pipelines.", err)
-		return
-	}
-
-	backend.unit_quad = &Model{}
-
-	if err = backend.unit_quad.gen_quad(backend, 1, 1); err != nil {
-		println("Failed to create unit quad.", err)
 		return
 	}
 

@@ -10,15 +10,22 @@ struct VertOut {
 var<uniform> mvp: mat4x4<f32>;
 
 @vertex
-fn vert_main(
-	@location(0) pos: vec2f,
-	@location(1) uv: vec2f,
-	@location(2) normal: vec3f,
-) -> VertOut {
+fn vert_main(@builtin(vertex_index) index: u32) -> VertOut {
+	let quad = array<vec2f, 6>(
+		vec2f(-0.5, -0.5),
+		vec2f( 0.5, -0.5),
+		vec2f(-0.5,  0.5),
+		vec2f(-0.5,  0.5),
+		vec2f( 0.5, -0.5),
+		vec2f( 0.5,  0.5),
+	);
+
+	let pos = quad[index];
+
 	var out: VertOut;
 
 	out.pos = mvp * vec4(pos, 0., 1.);
-	out.uv = uv;
+	out.uv = vec2f(pos.x + 0.5, 0.5 - pos.y);
 
 	return out;
 }

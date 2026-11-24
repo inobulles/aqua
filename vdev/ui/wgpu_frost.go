@@ -71,14 +71,14 @@ func (b *WgpuBackend) create_frost_pipelines() error {
 	// Create dual Kawase downsampling pipeline.
 
 	if f.kawase_down_pipeline, err = b.NewPipeline("Frost (dual Kawase downsampling)", kawase_shader_src, "frag_down_main",
-		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
+		bind_group_layout, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
 		return err
 	}
 
 	// Create dual Kawase upsampling pipeline.
 
 	if f.kawase_up_pipeline, err = b.NewPipeline("Frost (dual Kawase upsampling)", kawase_shader_src, "frag_up_main",
-		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
+		bind_group_layout, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
 		return err
 	}
 
@@ -105,7 +105,7 @@ func (b *WgpuBackend) create_frost_pipelines() error {
 	}
 
 	if f.blit_pipeline, err = b.NewPipeline("Frost (blit)", blit_shader_src, "frag_main",
-		blit_bind_group_layout, []wgpu.VertexBufferLayout{}, nil); err != nil {
+		blit_bind_group_layout, nil); err != nil {
 		return err
 	}
 

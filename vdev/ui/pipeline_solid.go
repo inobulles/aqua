@@ -5,42 +5,18 @@ package main
 
 import (
 	_ "embed"
-	"unsafe"
 
 	"obiw.ac/aqua/wgpu"
 )
 
 type SolidPipeline struct {
 	Pipeline
-	vbo_layout wgpu.VertexBufferLayout
 }
 
 //go:embed shaders/solid.wgsl
 var solid_shader_src string
 
 func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
-	vbo_layout := wgpu.VertexBufferLayout{
-		ArrayStride: uint64(unsafe.Sizeof(Vertex{})),
-		StepMode:    wgpu.VertexStepModeVertex,
-		Attributes: []wgpu.VertexAttribute{
-			{ // Vertex position (x, y).
-				Format:         wgpu.VertexFormatFloat32x2,
-				Offset:         0,
-				ShaderLocation: 0,
-			},
-			{ // Texture coordinate (u, v).
-				Format:         wgpu.VertexFormatFloat32x2,
-				Offset:         4 * 2,
-				ShaderLocation: 1,
-			},
-			{ // Normal (nx, ny, nz).
-				Format:         wgpu.VertexFormatFloat32x3,
-				Offset:         4 * (2 + 2),
-				ShaderLocation: 2,
-			},
-		},
-	}
-
 	pipeline, err := b.NewPipeline("Solid", solid_shader_src, "frag_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
@@ -58,9 +34,6 @@ func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
 				},
 			},
 		},
-		[]wgpu.VertexBufferLayout{
-			vbo_layout,
-		},
 		&wgpu.BlendStateAlphaBlending,
 	)
 
@@ -69,8 +42,7 @@ func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
 	}
 
 	return &SolidPipeline{
-		Pipeline:   *pipeline,
-		vbo_layout: vbo_layout,
+		Pipeline: *pipeline,
 	}, nil
 }
 

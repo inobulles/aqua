@@ -6,14 +6,12 @@ package main
 import (
 	_ "embed"
 	"fmt"
-	"unsafe"
 
 	"obiw.ac/aqua/wgpu"
 )
 
 type TexturePipeline struct {
 	Pipeline
-	vbo_layout wgpu.VertexBufferLayout
 }
 
 type TextureAlpha int
@@ -38,28 +36,6 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 		frag_entry = "frag_opaque_main"
 	default:
 		panic(fmt.Sprintf("unexpected main.TextureAlpha: %#v", alpha))
-	}
-
-	vbo_layout := wgpu.VertexBufferLayout{
-		ArrayStride: uint64(unsafe.Sizeof(Vertex{})),
-		StepMode:    wgpu.VertexStepModeVertex,
-		Attributes: []wgpu.VertexAttribute{
-			{ // Vertex position (x, y).
-				Format:         wgpu.VertexFormatFloat32x2,
-				Offset:         0,
-				ShaderLocation: 0,
-			},
-			{ // Texture coordinate (u, v).
-				Format:         wgpu.VertexFormatFloat32x2,
-				Offset:         4 * 2,
-				ShaderLocation: 1,
-			},
-			{ // Normal (nx, ny, nz).
-				Format:         wgpu.VertexFormatFloat32x3,
-				Offset:         4 * (2 + 2),
-				ShaderLocation: 2,
-			},
-		},
 	}
 
 	pipeline, err := b.NewPipeline(label, texture_shader_src, frag_entry,
@@ -88,9 +64,6 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 				},
 			},
 		},
-		[]wgpu.VertexBufferLayout{
-			vbo_layout,
-		},
 		&wgpu.BlendStatePremultipliedAlphaBlending,
 	)
 
@@ -99,8 +72,7 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 	}
 
 	return &TexturePipeline{
-		Pipeline:   *pipeline,
-		vbo_layout: vbo_layout,
+		Pipeline: *pipeline,
 	}, nil
 }
 
