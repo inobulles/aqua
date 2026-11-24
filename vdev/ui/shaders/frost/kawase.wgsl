@@ -26,8 +26,6 @@ struct FragOut {
 };
 
 struct FrostParams {
-	// XXX pos and size are entirely unused in the upsampling direction.
-	// They are just kept so we can have the same bind group layout as the downsampling shader.
 	pos: vec2f,
 	size: vec2f,
 	res: vec2f,
@@ -46,8 +44,32 @@ fn sample(centre: vec2f, off: vec2f) -> vec3f {
 	return colour.rgb * colour.rgb; // Gamma correction (approximating with ^2).
 }
 
+// Dual Kawase downsampling.
+
 @fragment
-fn frag_main(vert: VertOut) -> FragOut {
+fn frag_down_main(vert: VertOut) -> FragOut {
+	let centre = vert.pos.xy * frost_params.size + frost_params.pos;
+	let inv_res = 1 / frost_params.res;
+	let o = inv_res / 2 * frost_params.off;
+
+	var colour = 4 * sample(centre, vec2f(0., 0.));
+
+	colour += sample(centre, vec2f( o.x,  o.y));
+	colour += sample(centre, vec2f(-o.x,  o.y));
+	colour += sample(centre, vec2f( o.x, -o.y));
+	colour += sample(centre, vec2f(-o.x, -o.y));
+
+	colour = sqrt(colour / 8);
+
+	var out: FragOut;
+	out.colour = vec4f(colour, 1.);
+	return out;
+}
+
+// Dual Kawase upsampling.
+
+@fragment
+fn frag_up_main(vert: VertOut) -> FragOut {
 	let centre = vert.pos.xy * frost_params.size + frost_params.pos;
 	let inv_res = 1 / frost_params.res;
 	let o = inv_res / 2 * frost_params.off;

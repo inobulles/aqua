@@ -29,11 +29,8 @@ type WgpuBackendDivDataFrost struct {
 	res_x, res_y          [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
 }
 
-//go:embed shaders/frost/kawase_down.wgsl
-var kawase_down_shader_src string
-
-//go:embed shaders/frost/kawase_up.wgsl
-var kawase_up_shader_src string
+//go:embed shaders/frost/kawase.wgsl
+var kawase_shader_src string
 
 //go:embed shaders/frost/blit.wgsl
 var blit_shader_src string
@@ -73,14 +70,14 @@ func (b *WgpuBackend) create_frost_pipelines() error {
 
 	// Create dual Kawase downsampling pipeline.
 
-	if f.kawase_down_pipeline, err = b.NewPipeline("Frost (dual Kawase downsampling)", kawase_down_shader_src, "frag_main",
+	if f.kawase_down_pipeline, err = b.NewPipeline("Frost (dual Kawase downsampling)", kawase_shader_src, "frag_down_main",
 		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
 		return err
 	}
 
 	// Create dual Kawase upsampling pipeline.
 
-	if f.kawase_up_pipeline, err = b.NewPipeline("Frost (dual Kawase upsampling)", kawase_up_shader_src, "frag_main",
+	if f.kawase_up_pipeline, err = b.NewPipeline("Frost (dual Kawase upsampling)", kawase_shader_src, "frag_up_main",
 		bind_group_layout, []wgpu.VertexBufferLayout{}, &wgpu.BlendStatePremultipliedAlphaBlending); err != nil {
 		return err
 	}
