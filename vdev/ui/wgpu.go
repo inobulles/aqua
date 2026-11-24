@@ -143,7 +143,9 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 	switch e := elem.(type) {
 	case *Text:
 		if e.backend_data == nil || e.flow_w != e.backend_data.(WgpuBackendTextData).flow_w {
-			b.gen_text_backend_data(e)
+			if err := b.gen_text_backend_data(e); err != nil {
+				return
+			}
 		}
 
 		data := e.backend_data.(WgpuBackendTextData)
@@ -157,7 +159,9 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 		// Only frost depends on the size of the div; everything else just scales the unit quad.
 
 		if e.backend_data == nil || e.bg_tex_view_changed() || (e.do_frost() && e.size_changed()) {
-			b.gen_div_backend_data(e, e.flow_w, e.flow_h)
+			if err := b.gen_div_backend_data(e, e.flow_w, e.flow_h); err != nil {
+				return
+			}
 		}
 
 		data := e.backend_data.(WgpuBackendDivData)

@@ -143,7 +143,7 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 	return err
 }
 
-func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
+func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) error {
 	// If we already have backend data, free everything.
 
 	if e.backend_data != nil {
@@ -161,8 +161,8 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 	}); err != nil {
 		println("Can't create MVP matrix buffer.")
-		b.free_elem(e)
-		return
+		data.release()
+		return err
 	}
 
 	// Create colour vector buffer.
@@ -172,8 +172,8 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 	}); err != nil {
 		println("Can't create colour vector buffer.")
-		b.free_elem(e)
-		return
+		data.release()
+		return err
 	}
 
 	// If we have a raster background attribute, create texture.
@@ -201,27 +201,28 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 
 	if data.tex == nil {
 		if err = data.create_solid_bind_group(b); err != nil {
-			b.free_elem(e)
-			return
+			data.release()
+			return err
 		}
 	} else if e.do_frost() {
 		if err = data.create_frost(b, w, h); err != nil {
-			b.free_elem(e)
-			return
+			data.release()
+			return err
 		}
 
 		if err = data.create_frost_bind_group(b); err != nil {
-			b.free_elem(e)
-			return
+			data.release()
+			return err
 		}
 	} else {
 		if err = data.create_texture_bind_group(b, e); err != nil {
-			b.free_elem(e)
-			return
+			data.release()
+			return err
 		}
 	}
 
 	e.backend_data = data
+	return nil
 }
 
 func (e *Div) size_changed() bool {

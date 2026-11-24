@@ -32,14 +32,9 @@ func (d *WgpuBackendTextData) release() {
 	if d.bind_group != nil {
 		d.bind_group.Release()
 	}
-	if d.model != nil {
-		d.model.release()
-	}
 }
 
-func (b *WgpuBackend) gen_text_backend_data(e *Text) {
-	// TODO Split into multiple functions when I make quad thing made only once for backend, because cleaning when error is kinda disgusting currently.
-
+func (b *WgpuBackend) gen_text_backend_data(e *Text) error {
 	// If we already have backend data, free everything.
 
 	if e.backend_data != nil {
@@ -67,8 +62,8 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 		w, h, data.data.Pix,
 	); err != nil {
 		println("Can't create texture.")
-		b.free_elem(e)
-		return
+		data.release()
+		return err
 	}
 
 	// Create MVP matrix buffer.
@@ -78,8 +73,8 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 	}); err != nil {
 		println("Can't create MVP matrix buffer.")
-		b.free_elem(e)
-		return
+		data.release()
+		return err
 	}
 
 	// Bind group shit.
@@ -103,9 +98,10 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 		},
 	}); err != nil {
 		println("Can't create bind group.")
-		b.free_elem(e)
-		return
+		data.release()
+		return err
 	}
 
 	e.backend_data = data
+	return nil
 }
