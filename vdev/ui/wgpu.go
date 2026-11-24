@@ -164,24 +164,26 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 
 		data := e.backend_data.(WgpuBackendDivData)
 
-		if data.tex == nil {
-			colour := [4]float32{0, 0, 0, 0}
+		// Colour is drawn over everything else (also over textures and frost), so it defaults to fully transparent.
 
-			if r := elem.ElemBase().get_attr("bg.r"); r != nil {
-				colour[0] = r.(float32)
-			}
-			if g := elem.ElemBase().get_attr("bg.g"); g != nil {
-				colour[1] = g.(float32)
-			}
-			if b := elem.ElemBase().get_attr("bg.b"); b != nil {
-				colour[2] = b.(float32)
-			}
-			if a := elem.ElemBase().get_attr("bg.a"); a != nil {
-				colour[3] = a.(float32)
-			}
+		colour := [4]float32{0, 0, 0, 0}
 
-			b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
-		} else if e.do_frost() {
+		if r := elem.ElemBase().get_attr("bg.r"); r != nil {
+			colour[0] = r.(float32)
+		}
+		if g := elem.ElemBase().get_attr("bg.g"); g != nil {
+			colour[1] = g.(float32)
+		}
+		if b := elem.ElemBase().get_attr("bg.b"); b != nil {
+			colour[2] = b.(float32)
+		}
+		if a := elem.ElemBase().get_attr("bg.a"); a != nil {
+			colour[3] = a.(float32)
+		}
+
+		b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
+
+		if data.tex != nil && e.do_frost() {
 			b.encounter_frost(e)
 		}
 
