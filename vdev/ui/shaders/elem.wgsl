@@ -46,9 +46,17 @@ struct FragOut {
 @group(0) @binding(1)
 var<uniform> colour: vec4f;
 
+struct Rounding {
+	size: vec2f,
+	radius: f32,
+};
+
 @group(0) @binding(2)
-var t: texture_2d<f32>;
+var<uniform> rounding: Rounding;
+
 @group(0) @binding(3)
+var t: texture_2d<f32>;
+@group(0) @binding(4)
 var s: sampler;
 
 struct FrostParams {
@@ -60,12 +68,31 @@ struct FrostParams {
 	off: f32,
 };
 
-@group(0) @binding(4)
-var frost_t: texture_2d<f32>;
 @group(0) @binding(5)
-var frost_s: sampler;
+var frost_t: texture_2d<f32>;
 @group(0) @binding(6)
+var frost_s: sampler;
+@group(0) @binding(7)
 var<uniform> frost_params: FrostParams;
+
+// Rounded rectangle SDF.
+
+fn rounded_rect_sdf(p: vec2f, half_size: vec2f, r: f32) -> f32 {
+	let q = abs(p) - half_size + r;
+	return length(max(q, vec2f(0.))) + min(max(q.x, q.y), 0.) - r;
+}
+
+// How much of the current pixel is covered by the rounded rectangle, for anti-aliasing.
+
+fn rounding_coverage(uv: vec2f) -> f32 {
+	let half_size = rounding.size / 2;
+	let r = min(rounding.radius, min(half_size.x, half_size.y));
+
+	let d = rounded_rect_sdf((uv - 0.5) * rounding.size, half_size, r);
+	let aa = fwidth(d);
+
+	return 1. - smoothstep(-aa / 2, aa / 2, d);
+}
 
 // Draw colour over what's below it (premultiplied).
 
@@ -76,15 +103,21 @@ fn over_colour(below: vec4f) -> vec4f {
 
 @fragment
 fn frag_solid_main(vert: VertOut) -> FragOut {
+	let coverage = rounding_coverage(vert.uv);
+
 	var out: FragOut;
-	out.colour = over_colour(vec4f(0.));
+	out.colour = over_colour(vec4f(0.)) * coverage;
+
 	return out;
 }
 
 @fragment
 fn frag_texture_main(vert: VertOut) -> FragOut {
+	let coverage = rounding_coverage(vert.uv);
+
 	var out: FragOut;
-	out.colour = over_colour(textureSample(t, s, vert.uv));
+	out.colour = over_colour(textureSample(t, s, vert.uv)) * coverage;
+
 	return out;
 }
 
@@ -92,8 +125,11 @@ fn frag_texture_main(vert: VertOut) -> FragOut {
 
 @fragment
 fn frag_texture_opaque_main(vert: VertOut) -> FragOut {
+	let coverage = rounding_coverage(vert.uv);
+
 	var out: FragOut;
-	out.colour = over_colour(vec4(textureSample(t, s, vert.uv).rgb, 1.));
+	out.colour = over_colour(vec4(textureSample(t, s, vert.uv).rgb, 1.)) * coverage;
+
 	return out;
 }
 
@@ -101,6 +137,7 @@ fn frag_texture_opaque_main(vert: VertOut) -> FragOut {
 fn frag_text_main(vert: VertOut) -> FragOut {
 	var out: FragOut;
 	out.colour = textureSample(t, s, vert.uv);
+
 	return out;
 }
 
@@ -111,6 +148,8 @@ fn sample_frost(centre: vec2f, off: vec2f) -> vec3f {
 
 @fragment
 fn frag_frost_main(vert: VertOut) -> FragOut {
+	let coverage = rounding_coverage(vert.uv);
+
 	// Here, we're actually doing the last stage of the dual Kawase blur algorithm.
 
 	let inv_res = 1 / frost_params.res;
@@ -137,8 +176,7 @@ fn frag_frost_main(vert: VertOut) -> FragOut {
 	let below = tex_colour + vec4f(frost_colour, 1.) * (1. - tex_colour.a);
 
 	var out: FragOut;
-
-	out.colour = over_colour(below);
+	out.colour = over_colour(below) * coverage;
 
 	return out;
 }

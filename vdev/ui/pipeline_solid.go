@@ -26,6 +26,13 @@ func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
 					Type: wgpu.BufferBindingTypeUniform,
 				},
 			},
+			{ // Rounding parameters.
+				Binding:    2,
+				Visibility: wgpu.ShaderStageFragment,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
 		},
 		&wgpu.BlendStatePremultipliedAlphaBlending,
 	)

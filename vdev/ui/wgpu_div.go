@@ -9,11 +9,16 @@ import (
 	"obiw.ac/aqua/wgpu"
 )
 
+// XXX Hardcoded for now, but this should eventually be an attribute.
+
+const WGPU_DIV_RADIUS = 20
+
 type WgpuBackendDivData struct {
 	IWgpuBackendData
 
-	mvp_buf    *wgpu.Buffer
-	colour_buf *wgpu.Buffer
+	mvp_buf      *wgpu.Buffer
+	colour_buf   *wgpu.Buffer
+	rounding_buf *wgpu.Buffer
 
 	tex *WgpuTexture
 
@@ -31,6 +36,9 @@ func (d *WgpuBackendDivData) release() {
 	}
 	if d.colour_buf != nil {
 		d.colour_buf.Release()
+	}
+	if d.rounding_buf != nil {
+		d.rounding_buf.Release()
 	}
 	if d.tex != nil {
 		d.tex.Release()
@@ -58,6 +66,11 @@ func (d *WgpuBackendDivData) create_solid_bind_group(b *WgpuBackend) error {
 			{
 				Binding: 1,
 				Buffer:  d.colour_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding: 2,
+				Buffer:  d.rounding_buf,
 				Size:    wgpu.WholeSize,
 			},
 		},
@@ -92,11 +105,16 @@ func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend, e *Div) e
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding:     2,
+				Binding: 2,
+				Buffer:  d.rounding_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     3,
 				TextureView: d.tex.view,
 			},
 			{
-				Binding: 3,
+				Binding: 4,
 				Sampler: d.tex.sampler,
 			},
 		},
@@ -125,23 +143,28 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding:     2,
+				Binding: 2,
+				Buffer:  d.rounding_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     3,
 				TextureView: d.tex.view,
 			},
 			{
-				Binding: 3,
+				Binding: 4,
 				Sampler: d.tex.sampler,
 			},
 			{
-				Binding:     4,
+				Binding:     5,
 				TextureView: d.frost.last.view,
 			},
 			{
-				Binding: 5,
+				Binding: 6,
 				Sampler: d.frost.last.sampler,
 			},
 			{
-				Binding: 6,
+				Binding: 7,
 				Buffer:  d.frost.final_frost_param_buf,
 				Size:    wgpu.WholeSize,
 			},
@@ -182,6 +205,18 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) error {
 		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
 	}); err != nil {
 		println("Can't create colour vector buffer.")
+		data.release()
+		return err
+	}
+
+	// Create rounding parameter buffer.
+
+	if data.rounding_buf, err = b.dev.CreateBuffer(&wgpu.BufferDescriptor{
+		// Note that the size of the Rounding struct is 16 bytes because of padding, not 12.
+		Size:  16,
+		Usage: wgpu.BufferUsageUniform | wgpu.BufferUsageCopyDst,
+	}); err != nil {
+		println("Can't create rounding parameter buffer.")
 		data.release()
 		return err
 	}

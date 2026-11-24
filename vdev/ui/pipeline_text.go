@@ -20,7 +20,7 @@ func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 				},
 			},
 			{ // Texture.
-				Binding:    2,
+				Binding:    3,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -29,7 +29,7 @@ func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 				},
 			},
 			{ // Sampler.
-				Binding:    3,
+				Binding:    4,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,

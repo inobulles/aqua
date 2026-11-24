@@ -191,6 +191,9 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 
 		data.pipeline.Set(b.render_pass, data.bind_group)
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(div_mvp[:]))
+
+		rounding := [4]float32{float32(e.flow_w), float32(e.flow_h), WGPU_DIV_RADIUS, 0}
+		b.queue.WriteBuffer(data.rounding_buf, 0, wgpu.ToBytes(rounding[:]))
 		b.render_pass.Draw(6, 1, 0, 0)
 
 		// Render children.

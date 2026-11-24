@@ -50,8 +50,15 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 					Type: wgpu.BufferBindingTypeUniform,
 				},
 			},
-			{ // Texture.
+			{ // Rounding parameters.
 				Binding:    2,
+				Visibility: wgpu.ShaderStageFragment,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
+			{ // Texture.
+				Binding:    3,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -60,7 +67,7 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 				},
 			},
 			{ // Sampler.
-				Binding:    3,
+				Binding:    4,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,

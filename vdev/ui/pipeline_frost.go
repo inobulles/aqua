@@ -26,8 +26,15 @@ func (b *WgpuBackend) NewFrostPipeline() (*FrostPipeline, error) {
 					Type: wgpu.BufferBindingTypeUniform,
 				},
 			},
-			{ // Texture.
+			{ // Rounding parameters.
 				Binding:    2,
+				Visibility: wgpu.ShaderStageFragment,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
+			{ // Texture.
+				Binding:    3,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -36,14 +43,14 @@ func (b *WgpuBackend) NewFrostPipeline() (*FrostPipeline, error) {
 				},
 			},
 			{ // Sampler.
-				Binding:    3,
+				Binding:    4,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,
 				},
 			},
 			{ // Background (what will be frostified) texture.
-				Binding:    4,
+				Binding:    5,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -52,14 +59,14 @@ func (b *WgpuBackend) NewFrostPipeline() (*FrostPipeline, error) {
 				},
 			},
 			{ // Background (what will be frostified) sampler.
-				Binding:    5,
+				Binding:    6,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,
 				},
 			},
 			{ // Frost parameters.
-				Binding:    6,
+				Binding:    7,
 				Visibility: wgpu.ShaderStageFragment,
 				Buffer: wgpu.BufferBindingLayout{
 					Type: wgpu.BufferBindingTypeUniform,
