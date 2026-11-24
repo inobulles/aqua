@@ -37,7 +37,7 @@ func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Text", texture_shader_src,
+	pipeline, err := b.NewPipeline("Text", texture_shader_src, "frag_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,

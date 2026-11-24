@@ -41,7 +41,7 @@ func (b *WgpuBackend) NewTexturePipeline() (*TexturePipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Texture", texture_shader_src,
+	pipeline, err := b.NewPipeline("Texture", texture_shader_src, "frag_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,

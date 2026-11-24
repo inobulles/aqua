@@ -41,7 +41,7 @@ func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Solid", solid_shader_src,
+	pipeline, err := b.NewPipeline("Solid", solid_shader_src, "frag_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,

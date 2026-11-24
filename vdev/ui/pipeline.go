@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
@@ -21,6 +21,7 @@ type Pipeline struct {
 func (b *WgpuBackend) NewPipeline(
 	label string,
 	src string,
+	frag_entry string,
 	bind_group_layout_entries []wgpu.BindGroupLayoutEntry,
 	vbo_layouts []wgpu.VertexBufferLayout,
 	blend *wgpu.BlendState,
@@ -75,7 +76,7 @@ func (b *WgpuBackend) NewPipeline(
 		},
 		Fragment: &wgpu.FragmentState{
 			Module:     pipeline.shader,
-			EntryPoint: "frag_main",
+			EntryPoint: frag_entry,
 			Targets: []wgpu.ColorTargetState{
 				{
 					Format:    b.format,

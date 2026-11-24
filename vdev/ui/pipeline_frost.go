@@ -43,7 +43,7 @@ func (b *WgpuBackend) NewFrostPipeline() (*FrostPipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Frost", frost_shader_src,
+	pipeline, err := b.NewPipeline("Frost", frost_shader_src, "frag_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,
