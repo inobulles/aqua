@@ -49,9 +49,10 @@ func (d *WgpuBackendDivData) release() {
 
 func (d *WgpuBackendDivData) create_solid_bind_group(b *WgpuBackend) error {
 	var err error
+	d.pipeline = &b.solid_pipeline.Pipeline
 
 	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-		Layout: b.solid_pipeline.bind_group_layout,
+		Layout: d.pipeline.bind_group_layout,
 		Entries: []wgpu.BindGroupEntry{
 			{
 				Binding: 0,
@@ -73,9 +74,11 @@ func (d *WgpuBackendDivData) create_solid_bind_group(b *WgpuBackend) error {
 
 func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend) error {
 	var err error
+	d.pipeline = &b.texture_pipeline.Pipeline
+
 
 	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-		Layout: b.texture_pipeline.bind_group_layout,
+		Layout: d.pipeline.bind_group_layout,
 		Entries: []wgpu.BindGroupEntry{
 			{
 				Binding: 0,
@@ -100,9 +103,10 @@ func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend) error {
 
 func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 	var err error
+	d.pipeline = &b.frost_pipeline.Pipeline
 
 	if d.bind_group, err = b.dev.CreateBindGroup(&wgpu.BindGroupDescriptor{
-		Layout: b.frost_pipeline.bind_group_layout,
+		Layout: d.pipeline.bind_group_layout,
 		Entries: []wgpu.BindGroupEntry{
 			{
 				Binding: 0,

@@ -159,8 +159,6 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 		data := e.backend_data.(WgpuBackendDivData)
 
 		if data.tex == nil {
-			b.solid_pipeline.Set(b.render_pass, data.bind_group)
-
 			colour := [4]float32{0, 0, 0, 0}
 
 			if r := elem.ElemBase().get_attr("bg.r"); r != nil {
@@ -179,13 +177,10 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 			b.queue.WriteBuffer(data.colour_buf, 0, wgpu.ToBytes(colour[:]))
 		} else if e.do_frost() {
 			b.encounter_frost(e)
-			b.frost_pipeline.Set(b.render_pass, data.bind_group)
-		} else {
-			b.texture_pipeline.Set(b.render_pass, data.bind_group)
 		}
 
+		data.pipeline.Set(b.render_pass, data.bind_group)
 		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
-
 		data.model.draw(b.render_pass)
 
 		// Render children.
