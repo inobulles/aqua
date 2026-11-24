@@ -59,6 +59,11 @@ func (b *WgpuBackend) set_attr(elem *Elem, key string, val any) {
 		if prev != nil && prev != cur {
 			b.free_backend_data(elem)
 		}
+	// Same thing if we enable/disable frost.
+	case "frost":
+		if prev, _ := elem.get_attr(key).(bool); prev != val.(bool) {
+			b.free_backend_data(elem)
+		}
 	}
 }
 
