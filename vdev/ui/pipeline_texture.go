@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
@@ -14,6 +14,9 @@ type TexturePipeline struct {
 	Pipeline
 	vbo_layout wgpu.VertexBufferLayout
 }
+
+//go:embed shaders/texture.wgsl
+var texture_shader_src string
 
 func (b *WgpuBackend) NewTexturePipeline() (*TexturePipeline, error) {
 	vbo_layout := wgpu.VertexBufferLayout{
@@ -38,7 +41,7 @@ func (b *WgpuBackend) NewTexturePipeline() (*TexturePipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Texture", text_shader_src,
+	pipeline, err := b.NewPipeline("Texture", texture_shader_src,
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,

@@ -4,7 +4,6 @@
 package main
 
 import (
-	_ "embed"
 	"unsafe"
 
 	"obiw.ac/aqua/wgpu"
@@ -14,9 +13,6 @@ type TextPipeline struct {
 	Pipeline
 	vbo_layout wgpu.VertexBufferLayout
 }
-
-//go:embed shaders/text.wgsl
-var text_shader_src string
 
 func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 	vbo_layout := wgpu.VertexBufferLayout{
@@ -41,7 +37,7 @@ func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 		},
 	}
 
-	pipeline, err := b.NewPipeline("Text", text_shader_src,
+	pipeline, err := b.NewPipeline("Text", texture_shader_src,
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,
