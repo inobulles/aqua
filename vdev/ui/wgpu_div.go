@@ -20,7 +20,6 @@ type WgpuBackendDivData struct {
 	pipeline   *Pipeline
 	bind_group *wgpu.BindGroup
 
-	model *Model
 	frost *WgpuBackendDivDataFrost
 
 	w, h uint32
@@ -38,9 +37,6 @@ func (d *WgpuBackendDivData) release() {
 	}
 	if d.bind_group != nil {
 		d.bind_group.Release()
-	}
-	if d.model != nil {
-		d.model.release()
 	}
 	if d.frost != nil {
 		d.frost.Release()
@@ -225,25 +221,12 @@ func (b *WgpuBackend) gen_div_backend_data(e *Div, w, h uint32) {
 		}
 	}
 
-	// Generate pane model.
-
-	data.model = &Model{}
-	data.model.gen_pane(b, float32(w), float32(h), 10)
-
 	e.backend_data = data
 }
 
 func (e *Div) size_changed() bool {
 	data := e.backend_data.(WgpuBackendDivData)
 	return data.w != e.flow_w || data.h != e.flow_h
-}
-
-func (e *Div) frost_size_changed() bool {
-	if !e.do_frost() {
-		return false
-	}
-
-	return e.size_changed()
 }
 
 func (e *Div) bg_tex_view_changed() bool {

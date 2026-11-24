@@ -59,3 +59,12 @@ func scale_mat(scale float32) [4][4]float32 {
 		{0, 0, 0, 1},
 	}
 }
+
+func scale_xy_mat(x, y float32) [4][4]float32 {
+	return [4][4]float32{
+		{x, 0, 0, 0},
+		{0, y, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1},
+	}
+}
