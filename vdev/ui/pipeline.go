@@ -4,10 +4,14 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 
 	"obiw.ac/aqua/wgpu"
 )
+
+//go:embed shaders/elem.wgsl
+var elem_shader_src string
 
 // TODO Should really make this an interface to make my life easier.
 

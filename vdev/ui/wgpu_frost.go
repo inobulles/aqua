@@ -29,10 +29,10 @@ type WgpuBackendDivDataFrost struct {
 	res_x, res_y          [WGPU_FROST_DOWNSAMPLE_STEPS]uint32
 }
 
-//go:embed shaders/frost/kawase.wgsl
+//go:embed shaders/kawase.wgsl
 var kawase_shader_src string
 
-//go:embed shaders/frost/blit.wgsl
+//go:embed shaders/blit.wgsl
 var blit_shader_src string
 
 func (b *WgpuBackend) create_frost_pipelines() error {

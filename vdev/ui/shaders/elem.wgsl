@@ -1,5 +1,9 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2026 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
+
+// Mega shader with multiple fragment shader entry points.
+// Pipelines choose their entry point and only bind what that entry point uses.
+// All entry points must output premultiplied alpha.
 
 struct VertOut {
 	@builtin(position) pos: vec4f,
@@ -36,6 +40,17 @@ struct FragOut {
 	@location(0) colour: vec4f,
 };
 
+// Colour (not premultiplied).
+// This is drawn over everything else, so (0, 0, 0, 0) means no overlay.
+
+@group(0) @binding(1)
+var<uniform> colour: vec4f;
+
+@group(0) @binding(2)
+var t: texture_2d<f32>;
+@group(0) @binding(3)
+var s: sampler;
+
 struct FrostParams {
 	// XXX pos and size are entirely unused in the upsampling direction.
 	// They are just kept so we can have the same bind group layout as the downsampling shader.
@@ -45,16 +60,49 @@ struct FrostParams {
 	off: f32,
 };
 
-@group(0) @binding(1)
-var t: texture_2d<f32>;
-@group(0) @binding(2)
-var s: sampler;
-@group(0) @binding(3)
-var frost_t: texture_2d<f32>;
 @group(0) @binding(4)
-var frost_s: sampler;
+var frost_t: texture_2d<f32>;
 @group(0) @binding(5)
+var frost_s: sampler;
+@group(0) @binding(6)
 var<uniform> frost_params: FrostParams;
+
+// Draw colour over what's below it (premultiplied).
+
+fn over_colour(below: vec4f) -> vec4f {
+	let premul = vec4f(colour.rgb * colour.a, colour.a);
+	return premul + below * (1. - colour.a);
+}
+
+@fragment
+fn frag_solid_main(vert: VertOut) -> FragOut {
+	var out: FragOut;
+	out.colour = over_colour(vec4f(0.));
+	return out;
+}
+
+@fragment
+fn frag_texture_main(vert: VertOut) -> FragOut {
+	var out: FragOut;
+	out.colour = over_colour(textureSample(t, s, vert.uv));
+	return out;
+}
+
+// For textures whose alpha channel is undefined, e.g. the padding in XRGB8888.
+
+@fragment
+fn frag_texture_opaque_main(vert: VertOut) -> FragOut {
+	var out: FragOut;
+	out.colour = over_colour(vec4(textureSample(t, s, vert.uv).rgb, 1.));
+	return out;
+}
+
+@fragment
+fn frag_text_main(vert: VertOut) -> FragOut {
+	var out: FragOut;
+	out.colour = textureSample(t, s, vert.uv);
+	return out;
+}
 
 fn sample_frost(centre: vec2f, off: vec2f) -> vec3f {
 	let colour = textureSample(frost_t, frost_s, centre + off);
@@ -62,7 +110,7 @@ fn sample_frost(centre: vec2f, off: vec2f) -> vec3f {
 }
 
 @fragment
-fn frag_main(vert: VertOut) -> FragOut {
+fn frag_frost_main(vert: VertOut) -> FragOut {
 	// Here, we're actually doing the last stage of the dual Kawase blur algorithm.
 
 	let inv_res = 1 / frost_params.res;
@@ -83,11 +131,14 @@ fn frag_main(vert: VertOut) -> FragOut {
 
 	frost_colour = sqrt(frost_colour / 12);
 
-	// Now, we just add our texture on top of that.
+	// Now, we just add our texture and colour on top of that.
 
 	let tex_colour = textureSample(t, s, vert.uv);
+	let below = tex_colour + vec4f(frost_colour, 1.) * (1. - tex_colour.a);
 
 	var out: FragOut;
-	out.colour = tex_colour + vec4f(frost_colour, 1.) * (1. - tex_colour.a);
+
+	out.colour = over_colour(below);
+
 	return out;
 }

@@ -4,7 +4,6 @@
 package main
 
 import (
-	_ "embed"
 	"fmt"
 
 	"obiw.ac/aqua/wgpu"
@@ -21,24 +20,21 @@ const (
 	TextureAlphaOpaque
 )
 
-//go:embed shaders/texture.wgsl
-var texture_shader_src string
-
 func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, error) {
 	var label, frag_entry string
 
 	switch alpha {
 	case TextureAlphaTranslucent:
 		label = "Texture"
-		frag_entry = "frag_main"
+		frag_entry = "frag_texture_main"
 	case TextureAlphaOpaque:
 		label = "Texture (opaque)"
-		frag_entry = "frag_opaque_main"
+		frag_entry = "frag_texture_opaque_main"
 	default:
 		panic(fmt.Sprintf("unexpected main.TextureAlpha: %#v", alpha))
 	}
 
-	pipeline, err := b.NewPipeline(label, texture_shader_src, frag_entry,
+	pipeline, err := b.NewPipeline(label, elem_shader_src, frag_entry,
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,
@@ -47,8 +43,15 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 					Type: wgpu.BufferBindingTypeUniform,
 				},
 			},
-			{ // Texture.
+			{ // Colour.
 				Binding:    1,
+				Visibility: wgpu.ShaderStageFragment,
+				Buffer: wgpu.BufferBindingLayout{
+					Type: wgpu.BufferBindingTypeUniform,
+				},
+			},
+			{ // Texture.
+				Binding:    2,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -57,7 +60,7 @@ func (b *WgpuBackend) NewTexturePipeline(alpha TextureAlpha) (*TexturePipeline, 
 				},
 			},
 			{ // Sampler.
-				Binding:    2,
+				Binding:    3,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,

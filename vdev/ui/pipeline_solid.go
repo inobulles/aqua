@@ -3,21 +3,14 @@
 
 package main
 
-import (
-	_ "embed"
-
-	"obiw.ac/aqua/wgpu"
-)
+import "obiw.ac/aqua/wgpu"
 
 type SolidPipeline struct {
 	Pipeline
 }
 
-//go:embed shaders/solid.wgsl
-var solid_shader_src string
-
 func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
-	pipeline, err := b.NewPipeline("Solid", solid_shader_src, "frag_main",
+	pipeline, err := b.NewPipeline("Solid", elem_shader_src, "frag_solid_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,
@@ -34,7 +27,7 @@ func (b *WgpuBackend) NewSolidPipeline() (*SolidPipeline, error) {
 				},
 			},
 		},
-		&wgpu.BlendStateAlphaBlending,
+		&wgpu.BlendStatePremultipliedAlphaBlending,
 	)
 
 	if err != nil {

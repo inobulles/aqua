@@ -87,11 +87,16 @@ func (d *WgpuBackendDivData) create_texture_bind_group(b *WgpuBackend, e *Div) e
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding:     1,
+				Binding: 1,
+				Buffer:  d.colour_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     2,
 				TextureView: d.tex.view,
 			},
 			{
-				Binding: 2,
+				Binding: 3,
 				Sampler: d.tex.sampler,
 			},
 		},
@@ -115,23 +120,28 @@ func (d *WgpuBackendDivData) create_frost_bind_group(b *WgpuBackend) error {
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding:     1,
+				Binding: 1,
+				Buffer:  d.colour_buf,
+				Size:    wgpu.WholeSize,
+			},
+			{
+				Binding:     2,
 				TextureView: d.tex.view,
 			},
 			{
-				Binding: 2,
+				Binding: 3,
 				Sampler: d.tex.sampler,
 			},
 			{
-				Binding:     3,
+				Binding:     4,
 				TextureView: d.frost.last.view,
 			},
 			{
-				Binding: 4,
+				Binding: 5,
 				Sampler: d.frost.last.sampler,
 			},
 			{
-				Binding: 5,
+				Binding: 6,
 				Buffer:  d.frost.final_frost_param_buf,
 				Size:    wgpu.WholeSize,
 			},

@@ -88,11 +88,11 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) error {
 				Size:    wgpu.WholeSize,
 			},
 			{
-				Binding:     1,
+				Binding:     2,
 				TextureView: data.tex.view,
 			},
 			{
-				Binding: 2,
+				Binding: 3,
 				Sampler: data.tex.sampler,
 			},
 		},

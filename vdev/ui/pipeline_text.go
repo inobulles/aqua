@@ -10,7 +10,7 @@ type TextPipeline struct {
 }
 
 func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
-	pipeline, err := b.NewPipeline("Text", texture_shader_src, "frag_main",
+	pipeline, err := b.NewPipeline("Text", elem_shader_src, "frag_text_main",
 		[]wgpu.BindGroupLayoutEntry{
 			{ // Model-view-projection matrix.
 				Binding:    0,
@@ -20,7 +20,7 @@ func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 				},
 			},
 			{ // Texture.
-				Binding:    1,
+				Binding:    2,
 				Visibility: wgpu.ShaderStageFragment,
 				Texture: wgpu.TextureBindingLayout{
 					Multisampled:  false,
@@ -29,7 +29,7 @@ func (b *WgpuBackend) NewTextPipeline() (*TextPipeline, error) {
 				},
 			},
 			{ // Sampler.
-				Binding:    2,
+				Binding:    3,
 				Visibility: wgpu.ShaderStageFragment,
 				Sampler: wgpu.SamplerBindingLayout{
 					Type: wgpu.SamplerBindingTypeFiltering,
