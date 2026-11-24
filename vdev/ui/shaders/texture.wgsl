@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 struct VertOut {
 	@builtin(position) pos: vec4f,
@@ -37,6 +37,17 @@ fn frag_main(vert: VertOut) -> FragOut {
 	var out: FragOut;
 
 	out.colour = textureSample(t, s, vert.uv);
+
+	return out;
+}
+
+// For textures whose alpha channel is undefined, e.g. the padding in XRGB8888.
+
+@fragment
+fn frag_opaque_main(vert: VertOut) -> FragOut {
+	var out: FragOut;
+
+	out.colour = vec4(textureSample(t, s, vert.uv).rgb, 1.);
 
 	return out;
 }

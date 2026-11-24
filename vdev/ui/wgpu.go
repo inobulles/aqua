@@ -34,10 +34,11 @@ type WgpuBackend struct {
 	title_font     *Font
 	paragraph_font *Font
 
-	regular_pipeline *TextPipeline
-	solid_pipeline   *SolidPipeline
-	texture_pipeline *TexturePipeline
-	frost_pipeline   *FrostPipeline
+	regular_pipeline        *TextPipeline
+	solid_pipeline          *SolidPipeline
+	frost_pipeline          *FrostPipeline
+	texture_pipeline        *TexturePipeline
+	texture_opaque_pipeline *TexturePipeline
 
 	swapchain_view *wgpu.TextureView
 	last_frost     *Div
@@ -258,8 +259,13 @@ func GoUiBackendWgpuInit(
 		return
 	}
 
-	if backend.texture_pipeline, err = backend.NewTexturePipeline(); err != nil {
+	if backend.texture_pipeline, err = backend.NewTexturePipeline(TextureAlphaTranslucent); err != nil {
 		println("Failed to create texture pipeline.", err)
+		return
+	}
+
+	if backend.texture_opaque_pipeline, err = backend.NewTexturePipeline(TextureAlphaOpaque); err != nil {
+		println("Failed to create opaque texture pipeline.", err)
 		return
 	}
 
