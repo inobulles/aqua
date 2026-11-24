@@ -1,5 +1,5 @@
 // This Source Form is subject to the terms of the AQUA Software License, v. 1.0.
-// Copyright (c) 2025 Aymeric Wibo
+// Copyright (c) 2025-2026 Aymeric Wibo
 
 package main
 
@@ -15,12 +15,11 @@ type WgpuBackendTextData struct {
 
 	flow_w uint32
 	data   *image.RGBA
+	w, h   uint32
 
 	tex        *WgpuTexture
 	mvp_buf    *wgpu.Buffer
 	bind_group *wgpu.BindGroup
-
-	model *Model
 }
 
 func (d *WgpuBackendTextData) release() {
@@ -58,6 +57,8 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 
 	w := uint32(data.data.Bounds().Dx())
 	h := uint32(data.data.Bounds().Dy())
+
+	data.w, data.h = w, h
 
 	var err error
 
@@ -105,9 +106,6 @@ func (b *WgpuBackend) gen_text_backend_data(e *Text) {
 		b.free_elem(e)
 		return
 	}
-
-	data.model = &Model{}
-	data.model.gen_quad(b, float32(w), float32(h))
 
 	e.backend_data = data
 }

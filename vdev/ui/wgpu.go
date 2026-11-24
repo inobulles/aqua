@@ -149,9 +149,10 @@ func (b *WgpuBackend) render(elem IElem, parent [4][4]float32) {
 		data := e.backend_data.(WgpuBackendTextData)
 		b.regular_pipeline.Set(b.render_pass, data.bind_group)
 
-		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(mvp[:]))
+		text_mvp := mul_mat(mvp, scale_xy_mat(float32(data.w), float32(data.h)))
+		b.queue.WriteBuffer(data.mvp_buf, 0, wgpu.ToBytes(text_mvp[:]))
 
-		data.model.draw(b.render_pass)
+		b.unit_quad.draw(b.render_pass)
 	case *Div:
 		// Only frost depends on the size of the div; everything else just scales the unit quad.
 
