@@ -223,6 +223,7 @@ func animate_elem(elem IElem, now time.Time) bool {
 
 	running := base.scale.update(now)
 	running = base.rot.update(now) || running
+	running = base.corner_radius.update(now) || running
 
 	if div, ok := elem.(*Div); ok {
 		for _, child := range div.children {

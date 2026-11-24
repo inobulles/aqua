@@ -9,10 +9,6 @@ import (
 	"obiw.ac/aqua/wgpu"
 )
 
-// XXX Hardcoded for now, but this should eventually be an attribute.
-
-const WGPU_DIV_RADIUS = 20
-
 type WgpuBackendDivData struct {
 	IWgpuBackendData
 

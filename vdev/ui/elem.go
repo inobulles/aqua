@@ -76,6 +76,9 @@ type Elem struct {
 	scale Anim
 	rot   Anim
 
+	// Corner radius, in pixels.
+	corner_radius Anim
+
 	backend_data any
 }
 
@@ -130,6 +133,8 @@ type Div struct {
 	content_align_x, content_align_y Align
 }
 
+const DEFAULT_CORNER_RADIUS = 20 // pixels
+
 func construct_elem(kind ElemKind, ui *Ui, parent IElem, semantic_str string) Elem {
 	return Elem{
 		kind:         kind,
@@ -144,8 +149,9 @@ func construct_elem(kind ElemKind, ui *Ui, parent IElem, semantic_str string) El
 			anchor_x: .5,
 			anchor_y: .5,
 		},
-		scale: new_anim(1, AnimCurveElastic),
-		rot:   new_anim(0, AnimCurveElastic),
+		scale:         new_anim(1, AnimCurveElastic),
+		rot:           new_anim(0, AnimCurveElastic),
+		corner_radius: new_anim(DEFAULT_CORNER_RADIUS, AnimCurveElastic),
 	}
 }
 
@@ -237,6 +243,10 @@ func (e *Elem) set_attr(key string, val any) {
 		return
 	}
 
+	if e.corner_radius.process_attrs("corner_radius", key, val) {
+		return
+	}
+
 	switch key {
 	case "abs":
 		e.is_abs = val.(bool)
@@ -269,6 +279,8 @@ func (e *Elem) get_attr(key string) any {
 		return float32(e.scale.pos)
 	case "rot":
 		return float32(e.rot.pos)
+	case "corner_radius":
+		return float32(e.corner_radius.pos)
 	}
 
 	if v, ok := e.attrs[key]; ok {
