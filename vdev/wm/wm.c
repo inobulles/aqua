@@ -35,22 +35,6 @@ typedef struct {
 	struct wl_list link;
 
 	wm_t* wm;
-	struct wlr_output* output;
-
-	struct wlr_drm_syncobj_timeline* timeline;
-	uint64_t timeline_point;
-
-	bool needs_render;
-
-	struct wl_listener frame;
-	struct wl_listener needs_frame;
-	struct wl_listener destroy;
-} output_t;
-
-typedef struct {
-	struct wl_list link;
-
-	wm_t* wm;
 	struct wlr_buffer* buf;
 	VkImage image;
 

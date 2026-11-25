@@ -307,6 +307,22 @@ static kos_fn_t const FNS[] = {
 			{KOS_TYPE_OPAQUE_PTR, "win"},
 		},
 	},
+	{
+		.name = "get_hw_cursor_max_x_res",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
+		},
+	},
+	{
+		.name = "get_hw_cursor_max_y_res",
+		.ret_type = KOS_TYPE_U32,
+		.param_count = 1,
+		.params = (kos_param_t[]) {
+			{KOS_TYPE_OPAQUE_PTR, "wm"},
+		},
+	},
 };
 
 static void conn(kos_cookie_t cookie, vid_t vid, uint64_t conn_id) {
@@ -540,6 +556,22 @@ static void call(kos_cookie_t cookie, uint64_t vdev_id, uint64_t conn_id, uint64
 		}
 
 		wm_vdev_toplevel_close(toplevel);
+		break;
+	}
+	case 14:   // get_hw_cursor_max_x_res
+	case 15: { // get_hw_cursor_max_y_res
+		wm_t* const wm = vdriver_unwrap_local_opaque_ptr(args[0].opaque_ptr);
+
+		if (wm == NULL) {
+			LOG_E(cls, "Tried to get hardware cursor size of non-local or NULL WM.");
+			notif.kind = KOS_NOTIF_CALL_FAIL;
+			break;
+		}
+
+		uint32_t x_res, y_res;
+		wm_vdev_get_hw_cursor_max_size(wm, &x_res, &y_res);
+
+		notif.call_ret.ret.u32 = fn_id == 14 ? x_res : y_res;
 		break;
 	}
 	default:

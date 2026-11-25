@@ -132,6 +132,22 @@ typedef struct {
 	struct wl_list link;
 
 	wm_t* wm;
+	struct wlr_output* output;
+
+	struct wlr_drm_syncobj_timeline* timeline;
+	uint64_t timeline_point;
+
+	bool needs_render;
+
+	struct wl_listener frame;
+	struct wl_listener needs_frame;
+	struct wl_listener destroy;
+} output_t;
+
+typedef struct {
+	struct wl_list link;
+
+	wm_t* wm;
 	struct wlr_xdg_toplevel* xdg_toplevel;
 	struct wlr_scene_tree* scene_tree;
 
@@ -230,3 +246,7 @@ void wm_vdev_toplevel_notify_key(toplevel_t* toplevel, uint32_t time, bool press
 void wm_vdev_toplevel_set_size(toplevel_t* toplevel, uint32_t x_res, uint32_t y_res);
 void wm_vdev_toplevel_set_resizing(toplevel_t* toplevel, bool resizing);
 void wm_vdev_toplevel_close(toplevel_t* toplevel);
+
+// Hardware cursor stuff (hw_cursor.c).
+
+void wm_vdev_get_hw_cursor_max_size(wm_t* wm, uint32_t* x_res, uint32_t* y_res);

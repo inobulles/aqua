@@ -70,6 +70,8 @@ struct wm_ctx_t {
 		uint32_t get_backend;
 		uint32_t schedule_frame;
 		uint32_t win_close;
+		uint32_t get_hw_cursor_max_x_res;
+		uint32_t get_hw_cursor_max_y_res;
 	} fns;
 
 	bool last_success;
@@ -460,6 +462,26 @@ static void notif_conn(kos_notif_t const* notif, void* data) {
 		) {
 			ctx->fns.win_close = i;
 		}
+
+		if (
+			strcmp(name, "get_hw_cursor_max_x_res") == 0 &&
+			fn->ret_type == KOS_TYPE_U32 &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "wm") == 0
+		) {
+			ctx->fns.get_hw_cursor_max_x_res = i;
+		}
+
+		if (
+			strcmp(name, "get_hw_cursor_max_y_res") == 0 &&
+			fn->ret_type == KOS_TYPE_U32 &&
+			fn->param_count == 1 &&
+			fn->params[0].type == KOS_TYPE_OPAQUE_PTR &&
+			strcmp((char*) fn->params[0].name, "wm") == 0
+		) {
+			ctx->fns.get_hw_cursor_max_y_res = i;
+		}
 	}
 
 	for (size_t i = 0; i < sizeof ctx->fns / sizeof(uint32_t); i++) {
@@ -849,6 +871,55 @@ wm_backend_t wm_get_backend(wm_t wm) {
 	}
 
 	return conv_backend(ctx, ctx->last_ret.u8);
+}
+
+static int call_wm_u32(wm_t wm, uint32_t fn, uint32_t* ret) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	kos_val_t const args[] = {
+		{.opaque_ptr = wm->opaque_ptr},
+	};
+
+	ctx->last_cookie = kos_vdev_call(ctx->conn_id, fn, args);
+	ctx->last_success = false;
+	kos_flush(true);
+
+	if (!ctx->last_success) {
+		return -1;
+	}
+
+	*ret = ctx->last_ret.u32;
+	return 0;
+}
+
+int wm_get_hw_cursor_max_size(wm_t wm, uint32_t* x_res, uint32_t* y_res) {
+	wm_ctx_t const ctx = wm->ctx;
+
+	*x_res = *y_res = 0;
+
+	if (ctx == NULL || !ctx->is_conn) {
+		LOG_E(cls, "No context or not connected.");
+		return -1;
+	}
+
+	uint32_t max_x_res, max_y_res;
+
+	if (
+		call_wm_u32(wm, ctx->fns.get_hw_cursor_max_x_res, &max_x_res) < 0 ||
+		call_wm_u32(wm, ctx->fns.get_hw_cursor_max_y_res, &max_y_res) < 0
+	) {
+		LOG_E(cls, "Failed to get maximum hardware cursor size.");
+		return -1;
+	}
+
+	if (max_x_res == 0 || max_y_res == 0) {
+		return -1;
+	}
+
+	*x_res = max_x_res;
+	*y_res = max_y_res;
+
+	return 0;
 }
 
 void wm_schedule_frame(wm_t wm) {
